@@ -1,16 +1,16 @@
 package com.dscorp.ispadmin.presentation.ui.features.forms.subscription
 
 import com.dscorp.ispadmin.R
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.NetworkDevice
+import com.dscorp.ispadmin.domain.model.Onu
+import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.domain.model.extensions.isValidDni
+import com.dscorp.ispadmin.domain.model.extensions.isValidIpv4
+import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.ReactiveFormField
-import com.example.cleanarchitecture.domain.entity.NapBoxResponse
-import com.example.cleanarchitecture.domain.entity.NetworkDevice
-import com.example.cleanarchitecture.domain.entity.Onu
-import com.example.cleanarchitecture.domain.entity.PlaceResponse
-import com.example.cleanarchitecture.domain.entity.PlanResponse
-import com.example.cleanarchitecture.domain.entity.Technician
-import com.example.cleanarchitecture.domain.entity.extensions.isValidDni
-import com.example.cleanarchitecture.domain.entity.extensions.isValidIpv4
-import com.example.cleanarchitecture.domain.entity.extensions.isValidPhone
 import com.google.android.gms.maps.model.LatLng
 
 
@@ -89,7 +89,7 @@ abstract class SubscriptionForm {
         validator = { it != null }
     )
 
-    val technicianField = ReactiveFormField<Technician?>(
+    val technicianField = ReactiveFormField<User?>(
         hintResourceId = R.string.technician,
         errorResourceId = R.string.mustSelectTechnician,
         validator = { it != null }

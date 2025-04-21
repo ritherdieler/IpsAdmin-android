@@ -1,15 +1,15 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 
-import com.example.cleanarchitecture.domain.entity.InstallationType
-import com.example.cleanarchitecture.domain.entity.NapBoxResponse
-import com.example.cleanarchitecture.domain.entity.NetworkDevice
-import com.example.cleanarchitecture.domain.entity.Onu
-import com.example.cleanarchitecture.domain.entity.PlaceResponse
-import com.example.cleanarchitecture.domain.entity.PlanResponse
-import com.example.cleanarchitecture.domain.entity.extensions.isAValidAddress
-import com.example.cleanarchitecture.domain.entity.extensions.isAValidName
-import com.example.cleanarchitecture.domain.entity.extensions.isValidDni
-import com.example.cleanarchitecture.domain.entity.extensions.isValidPhone
+import com.dscorp.ispadmin.domain.model.InstallationType
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.NetworkDevice
+import com.dscorp.ispadmin.domain.model.Onu
+import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.extensions.isAValidAddress
+import com.dscorp.ispadmin.domain.model.extensions.isAValidName
+import com.dscorp.ispadmin.domain.model.extensions.isValidDni
+import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
 import com.google.android.gms.maps.model.LatLng
 
 data class RegisterSubscriptionFormState(

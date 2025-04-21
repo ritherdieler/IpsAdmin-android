@@ -9,10 +9,10 @@ import com.dscorp.ispadmin.presentation.ui.features.napbox.edit.EditNapBoxUiStat
 import com.dscorp.ispadmin.presentation.ui.features.napbox.register.RegisterNapBoxUiState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.FieldValidator
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.FormField
-import com.example.cleanarchitecture.domain.entity.GeoLocation
-import com.example.cleanarchitecture.domain.entity.Mufa
-import com.example.cleanarchitecture.domain.entity.NapBox
-import com.example.cleanarchitecture.domain.entity.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.GeoLocation
+import com.dscorp.ispadmin.domain.model.Mufa
+import com.dscorp.ispadmin.domain.model.NapBox
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.launch
 

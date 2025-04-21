@@ -1,15 +1,15 @@
 package com.dscorp.ispadmin.presentation.ui.features.registration
 
 import com.dscorp.ispadmin.R
+import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.domain.model.extensions.isValidDni
+import com.dscorp.ispadmin.domain.model.extensions.isValidEmail
+import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
 import com.dscorp.ispadmin.presentation.extension.analytics.AnalyticsConstants
 import com.dscorp.ispadmin.presentation.extension.analytics.sendSignUpEvent
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.ReactiveFormField
-import com.example.cleanarchitecture.domain.entity.User
-import com.example.cleanarchitecture.domain.entity.extensions.isValidDni
-import com.example.cleanarchitecture.domain.entity.extensions.isValidEmail
-import com.example.cleanarchitecture.domain.entity.extensions.isValidPhone
 import com.example.data2.data.extensions.encryptWithSHA384
 import com.example.data2.data.repository.IRepository
 import com.google.firebase.analytics.FirebaseAnalytics

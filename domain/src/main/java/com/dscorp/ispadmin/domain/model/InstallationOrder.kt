@@ -16,11 +16,18 @@ data class InstallationOrder(
     val cancellationReason: String? = null,
     val subscription: Subscription? = null,
 //    val place: Place
-)
+){
+    data class Subscription(
+        val id: Int = 0,
+        val clientName: String = "",
+        val status: String = ""
+    )
+}
 
 enum class InstallationOrderStatus {
     SOLICITADO,
     EN_CURSO,
     CERRADO,
     CANCELADO
-} 
+}
+

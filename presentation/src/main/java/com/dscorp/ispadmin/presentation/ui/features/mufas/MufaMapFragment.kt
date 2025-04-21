@@ -9,8 +9,8 @@ import com.dscorp.ispadmin.presentation.ui.features.base.BaseFragment
 import com.dscorp.ispadmin.presentation.ui.features.mufas.MufaUiState
 import com.dscorp.ispadmin.presentation.ui.features.mufas.MufaViewModel
 import com.dscorp.ispadmin.presentation.ui.features.mufas.NapBoxDetailDialogFragment
-import com.example.cleanarchitecture.domain.entity.Mufa
-import com.example.cleanarchitecture.domain.entity.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.Mufa
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView

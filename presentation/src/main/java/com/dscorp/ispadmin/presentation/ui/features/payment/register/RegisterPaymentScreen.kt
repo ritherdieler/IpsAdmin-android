@@ -47,7 +47,7 @@ import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyCustomDialog
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutlinedTextField
-import com.example.cleanarchitecture.domain.entity.Payment
+import com.dscorp.ispadmin.domain.model.Payment
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

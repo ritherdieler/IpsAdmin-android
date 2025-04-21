@@ -3,7 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.place
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cleanarchitecture.domain.entity.Place
+import com.dscorp.ispadmin.domain.model.Place
 import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent

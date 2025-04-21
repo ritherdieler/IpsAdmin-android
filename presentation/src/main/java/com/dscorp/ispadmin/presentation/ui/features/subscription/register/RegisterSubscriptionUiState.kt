@@ -1,12 +1,12 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register
 
-import com.example.cleanarchitecture.domain.entity.NapBoxResponse
-import com.example.cleanarchitecture.domain.entity.NetworkDevice
-import com.example.cleanarchitecture.domain.entity.Onu
-import com.example.cleanarchitecture.domain.entity.PlaceResponse
-import com.example.cleanarchitecture.domain.entity.PlanResponse
-import com.example.cleanarchitecture.domain.entity.Subscription
-import com.example.cleanarchitecture.domain.entity.Technician
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.NetworkDevice
+import com.dscorp.ispadmin.domain.model.Onu
+import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.Subscription
+import com.dscorp.ispadmin.domain.model.User
 
 /**
  * Created by Sergio Carrillo Diestra on 13/12/2022.
@@ -19,7 +19,7 @@ sealed class RegisterSubscriptionUiState {
     class FormDataFound(
         val networkDevices: List<NetworkDevice>,
         val places: List<PlaceResponse>,
-        val technicians: List<Technician>,
+        val technicians: List<User>,
         val napBoxes: List<NapBoxResponse>,
         val hostNetworkDevices: List<NetworkDevice>,
         val unconfirmedOnus: List<Onu>

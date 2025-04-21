@@ -20,8 +20,8 @@ import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.theme.myTypography
 import com.dscorp.ispadmin.presentation.ui.features.fixedCost.GetAllFixedCostsState
 import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
-import com.example.cleanarchitecture.domain.entity.FixedCost
-import com.example.cleanarchitecture.domain.entity.FixedCostType
+import com.dscorp.ispadmin.domain.model.FixedCost
+import com.dscorp.ispadmin.domain.model.FixedCostType
 
 @Composable
 fun FixedCostList(modifier: Modifier = Modifier, fixedCosts: GetAllFixedCostsState) {

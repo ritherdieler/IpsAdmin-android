@@ -17,8 +17,8 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.ActivityMainBinding
+import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.fcm.FcmTopics
-import com.example.cleanarchitecture.domain.entity.User
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.messaging.FirebaseMessaging
 import org.koin.android.ext.android.inject

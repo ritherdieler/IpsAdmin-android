@@ -11,7 +11,7 @@ import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.FragmentEditPlanBinding
 import com.dscorp.ispadmin.presentation.extension.showCrossDialog
 import com.dscorp.ispadmin.presentation.extension.showErrorDialog
-import com.example.cleanarchitecture.domain.entity.PlanResponse
+import com.dscorp.ispadmin.domain.model.PlanResponse
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class EditPlanFragment : Fragment() {

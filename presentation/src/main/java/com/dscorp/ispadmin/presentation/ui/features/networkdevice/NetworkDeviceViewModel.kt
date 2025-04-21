@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.presentation.ui.features.networkdevice.NetworkDeviceFormError.*
 import com.dscorp.ispadmin.presentation.ui.features.networkdevice.NetworkDeviceResponse.*
-import com.example.cleanarchitecture.domain.entity.NetworkDevice
-import com.example.cleanarchitecture.domain.entity.extensions.isValidIpv4
+import com.dscorp.ispadmin.domain.model.NetworkDevice
+import com.dscorp.ispadmin.domain.model.extensions.isValidIpv4
 import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent

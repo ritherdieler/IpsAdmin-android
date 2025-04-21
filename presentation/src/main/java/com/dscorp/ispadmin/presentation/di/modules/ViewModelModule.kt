@@ -32,8 +32,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.Subscript
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.SupportTicketViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.CreateSupportTicketViewModel
-import com.dscorp.ispadmin.presentation.ui.features.technician.TechnicianViewModel
-import com.dscorp.ispadmin.presentation.ui.features.technician.technicianlist.TechnicianListViewModel
+
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -66,7 +65,6 @@ val viewModelModule = module {
         )
     }
 
-    viewModel { TechnicianViewModel() }
     viewModel { NapBoxViewModel(get()) }
     viewModel { NapBoxesListViewModel() }
     viewModel { PaymentHistoryViewModel(get()) }
@@ -81,7 +79,6 @@ val viewModelModule = module {
     viewModel { PlanListViewModel(get()) }
     viewModel { NetworkDeviceListViewModel() }
     viewModel { PlaceListViewModel() }
-    viewModel { TechnicianListViewModel() }
     viewModel { MufaViewModel(get()) }
     viewModel { EditSubscriptionViewModel(get()) }
     viewModel { EditPlanViewModel(get()) }

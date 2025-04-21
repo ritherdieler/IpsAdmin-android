@@ -46,11 +46,11 @@ import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLined
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
-import com.example.cleanarchitecture.domain.entity.InstallationType
-import com.example.cleanarchitecture.domain.entity.NapBoxResponse
-import com.example.cleanarchitecture.domain.entity.Onu
-import com.example.cleanarchitecture.domain.entity.PlaceResponse
-import com.example.cleanarchitecture.domain.entity.PlanResponse
+import com.dscorp.ispadmin.domain.model.InstallationType
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.Onu
+import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.PlanResponse
 
 @Composable
 fun RegisterSubscriptionForm(

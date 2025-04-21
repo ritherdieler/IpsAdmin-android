@@ -35,7 +35,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.dscorp.ispadmin.databinding.FragmentRegisterOutlayBinding
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyConfirmDialog
 import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
-import com.example.cleanarchitecture.domain.entity.Outlay
+import com.dscorp.ispadmin.domain.model.Outlay
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.androidx.viewmodel.ext.android.viewModel
 

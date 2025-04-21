@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
 import com.dscorp.ispadmin.databinding.DialogNapboxDetailBinding
-import com.example.cleanarchitecture.domain.entity.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
 
 class NapBoxDetailDialogFragment(
     private val napBox: NapBoxResponse? = null,

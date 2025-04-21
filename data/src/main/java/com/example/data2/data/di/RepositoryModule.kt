@@ -19,5 +19,5 @@ import org.koin.dsl.module
 val repositoryModule = module {
     single<IRepository> { Repository() }
     single<InstallationOrderRepository> { InstallationOrderRepositoryImpl() }
-    single<UserRepository> { UserRepositoryImpl(get()) }
+    single<UserRepository> { UserRepositoryImpl(get(), get()) }
 }

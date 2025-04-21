@@ -1,18 +1,28 @@
 package com.dscorp.ispadmin.domain.model
 
+
 data class User(
-    val id: Int = -1,
-    val name: String = "",
-    val lastName: String = "",
-    val username: String = "",
-    val email: String? = null,
-    val phone: String? = null,
-    val dni: String? = null,
-    val type: UserType? = null
+    val id: Int? = null,
+    val name: String,
+    val lastName: String,
+    val type: UserType,
+    val username: String,
+    var password: String,
+    val verified: Boolean,
+    val dni: String,
+    val email: String,
+    val phone: String,
 ) {
-    enum class UserType {
-        ADMIN, TECHNICIAN, CLIENT, SALES, SECRETARY, ACCOUNTANT
+    enum class UserType(val value: String) {
+        ADMIN("Administrador"),
+        TECHNICIAN("Tecnico"),
+        CLIENT("Cliente"),
+        LOGISTIC("Logistica"),
+        SALES("Ventas"),
+        SECRETARY("Secretario"),
+        ACCOUNTANT("Contador"),
     }
-    
-    override fun toString(): String = "$name $lastName"
-} 
+
+    fun typeAsString() = type.value
+
+}

@@ -8,13 +8,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyConfirmDialog
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyCustomDialog
-import com.dscorp.ispadmin.presentation.ui.features.login.CheckVersionState.*
+import com.dscorp.ispadmin.presentation.ui.features.login.CheckVersionState.CheckVersionSuccess
+import com.dscorp.ispadmin.presentation.ui.features.login.CheckVersionState.Error
+import com.dscorp.ispadmin.presentation.ui.features.login.CheckVersionState.Loading
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginState
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginViewModel
 import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
-import com.example.cleanarchitecture.domain.entity.User
 import org.koin.androidx.compose.koinViewModel
 
 @Composable

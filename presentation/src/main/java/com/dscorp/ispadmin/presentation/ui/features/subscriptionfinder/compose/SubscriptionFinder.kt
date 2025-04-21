@@ -14,13 +14,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.cleanarchitecture.domain.entity.CustomerData
-import com.example.cleanarchitecture.domain.entity.GeoLocation
-import com.example.cleanarchitecture.domain.entity.InstallationType
-import com.example.cleanarchitecture.domain.entity.NapBox
-import com.example.cleanarchitecture.domain.entity.PlaceResponse
-import com.example.cleanarchitecture.domain.entity.ServiceStatus
-import com.example.cleanarchitecture.domain.entity.SubscriptionResume
+import com.dscorp.ispadmin.domain.model.CustomerData
+import com.dscorp.ispadmin.domain.model.GeoLocation
+import com.dscorp.ispadmin.domain.model.InstallationType
+import com.dscorp.ispadmin.domain.model.NapBox
+import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.ServiceStatus
+import com.dscorp.ispadmin.domain.model.SubscriptionResume
 
 val filters = listOf(
     SubscriptionFilter.BY_NAME(),

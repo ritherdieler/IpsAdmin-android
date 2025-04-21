@@ -6,7 +6,7 @@
 
         <variable
             name="payment"
-            type="com.example.cleanarchitecture.domain.entity.Payment" />
+            type="com.dscorp.ispadmin.domain.model.Payment" />
     </data>
 
     <androidx.cardview.widget.CardView

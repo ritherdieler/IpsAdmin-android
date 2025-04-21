@@ -10,8 +10,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.dscorp.ispadmin.databinding.FragmentSupportTicketListBinding
 import com.dscorp.ispadmin.databinding.ItemSupportTicketBinding
+import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseFragment
-import com.example.cleanarchitecture.domain.entity.User
 import com.example.data2.data.response.AssistanceTicketResponse
 import com.example.data2.data.response.AssistanceTicketStatus
 import com.google.android.material.tabs.TabLayoutMediator

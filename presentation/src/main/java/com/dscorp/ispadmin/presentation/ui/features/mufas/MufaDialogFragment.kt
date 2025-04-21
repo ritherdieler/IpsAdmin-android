@@ -9,7 +9,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.navigation.fragment.navArgs
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.FragmentMufaDialogBinding
-import com.example.cleanarchitecture.domain.entity.Mufa
+import com.dscorp.ispadmin.domain.model.Mufa
 
 class MufaDialogFragment : DialogFragment(){
 

@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.dscorp.ispadmin.databinding.ItemPlaceListBinding
-import com.example.cleanarchitecture.domain.entity.PlaceResponse
+import com.dscorp.ispadmin.domain.model.PlaceResponse
 
 class PlaceAdapter : ListAdapter<PlaceResponse, PlaceAdapter.PlaceListAdapterViewHolder>(
     NetworkDeviceListDiffCallback()

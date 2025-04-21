@@ -10,7 +10,7 @@ import com.dscorp.ispadmin.presentation.extension.fillWithList
 import com.dscorp.ispadmin.presentation.extension.showErrorDialog
 import com.dscorp.ispadmin.presentation.extension.showSuccessDialog
 import com.dscorp.ispadmin.presentation.ui.features.networkdevice.NetworkDeviceFormError.*
-import com.example.cleanarchitecture.domain.entity.NetworkDevice
+import com.dscorp.ispadmin.domain.model.NetworkDevice
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class NetworkDeviceFragment : Fragment() {

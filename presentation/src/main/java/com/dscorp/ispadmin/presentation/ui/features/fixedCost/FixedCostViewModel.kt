@@ -2,7 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.fixedCost
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cleanarchitecture.domain.entity.FixedCost
+import com.dscorp.ispadmin.domain.model.FixedCost
 import com.example.data2.data.apirequestmodel.FixedCostRequest
 import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.flow.MutableStateFlow

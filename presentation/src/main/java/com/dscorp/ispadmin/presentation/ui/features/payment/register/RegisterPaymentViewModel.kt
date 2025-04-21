@@ -2,7 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.payment.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cleanarchitecture.domain.entity.Payment
+import com.dscorp.ispadmin.domain.model.Payment
 import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow

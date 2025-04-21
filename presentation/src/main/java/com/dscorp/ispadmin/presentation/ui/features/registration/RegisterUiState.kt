@@ -1,6 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.registration
 
-import com.example.cleanarchitecture.domain.entity.User
+import com.dscorp.ispadmin.domain.model.User
 
 /**
  * Created by Sergio Carrillo Diestra on 16/12/2022.

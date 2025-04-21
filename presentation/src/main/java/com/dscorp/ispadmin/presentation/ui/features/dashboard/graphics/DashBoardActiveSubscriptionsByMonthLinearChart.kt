@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import androidx.core.content.ContextCompat
 import com.dscorp.ispadmin.R
-import com.example.cleanarchitecture.domain.entity.MonthlySubscriptionResume
+import com.dscorp.ispadmin.domain.model.MonthlySubscriptionResume
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry

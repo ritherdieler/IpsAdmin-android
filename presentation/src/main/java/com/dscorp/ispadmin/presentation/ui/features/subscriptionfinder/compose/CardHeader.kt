@@ -31,8 +31,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
-import com.example.cleanarchitecture.domain.entity.InstallationType
-import com.example.cleanarchitecture.domain.entity.SubscriptionResume
+import com.dscorp.ispadmin.domain.model.InstallationType
+import com.dscorp.ispadmin.domain.model.SubscriptionResume
 
 /**
  * Enum representing the menu options available for a subscription

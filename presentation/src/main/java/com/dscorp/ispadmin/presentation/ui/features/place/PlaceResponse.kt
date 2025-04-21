@@ -1,6 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.place
 
-import com.example.cleanarchitecture.domain.entity.Place
+import com.dscorp.ispadmin.domain.model.Place
 
 /**
  * Created by Sergio Carrillo Diestra on 20/12/2022.

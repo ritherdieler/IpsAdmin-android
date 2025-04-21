@@ -6,7 +6,7 @@
     <data>
         <variable
             name="mufa"
-            type="com.example.cleanarchitecture.domain.entity.Mufa" />
+            type="com.dscorp.ispadmin.domain.model.Mufa" />
     </data>
 
     <com.google.android.material.card.MaterialCardView

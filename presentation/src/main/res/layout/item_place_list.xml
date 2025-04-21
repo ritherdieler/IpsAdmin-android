@@ -6,7 +6,7 @@
     <data>
 <variable
     name="placeList"
-    type="com.example.cleanarchitecture.domain.entity.PlaceResponse" />
+    type="com.dscorp.ispadmin.domain.model.PlaceResponse" />
     </data>
 
     <com.google.android.material.card.MaterialCardView

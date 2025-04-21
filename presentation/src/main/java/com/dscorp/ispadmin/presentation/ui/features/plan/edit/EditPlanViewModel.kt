@@ -5,8 +5,8 @@ import com.dscorp.ispadmin.presentation.extension.formIsValid
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.ReactiveFormField
-import com.example.cleanarchitecture.domain.entity.Plan
-import com.example.cleanarchitecture.domain.entity.PlanResponse
+import com.dscorp.ispadmin.domain.model.Plan
+import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.example.data2.data.repository.IRepository
 
 class EditPlanViewModel(val repository: IRepository) : BaseViewModel<EditPlanUiState>() {

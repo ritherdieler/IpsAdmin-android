@@ -1,37 +1,36 @@
 package com.example.data2.data.datasource
 
+import com.dscorp.ispadmin.domain.model.AppVersion
+import com.dscorp.ispadmin.domain.model.Coupon
+import com.dscorp.ispadmin.domain.model.CustomerData
+import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
+import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
+import com.dscorp.ispadmin.domain.model.FixedCost
 import com.dscorp.ispadmin.domain.model.InstallationOrder
-import com.example.cleanarchitecture.domain.entity.AppVersion
-import com.example.cleanarchitecture.domain.entity.Coupon
-import com.example.cleanarchitecture.domain.entity.CustomerData
-import com.example.cleanarchitecture.domain.entity.DashBoardDataResponse
-import com.example.cleanarchitecture.domain.entity.DownloadDocumentResponse
-import com.example.cleanarchitecture.domain.entity.FixedCost
-import com.example.cleanarchitecture.domain.entity.Ip
-import com.example.cleanarchitecture.domain.entity.IpPool
-import com.example.cleanarchitecture.domain.entity.Loging
-import com.example.cleanarchitecture.domain.entity.Mufa
-import com.example.cleanarchitecture.domain.entity.NapBox
-import com.example.cleanarchitecture.domain.entity.NapBoxResponse
-import com.example.cleanarchitecture.domain.entity.NetworkDevice
-import com.example.cleanarchitecture.domain.entity.NetworkDeviceResponse
-import com.example.cleanarchitecture.domain.entity.Onu
-import com.example.cleanarchitecture.domain.entity.Outlay
-import com.example.cleanarchitecture.domain.entity.Payment
-import com.example.cleanarchitecture.domain.entity.Place
-import com.example.cleanarchitecture.domain.entity.PlaceResponse
-import com.example.cleanarchitecture.domain.entity.Plan
-import com.example.cleanarchitecture.domain.entity.PlanResponse
-import com.example.cleanarchitecture.domain.entity.ServiceOrder
-import com.example.cleanarchitecture.domain.entity.ServiceOrderResponse
-import com.example.cleanarchitecture.domain.entity.Subscription
-import com.example.cleanarchitecture.domain.entity.SubscriptionFastSearchResponse
-import com.example.cleanarchitecture.domain.entity.SubscriptionResponse
-import com.example.cleanarchitecture.domain.entity.Technician
-import com.example.cleanarchitecture.domain.entity.User
-import com.example.cleanarchitecture.domain.entity.extensions.PayerFinderResult
-import com.example.data2.data.apirequestmodel.AssistanceTicketRequest
+import com.dscorp.ispadmin.domain.model.Ip
+import com.dscorp.ispadmin.domain.model.IpPool
+import com.dscorp.ispadmin.domain.model.Loging
+import com.dscorp.ispadmin.domain.model.Mufa
+import com.dscorp.ispadmin.domain.model.NapBox
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.NetworkDevice
+import com.dscorp.ispadmin.domain.model.NetworkDeviceResponse
+import com.dscorp.ispadmin.domain.model.Onu
+import com.dscorp.ispadmin.domain.model.Outlay
+import com.dscorp.ispadmin.domain.model.Payment
+import com.dscorp.ispadmin.domain.model.Place
+import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Plan
+import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.ServiceOrder
+import com.dscorp.ispadmin.domain.model.ServiceOrderResponse
+import com.dscorp.ispadmin.domain.model.Subscription
+import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
+import com.dscorp.ispadmin.domain.model.SubscriptionResponse
+import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.domain.model.extensions.PayerFinderResult
 import com.example.data2.data.apirequestmodel.AssignTechnicianRequest
+import com.example.data2.data.apirequestmodel.AssistanceTicketRequest
 import com.example.data2.data.apirequestmodel.FixedCostRequest
 import com.example.data2.data.apirequestmodel.IpPoolRequest
 import com.example.data2.data.apirequestmodel.MigrationRequest
@@ -105,9 +104,6 @@ interface RestApiServices {
         @Query("longitude") longitude: Double
     ): Response<PlaceResponse>
 
-    @POST("technician")
-    suspend fun registerTechnician(@Body technician: Technician): Response<Technician>
-
     @POST("napbox")
     suspend fun registerNapBox(@Body napBox: NapBox): Response<NapBox>
 
@@ -118,7 +114,7 @@ interface RestApiServices {
     suspend fun getServicesOrder(): Response<List<ServiceOrderResponse>>
 
     @GET("technician")
-    suspend fun getTechnicians(): Response<List<Technician>>
+    suspend fun getTechnicians(): Response<List<User>>
 
     @GET("napbox")
     suspend fun getNapBoxes(): Response<List<NapBoxResponse>>

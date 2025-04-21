@@ -1,6 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 
-import com.example.cleanarchitecture.domain.entity.Subscription
+import com.dscorp.ispadmin.domain.model.Subscription
 
 data class RegisterSubscriptionState(
     val isLoading: Boolean = false,

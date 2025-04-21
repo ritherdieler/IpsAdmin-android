@@ -1,6 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.report
 
-import com.example.cleanarchitecture.domain.entity.DownloadDocumentResponse
+import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
 
 sealed class ReportsUiState {
     class DocumentReady(val document: DownloadDocumentResponse) : ReportsUiState()

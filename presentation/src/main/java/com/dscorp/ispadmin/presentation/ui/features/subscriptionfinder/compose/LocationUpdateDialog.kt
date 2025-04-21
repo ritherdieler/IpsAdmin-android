@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MiniMap
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyCustomDialog
-import com.example.cleanarchitecture.domain.entity.SubscriptionResume
+import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.google.android.gms.maps.model.LatLng
 
 /**

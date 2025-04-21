@@ -1,6 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.login
 
-import com.example.cleanarchitecture.domain.entity.User
+import com.dscorp.ispadmin.domain.model.User
 
 /**
  * Created by Sergio Carrillo Diestra on 14/12/2022.

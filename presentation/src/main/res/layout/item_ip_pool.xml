@@ -5,7 +5,7 @@
     <data>
 <variable
     name="ipPool"
-    type="com.example.cleanarchitecture.domain.entity.IpPool" />
+    type="com.dscorp.ispadmin.domain.model.IpPool" />
     </data>
 
     <androidx.appcompat.widget.LinearLayoutCompat

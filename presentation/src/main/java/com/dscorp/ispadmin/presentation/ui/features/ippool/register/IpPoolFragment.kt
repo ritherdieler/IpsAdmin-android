@@ -7,8 +7,8 @@ import com.dscorp.ispadmin.databinding.FragmentIpPoolBinding
 import com.dscorp.ispadmin.presentation.extension.populate
 import com.dscorp.ispadmin.presentation.extension.showSuccessDialog
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseFragment
-import com.example.cleanarchitecture.domain.entity.IpPool
-import com.example.cleanarchitecture.domain.entity.NetworkDevice
+import com.dscorp.ispadmin.domain.model.IpPool
+import com.dscorp.ispadmin.domain.model.NetworkDevice
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class IpPoolFragment : BaseFragment<IpPoolUiState, FragmentIpPoolBinding>(),

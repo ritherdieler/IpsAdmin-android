@@ -11,7 +11,7 @@
 
         <import type="android.view.View" />
 
-        <import type="com.example.cleanarchitecture.domain.entity.InstallationType" />
+        <import type="com.dscorp.ispadmin.domain.model.InstallationType" />
     </data>
 
     <LinearLayout

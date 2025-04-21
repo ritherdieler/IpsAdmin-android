@@ -6,7 +6,7 @@
     <data>
     <variable
         name="technicianList"
-        type="com.example.cleanarchitecture.domain.entity.Technician" />
+        type="com.dscorp.ispadmin.domain.model.User" />
     </data>
 
     <com.google.android.material.card.MaterialCardView

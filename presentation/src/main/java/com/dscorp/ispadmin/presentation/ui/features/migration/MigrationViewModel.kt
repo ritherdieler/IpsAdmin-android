@@ -2,10 +2,10 @@ package com.dscorp.ispadmin.presentation.ui.features.migration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cleanarchitecture.domain.entity.InstallationType
-import com.example.cleanarchitecture.domain.entity.Onu
-import com.example.cleanarchitecture.domain.entity.PlanResponse
-import com.example.cleanarchitecture.domain.entity.SubscriptionResponse
+import com.dscorp.ispadmin.domain.model.InstallationType
+import com.dscorp.ispadmin.domain.model.Onu
+import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.example.data2.data.apirequestmodel.MigrationRequest
 import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.async

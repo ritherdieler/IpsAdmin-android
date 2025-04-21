@@ -6,8 +6,8 @@ import com.dscorp.ispadmin.presentation.extension.formIsValid
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.ReactiveFormField
-import com.example.cleanarchitecture.domain.entity.NetworkDevice
-import com.example.cleanarchitecture.domain.entity.extensions.IsValidIpv4Segment
+import com.dscorp.ispadmin.domain.model.NetworkDevice
+import com.dscorp.ispadmin.domain.model.extensions.IsValidIpv4Segment
 import com.example.data2.data.apirequestmodel.IpPoolRequest
 import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.async

@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
 interface InstallationOrderRepository {
-    suspend fun getAllInstallationOrders(): Flow<List<InstallationOrder>>
+    suspend fun getAllInstallationOrders(): List<InstallationOrder>
     suspend fun getInstallationOrderById(id: Int): InstallationOrder?
     suspend fun createInstallationOrder(installationOrder: InstallationOrder): InstallationOrder
     suspend fun updateInstallationOrder(installationOrder: InstallationOrder): InstallationOrder

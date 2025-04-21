@@ -1,6 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
-import com.example.cleanarchitecture.domain.entity.PlanResponse
+import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.example.data2.data.repository.IRepository
 
 class GetPlanListUseCase(private val repository: IRepository) {

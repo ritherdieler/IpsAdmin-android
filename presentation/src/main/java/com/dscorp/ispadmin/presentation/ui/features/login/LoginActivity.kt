@@ -6,12 +6,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.ActivityLoginBinding
+import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.extension.showCrossDialog
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.features.login.compose.LoginScreen
 import com.dscorp.ispadmin.presentation.ui.features.main.MainActivity
 import com.dscorp.ispadmin.presentation.ui.features.registration.RegisterActivity
-import com.example.cleanarchitecture.domain.entity.User
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import org.koin.androidx.viewmodel.ext.android.viewModel
 

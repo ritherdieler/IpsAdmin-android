@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.dscorp.ispadmin.databinding.ItemPlanListBinding
-import com.example.cleanarchitecture.domain.entity.PlanResponse
+import com.dscorp.ispadmin.domain.model.PlanResponse
 
 class PlanAdapter(val onItemSelected: OnPlanSelectedListener) :
     ListAdapter<PlanResponse, PlanAdapter.PlanListAdapterViewHolder>(PlanListDiffCallback()) {

@@ -14,12 +14,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginActivity
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginViewModel
 import com.dscorp.ispadmin.presentation.ui.features.main.MainActivity
 import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
-import com.example.cleanarchitecture.domain.entity.User
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import org.koin.androidx.viewmodel.ext.android.viewModel
 

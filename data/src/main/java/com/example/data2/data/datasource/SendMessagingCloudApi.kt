@@ -1,7 +1,7 @@
 package com.example.data2.data.datasource
 
-import com.example.cleanarchitecture.domain.entity.FirebaseBody
-import com.example.cleanarchitecture.domain.entity.FireBaseResponse
+import com.dscorp.ispadmin.domain.model.FirebaseBody
+import com.dscorp.ispadmin.domain.model.FireBaseResponse
 import com.example.data2.BuildConfig
 import retrofit2.Response
 import retrofit2.http.Body

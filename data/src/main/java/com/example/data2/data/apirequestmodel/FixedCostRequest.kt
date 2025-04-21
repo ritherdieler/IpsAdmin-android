@@ -1,6 +1,6 @@
 package com.example.data2.data.apirequestmodel
 
-import com.example.cleanarchitecture.domain.entity.FixedCostType
+import com.dscorp.ispadmin.domain.model.FixedCostType
 
 data class FixedCostRequest(
     val amount: Double = 0.0,

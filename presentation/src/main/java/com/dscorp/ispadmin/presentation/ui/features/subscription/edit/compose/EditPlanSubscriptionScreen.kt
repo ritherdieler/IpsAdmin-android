@@ -28,7 +28,7 @@ import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyCustomDi
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.EditSubscriptionUIState
-import com.example.cleanarchitecture.domain.entity.PlanResponse
+import com.dscorp.ispadmin.domain.model.PlanResponse
 
 @Composable
 fun EditPlanSubscriptionScreen(

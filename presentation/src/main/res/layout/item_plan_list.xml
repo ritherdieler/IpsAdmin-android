@@ -7,7 +7,7 @@
 
         <variable
             name="planList"
-            type="com.example.cleanarchitecture.domain.entity.PlanResponse" />
+            type="com.dscorp.ispadmin.domain.model.PlanResponse" />
     </data>
 
     <com.google.android.material.card.MaterialCardView

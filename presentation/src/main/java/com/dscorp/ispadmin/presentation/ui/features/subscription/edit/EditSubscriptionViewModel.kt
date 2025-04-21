@@ -3,8 +3,8 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.R
-import com.example.cleanarchitecture.domain.entity.PlanResponse
-import com.example.cleanarchitecture.domain.entity.SubscriptionResponse
+import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.example.data2.data.apirequestmodel.UpdateSubscriptionPlanBody
 import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.async

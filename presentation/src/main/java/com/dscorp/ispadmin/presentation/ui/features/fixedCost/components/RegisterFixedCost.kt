@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.theme.myTypography
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyDropDown
-import com.example.cleanarchitecture.domain.entity.FixedCostType
+import com.dscorp.ispadmin.domain.model.FixedCostType
 import com.example.data2.data.apirequestmodel.FixedCostRequest
 
 @Composable

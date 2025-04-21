@@ -17,8 +17,8 @@ import com.dscorp.ispadmin.databinding.FragmentPlaceBinding
 import com.dscorp.ispadmin.presentation.extension.navigateSafe
 import com.dscorp.ispadmin.presentation.extension.showErrorDialog
 import com.dscorp.ispadmin.presentation.extension.showSuccessDialog
-import com.example.cleanarchitecture.domain.entity.GeoLocation
-import com.example.cleanarchitecture.domain.entity.Place
+import com.dscorp.ispadmin.domain.model.GeoLocation
+import com.dscorp.ispadmin.domain.model.Place
 import com.google.android.gms.maps.model.LatLng
 import org.koin.androidx.viewmodel.ext.android.viewModel
 

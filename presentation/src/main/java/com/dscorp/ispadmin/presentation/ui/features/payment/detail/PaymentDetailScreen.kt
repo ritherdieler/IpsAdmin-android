@@ -41,7 +41,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.DetailField
-import com.example.cleanarchitecture.domain.entity.Payment
+import com.dscorp.ispadmin.domain.model.Payment
 
 class PaymentDetailFragment : Fragment() {
 

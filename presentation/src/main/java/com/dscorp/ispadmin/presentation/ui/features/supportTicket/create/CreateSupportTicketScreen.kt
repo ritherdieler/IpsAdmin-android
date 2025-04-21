@@ -39,8 +39,8 @@ import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyCustomDialog
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutlinedTextField
-import com.example.cleanarchitecture.domain.entity.PlaceResponse
-import com.example.cleanarchitecture.domain.entity.SubscriptionFastSearchResponse
+import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
 
 @Composable
 fun CreateSupportTicketScreen(

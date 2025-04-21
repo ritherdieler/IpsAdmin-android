@@ -1,6 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.payment.history
 
-import com.example.cleanarchitecture.domain.entity.Payment
+import com.dscorp.ispadmin.domain.model.Payment
 
 sealed interface PaymentHistoryUiState {
     class OnPaymentHistoryFilteredResponse(val payments: List<Payment>) : PaymentHistoryUiState

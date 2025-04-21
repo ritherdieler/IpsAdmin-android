@@ -56,15 +56,12 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.setFragmentResultListener
-import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyConfirmDialog
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyCustomDialog
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.MAP_SELECTION_REQUEST_KEY
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.MAP_SELECTION_RESULT_KEY
-import com.dscorp.ispadmin.presentation.ui.features.locationMapView.SelectableLocationMapViewDialogFragment
 import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationActivity
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.SubscriptionFinderFragmentDirections
@@ -75,8 +72,8 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SEE_DETAILS
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SHOW_PAYMENT_HISTORY
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.UPDATE_LOCATION
-import com.example.cleanarchitecture.domain.entity.GeoLocation
-import com.example.cleanarchitecture.domain.entity.SubscriptionResume
+import com.dscorp.ispadmin.domain.model.GeoLocation
+import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.example.data2.data.apirequestmodel.MoveOnuRequest
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch

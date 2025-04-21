@@ -1,37 +1,36 @@
 package com.example.data2.data.repository
 
-import com.example.cleanarchitecture.domain.entity.AppVersion
-import com.example.cleanarchitecture.domain.entity.Coupon
-import com.example.cleanarchitecture.domain.entity.CustomerData
-import com.example.cleanarchitecture.domain.entity.DashBoardDataResponse
-import com.example.cleanarchitecture.domain.entity.DownloadDocumentResponse
-import com.example.cleanarchitecture.domain.entity.FireBaseResponse
-import com.example.cleanarchitecture.domain.entity.FirebaseBody
-import com.example.cleanarchitecture.domain.entity.FixedCost
-import com.example.cleanarchitecture.domain.entity.Ip
-import com.example.cleanarchitecture.domain.entity.IpPool
-import com.example.cleanarchitecture.domain.entity.Loging
-import com.example.cleanarchitecture.domain.entity.Mufa
-import com.example.cleanarchitecture.domain.entity.NapBox
-import com.example.cleanarchitecture.domain.entity.NapBoxResponse
-import com.example.cleanarchitecture.domain.entity.NetworkDevice
-import com.example.cleanarchitecture.domain.entity.NetworkDeviceResponse
-import com.example.cleanarchitecture.domain.entity.Onu
-import com.example.cleanarchitecture.domain.entity.Outlay
-import com.example.cleanarchitecture.domain.entity.Payment
-import com.example.cleanarchitecture.domain.entity.Place
-import com.example.cleanarchitecture.domain.entity.PlaceResponse
-import com.example.cleanarchitecture.domain.entity.Plan
-import com.example.cleanarchitecture.domain.entity.PlanResponse
-import com.example.cleanarchitecture.domain.entity.ServiceOrder
-import com.example.cleanarchitecture.domain.entity.ServiceOrderResponse
-import com.example.cleanarchitecture.domain.entity.Subscription
-import com.example.cleanarchitecture.domain.entity.SubscriptionFastSearchResponse
-import com.example.cleanarchitecture.domain.entity.SubscriptionResponse
-import com.example.cleanarchitecture.domain.entity.SubscriptionResume
-import com.example.cleanarchitecture.domain.entity.Technician
-import com.example.cleanarchitecture.domain.entity.User
-import com.example.cleanarchitecture.domain.entity.extensions.PayerFinderResult
+import com.dscorp.ispadmin.domain.model.AppVersion
+import com.dscorp.ispadmin.domain.model.Coupon
+import com.dscorp.ispadmin.domain.model.CustomerData
+import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
+import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
+import com.dscorp.ispadmin.domain.model.FireBaseResponse
+import com.dscorp.ispadmin.domain.model.FirebaseBody
+import com.dscorp.ispadmin.domain.model.FixedCost
+import com.dscorp.ispadmin.domain.model.Ip
+import com.dscorp.ispadmin.domain.model.IpPool
+import com.dscorp.ispadmin.domain.model.Loging
+import com.dscorp.ispadmin.domain.model.Mufa
+import com.dscorp.ispadmin.domain.model.NapBox
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.NetworkDevice
+import com.dscorp.ispadmin.domain.model.NetworkDeviceResponse
+import com.dscorp.ispadmin.domain.model.Onu
+import com.dscorp.ispadmin.domain.model.Outlay
+import com.dscorp.ispadmin.domain.model.Payment
+import com.dscorp.ispadmin.domain.model.Place
+import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Plan
+import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.ServiceOrder
+import com.dscorp.ispadmin.domain.model.ServiceOrderResponse
+import com.dscorp.ispadmin.domain.model.Subscription
+import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
+import com.dscorp.ispadmin.domain.model.SubscriptionResponse
+import com.dscorp.ispadmin.domain.model.SubscriptionResume
+import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.domain.model.extensions.PayerFinderResult
 import com.example.data2.data.apirequestmodel.AssistanceTicketRequest
 import com.example.data2.data.apirequestmodel.FixedCostRequest
 import com.example.data2.data.apirequestmodel.IpPoolRequest
@@ -68,11 +67,10 @@ interface IRepository {
     suspend fun getSubscriptions(): List<SubscriptionResponse>
     suspend fun registerPlace(registerPlace: Place): Place
     suspend fun getPlaces(): List<PlaceResponse>
-    suspend fun registerTechnician(registerTechnician: Technician): Technician
     suspend fun registerNapBox(napBox: NapBox): NapBox
     suspend fun registerServiceOrder(serviceOrder: ServiceOrder): ServiceOrder
     suspend fun getServicesOrder(): List<ServiceOrderResponse>
-    suspend fun getTechnicians(): List<Technician>
+    suspend fun getTechnicians(): List<User>
     suspend fun getNapBoxes(): List<NapBoxResponse>
     suspend fun getNapBoxesOrderedByLocation(latitude:Double, longitude: Double): List<NapBoxResponse>
 

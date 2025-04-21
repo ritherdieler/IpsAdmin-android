@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.sp
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
-import com.example.cleanarchitecture.domain.entity.Payment
+import com.dscorp.ispadmin.domain.model.Payment
 import kotlinx.coroutines.launch
 
 @Composable

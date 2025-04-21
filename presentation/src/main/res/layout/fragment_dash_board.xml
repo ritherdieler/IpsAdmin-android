@@ -7,13 +7,13 @@
 
         <variable
             name="dashboardDataResponse"
-            type="com.example.cleanarchitecture.domain.entity.DashBoardDataResponse" />
+            type="com.dscorp.ispadmin.domain.model.DashBoardDataResponse" />
 
         <variable
             name="viewModel"
             type="com.dscorp.ispadmin.presentation.ui.features.dashboard.DashBoardViewModel" />
 
-        <import type="com.example.cleanarchitecture.domain.entity.User.UserType" />
+        <import type="com.dscorp.ispadmin.domain.model.User.UserType" />
 
         <import type="android.view.View" />
     </data>

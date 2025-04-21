@@ -10,9 +10,8 @@ import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.FragmentPlanBinding
 import com.dscorp.ispadmin.presentation.extension.showErrorDialog
 import com.dscorp.ispadmin.presentation.extension.showSuccessDialog
-import com.dscorp.ispadmin.presentation.ui.features.base.BaseFragment
 import com.dscorp.ispadmin.presentation.ui.features.plan.PlanFormError.*
-import com.example.cleanarchitecture.domain.entity.Plan
+import com.dscorp.ispadmin.domain.model.Plan
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class RegisterPlanFragment : Fragment() {

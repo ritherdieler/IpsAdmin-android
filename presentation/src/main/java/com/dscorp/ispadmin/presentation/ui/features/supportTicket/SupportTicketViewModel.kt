@@ -10,8 +10,8 @@ import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
 import com.dscorp.ispadmin.presentation.util.compressImage
 import com.dscorp.ispadmin.presentation.util.rotateImageIfNeeded
-import com.example.cleanarchitecture.domain.entity.PlaceResponse
-import com.example.cleanarchitecture.domain.entity.SubscriptionFastSearchResponse
+import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
 import com.example.data2.data.apirequestmodel.AssistanceTicketRequest
 import com.example.data2.data.repository.IRepository
 import com.example.data2.data.response.AssistanceTicketResponse

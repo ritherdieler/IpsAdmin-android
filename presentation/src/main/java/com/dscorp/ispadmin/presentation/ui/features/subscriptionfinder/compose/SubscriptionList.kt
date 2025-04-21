@@ -16,10 +16,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.cleanarchitecture.domain.entity.PlaceResponse
-import com.example.cleanarchitecture.domain.entity.ServiceStatus
-import com.example.cleanarchitecture.domain.entity.SubscriptionResume
-import com.example.cleanarchitecture.domain.entity.createReminderMessage
+import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.ServiceStatus
+import com.dscorp.ispadmin.domain.model.SubscriptionResume
+import com.dscorp.ispadmin.domain.model.createReminderMessage
 
 
 @OptIn(ExperimentalFoundationApi::class)

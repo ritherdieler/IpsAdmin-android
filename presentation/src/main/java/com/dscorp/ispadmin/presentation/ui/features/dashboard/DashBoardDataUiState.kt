@@ -1,6 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.dashboard
 
-import com.example.cleanarchitecture.domain.entity.DashBoardDataResponse
+import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
 
 sealed class DashBoardDataUiState {
     object CutServiceSuccess : DashBoardDataUiState()

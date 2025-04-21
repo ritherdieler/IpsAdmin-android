@@ -3,7 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.supportTicket
 import android.content.Context
 import android.widget.ArrayAdapter
 import android.widget.Filter
-import com.example.cleanarchitecture.domain.entity.SubscriptionFastSearchResponse
+import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
 
 class MyAutoCompleteAdapter(context: Context, resource: Int, objects: List<SubscriptionFastSearchResponse>) : ArrayAdapter<SubscriptionFastSearchResponse>(context, resource, objects) {
 

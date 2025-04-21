@@ -4,14 +4,13 @@ import com.dscorp.ispadmin.domain.model.InstallationOrder
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.example.data2.data.repository.InstallationOrderRepository
 import java.time.LocalDate
-import kotlinx.coroutines.flow.first
 
 class InstallationOrderUseCaseImpl(
     private val repository: InstallationOrderRepository
 ) : InstallationOrderUseCase {
     
     override suspend fun getAllInstallationOrders(): List<InstallationOrder> {
-        return repository.getAllInstallationOrders().first()
+        return repository.getAllInstallationOrders()
     }
     
     override suspend fun getInstallationOrderById(id: Int): InstallationOrder {

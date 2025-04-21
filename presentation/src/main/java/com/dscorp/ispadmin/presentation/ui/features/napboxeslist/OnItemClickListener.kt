@@ -1,7 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.napboxeslist
 
 import android.view.View
-import com.example.cleanarchitecture.domain.entity.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
 
 interface OnItemClickListener {
     fun onItemClick(napBox: NapBoxResponse)

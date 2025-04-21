@@ -1,21 +1,16 @@
 package com.dscorp.ispadmin.presentation.ui.features.report
 
 import android.Manifest
-import android.content.ActivityNotFoundException
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import com.dscorp.ispadmin.databinding.FragmentReportsBinding
 import com.dscorp.ispadmin.presentation.extension.getDownloadedFileUri
 import com.dscorp.ispadmin.presentation.extension.openWithXlsxApp
-import com.dscorp.ispadmin.presentation.extension.showErrorDialog
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseFragment
 import com.dscorp.ispadmin.presentation.ui.features.report.DownloadDocumentType.*
-import com.example.cleanarchitecture.domain.entity.DownloadDocumentResponse
+import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ReportsFragment : BaseFragment<ReportsUiState, FragmentReportsBinding>() {

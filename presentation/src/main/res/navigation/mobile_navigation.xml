@@ -54,11 +54,7 @@
             android:id="@+id/action_nav_register_place_to_mapDialog"
             app:destination="@id/mapDialog" />
     </fragment>
-    <fragment
-        android:id="@+id/nav_to_register_technician"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.technician.TechnicianFragment"
-        android:label="TechnicianFragment"
-        tools:layout="@layout/fragment_technician" />
+
     <fragment
         android:id="@+id/nav_to_register_nap_box"
         android:name="com.dscorp.ispadmin.presentation.ui.features.napbox.register.NapBoxFragment"
@@ -150,7 +146,7 @@
         android:label="Registrar Pago">
         <argument
             android:name="payment"
-            app:argType="com.example.cleanarchitecture.domain.entity.Payment" />
+            app:argType="com.dscorp.ispadmin.domain.model.Payment" />
     </fragment>
 
     <fragment
@@ -208,7 +204,7 @@
             app:destination="@id/register_payment" />
         <argument
             android:name="payment"
-            app:argType="com.example.cleanarchitecture.domain.entity.Payment" />
+            app:argType="com.dscorp.ispadmin.domain.model.Payment" />
     </fragment>
     <fragment
         android:id="@+id/nav_reports"
@@ -227,7 +223,7 @@
         tools:layout="@layout/fragment_edit_nap_box">
         <argument
             android:name="napBox"
-            app:argType="com.example.cleanarchitecture.domain.entity.NapBoxResponse" />
+            app:argType="com.dscorp.ispadmin.domain.model.NapBoxResponse" />
     </fragment>
 
     <fragment
@@ -246,7 +242,7 @@
         tools:layout="@layout/fragment_edit_plan">
         <argument
             android:name="plan"
-            app:argType="com.example.cleanarchitecture.domain.entity.PlanResponse" />
+            app:argType="com.dscorp.ispadmin.domain.model.PlanResponse" />
     </fragment>
 
     <fragment
@@ -258,11 +254,7 @@
         android:id="@+id/nav_see_place_list"
         android:name="com.dscorp.ispadmin.presentation.ui.features.place.placelist.PlaceListFragment"
         android:label="PlaceListFragment" />
-    <fragment
-        android:id="@+id/see_technician_list"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.technician.technicianlist.TechnicianListFragment"
-        android:label="TechnicianListFragment"
-        tools:layout="@layout/item_technician_list" />
+
     <fragment
         android:id="@+id/ipListFragment"
         android:name="com.dscorp.ispadmin.presentation.ui.features.ippool.seeip.IpListFragment"
@@ -270,7 +262,7 @@
         tools:layout="@layout/fragment_ip_list">
         <argument
             android:name="ipPool"
-            app:argType="com.example.cleanarchitecture.domain.entity.IpPool" />
+            app:argType="com.dscorp.ispadmin.domain.model.IpPool" />
     </fragment>
     <fragment
         android:id="@+id/nav_mufa"
@@ -291,7 +283,7 @@
         tools:layout="@layout/fragment_mufa_dialog">
         <argument
             android:name="mufas"
-            app:argType="com.example.cleanarchitecture.domain.entity.Mufa" />
+            app:argType="com.dscorp.ispadmin.domain.model.Mufa" />
     </dialog>
     <fragment
         android:id="@+id/editSubscriptionFragment"
@@ -314,7 +306,7 @@
         android:label="NapBoxDialogFragment">
         <argument
             android:name="napBox"
-            app:argType="com.example.cleanarchitecture.domain.entity.NapBox" />
+            app:argType="com.dscorp.ispadmin.domain.model.NapBox" />
         <argument
             android:name="showSelectionButton"
             app:argType="boolean" />

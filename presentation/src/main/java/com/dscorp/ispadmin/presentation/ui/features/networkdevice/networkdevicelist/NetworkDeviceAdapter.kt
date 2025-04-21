@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.dscorp.ispadmin.databinding.ItemNetworkDeviceListBinding
-import com.example.cleanarchitecture.domain.entity.NetworkDeviceResponse
+import com.dscorp.ispadmin.domain.model.NetworkDeviceResponse
 
 class NetworkDeviceAdapter : ListAdapter<NetworkDeviceResponse, NetworkDeviceAdapter.NetworkDeviceListAdapterViewHolder>(
     NetworkDeviceListDiffCallback()

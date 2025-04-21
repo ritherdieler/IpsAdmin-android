@@ -7,7 +7,7 @@
 
         <variable
             name="subscription"
-            type="com.example.cleanarchitecture.domain.entity.SubscriptionResponse" />
+            type="com.dscorp.ispadmin.domain.model.SubscriptionResponse" />
     </data>
 
     <com.google.android.material.card.MaterialCardView

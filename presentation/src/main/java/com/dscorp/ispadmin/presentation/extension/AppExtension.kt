@@ -27,8 +27,8 @@ import androidx.navigation.NavController
 import com.dscorp.ispadmin.CrossDialogFragment
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.ReactiveFormField
 import com.dscorp.ispadmin.presentation.util.IDialogFactory
-import com.example.cleanarchitecture.domain.entity.DownloadDocumentResponse
-import com.example.cleanarchitecture.domain.entity.GeoLocation
+import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
+import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback

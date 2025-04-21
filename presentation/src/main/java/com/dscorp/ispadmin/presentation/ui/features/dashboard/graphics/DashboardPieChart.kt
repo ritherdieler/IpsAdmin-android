@@ -2,7 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.dashboard.graphics
 
 import android.graphics.Color
 import com.dscorp.ispadmin.R
-import com.example.cleanarchitecture.domain.entity.DashBoardDataResponse
+import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.data.PieData

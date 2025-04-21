@@ -1,6 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.mufas
 
-import com.example.cleanarchitecture.domain.entity.Mufa
+import com.dscorp.ispadmin.domain.model.Mufa
 
 sealed class MufaUiState {
 

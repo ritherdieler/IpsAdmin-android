@@ -1,7 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.napbox.register
 
-import com.example.cleanarchitecture.domain.entity.Mufa
-import com.example.cleanarchitecture.domain.entity.NapBox
+import com.dscorp.ispadmin.domain.model.Mufa
+import com.dscorp.ispadmin.domain.model.NapBox
 
 /**
  * Created by Sergio Carrillo Diestra on 20/12/2022.

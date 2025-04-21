@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.dscorp.ispadmin.databinding.ItemFindSubscriptionBinding
-import com.example.cleanarchitecture.domain.entity.SubscriptionResponse
+import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 
 class FindSubscriptionAdapter(val listener: SelectableSubscriptionListener) :
     ListAdapter<SubscriptionResponse, FindSubscriptionAdapter.FindSubscriptionViewHolder>(

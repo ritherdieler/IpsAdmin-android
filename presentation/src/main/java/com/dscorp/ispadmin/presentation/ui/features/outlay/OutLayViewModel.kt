@@ -2,7 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.outlay
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cleanarchitecture.domain.entity.Outlay
+import com.dscorp.ispadmin.domain.model.Outlay
 import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

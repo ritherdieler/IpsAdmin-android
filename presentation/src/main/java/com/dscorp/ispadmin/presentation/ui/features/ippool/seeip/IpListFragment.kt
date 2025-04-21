@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.fragment.navArgs
 import com.dscorp.ispadmin.databinding.FragmentIpListBinding
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseFragment
-import com.example.cleanarchitecture.domain.entity.Ip
+import com.dscorp.ispadmin.domain.model.Ip
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class IpListFragment : BaseFragment<IpListUiState, FragmentIpListBinding>() {

@@ -29,8 +29,8 @@ import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.NapBoxesState
-import com.example.cleanarchitecture.domain.entity.NapBox
-import com.example.cleanarchitecture.domain.entity.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.NapBox
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

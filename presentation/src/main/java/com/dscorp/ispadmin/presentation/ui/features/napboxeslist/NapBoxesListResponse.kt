@@ -1,7 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.napboxeslist
 
 
-import com.example.cleanarchitecture.domain.entity.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
 
 /**
  * Created by Sergio Carrillo Diestra on 19/12/2022.
