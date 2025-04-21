@@ -1,0 +1,25 @@
+package com.dscorp.ispadmin.domain.model
+
+import java.time.LocalDate
+
+data class InstallationOrder(
+    val id: Int = 0,
+    val customerFirstName: String = "",
+    val customerLastName: String = "",
+    val customerAddress: String = "",
+    val customerPhone: String = "",
+    val seller: User? = null,
+    val assignedBy: User? = null,
+    val technician: User? = null,
+    val scheduledDate: LocalDate? = null,
+    val status: InstallationOrderStatus = InstallationOrderStatus.SOLICITADO,
+    val cancellationReason: String? = null,
+    val subscription: Subscription? = null
+)
+
+enum class InstallationOrderStatus {
+    SOLICITADO,
+    EN_CURSO,
+    CERRADO,
+    CANCELADO
+} 
