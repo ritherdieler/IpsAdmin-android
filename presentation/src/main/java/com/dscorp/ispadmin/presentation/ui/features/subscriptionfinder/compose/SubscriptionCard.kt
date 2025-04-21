@@ -50,7 +50,7 @@ import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.CustomOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
 import com.dscorp.ispadmin.domain.model.InstallationType
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 
@@ -80,7 +80,7 @@ fun SubscriptionCard(
     placesState: PlacesState = PlacesState(),
     saveState: SaveSubscriptionState = SaveSubscriptionState.Success,
     onFieldChange: (String, String) -> Unit = { _, _ -> },
-    onPlaceSelected: (PlaceResponse) -> Unit = {},
+    onPlaceSelected: (Place) -> Unit = {},
     onUpdatePlace: (Int, String) -> Unit = { _, _ -> },
     onSaveClick: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -178,7 +178,7 @@ fun CustomerDataForm(
     placesState: PlacesState,
     saveState: SaveSubscriptionState,
     onFieldChange: (String, String) -> Unit,
-    onPlaceSelected: (PlaceResponse) -> Unit,
+    onPlaceSelected: (Place) -> Unit,
     onUpdatePlace: (Int, String) -> Unit,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -218,7 +218,7 @@ private fun CustomerFormFields(
     formData: CustomerFormData,
     placesState: PlacesState,
     onFieldChange: (String, String) -> Unit,
-    onPlaceSelected: (PlaceResponse) -> Unit,
+    onPlaceSelected: (Place) -> Unit,
     onUpdatePlace: (Int, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -445,7 +445,7 @@ private fun PlaceSelector(
     placesState: PlacesState,
     currentPlace: String,
     currentPlaceId: Int,
-    onPlaceSelected: (PlaceResponse) -> Unit,
+    onPlaceSelected: (Place) -> Unit,
     onUpdatePlace: (Int, String) -> Unit,
     isError: Boolean = false,
     modifier: Modifier = Modifier

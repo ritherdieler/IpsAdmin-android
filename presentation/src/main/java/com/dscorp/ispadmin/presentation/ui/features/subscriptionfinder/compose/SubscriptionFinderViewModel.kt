@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.presentation.extension.removeAccents
 import com.dscorp.ispadmin.domain.model.CustomerData
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.domain.model.extensions.isAValidAddress
@@ -221,7 +221,7 @@ class SubscriptionFinderViewModel(
         }
     }
 
-    fun onPlaceSelected(place: PlaceResponse) {
+    fun onPlaceSelected(place: Place) {
         _uiState.update {
             it.copy(
                 placesState = it.placesState.copy(selectedPlace = place)
@@ -473,8 +473,8 @@ sealed class NapBoxesState {
 }
 
 data class PlacesState(
-    val places: List<PlaceResponse> = emptyList(),
-    val selectedPlace: PlaceResponse? = null,
+    val places: List<Place> = emptyList(),
+    val selectedPlace: Place? = null,
     val isLoading: Boolean = false,
     val error: String? = null
 )

@@ -20,7 +20,6 @@ import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Outlay
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.model.Place
-import com.dscorp.ispadmin.domain.model.PlaceResponse
 import com.dscorp.ispadmin.domain.model.Plan
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.ServiceOrder
@@ -66,7 +65,7 @@ interface IRepository {
     suspend fun getDevices(): List<NetworkDeviceResponse>
     suspend fun getSubscriptions(): List<SubscriptionResponse>
     suspend fun registerPlace(registerPlace: Place): Place
-    suspend fun getPlaces(): List<PlaceResponse>
+    suspend fun getPlaces(): List<Place>
     suspend fun registerNapBox(napBox: NapBox): NapBox
     suspend fun registerServiceOrder(serviceOrder: ServiceOrder): ServiceOrder
     suspend fun getServicesOrder(): List<ServiceOrderResponse>
@@ -165,6 +164,6 @@ interface IRepository {
     suspend fun saveFixedCost(fixedCostRequest: FixedCostRequest)
     suspend fun getAllFixedCosts(): List<FixedCost>
     suspend fun findPaymentByElectronicPayerName(electronicPayerName: String): List<PayerFinderResult>
-    suspend fun getPlaceFromLocation(latitude: Double, longitude: Double): PlaceResponse
+    suspend fun getPlaceFromLocation(latitude: Double, longitude: Double): Place
     suspend fun updateSubscriptionLocation(subscriptionId: Int, latitude: Double, longitude: Double)
 }

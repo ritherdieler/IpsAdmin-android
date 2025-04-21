@@ -4,7 +4,7 @@ import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.NetworkDevice
 import com.dscorp.ispadmin.domain.model.Onu
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.model.extensions.isValidDni
@@ -83,7 +83,7 @@ abstract class SubscriptionForm {
         }
     )
 
-    val placeField = ReactiveFormField<PlaceResponse?>(
+    val placeField = ReactiveFormField<Place?>(
         hintResourceId = R.string.place,
         errorResourceId = R.string.mustSelectPlace,
         validator = { it != null }

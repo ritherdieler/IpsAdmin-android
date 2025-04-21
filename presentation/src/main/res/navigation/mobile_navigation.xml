@@ -46,16 +46,6 @@
     </fragment>
 
     <fragment
-        android:id="@+id/nav_register_place"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.place.PlaceFragment"
-        android:label="PlaceFragment"
-        tools:layout="@layout/fragment_place">
-        <action
-            android:id="@+id/action_nav_register_place_to_mapDialog"
-            app:destination="@id/mapDialog" />
-    </fragment>
-
-    <fragment
         android:id="@+id/nav_to_register_nap_box"
         android:name="com.dscorp.ispadmin.presentation.ui.features.napbox.register.NapBoxFragment"
         android:label="NapBoxFragment"
@@ -153,8 +143,7 @@
         android:id="@+id/nav_consult_payments"
         android:name="com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryComposeFragment"
         android:label="Consultar Pagos"
-        tools:layout="@layout/fragment_consult_payments" />
-
+        />
 
     <fragment
         android:id="@+id/payment_history_compose_fragment"
@@ -189,7 +178,7 @@
         android:id="@+id/nav_my_profile"
         android:name="com.dscorp.ispadmin.presentation.ui.features.profile.MyProfileFragment"
         android:label="fragment_my_profile"
-        tools:layout="@layout/fragment_my_profile">
+        >
         <argument android:name="user" />
     </fragment>
 
@@ -197,7 +186,7 @@
         android:id="@+id/paymentDetailFragment"
         android:name="com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailFragment"
         android:label="fragment_payment_detail"
-        tools:layout="@layout/fragment_payment_detail">
+        >
 
         <action
             android:id="@+id/action_paymentDetailFragment_to_registerPaymentFragment"

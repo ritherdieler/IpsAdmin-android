@@ -69,5 +69,11 @@ android {
 
         def koin_compose_version = "3.5.0"
         api "io.insert-koin:koin-androidx-compose:$koin_compose_version"
+
+        // Add JUnit dependency for unit tests
+        testImplementation 'junit:junit:4.13.2'
+        // Add AndroidJUnit4 runner for instrumented tests if needed
+        // androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+        // androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     }
 }

@@ -3,7 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.NetworkDevice
 import com.dscorp.ispadmin.domain.model.Onu
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.domain.model.User
@@ -18,7 +18,7 @@ import com.dscorp.ispadmin.domain.model.User
 sealed class RegisterSubscriptionUiState {
     class FormDataFound(
         val networkDevices: List<NetworkDevice>,
-        val places: List<PlaceResponse>,
+        val places: List<Place>,
         val technicians: List<User>,
         val napBoxes: List<NapBoxResponse>,
         val hostNetworkDevices: List<NetworkDevice>,

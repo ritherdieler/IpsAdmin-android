@@ -21,7 +21,6 @@ import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Outlay
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.model.Place
-import com.dscorp.ispadmin.domain.model.PlaceResponse
 import com.dscorp.ispadmin.domain.model.Plan
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.ServiceOrder
@@ -230,7 +229,7 @@ class Repository : IRepository, KoinComponent {
         }
     }
 
-    override suspend fun getPlaces(): List<PlaceResponse> {
+    override suspend fun getPlaces(): List<Place> {
         val response = restApiServices.getPlaces()
         if (response.code() == 200) {
             return response.body()!!
@@ -790,7 +789,7 @@ class Repository : IRepository, KoinComponent {
         return response.data!!
     }
 
-    override suspend fun getPlaceFromLocation(latitude: Double, longitude: Double): PlaceResponse {
+    override suspend fun getPlaceFromLocation(latitude: Double, longitude: Double): Place {
         val response = restApiServices.findPlaceByLocation(latitude, longitude)
         if (response.code() != HTTP_OK)
             throw Exception("No se pudo obtener la ubicacion")

@@ -17,8 +17,7 @@ import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdminist
 import com.dscorp.ispadmin.presentation.ui.features.outlay.OutLayViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.register.RegisterPaymentViewModel
-import com.dscorp.ispadmin.presentation.ui.features.place.PlaceViewModel
-import com.dscorp.ispadmin.presentation.ui.features.place.placelist.PlaceListViewModel
+
 import com.dscorp.ispadmin.presentation.ui.features.plan.PlanViewModel
 import com.dscorp.ispadmin.presentation.ui.features.plan.edit.EditPlanViewModel
 import com.dscorp.ispadmin.presentation.ui.features.plan.planlist.PlanListViewModel
@@ -46,11 +45,9 @@ import org.koin.dsl.module
 val viewModelModule = module {
     viewModel { LoginViewModel(get()) }
     viewModel { NetworkDeviceViewModel() }
-    viewModel { PlaceViewModel() }
     viewModel { PlanViewModel() }
     viewModel { RegisterViewModel(get(), get()) }
     viewModel { RegisterSubscriptionViewModel(get(), get()) }
-
     viewModel {
         RegisterSubscriptionComposeViewModel(
             get(),
@@ -78,7 +75,6 @@ val viewModelModule = module {
     viewModel { IpListViewModel(get()) }
     viewModel { PlanListViewModel(get()) }
     viewModel { NetworkDeviceListViewModel() }
-    viewModel { PlaceListViewModel() }
     viewModel { MufaViewModel(get()) }
     viewModel { EditSubscriptionViewModel(get()) }
     viewModel { EditPlanViewModel(get()) }

@@ -4,7 +4,7 @@ import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.NetworkDevice
 import com.dscorp.ispadmin.domain.model.Onu
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.extensions.isAValidAddress
 import com.dscorp.ispadmin.domain.model.extensions.isAValidName
@@ -29,8 +29,8 @@ data class RegisterSubscriptionFormState(
     val planList: List<PlanResponse> = emptyList(),
     val selectedPlan: PlanResponse? = null,
     val planError: String? = null,
-    val placeList: List<PlaceResponse> = emptyList(),
-    val selectedPlace: PlaceResponse? = null,
+    val placeList: List<Place> = emptyList(),
+    val selectedPlace: Place? = null,
     val placeError: String? = null,
     val selectedHostDevice: NetworkDevice? = null,
     val location: LatLng? = null,

@@ -8,7 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.ReactiveFormField
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
@@ -70,17 +70,17 @@ fun changeFabIcon(fab: FloatingActionButton, value: MutableLiveData<Int>) {
 
 @BindingAdapter(value = ["app:places", "app:fieldToSaveSelection"], requireAll = true)
 fun com.google.android.material.textfield.MaterialAutoCompleteTextView.fillPlacesAutoComplete(
-    places: MutableLiveData<List<PlaceResponse>>,
-    fieldToSaveSelection: ReactiveFormField<PlaceResponse>
+    places: MutableLiveData<List<Place>>,
+    fieldToSaveSelection: ReactiveFormField<Place>
 ) {
     val adapter = ArrayAdapter(
         context,
         android.R.layout.simple_list_item_1,
-        places.value ?: emptyList<PlaceResponse>()
+        places.value ?: emptyList<Place>()
     )
     setAdapter(adapter)
 
-    val observer = Observer<List<PlaceResponse>> {
+    val observer = Observer<List<Place>> {
 //        adapter.clear()
         adapter.addAll(it)
     }
@@ -96,7 +96,7 @@ fun com.google.android.material.textfield.MaterialAutoCompleteTextView.fillPlace
     })
 
     setOnItemClickListener { parent, view, position, id ->
-        val place = parent.getItemAtPosition(position) as PlaceResponse
+        val place = parent.getItemAtPosition(position) as Place
         fieldToSaveSelection.setValue(place)
     }
 

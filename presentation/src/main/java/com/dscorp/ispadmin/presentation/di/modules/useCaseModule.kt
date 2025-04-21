@@ -13,6 +13,8 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compos
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetUserSessionUseCase
 import com.example.data2.data.usecase.InstallationOrderUseCaseImpl
 import com.example.data2.data.usecase.UserUseCaseImpl
+import com.dscorp.ispadmin.data.usecase.PlaceUseCaseImpl
+import com.dscorp.ispadmin.domain.usecase.PlaceUseCase
 import org.koin.dsl.module
 
 val useCaseModule = module {
@@ -27,4 +29,5 @@ val useCaseModule = module {
     single { GetNearNapBoxesUseCase(get()) }
     single<InstallationOrderUseCase> { InstallationOrderUseCaseImpl(get()) }
     single<UserUseCase> { UserUseCaseImpl(get()) }
+    single<PlaceUseCase> { PlaceUseCaseImpl(get()) }
 }

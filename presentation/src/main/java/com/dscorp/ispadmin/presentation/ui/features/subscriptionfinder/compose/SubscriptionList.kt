@@ -16,7 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.domain.model.createReminderMessage
@@ -34,7 +34,7 @@ fun SubscriptionList(
     placesState: PlacesState = PlacesState(),
     saveState: SaveSubscriptionState = SaveSubscriptionState.Success,
     onFieldChange: (String, String) -> Unit = { _, _ -> },
-    onPlaceSelected: (PlaceResponse) -> Unit = {},
+    onPlaceSelected: (Place) -> Unit = {},
     onUpdatePlaceId: (Int, String) -> Unit = { _, _ -> },
     onSaveCustomer: () -> Unit = {}
 ) {

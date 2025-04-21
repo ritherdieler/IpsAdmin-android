@@ -39,7 +39,7 @@ import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyCustomDialog
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutlinedTextField
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
 
 @Composable
@@ -49,7 +49,7 @@ fun CreateSupportTicketScreen(
     onCategoryChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onIsClientChange: (Boolean) -> Unit,
-    onPlaceSelected: (PlaceResponse?) -> Unit,
+    onPlaceSelected: (Place?) -> Unit,
     onSubscriptionSelected: (SubscriptionFastSearchResponse?) -> Unit,
     onSearchTextChange: (String) -> Unit,
     onCustomerNameChange: (String) -> Unit,
@@ -472,8 +472,8 @@ fun CreateSupportTicketScreenWithErrorsPreview() {
                 selectedSubscription = null,
                 subscriptions = emptyList(),
                 places = listOf(
-                    PlaceResponse("1", "Lima"),
-                    PlaceResponse("2", "Arequipa")
+                    Place("1", "Lima"),
+                    Place("2", "Arequipa")
                 ),
                 selectedPlace = null,
                 isLoading = false,
@@ -555,10 +555,10 @@ fun CreateSupportTicketScreenNonClientPreview() {
                 selectedSubscription = null,
                 subscriptions = emptyList(),
                 places = listOf(
-                    PlaceResponse("1", "Lima"),
-                    PlaceResponse("2", "Arequipa")
+                    Place("1", "Lima"),
+                    Place("2", "Arequipa")
                 ),
-                selectedPlace = PlaceResponse("1", "Lima"),
+                selectedPlace = Place("1", "Lima"),
                 isLoading = false,
                 error = null,
                 phoneError = null,

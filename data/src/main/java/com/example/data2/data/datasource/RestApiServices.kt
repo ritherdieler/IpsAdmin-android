@@ -19,7 +19,6 @@ import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Outlay
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.model.Place
-import com.dscorp.ispadmin.domain.model.PlaceResponse
 import com.dscorp.ispadmin.domain.model.Plan
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.ServiceOrder
@@ -96,13 +95,13 @@ interface RestApiServices {
     suspend fun registerPlace(@Body place: Place): Response<Place>
 
     @GET("place")
-    suspend fun getPlaces(): Response<List<PlaceResponse>>
+    suspend fun getPlaces(): Response<List<Place>>
 
     @GET("place/findByLocation")
     suspend fun findPlaceByLocation(
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double
-    ): Response<PlaceResponse>
+    ): Response<Place>
 
     @POST("napbox")
     suspend fun registerNapBox(@Body napBox: NapBox): Response<NapBox>

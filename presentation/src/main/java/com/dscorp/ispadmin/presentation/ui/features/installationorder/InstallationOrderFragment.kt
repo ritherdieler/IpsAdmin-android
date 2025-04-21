@@ -34,44 +34,23 @@ class InstallationOrderFragment : Fragment() {
                     when (screen) {
                         "create" -> CreateInstallationOrderScreen(
                             uiState = uiState,
-                            onCreateOrder = viewModel::createInstallationOrder,
-                            onErrorDismissed = viewModel::clearError,
-                            onSuccessDismissed = viewModel::clearSuccessMessage,
-                            onOrderCreationHandled = viewModel::clearOrderCreated,
+                            onCreateOrderClicked = viewModel::createOrder,
+                            onFirstNameChange = viewModel::onFirstNameChange,
+                            onLastNameChange = viewModel::onLastNameChange,
+                            onAddressChange = viewModel::onAddressChange,
+                            onPhoneChange = viewModel::onPhoneChange,
+                            onPlaceChange = viewModel::onPlaceChange,
+                            onErrorDismissed = viewModel::dismissError,
+                            onSuccessDismissed = viewModel::dismissSuccess,
+                            onOrderCreationHandled = { /* No es necesario hacer nada aquí */ },
                             onNavigateBack = { findNavController().popBackStack() }
                         )
-                        "assign" -> AssignTechnicianScreen(
-                            uiState = uiState,
-                            orderId = orderId,
-                            onAssignTechnician = { techId, assignedById, date ->
-                                viewModel.assignTechnicianToOrder(orderId, techId, assignedById, date)
-                            },
-                            onErrorDismissed = viewModel::clearError,
-                            onSuccessDismissed = viewModel::clearSuccessMessage,
-                            onOrderUpdateHandled = viewModel::clearOrderUpdated,
-                            onNavigateBack = { findNavController().popBackStack() }
-                        )
-                        "close" -> CloseInstallationOrderScreen(
-                            uiState = uiState,
-                            orderId = orderId,
-                            onCloseOrder = { viewModel.closeInstallationOrder(orderId) },
-                            onErrorDismissed = viewModel::clearError,
-                            onSuccessDismissed = viewModel::clearSuccessMessage,
-                            onOrderUpdateHandled = viewModel::clearOrderUpdated,
-                            onNavigateBack = { findNavController().popBackStack() }
-                        )
-                        "cancel" -> CancelInstallationOrderScreen(
-                            uiState = uiState,
-                            orderId = orderId,
-                            onCancelOrder = { reason -> viewModel.cancelInstallationOrder(orderId, reason) },
-                            onErrorDismissed = viewModel::clearError,
-                            onSuccessDismissed = viewModel::clearSuccessMessage,
-                            onOrderUpdateHandled = viewModel::clearOrderUpdated,
-                            onNavigateBack = { findNavController().popBackStack() }
-                        )
+                        "assign" -> {}
+                        "close" -> {}
+                        "cancel" -> {}
                     }
                 }
             }
         }
     }
-} 
+}

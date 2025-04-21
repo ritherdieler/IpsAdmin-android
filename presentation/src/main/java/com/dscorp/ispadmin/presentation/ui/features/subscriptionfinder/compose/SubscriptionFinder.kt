@@ -18,7 +18,7 @@ import com.dscorp.ispadmin.domain.model.CustomerData
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBox
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 
@@ -38,7 +38,7 @@ fun SubscriptionFinder(
     placesState: PlacesState = PlacesState(),
     saveState: SaveSubscriptionState = SaveSubscriptionState.Success,
     onFieldChange: (String, String) -> Unit = { _, _ -> },
-    onPlaceSelected: (PlaceResponse) -> Unit = {},
+    onPlaceSelected: (Place) -> Unit = {},
     onUpdatePlaceId: (Int, String) -> Unit = { _, _ -> },
     onSaveCustomer: () -> Unit = {}
 ) {
@@ -81,7 +81,7 @@ fun SubscriptionFinderContent(
     placesState: PlacesState = PlacesState(),
     saveState: SaveSubscriptionState = SaveSubscriptionState.Success,
     onFieldChange: (String, String) -> Unit = { _, _ -> },
-    onPlaceSelected: (PlaceResponse) -> Unit = {},
+    onPlaceSelected: (Place) -> Unit = {},
     onUpdatePlaceId: (Int, String) -> Unit = { _, _ -> },
     onSaveCustomer: () -> Unit = {}
 ) {

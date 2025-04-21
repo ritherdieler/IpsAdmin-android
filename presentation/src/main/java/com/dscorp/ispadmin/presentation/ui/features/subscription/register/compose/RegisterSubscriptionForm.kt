@@ -49,7 +49,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.Onu
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 
 @Composable
@@ -63,7 +63,7 @@ fun RegisterSubscriptionForm(
     onPhoneChanged: (String) -> Unit = {},
     onPlanSelected: (PlanResponse) -> Unit = {},
     onOnuSelected: (Onu) -> Unit = {},
-    onPlaceSelected: (PlaceResponse) -> Unit = {},
+    onPlaceSelected: (Place) -> Unit = {},
     onNapBoxSelected: (NapBoxResponse) -> Unit = {},
     onPLaceSelectionCleared: () -> Unit = {},
     onNapBoxSelectionCleared: () -> Unit = {},

@@ -10,7 +10,7 @@ import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
 import com.dscorp.ispadmin.presentation.util.compressImage
 import com.dscorp.ispadmin.presentation.util.rotateImageIfNeeded
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
 import com.example.data2.data.apirequestmodel.AssistanceTicketRequest
 import com.example.data2.data.repository.IRepository
@@ -28,7 +28,7 @@ class SupportTicketViewModel(
     private val context: Context
 ) : BaseViewModel<SupportTicketState>() {
 
-    val placesFlow = MutableStateFlow<List<PlaceResponse>>(value = emptyList())
+    val placesFlow = MutableStateFlow<List<Place>>(value = emptyList())
 
     val user = repository.getUserSession()!!
 

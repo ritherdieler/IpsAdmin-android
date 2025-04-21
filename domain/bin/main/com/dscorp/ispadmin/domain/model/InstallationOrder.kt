@@ -15,7 +15,7 @@ data class InstallationOrder(
     val status: InstallationOrderStatus = InstallationOrderStatus.SOLICITADO,
     val cancellationReason: String? = null,
     val subscription: Subscription? = null,
-//    val place: Place
+    val place: Place? = null
 ){
     data class Subscription(
         val id: Int = 0,

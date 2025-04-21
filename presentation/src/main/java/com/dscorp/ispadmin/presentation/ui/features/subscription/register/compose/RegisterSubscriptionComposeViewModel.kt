@@ -6,7 +6,7 @@ import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.Onu
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.domain.model.User
@@ -151,7 +151,7 @@ class RegisterSubscriptionComposeViewModel(
                 )
 
                 FormFieldKey.PLACE -> form.copy(
-                    selectedPlace = value as PlaceResponse,
+                    selectedPlace = value as Place,
                     placeError = if (isValid(value)) null else errorMessage,
                     napBoxList = cachedNapBoxList.filter { it.placeId == value.id?.toInt() }
                 )
@@ -240,7 +240,7 @@ class RegisterSubscriptionComposeViewModel(
         )
     }
 
-    fun onPlaceSelected(value: PlaceResponse) {
+    fun onPlaceSelected(value: Place) {
         updateField(
             fieldKey = FormFieldKey.PLACE,
             value = value,

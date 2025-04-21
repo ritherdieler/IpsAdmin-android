@@ -2,7 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.supportTicket.create
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dscorp.ispadmin.domain.model.PlaceResponse
+import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
 import com.example.data2.data.apirequestmodel.AssistanceTicketRequest
 import com.example.data2.data.repository.IRepository
@@ -135,7 +135,7 @@ class CreateSupportTicketViewModel(
     }
     
     // Actualizar el lugar seleccionado
-    fun updateSelectedPlace(place: PlaceResponse?) {
+    fun updateSelectedPlace(place: Place?) {
         _uiState.update {
             val placeError = if (!it.isClient && place == null) {
                 "Debe seleccionar un lugar"
@@ -313,12 +313,12 @@ data class CreateSupportTicketUiState(
     val isClient: Boolean = true,
     val selectedSubscription: SubscriptionFastSearchResponse? = null,
     val subscriptionError: String? = null,
-    val selectedPlace: PlaceResponse? = null,
+    val selectedPlace: Place? = null,
     val placeError: String? = null,
     val customerName: String = "",
     val customerNameError: String? = null,
     
     // Datos para los dropdowns
     val subscriptions: List<SubscriptionFastSearchResponse> = emptyList(),
-    val places: List<PlaceResponse> = emptyList()
+    val places: List<Place> = emptyList()
 ) 
