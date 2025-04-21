@@ -21,8 +21,8 @@ interface InstallationOrderApiService {
     @GET("installation-order/{id}")
     suspend fun getInstallationOrderById(@Path("id") id: Int): Response<InstallationOrder>
     
-    @GET("installation-order/status")
-    suspend fun getInstallationOrdersByStatus(@Query("status") status: InstallationOrderStatus): Response<List<InstallationOrder>>
+    @GET("installation-order/status/{status}")
+    suspend fun getInstallationOrdersByStatus(@Path("status") status: InstallationOrderStatus): Response<List<InstallationOrder>>
     
     @POST("installation-order")
     suspend fun createInstallationOrder(@Body installationOrder: InstallationOrder): Response<InstallationOrder>

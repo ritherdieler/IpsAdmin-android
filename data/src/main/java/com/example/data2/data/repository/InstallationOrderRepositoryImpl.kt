@@ -1,6 +1,7 @@
 package com.example.data2.data.repository
 
 import com.dscorp.ispadmin.domain.model.InstallationOrder
+import com.dscorp.ispadmin.domain.model.InstallationOrderStatus
 import com.example.data2.data.apirequestmodel.AssignTechnicianRequest
 import com.example.data2.data.datasource.InstallationOrderApiService
 import com.example.data2.data.repository.util.handleResponse
@@ -33,6 +34,12 @@ class InstallationOrderRepositoryImpl : InstallationOrderRepository, KoinCompone
             handleResponse(response, "Obtener orden de instalación $id")
         }
 
+    override suspend fun getInstallationOrdersByStatus(status: InstallationOrderStatus): List<InstallationOrder> =
+        withContext(Dispatchers.IO) {
+            val response = apiService.getInstallationOrdersByStatus(status)
+            handleResponse(response, "Obtener órdenes de instalación por estado: $status")
+        }
+
     override suspend fun createInstallationOrder(installationOrder: InstallationOrder): InstallationOrder =
         withContext(Dispatchers.IO) {
             val response = apiService.createInstallationOrder(installationOrder)
@@ -55,14 +62,6 @@ class InstallationOrderRepositoryImpl : InstallationOrderRepository, KoinCompone
         flow {
             // Este método requeriría un endpoint específico de búsqueda
             // Como no está en la interfaz, podríamos obtener todos y filtrar, pero esto no es eficiente
-            // Mejor lanzar una excepción o devolver vacío
-            emit(emptyList())
-        }
-
-    override suspend fun getInstallationOrdersByStatus(status: String): Flow<List<InstallationOrder>> =
-        flow {
-            // Este método requeriría un endpoint específico de filtrado por estado
-            // Como no está en la interfaz, podríamos obtener todos y filtrar, pero no es eficiente
             // Mejor lanzar una excepción o devolver vacío
             emit(emptyList())
         }

@@ -25,4 +25,8 @@ data class User(
 
     fun typeAsString() = type.value
 
+    override fun toString(): String {
+        return "${name.capitalize()} ${lastName.capitalize()}"
+    }
+
 }

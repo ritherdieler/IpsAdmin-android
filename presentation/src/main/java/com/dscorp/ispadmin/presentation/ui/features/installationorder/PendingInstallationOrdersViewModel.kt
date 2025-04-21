@@ -45,8 +45,9 @@ class PendingInstallationOrdersViewModel : ViewModel(), KoinComponent {
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true) }
-                val orders = installationOrderUseCase.getAllInstallationOrders()
-                val pendingOrders = orders.filter { it.status == InstallationOrderStatus.SOLICITADO }
+                
+                val pendingOrders = installationOrderUseCase.getInstallationOrdersByStatus(InstallationOrderStatus.SOLICITADO)
+                
                 _uiState.update { it.copy(
                     pendingOrders = pendingOrders,
                     isLoading = false
