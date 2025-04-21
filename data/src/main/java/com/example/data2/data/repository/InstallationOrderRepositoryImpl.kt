@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import retrofit2.Response
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -19,46 +20,80 @@ class InstallationOrderRepositoryImpl : InstallationOrderRepository, KoinCompone
     private val apiService: InstallationOrderApiService by inject()
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-    override suspend fun getAllInstallationOrders(): Flow<List<InstallationOrder>> = flow {
-        val response = withContext(Dispatchers.IO) {
-            apiService.getAllInstallationOrders()
+    // Método genérico para manejar códigos de respuesta HTTP
+    private fun <T> handleResponse(response: Response<T>, resourceName: String): T {
+        val code = response.code()
+        return when {
+            // 2xx - Éxito
+            code in 200..299 -> response.body() ?: throw Exception("Respuesta vacía de $resourceName")
+            
+            // 3xx - Redirección (normalmente no deberían ocurrir)
+            code in 300..399 -> throw Exception("$resourceName - Redirección no manejada: $code")
+            
+            // 4xx - Errores de cliente
+            code == 400 -> throw Exception("$resourceName - Petición incorrecta")
+            code == 401 -> throw Exception("$resourceName - No autorizado")
+            code == 403 -> throw Exception("$resourceName - Prohibido")
+            code == 404 -> throw Exception("$resourceName - No encontrado")
+            code == 409 -> throw Exception("$resourceName - Conflicto con el estado actual")
+            code in 400..499 -> throw Exception("$resourceName - Error de cliente: $code")
+            
+            // 5xx - Errores de servidor
+            code in 500..599 -> throw Exception("$resourceName - Error de servidor: $code")
+            
+            // Otros códigos no estándar
+            else -> throw Exception("$resourceName - Código de respuesta inesperado: $code")
         }
-        
-        when (response.code()) {
-            HttpCodes.OK -> emit(response.body() ?: emptyList())
-            else -> emit(emptyList())
+    }
+
+    override suspend fun getAllInstallationOrders(): Flow<List<InstallationOrder>> = flow {
+        try {
+            val response = withContext(Dispatchers.IO) {
+                apiService.getAllInstallationOrders()
+            }
+            
+            val code = response.code()
+            when {
+                code in 200..299 -> emit(response.body() ?: emptyList())
+                code == 404 -> emit(emptyList())
+                else -> {
+                    println("Error al obtener órdenes de instalación: $code")
+                    emit(emptyList())
+                }
+            }
+        } catch (e: Exception) {
+            println("Excepción al obtener órdenes de instalación: ${e.message}")
+            emit(emptyList())
         }
     }
     
     override suspend fun getInstallationOrderById(id: Int): InstallationOrder? = withContext(Dispatchers.IO) {
-        val response = apiService.getInstallationOrderById(id)
-        
-        when (response.code()) {
-            HttpCodes.OK -> response.body()
-            else -> null
+        try {
+            val response = apiService.getInstallationOrderById(id)
+            
+            val code = response.code()
+            when {
+                code in 200..299 -> response.body()
+                code == 404 -> null
+                else -> {
+                    println("Error al obtener orden de instalación $id: $code")
+                    null
+                }
+            }
+        } catch (e: Exception) {
+            println("Excepción al obtener orden de instalación $id: ${e.message}")
+            null
         }
     }
     
     override suspend fun createInstallationOrder(installationOrder: InstallationOrder): InstallationOrder = withContext(Dispatchers.IO) {
         val response = apiService.createInstallationOrder(installationOrder)
-        
-        when (response.code()) {
-            HttpCodes.OK -> response.body() 
-                ?: throw Exception("Error al crear la orden de instalación")
-            else -> throw Exception("Error al crear la orden de instalación: ${response.code()}")
-        }
+        handleResponse(response, "Crear orden de instalación")
     }
     
     override suspend fun updateInstallationOrder(installationOrder: InstallationOrder): InstallationOrder = withContext(Dispatchers.IO) {
-        // Aquí asumimos que el endpoint de actualización acepta el objeto completo, similar a createInstallationOrder
         val response = apiService.createInstallationOrder(installationOrder)
-        
-        when (response.code()) {
-            HttpCodes.OK -> response.body()
-                ?: throw Exception("Error al actualizar la orden de instalación")
-            HttpCodes.NOT_FOUND -> throw IllegalArgumentException("Installation order with id ${installationOrder.id} not found")
-            else -> throw Exception("Error al actualizar la orden de instalación: ${response.code()}")
-        }
+        handleResponse(response, "Actualizar orden de instalación")
     }
     
     override suspend fun deleteInstallationOrder(id: Int): Boolean = withContext(Dispatchers.IO) {
@@ -94,34 +129,16 @@ class InstallationOrderRepositoryImpl : InstallationOrderRepository, KoinCompone
         )
         
         val response = apiService.assignTechnician(orderId, request)
-        
-        when (response.code()) {
-            HttpCodes.OK -> response.body()
-                ?: throw Exception("Error al asignar técnico a la orden")
-            HttpCodes.NOT_FOUND -> throw Exception("Orden de instalación con id $orderId no encontrada")
-            else -> throw Exception("Error al asignar técnico a la orden: ${response.code()}")
-        }
+        handleResponse(response, "Asignar técnico a orden $orderId")
     }
     
     override suspend fun closeInstallationOrder(orderId: Int): InstallationOrder = withContext(Dispatchers.IO) {
         val response = apiService.closeInstallationOrder(orderId)
-        
-        when (response.code()) {
-            HttpCodes.OK -> response.body()
-                ?: throw Exception("Error al cerrar la orden de instalación")
-            HttpCodes.NOT_FOUND -> throw Exception("Orden de instalación con id $orderId no encontrada")
-            else -> throw Exception("Error al cerrar la orden de instalación: ${response.code()}")
-        }
+        handleResponse(response, "Cerrar orden de instalación $orderId")
     }
     
     override suspend fun cancelInstallationOrder(orderId: Int, cancellationReason: String?): InstallationOrder = withContext(Dispatchers.IO) {
         val response = apiService.cancelInstallationOrder(orderId, cancellationReason)
-        
-        when (response.code()) {
-            HttpCodes.OK -> response.body()
-                ?: throw Exception("Error al cancelar la orden de instalación")
-            HttpCodes.NOT_FOUND -> throw Exception("Orden de instalación con id $orderId no encontrada")
-            else -> throw Exception("Error al cancelar la orden de instalación: ${response.code()}")
-        }
+        handleResponse(response, "Cancelar orden de instalación $orderId")
     }
 } 
