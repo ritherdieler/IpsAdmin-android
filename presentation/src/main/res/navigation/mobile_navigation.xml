@@ -239,10 +239,6 @@
         android:name="com.dscorp.ispadmin.presentation.ui.features.networkdevice.networkdevicelist.NetworkDeviceListFragment"
         android:label="NetworkDeviceListFragment"
         tools:layout="@layout/item_network_device_list" />
-    <fragment
-        android:id="@+id/nav_see_place_list"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.place.placelist.PlaceListFragment"
-        android:label="PlaceListFragment" />
 
     <fragment
         android:id="@+id/ipListFragment"
@@ -350,6 +346,12 @@
             app:argType="integer"
             android:defaultValue="0" />
     </fragment>
+
+
+    <fragment
+        android:id="@+id/pendingInstallationOrdersFragment"
+        android:name="com.dscorp.ispadmin.presentation.ui.features.installationorder.PendingInstallationOrdersFragment"
+        android:label="Órdenes de Instalación Pendientes" />
     
     <fragment
         android:id="@+id/nav_assign_technician"

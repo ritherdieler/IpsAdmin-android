@@ -145,6 +145,7 @@ class MainActivity : AppCompatActivity() {
         // Los administradores y secretarias pueden ver todas las opciones
         menu.findItem(R.id.nav_installation_orders).isVisible = true
         menu.findItem(R.id.nav_create_installation_order).isVisible = true
+        menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
         menu.findItem(R.id.nav_assign_technician).isVisible = true
         menu.findItem(R.id.nav_close_installation_order).isVisible = true
         menu.findItem(R.id.nav_cancel_installation_order).isVisible = true
@@ -154,6 +155,7 @@ class MainActivity : AppCompatActivity() {
         // Los técnicos sólo pueden cerrar/cancelar órdenes
         menu.findItem(R.id.nav_installation_orders).isVisible = true
         menu.findItem(R.id.nav_create_installation_order).isVisible = false
+        menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
         menu.findItem(R.id.nav_assign_technician).isVisible = false
         menu.findItem(R.id.nav_close_installation_order).isVisible = true
         menu.findItem(R.id.nav_cancel_installation_order).isVisible = true
@@ -163,6 +165,7 @@ class MainActivity : AppCompatActivity() {
         // Los contadores pueden crear y ver, pero no pueden asignar técnicos
         menu.findItem(R.id.nav_installation_orders).isVisible = true
         menu.findItem(R.id.nav_create_installation_order).isVisible = true
+        menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
         menu.findItem(R.id.nav_assign_technician).isVisible = false
         menu.findItem(R.id.nav_close_installation_order).isVisible = true
         menu.findItem(R.id.nav_cancel_installation_order).isVisible = true
@@ -172,6 +175,7 @@ class MainActivity : AppCompatActivity() {
         // Los vendedores sólo pueden crear órdenes
         menu.findItem(R.id.nav_installation_orders).isVisible = true
         menu.findItem(R.id.nav_create_installation_order).isVisible = true
+        menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
         menu.findItem(R.id.nav_assign_technician).isVisible = false
         menu.findItem(R.id.nav_close_installation_order).isVisible = false
         menu.findItem(R.id.nav_cancel_installation_order).isVisible = false
