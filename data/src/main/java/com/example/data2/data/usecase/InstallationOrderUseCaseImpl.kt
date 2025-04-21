@@ -4,17 +4,19 @@ import com.dscorp.ispadmin.domain.model.InstallationOrder
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.example.data2.data.repository.InstallationOrderRepository
 import java.time.LocalDate
+import kotlinx.coroutines.flow.first
 
 class InstallationOrderUseCaseImpl(
     private val repository: InstallationOrderRepository
 ) : InstallationOrderUseCase {
     
     override suspend fun getAllInstallationOrders(): List<InstallationOrder> {
-        return repository.getAllInstallationOrders()
+        return repository.getAllInstallationOrders().first()
     }
     
     override suspend fun getInstallationOrderById(id: Int): InstallationOrder {
-        return repository.getInstallationOrderById(id)
+        return repository.getInstallationOrderById(id) 
+            ?: throw IllegalArgumentException("Installation order with id $id not found")
     }
     
     override suspend fun createInstallationOrder(installationOrder: InstallationOrder): InstallationOrder {

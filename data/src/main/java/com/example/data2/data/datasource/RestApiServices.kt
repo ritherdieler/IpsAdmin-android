@@ -1,5 +1,6 @@
 package com.example.data2.data.datasource
 
+import com.dscorp.ispadmin.domain.model.InstallationOrder
 import com.example.cleanarchitecture.domain.entity.AppVersion
 import com.example.cleanarchitecture.domain.entity.Coupon
 import com.example.cleanarchitecture.domain.entity.CustomerData
@@ -30,6 +31,7 @@ import com.example.cleanarchitecture.domain.entity.Technician
 import com.example.cleanarchitecture.domain.entity.User
 import com.example.cleanarchitecture.domain.entity.extensions.PayerFinderResult
 import com.example.data2.data.apirequestmodel.AssistanceTicketRequest
+import com.example.data2.data.apirequestmodel.AssignTechnicianRequest
 import com.example.data2.data.apirequestmodel.FixedCostRequest
 import com.example.data2.data.apirequestmodel.IpPoolRequest
 import com.example.data2.data.apirequestmodel.MigrationRequest
@@ -126,6 +128,30 @@ interface RestApiServices {
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double
     ): Response<List<NapBoxResponse>>
+
+    @GET("installation-order")
+    suspend fun getAllInstallationOrders(): Response<List<InstallationOrder>>
+    
+    @GET("installation-order/{id}")
+    suspend fun getInstallationOrderById(@Path("id") id: Int): Response<InstallationOrder>
+    
+    @POST("installation-order")
+    suspend fun createInstallationOrder(@Body installationOrder: InstallationOrder): Response<InstallationOrder>
+    
+    @PUT("installation-order/{id}/assign-technician")
+    suspend fun assignTechnician(
+        @Path("id") orderId: Int,
+        @Body request: AssignTechnicianRequest
+    ): Response<InstallationOrder>
+    
+    @PUT("installation-order/{id}/close")
+    suspend fun closeInstallationOrder(@Path("id") orderId: Int): Response<InstallationOrder>
+    
+    @PUT("installation-order/{id}/cancel")
+    suspend fun cancelInstallationOrder(
+        @Path("id") orderId: Int,
+        @Query("reason") cancellationReason: String?
+    ): Response<InstallationOrder>
 
     @GET("payment/filtered")
     suspend fun getFilteredPaymentHistory(
