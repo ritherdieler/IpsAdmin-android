@@ -691,7 +691,7 @@ class Repository : IRepository, KoinComponent {
     }
 
     override suspend fun createTicket(value: AssistanceTicketRequest): AssistanceTicketResponse {
-        return restApiServices.createTicket(value.copy(subscriptionId = -1)).successOrThrow()
+        return restApiServices.createTicket(value).successOrThrow()
     }
 
     override suspend fun findSubscriptionByNames(names: String): List<SubscriptionFastSearchResponse> {

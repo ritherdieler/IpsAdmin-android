@@ -56,7 +56,8 @@ class CloudMessagingService : FirebaseMessagingService() {
                 FcmMessageType.PAYMENT_CRITICAL,
                 FcmMessageType.PAYMENT_WARNING,
                 FcmMessageType.PAYMENT_INFO,
-                FcmMessageType.PAYMENT_SUCCESS -> {
+                FcmMessageType.INSTALLATION_ORDER,
+                        FcmMessageType.PAYMENT_SUCCESS -> {
                     createNotification(fcmMessage.title, fcmMessage.message)
                 }
 
@@ -160,7 +161,7 @@ data class FcmMessage(
 )
 
 enum class FcmMessageType {
-    PAYMENT, ADVERTISING, GENERAL, INFO, ASSISTANCE_TICKET, PAYMENT_CRITICAL, PAYMENT_WARNING, PAYMENT_INFO, PAYMENT_SUCCESS, APP_MANAGEMENT
+    PAYMENT, ADVERTISING, GENERAL, INFO, ASSISTANCE_TICKET, PAYMENT_CRITICAL, PAYMENT_WARNING, PAYMENT_INFO, PAYMENT_SUCCESS, APP_MANAGEMENT,INSTALLATION_ORDER
 }
 
 //keys

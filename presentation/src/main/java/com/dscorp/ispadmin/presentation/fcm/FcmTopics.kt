@@ -8,5 +8,5 @@ object FcmTopics {
     const val FCM_TECHNICIAN_TOPIC = "technician"
     const val FCM_CUSTOMER_TOPIC = "customer"
     const val FCM_SECRETARY_TOPIC = "secretary"
-
+    const val TOPIC_INSTALLATION_ORDER = "installationOrder"
 }

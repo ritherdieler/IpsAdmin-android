@@ -18,7 +18,6 @@ import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.ActivityMainBinding
 import com.dscorp.ispadmin.presentation.fcm.FcmTopics
 import com.example.cleanarchitecture.domain.entity.User
-import com.google.android.material.navigation.NavigationView
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.messaging.FirebaseMessaging
 import org.koin.android.ext.android.inject
@@ -26,10 +25,10 @@ import org.koin.android.ext.android.inject
 class MainActivity : AppCompatActivity() {
 
     private val binding: ActivityMainBinding by lazy { ActivityMainBinding.inflate(layoutInflater) }
-
     private val firebaseAnalytics: FirebaseAnalytics by inject()
-
     private val viewModel: MainActivityViewModel by inject()
+    private lateinit var navController: NavController
+    private lateinit var navHostFragment: NavHostFragment
 
     companion object {
         const val PERMISSION_CODE = 123
@@ -39,22 +38,33 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+        
+        setupNavigation()
+        checkNotificationPermission()
+        setupUserProfile()
+    }
 
-        val navView: NavigationView = binding.navView
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
+    private fun setupNavigation() {
+        navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
+        navController = findNavController(R.id.nav_host_fragment_content_main)
+        
+        // Inicializar el grafo de navegación
+        val navInflater = navHostFragment.navController.navInflater
+        val graph = navInflater.inflate(R.navigation.mobile_navigation)
+        navHostFragment.navController.graph = graph
+        
+        // Configurar el NavigationView
+        binding.navView.setupWithNavController(navController)
+    }
 
-        manageProfilePrivileges(navView, navController)
-
-        navView.setupWithNavController(navController)
-
-
-        // Verificar si ya se han otorgado permisos para las notificaciones
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun checkNotificationPermission() {
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.POST_NOTIFICATIONS
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // Si los permisos aún no se han otorgado, solicitar permiso
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.POST_NOTIFICATIONS),
@@ -63,131 +73,119 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun manageProfilePrivileges(
-        navView: NavigationView,
-        navController: NavController
-    ) {
-
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
-        val navInflater = navHostFragment.navController.navInflater
-        val graph = navInflater.inflate(R.navigation.mobile_navigation)
-        navHostFragment.navController.graph = graph
-        FirebaseMessaging.getInstance()
-            .subscribeToTopic(FcmTopics.FCM_ALL_TOPIC)
-        val user = viewModel.user
-        user?.let {
-            firebaseAnalytics.setUserId(it.id.toString())
-            when (user.type) {
-                User.UserType.TECHNICIAN -> {
-                    navView.menu.findItem(R.id.nav_dashboard).isVisible = false
-                    navView.menu.findItem(R.id.nav_reports).isVisible = false
-                    navView.menu.findItem(R.id.nav_see_plan_list).isVisible = false
-                    navView.menu.findItem(R.id.nav_reports).isVisible = false
-                    FirebaseMessaging.getInstance()
-                        .subscribeToTopic(FcmTopics.FCM_TECHNICIAN_TOPIC)
-
-                    val navOptions = NavOptions.Builder()
-                        .setPopUpTo(navController.graph.startDestinationId, true)
-                        .build()
-                    navController.navigate(
-                        R.id.nav_register_subscription,
-                        null,
-                        navOptions
-                    )
-                    navHostFragment.navController.navigate(R.id.nav_register_subscription)
-
-                    FirebaseMessaging.getInstance().subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
-                }
-
-                User.UserType.SECRETARY -> {
-                    navView.menu.findItem(R.id.nav_dashboard).isVisible = true
-                    navView.menu.findItem(R.id.nav_see_plan_list).isVisible = false
-                    navView.menu.findItem(R.id.nav_mufa).isVisible = false
-
-                    val navOptions = NavOptions.Builder()
-                        .setPopUpTo(navController.graph.startDestinationId, true)
-                        .build()
-                    navController.navigate(
-                        R.id.nav_find_subscriptions,
-                        null,
-                        navOptions
-                    )
-                    navHostFragment.navController.navigate(R.id.nav_find_subscriptions)
-                    FirebaseMessaging.getInstance()
-                        .subscribeToTopic(FcmTopics.FCM_SECRETARY_TOPIC)
-                    FirebaseMessaging.getInstance()
-                        .subscribeToTopic(FcmTopics.ASSISTANCE_TICKET_ADMINS)
-                    FirebaseMessaging.getInstance().subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
-
-                }
-                User.UserType.ACCOUNTANT->{
-                    navView.menu.findItem(R.id.nav_dashboard).isVisible = true
-                    navView.menu.findItem(R.id.nav_outlays).isVisible = true
-                    navView.menu.findItem(R.id.nav_fixed_cost).isVisible = true
-                    navView.menu.findItem(R.id.nav_see_plan_list).isVisible = false
-                    navView.menu.findItem(R.id.nav_mufa).isVisible = false
-                    FirebaseMessaging.getInstance()
-                        .subscribeToTopic(FcmTopics.FCM_SECRETARY_TOPIC)
-                    FirebaseMessaging.getInstance()
-                        .subscribeToTopic(FcmTopics.ASSISTANCE_TICKET_ADMINS)
-                    FirebaseMessaging.getInstance().subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
-                }
-
-                User.UserType.ADMIN -> {
-                    FirebaseMessaging.getInstance()
-                        .subscribeToTopic(FcmTopics.ASSISTANCE_TICKET_ADMINS)
-                    FirebaseMessaging.getInstance().subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
-
-                    navHostFragment.navController.navigate(R.id.nav_dashboard)
-                    navView.menu.findItem(R.id.nav_outlays).isVisible = true
-                    navView.menu.findItem(R.id.nav_fixed_cost).isVisible = true
-                }
-
-                else -> {
-                    navHostFragment.navController.navigate(R.id.nav_find_subscriptions)
-                }
-            }
-
-            manageSupportTicketVisibility(user, navView)
+    private fun setupUserProfile() {
+        // Suscribirse al tema común para todos los usuarios
+        FirebaseMessaging.getInstance().subscribeToTopic(FcmTopics.FCM_ALL_TOPIC)
+        
+        viewModel.user?.let { user ->
+            firebaseAnalytics.setUserId(user.id.toString())
+            configureMenuBasedOnUserType(user)
+            subscribeToFcmTopicsForUser(user)
+            navigateToInitialDestination(user)
         }
     }
 
-    private fun manageSupportTicketVisibility(
-        user: User,
-        navView: NavigationView
-    ) {
+    private fun configureMenuBasedOnUserType(user: User) {
+        val menu = binding.navView.menu
+        
+        // Configuración común
         when (user.type) {
-            User.UserType.ADMIN,
-            User.UserType.SECRETARY -> {
-                navView.menu.findItem(R.id.nav_create_support_ticket).isVisible = true
-                navView.menu.findItem(R.id.nav_support_assistance_tickets).isVisible = true
-            }
-
             User.UserType.TECHNICIAN -> {
-                navView.menu.findItem(R.id.nav_support_assistance_tickets).isVisible = true
+                menu.findItem(R.id.nav_dashboard).isVisible = false
+                menu.findItem(R.id.nav_reports).isVisible = false
+                menu.findItem(R.id.nav_see_plan_list).isVisible = false
+                menu.findItem(R.id.nav_mufa).isVisible = true
             }
-
-            else -> {}
+            User.UserType.SECRETARY -> {
+                menu.findItem(R.id.nav_dashboard).isVisible = true
+                menu.findItem(R.id.nav_see_plan_list).isVisible = false
+                menu.findItem(R.id.nav_mufa).isVisible = false
+            }
+            User.UserType.ACCOUNTANT -> {
+                menu.findItem(R.id.nav_dashboard).isVisible = true
+                menu.findItem(R.id.nav_outlays).isVisible = true
+                menu.findItem(R.id.nav_fixed_cost).isVisible = true
+                menu.findItem(R.id.nav_see_plan_list).isVisible = false
+                menu.findItem(R.id.nav_mufa).isVisible = false
+            }
+            User.UserType.ADMIN -> {
+                menu.findItem(R.id.nav_outlays).isVisible = true
+                menu.findItem(R.id.nav_fixed_cost).isVisible = true
+            }
+            else -> { /* No hacer cambios para otros tipos de usuario */ }
         }
+        
+        // Configurar visibilidad para tickets de soporte
+        configureSupportTicketVisibility(user)
+    }
+
+    private fun configureSupportTicketVisibility(user: User) {
+        val menu = binding.navView.menu
+        val showCreateTicket = user.type in listOf(User.UserType.ADMIN, User.UserType.SECRETARY)
+        val showSupportTickets = user.type in listOf(User.UserType.ADMIN, User.UserType.SECRETARY, User.UserType.TECHNICIAN)
+        
+        menu.findItem(R.id.nav_create_support_ticket).isVisible = showCreateTicket
+        menu.findItem(R.id.nav_support_assistance_tickets).isVisible = showSupportTickets
+    }
+
+    private fun subscribeToFcmTopicsForUser(user: User) {
+        val messaging = FirebaseMessaging.getInstance()
+        
+        // Suscripciones específicas basadas en el tipo de usuario
+        when (user.type) {
+            User.UserType.TECHNICIAN -> {
+                messaging.subscribeToTopic(FcmTopics.FCM_TECHNICIAN_TOPIC)
+                messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
+                messaging.subscribeToTopic(FcmTopics.TOPIC_INSTALLATION_ORDER)
+            }
+            User.UserType.SECRETARY, User.UserType.ACCOUNTANT -> {
+                messaging.subscribeToTopic(FcmTopics.FCM_SECRETARY_TOPIC)
+                messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET_ADMINS)
+                messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
+                messaging.subscribeToTopic(FcmTopics.TOPIC_INSTALLATION_ORDER)
+
+            }
+            User.UserType.ADMIN -> {
+                messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET_ADMINS)
+                messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
+                messaging.subscribeToTopic(FcmTopics.TOPIC_INSTALLATION_ORDER)
+            }
+            else -> { /* No hay suscripciones especiales para otros tipos */ }
+        }
+    }
+
+    private fun navigateToInitialDestination(user: User) {
+        val destination = when (user.type) {
+            User.UserType.TECHNICIAN -> R.id.nav_register_subscription
+            User.UserType.SECRETARY -> R.id.nav_find_subscriptions
+            User.UserType.ADMIN -> R.id.nav_dashboard
+            else -> R.id.nav_find_subscriptions
+        }
+        
+        // Crear opciones de navegación para reemplazar la pila de navegación
+        val navOptions = NavOptions.Builder()
+            .setPopUpTo(navController.graph.startDestinationId, true)
+            .build()
+            
+        // Navegar al destino inicial
+        navController.navigate(destination, null, navOptions)
     }
 
     override fun onBackPressed() {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        if (navController.currentDestination != null && navController.currentDestination!!.id == R.id.nav_dashboard) {
-            // Si estamos en el destino principal, mostrar el diálogo aquí
-            val builder = AlertDialog.Builder(this)
-            builder.setTitle("Salir")
-            builder.setMessage("¿Estás seguro que quieres salir?")
-            builder.setPositiveButton("Sí") { _, _ ->
-                finish()
-            }
-            builder.setNegativeButton("No", null)
-            val dialog = builder.create()
-            dialog.show()
+        if (navController.currentDestination?.id == R.id.nav_dashboard) {
+            showExitConfirmationDialog()
         } else {
-            // Si no estamos en el destino principal, continuar con el comportamiento predeterminado
             super.onBackPressed()
+        }
+    }
+
+    private fun showExitConfirmationDialog() {
+        AlertDialog.Builder(this).apply {
+            setTitle("Salir")
+            setMessage("¿Estás seguro que quieres salir?")
+            setPositiveButton("Sí") { _, _ -> finish() }
+            setNegativeButton("No", null)
+            create().show()
         }
     }
 }
