@@ -19,6 +19,31 @@
             android:icon="@drawable/ic_launcher_foreground"
             android:title="@string/find_subscription" />
 
+        <!-- Sección de Órdenes de Instalación -->
+        <item
+            android:id="@+id/nav_installation_orders"
+            android:icon="@drawable/ic_launcher_foreground"
+            android:title="@string/installation_orders">
+            <menu>
+                <item
+                    android:id="@+id/nav_create_installation_order"
+                    android:icon="@drawable/ic_launcher_foreground"
+                    android:title="@string/create_installation_order" />
+                <item
+                    android:id="@+id/nav_assign_technician"
+                    android:icon="@drawable/ic_launcher_foreground"
+                    android:title="@string/assign_technician" />
+                <item
+                    android:id="@+id/nav_close_installation_order"
+                    android:icon="@drawable/ic_launcher_foreground"
+                    android:title="@string/close_installation_order" />
+                <item
+                    android:id="@+id/nav_cancel_installation_order"
+                    android:icon="@drawable/ic_launcher_foreground"
+                    android:title="@string/cancel_installation_order" />
+            </menu>
+        </item>
+
         <item
             android:id="@+id/nav_deleteOnuFragment"
             android:icon="@drawable/ic_launcher_foreground"

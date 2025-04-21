@@ -355,4 +355,61 @@
         android:name="com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionComposeFragment"
         android:label="RegisterSubscriptionComposeFragment" />
 
+    <!-- Rutas para Órdenes de Instalación -->
+    <fragment
+        android:id="@+id/nav_create_installation_order"
+        android:name="com.dscorp.ispadmin.presentation.ui.features.installationorder.InstallationOrderFragment"
+        android:label="Crear Orden de Instalación">
+        <argument
+            android:name="screen"
+            app:argType="string"
+            android:defaultValue="create" />
+        <argument
+            android:name="orderId"
+            app:argType="integer"
+            android:defaultValue="0" />
+    </fragment>
+    
+    <fragment
+        android:id="@+id/nav_assign_technician"
+        android:name="com.dscorp.ispadmin.presentation.ui.features.installationorder.InstallationOrderFragment"
+        android:label="Asignar Técnico a Orden">
+        <argument
+            android:name="screen"
+            app:argType="string"
+            android:defaultValue="assign" />
+        <argument
+            android:name="orderId"
+            app:argType="integer"
+            android:defaultValue="0" />
+    </fragment>
+    
+    <fragment
+        android:id="@+id/nav_close_installation_order"
+        android:name="com.dscorp.ispadmin.presentation.ui.features.installationorder.InstallationOrderFragment"
+        android:label="Cerrar Orden de Instalación">
+        <argument
+            android:name="screen"
+            app:argType="string"
+            android:defaultValue="close" />
+        <argument
+            android:name="orderId"
+            app:argType="integer"
+            android:defaultValue="0" />
+    </fragment>
+    
+    <fragment
+        android:id="@+id/nav_cancel_installation_order"
+        android:name="com.dscorp.ispadmin.presentation.ui.features.installationorder.InstallationOrderFragment"
+        android:label="Cancelar Orden de Instalación">
+        <argument
+            android:name="screen"
+            app:argType="string"
+            android:defaultValue="cancel" />
+        <argument
+            android:name="orderId"
+            app:argType="integer"
+            android:defaultValue="0" />
+    </fragment>
+
 </navigation>

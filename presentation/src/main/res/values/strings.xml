@@ -319,4 +319,12 @@
     <string name="current_location">Ubicación actual</string>
     <string name="tap_to_select_location">Toque para seleccionar ubicación</string>
     <string name="profile">Perfil</string>
+
+    <!-- Strings para órdenes de instalación -->
+    <string name="installation_orders">Órdenes de Instalación</string>
+    <string name="create_installation_order">Crear Orden</string>
+    <string name="assign_technician">Asignar Técnico</string>
+    <string name="close_installation_order">Cerrar Orden</string>
+    <string name="cancel_installation_order">Cancelar Orden</string>
+    <string name="installation_order_details">Detalles de Orden</string>
 </resources>

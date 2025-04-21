@@ -1,5 +1,7 @@
 package com.dscorp.ispadmin.presentation.di.modules
 
+import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
+import com.dscorp.ispadmin.domain.usecase.UserUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetAvailableOnuListUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetCoreDevicesUseCase
@@ -9,6 +11,8 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compos
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetPlaceListUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetPlanListUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetUserSessionUseCase
+import com.example.data2.data.usecase.InstallationOrderUseCaseImpl
+import com.example.data2.data.usecase.UserUseCaseImpl
 import org.koin.dsl.module
 
 val useCaseModule = module {
@@ -21,4 +25,6 @@ val useCaseModule = module {
     single { GetUserSessionUseCase(get()) }
     single { GetCoreDevicesUseCase(get()) }
     single { GetNearNapBoxesUseCase(get()) }
+    single<InstallationOrderUseCase> { InstallationOrderUseCaseImpl(get()) }
+    single<UserUseCase> { UserUseCaseImpl(get()) }
 }

@@ -55,8 +55,7 @@ class KoinApplication : Application() {
                     single { firebaseAnalytics }
                 },
                 fileStorageModule,
-
-                )
+            )
         }
 
         getKoin().run {

@@ -1,7 +1,11 @@
 package com.example.data2.data.di
 
 import com.example.data2.data.repository.IRepository
+import com.example.data2.data.repository.InstallationOrderRepository
+import com.example.data2.data.repository.InstallationOrderRepositoryImpl
 import com.example.data2.data.repository.Repository
+import com.example.data2.data.repository.UserRepository
+import com.example.data2.data.repository.UserRepositoryImpl
 import org.koin.dsl.module
 
 /**
@@ -14,4 +18,6 @@ import org.koin.dsl.module
 
 val repositoryModule = module {
     single<IRepository> { Repository() }
+    single<InstallationOrderRepository> { InstallationOrderRepositoryImpl() }
+    single<UserRepository> { UserRepositoryImpl(get()) }
 }
