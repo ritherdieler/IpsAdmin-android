@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 class InstallationOrderRepositoryImpl : InstallationOrderRepository, KoinComponent {
@@ -69,13 +69,13 @@ class InstallationOrderRepositoryImpl : InstallationOrderRepository, KoinCompone
         orderId: Int,
         technicianId: Int,
         assignedById: Int,
-        scheduledDate: LocalDate
+        scheduledDate: LocalDateTime
     ): InstallationOrder = withContext(Dispatchers.IO) {
 
         val response = apiService.assignTechnician(orderId,
             technicianId = technicianId,
             assignedById = assignedById,
-            scheduledDate = scheduledDate.format(formatter), )
+            scheduledDateTime = scheduledDate.format(formatter), )
         handleResponse(response, "Asignar técnico a orden $orderId")
     }
 

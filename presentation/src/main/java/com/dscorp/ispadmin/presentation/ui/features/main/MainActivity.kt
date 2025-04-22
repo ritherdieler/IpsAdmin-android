@@ -203,6 +203,9 @@ class MainActivity : AppCompatActivity() {
                 messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
                 messaging.subscribeToTopic(FcmTopics.TOPIC_INSTALLATION_ORDER)
             }
+            User.UserType.SALES ->{
+                messaging.subscribeToTopic(FcmTopics.TOPIC_INSTALLATION_ORDER)
+            }
             else -> { /* No hay suscripciones especiales para otros tipos */ }
         }
     }

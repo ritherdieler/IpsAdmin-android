@@ -4,7 +4,7 @@ import com.dscorp.ispadmin.domain.model.InstallationOrder
 import com.dscorp.ispadmin.domain.model.InstallationOrderStatus
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.example.data2.data.repository.InstallationOrderRepository
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 class InstallationOrderUseCaseImpl(
     private val repository: InstallationOrderRepository
@@ -31,7 +31,7 @@ class InstallationOrderUseCaseImpl(
         orderId: Int,
         technicianId: Int,
         assignedById: Int,
-        scheduledDate: LocalDate
+        scheduledDate: LocalDateTime
     ): InstallationOrder {
         return repository.assignTechnician(orderId, technicianId, assignedById, scheduledDate)
     }

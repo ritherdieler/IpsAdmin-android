@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 data class PendingOrdersUiState(
     val pendingOrders: List<InstallationOrder> = emptyList(),
@@ -24,7 +24,7 @@ data class PendingOrdersUiState(
     val successMessage: String? = null,
     val selectedOrder: InstallationOrder? = null,
     val selectedTechnician: User? = null,
-    val scheduledDate: LocalDate? = null,
+    val scheduledDate: LocalDateTime? = null,
     val showAssignDialog: Boolean = false,
     val orderUpdated: InstallationOrder? = null
 )
@@ -85,7 +85,7 @@ class PendingInstallationOrdersViewModel : ViewModel(), KoinComponent {
         _uiState.update { it.copy(selectedTechnician = technician) }
     }
 
-    fun onScheduledDateSelected(date: LocalDate) {
+    fun onScheduledDateSelected(date: LocalDateTime) {
         _uiState.update { it.copy(scheduledDate = date) }
     }
 

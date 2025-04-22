@@ -1,9 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.installationorder
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -46,12 +43,9 @@ import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.Loader
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyCustomDialog
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyDatePickerField
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyDateTimePickerField
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,7 +54,7 @@ fun PendingInstallationOrdersScreen(
     uiState: PendingOrdersUiState,
     onOrderSelected: (InstallationOrder) -> Unit,
     onTechnicianSelected: (User) -> Unit,
-    onScheduledDateSelected: (LocalDate) -> Unit,
+    onScheduledDateSelected: (LocalDateTime) -> Unit,
     onAssignTechnician: () -> Unit,
     onCloseDialog: () -> Unit,
     onErrorDismissed: () -> Unit,
@@ -234,7 +228,7 @@ fun AssignTechnicianDialog(
     technicians: List<User>,
     selectedTechnician: User?,
     onTechnicianSelected: (User) -> Unit,
-    onScheduledDateSelected: (LocalDate) -> Unit,
+    onScheduledDateSelected: (LocalDateTime) -> Unit,
     onAssign: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -295,9 +289,10 @@ fun AssignTechnicianDialog(
                     // Convertir a LocalDate para el ViewModel
                     try {
                         // Extraer solo la fecha (ignorar la hora para la conversión a LocalDate)
-                        val date = LocalDate.parse(it.split(" ")[0], DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+                        val date = LocalDateTime.parse(it, DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"))
                         onScheduledDateSelected(date)
                     } catch (e: Exception) {
+                        e.printStackTrace()
                         // Manejar error de análisis de fecha
                     }
                 },

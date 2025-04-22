@@ -31,7 +31,7 @@ interface InstallationOrderApiService {
         @Path("id") orderId: Int,
         @Query("technicianId") technicianId: Int,
         @Query("assignedById") assignedById: Int,
-        @Query("scheduledDate") scheduledDate: String
+        @Query("scheduledDateTime") scheduledDateTime: String
     ): Response<InstallationOrder>
     
     @PUT("installation-order/{id}/close")

@@ -3,7 +3,7 @@ package com.example.data2.data.repository
 import com.dscorp.ispadmin.domain.model.InstallationOrder
 import com.dscorp.ispadmin.domain.model.InstallationOrderStatus
 import kotlinx.coroutines.flow.Flow
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 interface InstallationOrderRepository {
     suspend fun getAllInstallationOrders(): List<InstallationOrder>
@@ -17,7 +17,7 @@ interface InstallationOrderRepository {
         orderId: Int,
         technicianId: Int,
         assignedById: Int,
-        scheduledDate: LocalDate
+        scheduledDate: LocalDateTime
     ): InstallationOrder
     suspend fun closeInstallationOrder(orderId: Int): InstallationOrder
     suspend fun cancelInstallationOrder(orderId: Int, cancellationReason: String?): InstallationOrder
