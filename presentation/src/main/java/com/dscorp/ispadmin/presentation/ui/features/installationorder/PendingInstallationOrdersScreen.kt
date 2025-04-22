@@ -194,6 +194,26 @@ fun OrderItem(
                     fontWeight = FontWeight.Bold
                 )
             }
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            Divider(modifier = Modifier.padding(vertical = 2.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Vendedor:",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                
+                Text(
+                    text = order.seller?.let { "${it.name} ${it.lastName}" } ?: "No asignado",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 }

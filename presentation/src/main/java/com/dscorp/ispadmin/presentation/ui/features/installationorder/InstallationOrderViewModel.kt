@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -44,6 +45,8 @@ class InstallationOrderViewModel : ViewModel(), KoinComponent {
 
     private val _uiState = MutableStateFlow(InstallationOrderUiState())
     val uiState: StateFlow<InstallationOrderUiState> = _uiState.asStateFlow()
+
+    val currentUser = runBlocking { userUseCase.getCurrentUser() }
 
     init {
         loadPlaces()
@@ -88,26 +91,11 @@ class InstallationOrderViewModel : ViewModel(), KoinComponent {
         _uiState.update { currentState ->
             val form = currentState.form
             val isValid = form.firstName.isNotBlank() &&
-                          form.lastName.isNotBlank() &&
-                          form.address.isNotBlank() &&
-                          form.phone.isNotBlank() &&
-                          form.place != null
+                    form.lastName.isNotBlank() &&
+                    form.address.isNotBlank() &&
+                    form.phone.isNotBlank() &&
+                    form.place != null
             currentState.copy(isFormValid = isValid)
-        }
-    }
-
-    private fun loadTechnicians() {
-        viewModelScope.launch {
-            try {
-                _uiState.update { it.copy(isLoading = true) }
-                val technicians = userUseCase.getTechnicianUsers()
-                _uiState.update { it.copy(technicians = technicians, isLoading = false) }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(
-                    isLoading = false, 
-                    error = e.message ?: "Error al cargar técnicos"
-                ) }
-            }
         }
     }
 
@@ -118,10 +106,12 @@ class InstallationOrderViewModel : ViewModel(), KoinComponent {
                 val places = placeUseCase.getPlaces()
                 _uiState.update { it.copy(places = places, isLoading = false) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(
-                    isLoading = false, 
-                    error = e.message ?: "Error al cargar lugares"
-                ) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Error al cargar lugares"
+                    )
+                }
             }
         }
     }
@@ -136,19 +126,19 @@ class InstallationOrderViewModel : ViewModel(), KoinComponent {
             try {
                 _uiState.update { it.copy(isLoading = true) }
                 val formState = _uiState.value.form
-                
+
                 // Eliminar espacios en blanco al final de los campos
                 val trimmedFirstName = formState.firstName.trim()
                 val trimmedLastName = formState.lastName.trim()
                 val trimmedAddress = formState.address.trim()
-                
+
                 val newOrder = InstallationOrder(
                     customerFirstName = trimmedFirstName,
                     customerLastName = trimmedLastName,
                     customerAddress = trimmedAddress,
                     customerPhone = formState.phone,
                     status = InstallationOrderStatus.SOLICITADO,
-                    seller = null,
+                    seller = User(id = currentUser.id),
                     assignedBy = null,
                     technician = null,
                     scheduledDate = null,
@@ -157,18 +147,22 @@ class InstallationOrderViewModel : ViewModel(), KoinComponent {
                     place = formState.place // Ahora incluimos el lugar seleccionado
                 )
                 val result = installationOrderUseCase.createInstallationOrder(newOrder)
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    successMessage = "Orden de instalación creada correctamente",
-                    orderCreated = result
-                ) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        successMessage = "Orden de instalación creada correctamente",
+                        orderCreated = result
+                    )
+                }
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    error = e.message ?: "Error al crear la orden de instalación"
-                ) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Error al crear la orden de instalación"
+                    )
+                }
             }
         }
     }
@@ -178,17 +172,22 @@ class InstallationOrderViewModel : ViewModel(), KoinComponent {
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true) }
-                val result = installationOrderUseCase.closeInstallationOrder(orderId = orderId) // Use named argument
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    successMessage = "Orden de instalación cerrada correctamente",
-                    orderUpdated = result
-                ) }
+                val result =
+                    installationOrderUseCase.closeInstallationOrder(orderId = orderId) // Use named argument
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        successMessage = "Orden de instalación cerrada correctamente",
+                        orderUpdated = result
+                    )
+                }
             } catch (e: Exception) {
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    error = e.message ?: "Error al cerrar la orden de instalación"
-                ) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Error al cerrar la orden de instalación"
+                    )
+                }
             }
         }
     }
@@ -197,17 +196,24 @@ class InstallationOrderViewModel : ViewModel(), KoinComponent {
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true) }
-                val result = installationOrderUseCase.cancelInstallationOrder(orderId = orderId, cancellationReason = cancellationReason) // Use named arguments
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    successMessage = "Orden de instalación cancelada correctamente",
-                    orderUpdated = result
-                ) }
+                val result = installationOrderUseCase.cancelInstallationOrder(
+                    orderId = orderId,
+                    cancellationReason = cancellationReason
+                ) // Use named arguments
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        successMessage = "Orden de instalación cancelada correctamente",
+                        orderUpdated = result
+                    )
+                }
             } catch (e: Exception) {
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    error = e.message ?: "Error al cancelar la orden de instalación"
-                ) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Error al cancelar la orden de instalación"
+                    )
+                }
             }
         }
     }
