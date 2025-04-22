@@ -212,7 +212,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun navigateToInitialDestination(user: User) {
         val destination = when (user.type) {
-            User.UserType.TECHNICIAN -> R.id.nav_register_subscription
             User.UserType.SECRETARY -> R.id.nav_find_subscriptions
             User.UserType.ADMIN -> R.id.nav_dashboard
             else -> R.id.nav_find_subscriptions

@@ -15,7 +15,6 @@ import com.dscorp.ispadmin.domain.model.extensions.isAValidName
 import com.dscorp.ispadmin.domain.model.extensions.isValidDni
 import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
 import com.dscorp.ispadmin.presentation.extension.removeSpecialCharacters
-import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.FormFieldKey
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState

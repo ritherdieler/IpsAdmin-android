@@ -2,7 +2,7 @@ package com.dscorp.ispadmin.presentation.di.modules
 
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.UserUseCase
-import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionUseCase
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetAvailableOnuListUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetCoreDevicesUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetNapBoxListUseCase

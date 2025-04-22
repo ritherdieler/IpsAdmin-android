@@ -1,3 +1,4 @@
+
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -7,12 +8,12 @@ import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.FragmentNapboxMapBinding
+import com.dscorp.ispadmin.domain.model.Mufa
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseFragment
 import com.dscorp.ispadmin.presentation.ui.features.mufas.MufaUiState
 import com.dscorp.ispadmin.presentation.ui.features.mufas.MufaViewModel
 import com.dscorp.ispadmin.presentation.ui.features.mufas.NapBoxDetailDialogFragment
-import com.dscorp.ispadmin.domain.model.Mufa
-import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
@@ -129,7 +130,7 @@ class NapBoxMapFragment : BaseFragment<MufaUiState, FragmentNapboxMapBinding>(),
         setFragmentResult(
             NAP_BOX_SELECTION_RESULT,
             Bundle().apply { putSerializable(NAP_BOX_OBJECT, napBox) })
-        findNavController().popBackStack(R.id.nav_register_subscription, false)
+        findNavController().popBackStack(R.id.registerSubscriptionComposeFragment, false)
 
     }
 

@@ -27,23 +27,6 @@
         android:name="com.dscorp.ispadmin.presentation.ui.features.networkdevice.NetworkDeviceFragment"
         android:label="NetworkDeviceFragment"
         tools:layout="@layout/fragment_network_device" />
-    <fragment
-        android:id="@+id/nav_register_subscription"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionFragment"
-        android:label="SubscriptionFragment"
-        tools:layout="@layout/fragment_register_subscription">
-        <action
-            android:id="@+id/action_nav_subscription_to_mapDialog"
-            app:destination="@id/mapDialog" />
-
-        <action
-            android:id="@+id/save_subscription_to_dashboard"
-            app:destination="@+id/nav_dashboard" />
-
-        <action
-            android:id="@+id/save_subscription_to_napBoxMapFragment"
-            app:destination="@+id/napBoxMapDialogFragment" />
-    </fragment>
 
     <fragment
         android:id="@+id/nav_to_register_nap_box"

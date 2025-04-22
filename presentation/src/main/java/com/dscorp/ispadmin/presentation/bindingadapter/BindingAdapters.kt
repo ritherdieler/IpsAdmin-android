@@ -7,7 +7,7 @@ import androidx.databinding.BindingAdapter
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.findViewTreeLifecycleOwner
-import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.ReactiveFormField
+import com.dscorp.ispadmin.presentation.ui.features.formvalidation.ReactiveFormField
 import com.dscorp.ispadmin.domain.model.Place
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.floatingactionbutton.FloatingActionButton

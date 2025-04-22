@@ -9,7 +9,7 @@ import com.dscorp.ispadmin.presentation.extension.analytics.AnalyticsConstants
 import com.dscorp.ispadmin.presentation.extension.analytics.sendSignUpEvent
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
-import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.ReactiveFormField
+import com.dscorp.ispadmin.presentation.ui.features.formvalidation.ReactiveFormField
 import com.example.data2.data.extensions.encryptWithSHA384
 import com.example.data2.data.repository.IRepository
 import com.google.firebase.analytics.FirebaseAnalytics

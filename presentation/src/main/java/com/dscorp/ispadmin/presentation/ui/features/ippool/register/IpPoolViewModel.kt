@@ -5,7 +5,7 @@ import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.extension.formIsValid
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
-import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.ReactiveFormField
+import com.dscorp.ispadmin.presentation.ui.features.formvalidation.ReactiveFormField
 import com.dscorp.ispadmin.domain.model.NetworkDevice
 import com.dscorp.ispadmin.domain.model.extensions.IsValidIpv4Segment
 import com.example.data2.data.apirequestmodel.IpPoolRequest

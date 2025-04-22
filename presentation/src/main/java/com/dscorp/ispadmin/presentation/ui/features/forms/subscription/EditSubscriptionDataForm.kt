@@ -2,7 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.forms.subscription
 
 import com.dscorp.ispadmin.presentation.extension.formIsValid
 import com.dscorp.ispadmin.presentation.extension.toGeoLocation
-import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.ReactiveFormField
+import com.dscorp.ispadmin.presentation.ui.features.formvalidation.ReactiveFormField
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.example.data2.data.apirequestmodel.UpdateSubscriptionDataBody
 import com.google.android.gms.maps.model.LatLng

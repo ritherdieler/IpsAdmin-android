@@ -10,7 +10,7 @@ import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.model.extensions.isValidDni
 import com.dscorp.ispadmin.domain.model.extensions.isValidIpv4
 import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
-import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.ReactiveFormField
+import com.dscorp.ispadmin.presentation.ui.features.formvalidation.ReactiveFormField
 import com.google.android.gms.maps.model.LatLng
 
 

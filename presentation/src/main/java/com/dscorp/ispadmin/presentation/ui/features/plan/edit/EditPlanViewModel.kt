@@ -4,7 +4,7 @@ import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.extension.formIsValid
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
-import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.ReactiveFormField
+import com.dscorp.ispadmin.presentation.ui.features.formvalidation.ReactiveFormField
 import com.dscorp.ispadmin.domain.model.Plan
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.example.data2.data.repository.IRepository

@@ -1,9 +1,8 @@
-package com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation
+package com.dscorp.ispadmin.presentation.ui.features.formvalidation
 
 import android.content.Context
 import androidx.databinding.ObservableBoolean
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.map
 import org.koin.java.KoinJavaComponent.inject
 
 class FormField<T>(

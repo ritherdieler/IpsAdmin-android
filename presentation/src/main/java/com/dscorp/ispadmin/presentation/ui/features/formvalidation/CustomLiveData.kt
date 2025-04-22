@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation
+package com.dscorp.ispadmin.presentation.ui.features.formvalidation
 
 import android.util.Log
 import androidx.lifecycle.MutableLiveData

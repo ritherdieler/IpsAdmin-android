@@ -7,8 +7,8 @@ import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.ui.features.napbox.edit.EditNapBoxFormErrorUiState
 import com.dscorp.ispadmin.presentation.ui.features.napbox.edit.EditNapBoxUiState
 import com.dscorp.ispadmin.presentation.ui.features.napbox.register.RegisterNapBoxUiState
-import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.FieldValidator
-import com.dscorp.ispadmin.presentation.ui.features.subscription.register.formvalidation.FormField
+import com.dscorp.ispadmin.presentation.ui.features.formvalidation.FieldValidator
+import com.dscorp.ispadmin.presentation.ui.features.formvalidation.FormField
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.Mufa
 import com.dscorp.ispadmin.domain.model.NapBox
