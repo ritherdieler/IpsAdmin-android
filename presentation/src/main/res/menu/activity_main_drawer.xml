@@ -34,6 +34,10 @@
                     android:icon="@drawable/ic_launcher_foreground"
                     android:title="@string/view_pending_orders" />
                 <item
+                    android:id="@+id/assignedInstallationOrdersFragment"
+                    android:icon="@drawable/ic_launcher_foreground"
+                    android:title="@string/assigned_orders" />
+                <item
                     android:id="@+id/nav_assign_technician"
                     android:icon="@drawable/ic_launcher_foreground"
                     android:title="@string/assign_technician" />

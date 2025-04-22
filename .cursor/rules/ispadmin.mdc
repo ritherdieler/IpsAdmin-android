@@ -45,6 +45,7 @@ alwaysApply: true
      - **Presentación** (ViewModels y pantallas Compose).  
    - Asegurar que cada ViewModel contenga solo la **lógica de presentación** y no dependa directamente de la capa de UI.  
    - Utilizar nombres claros y descriptivos para clases, funciones y variables, y seguir un estilo de código coherente.
+   - Todos los casos de uso deben devolver un Result<T> usando un runCatching y no un T, esto para manejar los errores de forma correcta y no tener que hacer un try catch en el viewModel.
 
 7. **Modernización del Diseño**  
    - Enfocarse en una **experiencia de usuario excelente** con:

@@ -3,6 +3,7 @@ package com.example.data2.data.di
 import android.content.Context
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.example.data2.BuildConfig
+import com.example.data2.data.util.LocalDateTimeAdapter
 import com.facebook.stetho.okhttp3.StethoInterceptor
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
@@ -11,6 +12,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 const val BASE_URL = "BASE_URL"
@@ -23,17 +25,9 @@ val retrofitModule = module {
 }
 
 fun provideRetrofit(url: String, okHttpClient: OkHttpClient): Retrofit {
-    val gson = GsonBuilder().create()
-
-    return Retrofit.Builder()
-        .baseUrl(url)
-        .addConverterFactory(GsonConverterFactory.create(gson))
-        .client(okHttpClient)
-        .build()
-}
-
-fun provideStorageRetrofit(url: String, okHttpClient: OkHttpClient): Retrofit {
-    val gson = GsonBuilder().create()
+    val gson = GsonBuilder()
+        .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
+        .create()
 
     return Retrofit.Builder()
         .baseUrl(url)
@@ -58,3 +52,4 @@ fun provideHttpClient(context:Context): OkHttpClient {
 
     return httpClient.build()
 }
+

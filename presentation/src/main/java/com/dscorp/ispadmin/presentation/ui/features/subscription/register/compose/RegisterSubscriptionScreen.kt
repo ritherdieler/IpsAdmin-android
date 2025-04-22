@@ -39,19 +39,19 @@ import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
-import org.koin.androidx.compose.getViewModel
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun RegisterSubscriptionFormScreen(
-    registerSubscriptionViewModel: RegisterSubscriptionComposeViewModel = getViewModel(),
+    viewModel: RegisterSubscriptionComposeViewModel,
     context: Context = LocalContext.current,
     onSubscriptionRegisterSuccess: () -> Unit = {},
+    installationOrderId: Int?,
 ) {
     val locationPermissionState =
         rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
 
-    val uiState by registerSubscriptionViewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
@@ -69,10 +69,18 @@ fun RegisterSubscriptionFormScreen(
         isGpsEnabled = isGpsEnabled(context)
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.loadInitialFormData()
+        installationOrderId?.let {
+            viewModel.loadInstallationOrderData(it)
+        }
+    }
+
+
     when {
         uiState.registeredSubscription != null -> {
             AlertDialog(
-                onDismissRequest = { registerSubscriptionViewModel.clearRegisteredSubscription() },
+                onDismissRequest = { viewModel.clearRegisteredSubscription() },
                 title = { Text("Registro Exitoso") },
                 text = {
                     Column {
@@ -92,7 +100,7 @@ fun RegisterSubscriptionFormScreen(
                 },
                 confirmButton = {
                     Button(onClick = {
-                        registerSubscriptionViewModel.clearRegisteredSubscription()
+                        viewModel.clearRegisteredSubscription()
                         onSubscriptionRegisterSuccess()
                     }) {
                         Text("Aceptar")
@@ -103,7 +111,7 @@ fun RegisterSubscriptionFormScreen(
 
         uiState.error != null -> {
             AlertDialog(
-                onDismissRequest = { registerSubscriptionViewModel.clearError() },
+                onDismissRequest = { viewModel.clearError() },
                 title = { Text("Error") },
                 text = {
                     Text(
@@ -111,7 +119,7 @@ fun RegisterSubscriptionFormScreen(
                     )
                 },
                 confirmButton = {
-                    Button(onClick = { registerSubscriptionViewModel.clearError() }) {
+                    Button(onClick = { viewModel.clearError() }) {
                         Text("Aceptar")
                     }
                 }
@@ -167,19 +175,19 @@ fun RegisterSubscriptionFormScreen(
                     fusedLocationClient.getCurrentLocation(currentLocationRequest, null)
                         .addOnSuccessListener { location ->
                             location?.let {
-                                registerSubscriptionViewModel.onLocationChanged(
+                                viewModel.onLocationChanged(
                                     LatLng(
                                         it.latitude,
                                         it.longitude
                                     )
                                 )
-                                registerSubscriptionViewModel.getPlaceFromCurrentLocation(
+                                viewModel.getPlaceFromCurrentLocation(
                                     it.latitude,
                                     it.longitude
                                 )
                                 
                                 // Obtener cajas Nap cercanas a la ubicación actual
-                                registerSubscriptionViewModel.getNearbyNapBoxes(
+                                viewModel.getNearbyNapBoxes(
                                     it.latitude,
                                     it.longitude
                                 )
@@ -191,10 +199,6 @@ fun RegisterSubscriptionFormScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        registerSubscriptionViewModel.loadInitialFormData()
-    }
-
     LaunchedEffect(uiState.registerSubscriptionForm.selectedPlace) {
         println(uiState.registerSubscriptionForm.selectedPlace)
     }
@@ -204,27 +208,27 @@ fun RegisterSubscriptionFormScreen(
         isGpsEnabled && locationPermissionState.status.isGranted -> {
             RegisterSubscriptionForm(
                 formState = uiState,
-                onFirstNameChanged = { registerSubscriptionViewModel.onFirstNameChanged(it) },
-                onLastNameChanged = { registerSubscriptionViewModel.onLastNameChanged(it) },
-                onDniChanged = { registerSubscriptionViewModel.onDniChanged(it) },
-                onAddressChanged = { registerSubscriptionViewModel.onAddressChanged(it) },
-                onPhoneChanged = { registerSubscriptionViewModel.onPhoneChanged(it) },
-                onPlanSelected = { registerSubscriptionViewModel.onPlanSelected(it) },
-                onOnuSelected = { registerSubscriptionViewModel.onOnuSelected(it) },
+                onFirstNameChanged = { viewModel.onFirstNameChanged(it) },
+                onLastNameChanged = { viewModel.onLastNameChanged(it) },
+                onDniChanged = { viewModel.onDniChanged(it) },
+                onAddressChanged = { viewModel.onAddressChanged(it) },
+                onPhoneChanged = { viewModel.onPhoneChanged(it) },
+                onPlanSelected = { viewModel.onPlanSelected(it) },
+                onOnuSelected = { viewModel.onOnuSelected(it) },
                 onPlaceSelected = {
-                    registerSubscriptionViewModel.onPlaceSelected(it)
+                    viewModel.onPlaceSelected(it)
                 },
-                onNapBoxSelected = { registerSubscriptionViewModel.onNapBoxSelected(it) },
-                onPLaceSelectionCleared = { registerSubscriptionViewModel.onPlaceSelectionCleared() },
-                onNapBoxSelectionCleared = { registerSubscriptionViewModel.onNapBoxSelectionCleared() },
+                onNapBoxSelected = { viewModel.onNapBoxSelected(it) },
+                onPLaceSelectionCleared = { viewModel.onPlaceSelectionCleared() },
+                onNapBoxSelectionCleared = { viewModel.onNapBoxSelectionCleared() },
                 onInstallationTypeSelected = {
-                    registerSubscriptionViewModel.onInstallationTypeSelected(it)
+                    viewModel.onInstallationTypeSelected(it)
                 },
-                onRefreshOnuList = { registerSubscriptionViewModel.refreshOnuList() },
+                onRefreshOnuList = { viewModel.refreshOnuList() },
                 onRegisterClick = {
-                    registerSubscriptionViewModel.saveSubscription()
+                    viewModel.saveSubscription()
                 },
-                onNoteChanged = { registerSubscriptionViewModel.onNoteChanged(it) },
+                onNoteChanged = { viewModel.onNoteChanged(it) },
             )
         }
 

@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity() {
         
         // Inicializar el grafo de navegación
         val navInflater = navHostFragment.navController.navInflater
-        val graph = navInflater.inflate(R.navigation.mobile_navigation)
+        val graph = navInflater.inflate(R.navigation.main_nav_graph)
         navHostFragment.navController.graph = graph
         
         // Configurar el NavigationView

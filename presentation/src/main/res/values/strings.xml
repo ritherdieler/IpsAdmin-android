@@ -324,6 +324,7 @@
     <string name="installation_orders">Órdenes de Instalación</string>
     <string name="create_installation_order">Crear Orden</string>
     <string name="view_pending_orders">Ver Órdenes Pendientes</string>
+    <string name="assigned_orders">Órdenes Asignadas</string>
     <string name="assign_technician">Asignar Técnico</string>
     <string name="close_installation_order">Cerrar Orden</string>
     <string name="cancel_installation_order">Cancelar Orden</string>

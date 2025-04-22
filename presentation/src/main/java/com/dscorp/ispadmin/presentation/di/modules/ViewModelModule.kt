@@ -2,6 +2,7 @@ package com.dscorp.ispadmin.presentation.di.modules
 
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashBoardViewModel
 import com.dscorp.ispadmin.presentation.ui.features.fixedCost.FixedCostViewModel
+import com.dscorp.ispadmin.presentation.ui.features.installationorder.AssignedInstallationOrdersViewModel
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.InstallationOrderViewModel
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.PendingInstallationOrdersViewModel
 import com.dscorp.ispadmin.presentation.ui.features.ippool.register.IpPoolViewModel
@@ -57,6 +58,7 @@ val viewModelModule = module {
             get(),
             get(),
             get(),
+            get(),
             get()
         )
     }
@@ -87,4 +89,5 @@ val viewModelModule = module {
     viewModel { FixedCostViewModel(get()) }
     viewModel { InstallationOrderViewModel() }
     viewModel { PendingInstallationOrdersViewModel() }
+    viewModel { AssignedInstallationOrdersViewModel() }
 }

@@ -313,7 +313,24 @@
     <fragment
         android:id="@+id/registerSubscriptionComposeFragment"
         android:name="com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionComposeFragment"
-        android:label="RegisterSubscriptionComposeFragment" />
+        android:label="RegisterSubscriptionComposeFragment" >
+
+        <argument
+            android:name="installationOrderId"
+            android:defaultValue="0"
+            app:argType="integer" />
+
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/assignedInstallationOrdersFragment"
+        android:name="com.dscorp.ispadmin.presentation.ui.features.installationorder.AssignedInstallationOrdersFragment"
+        android:label="Órdenes Asignadas">
+        <action
+            android:id="@+id/actionToRegisterSubscription"
+            app:destination="@id/registerSubscriptionComposeFragment" />
+    </fragment>
 
     <!-- Rutas para Órdenes de Instalación -->
     <fragment
@@ -377,5 +394,5 @@
             app:argType="integer"
             android:defaultValue="0" />
     </fragment>
-
-</navigation>
+    
+</navigation> 

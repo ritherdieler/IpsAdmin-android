@@ -21,4 +21,5 @@ interface InstallationOrderRepository {
     ): InstallationOrder
     suspend fun closeInstallationOrder(orderId: Int): InstallationOrder
     suspend fun cancelInstallationOrder(orderId: Int, cancellationReason: String?): InstallationOrder
+    suspend fun getInstallationOrdersByUserAndStatus(userId: Int, status: InstallationOrderStatus): List<InstallationOrder>
 } 

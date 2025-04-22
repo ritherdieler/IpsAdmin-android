@@ -14,6 +14,7 @@ import com.dscorp.ispadmin.domain.model.extensions.isAValidAddress
 import com.dscorp.ispadmin.domain.model.extensions.isAValidName
 import com.dscorp.ispadmin.domain.model.extensions.isValidDni
 import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
+import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.presentation.extension.removeSpecialCharacters
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.FormFieldKey
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
@@ -33,7 +34,8 @@ class RegisterSubscriptionComposeViewModel(
     private val registerSubscriptionUseCase: RegisterSubscriptionUseCase,
     private val getUserSessionUseCase: GetUserSessionUseCase,
     private val getCoreDevicesUseCase: GetCoreDevicesUseCase,
-    private val getNearNapBoxesUseCase: GetNearNapBoxesUseCase
+    private val getNearNapBoxesUseCase: GetNearNapBoxesUseCase,
+    private val installationOrderUseCase: InstallationOrderUseCase
 ) : ViewModel() {
 
     val uiState = MutableStateFlow(RegisterSubscriptionState())
@@ -445,6 +447,54 @@ class RegisterSubscriptionComposeViewModel(
 
                 }
             )
+        }
+    }
+
+    /**
+     * Carga los datos de una orden de instalación para prellenar el formulario
+     */
+    fun loadInstallationOrderData(orderId: Int) = viewModelScope.launch {
+        uiState.update { it.copy(isLoading = true) }
+        
+        try {
+            val order = installationOrderUseCase.getInstallationOrderById(orderId)
+
+            val selectedPlace = order.place
+
+            uiState.update { current ->
+                current.copy(
+                    isLoading = false,
+                    registerSubscriptionForm = current.registerSubscriptionForm.copy(
+                        firstName = order.customerFirstName,
+                        lastName = order.customerLastName,
+                        address = order.customerAddress,
+                        phone = order.customerPhone,
+                        selectedPlace = selectedPlace
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            uiState.update { current ->
+                current.copy(
+                    isLoading = false,
+                    error = e.message ?: "Error al cargar los datos de la orden"
+                )
+            }
+        }
+    }
+    
+    /**
+     * Cierra una orden de instalación después de registrar la suscripción
+     */
+    fun closeInstallationOrder(orderId: Int) = viewModelScope.launch {
+        try {
+            installationOrderUseCase.closeInstallationOrderAsResult(orderId)
+        } catch (e: Exception) {
+            uiState.update { current ->
+                current.copy(
+                    error = e.message ?: "Error al cerrar la orden de instalación"
+                )
+            }
         }
     }
 

@@ -42,4 +42,10 @@ interface InstallationOrderApiService {
         @Path("id") orderId: Int,
         @Query("reason") cancellationReason: String?
     ): Response<InstallationOrder>
+    
+    @GET("installation-order/by-user-and-status")
+    suspend fun getInstallationOrdersByUserAndStatus(
+        @Query("userId") userId: Int,
+        @Query("status") status: InstallationOrderStatus
+    ): Response<List<InstallationOrder>>
 } 
