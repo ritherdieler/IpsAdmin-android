@@ -2,7 +2,6 @@ package com.example.data2.data.datasource
 
 import com.dscorp.ispadmin.domain.model.InstallationOrder
 import com.dscorp.ispadmin.domain.model.InstallationOrderStatus
-import com.example.data2.data.apirequestmodel.AssignTechnicianRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -27,10 +26,12 @@ interface InstallationOrderApiService {
     @POST("installation-order")
     suspend fun createInstallationOrder(@Body installationOrder: InstallationOrder): Response<InstallationOrder>
     
-    @PUT("installation-order/{id}/assign-technician")
+    @PUT("installation-order/{id}/assign")
     suspend fun assignTechnician(
         @Path("id") orderId: Int,
-        @Body request: AssignTechnicianRequest
+        @Query("technicianId") technicianId: Int,
+        @Query("assignedById") assignedById: Int,
+        @Query("scheduledDate") scheduledDate: String
     ): Response<InstallationOrder>
     
     @PUT("installation-order/{id}/close")

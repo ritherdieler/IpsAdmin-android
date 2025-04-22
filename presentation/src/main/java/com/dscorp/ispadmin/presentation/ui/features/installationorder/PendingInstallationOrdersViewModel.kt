@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.time.LocalDate
-import java.time.LocalTime
 
 data class PendingOrdersUiState(
     val pendingOrders: List<InstallationOrder> = emptyList(),
@@ -26,7 +25,6 @@ data class PendingOrdersUiState(
     val selectedOrder: InstallationOrder? = null,
     val selectedTechnician: User? = null,
     val scheduledDate: LocalDate? = null,
-    val scheduledTime: LocalTime? = LocalTime.of(8, 0), // Hora predeterminada: 8:00 AM
     val showAssignDialog: Boolean = false,
     val orderUpdated: InstallationOrder? = null
 )
@@ -104,7 +102,6 @@ class PendingInstallationOrdersViewModel : ViewModel(), KoinComponent {
         val order = _uiState.value.selectedOrder
         val technician = _uiState.value.selectedTechnician
         val scheduledDate = _uiState.value.scheduledDate
-        val scheduledTime = _uiState.value.scheduledTime
 
         if (order == null || technician == null || scheduledDate == null) {
             _uiState.update { it.copy(
@@ -118,7 +115,6 @@ class PendingInstallationOrdersViewModel : ViewModel(), KoinComponent {
                 _uiState.update { it.copy(isLoading = true) }
                 
                 val currentUser = userUseCase.getCurrentUser()
-                
                 val result = installationOrderUseCase.assignTechnician(
                     orderId = order.id,
                     technicianId = technician.id ?: throw IllegalStateException("El técnico no tiene ID"),
@@ -128,7 +124,7 @@ class PendingInstallationOrdersViewModel : ViewModel(), KoinComponent {
                 
                 _uiState.update { it.copy(
                     isLoading = false,
-                    successMessage = "Técnico asignado correctamente para el ${scheduledDate.toString()} a las ${scheduledTime?.toString() ?: ""}",
+                    successMessage = "Técnico asignado correctamente",
                     orderUpdated = result,
                     showAssignDialog = false
                 ) }
@@ -137,6 +133,7 @@ class PendingInstallationOrdersViewModel : ViewModel(), KoinComponent {
                 loadPendingOrders()
                 
             } catch (e: Exception) {
+                e.printStackTrace()
                 _uiState.update { it.copy(
                     isLoading = false,
                     error = e.message ?: "Error al asignar técnico",

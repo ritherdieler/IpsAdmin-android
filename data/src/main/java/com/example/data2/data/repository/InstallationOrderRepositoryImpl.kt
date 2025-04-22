@@ -2,7 +2,6 @@ package com.example.data2.data.repository
 
 import com.dscorp.ispadmin.domain.model.InstallationOrder
 import com.dscorp.ispadmin.domain.model.InstallationOrderStatus
-import com.example.data2.data.apirequestmodel.AssignTechnicianRequest
 import com.example.data2.data.datasource.InstallationOrderApiService
 import com.example.data2.data.repository.util.handleResponse
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +16,7 @@ import java.time.format.DateTimeFormatter
 class InstallationOrderRepositoryImpl : InstallationOrderRepository, KoinComponent {
 
     private val apiService: InstallationOrderApiService by inject()
-    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    private val formatter = DateTimeFormatter.ISO_DATE_TIME
 
 
 
@@ -72,13 +71,11 @@ class InstallationOrderRepositoryImpl : InstallationOrderRepository, KoinCompone
         assignedById: Int,
         scheduledDate: LocalDate
     ): InstallationOrder = withContext(Dispatchers.IO) {
-        val request = AssignTechnicianRequest(
+
+        val response = apiService.assignTechnician(orderId,
             technicianId = technicianId,
             assignedById = assignedById,
-            scheduledDate = scheduledDate.format(formatter)
-        )
-
-        val response = apiService.assignTechnician(orderId, request)
+            scheduledDate = scheduledDate.format(formatter), )
         handleResponse(response, "Asignar técnico a orden $orderId")
     }
 
