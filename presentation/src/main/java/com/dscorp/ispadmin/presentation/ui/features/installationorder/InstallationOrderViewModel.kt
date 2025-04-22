@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.time.LocalDate
 
 data class InstallationOrderForm(
     val firstName: String = "",
@@ -174,34 +173,6 @@ class InstallationOrderViewModel : ViewModel(), KoinComponent {
         }
     }
 
-    fun assignTechnicianToOrder(
-        orderId: Int,
-        technicianId: Int,
-        assignedById: Int,
-        scheduledDate: LocalDate
-    ) {
-        viewModelScope.launch {
-            try {
-                _uiState.update { it.copy(isLoading = true) }
-                val result = installationOrderUseCase.assignTechnician(
-                    orderId = orderId, // Use named arguments
-                    technicianId = technicianId, // Use named arguments
-                    assignedById = assignedById, // Use named arguments
-                    scheduledDate = scheduledDate // Use named arguments
-                )
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    successMessage = "Técnico asignado correctamente",
-                    orderUpdated = result
-                ) }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    error = e.message ?: "Error al asignar técnico"
-                ) }
-            }
-        }
-    }
 
     fun closeInstallationOrder(orderId: Int) {
         viewModelScope.launch {

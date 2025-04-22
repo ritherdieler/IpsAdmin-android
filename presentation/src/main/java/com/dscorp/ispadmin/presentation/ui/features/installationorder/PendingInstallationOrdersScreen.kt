@@ -47,8 +47,11 @@ import com.dscorp.ispadmin.presentation.ui.features.composecomponents.Loader
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyCustomDialog
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyDatePickerField
+import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyDateTimePickerField
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -237,9 +240,8 @@ fun AssignTechnicianDialog(
 ) {
     if (order == null) return
     
-    var dateText by rememberSaveable { mutableStateOf("") }
-    val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
-    val isFormValid = selectedTechnician != null && dateText.isNotEmpty()
+    var dateTimeText by rememberSaveable { mutableStateOf("") }
+    val isFormValid = selectedTechnician != null && dateTimeText.isNotEmpty()
     
     MyCustomDialog(
         onDismissRequest = onDismiss
@@ -285,17 +287,18 @@ fun AssignTechnicianDialog(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            MyDatePickerField(
-                label = "Fecha Programada",
-                date = dateText,
-                onDateSelected = { 
-                    dateText = it
-                    // Convert to LocalDate for the ViewModel
+            MyDateTimePickerField(
+                label = "Fecha y Hora Programada",
+                dateTime = dateTimeText,
+                onDateTimeSelected = { 
+                    dateTimeText = it
+                    // Convertir a LocalDate para el ViewModel
                     try {
-                        val parsedDate = LocalDate.parse(it.split(" ")[0], DateTimeFormatter.ofPattern("dd-MM-yyyy"))
-                        onScheduledDateSelected(parsedDate)
+                        // Extraer solo la fecha (ignorar la hora para la conversión a LocalDate)
+                        val date = LocalDate.parse(it.split(" ")[0], DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+                        onScheduledDateSelected(date)
                     } catch (e: Exception) {
-                        // Handle date parsing error
+                        // Manejar error de análisis de fecha
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
