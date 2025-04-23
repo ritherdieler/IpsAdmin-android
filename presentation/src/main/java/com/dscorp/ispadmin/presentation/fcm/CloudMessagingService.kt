@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -22,11 +23,51 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
 import org.koin.android.ext.android.inject
+import java.util.Locale
 
 private const val TAG = "FcmService"
 
 class CloudMessagingService : FirebaseMessagingService() {
     private val repository: IRepository by inject()
+    private var textToSpeech: TextToSpeech? = null
+    private var isTtsInitialized = false
+
+    override fun onCreate() {
+        super.onCreate()
+        initializeTextToSpeech()
+    }
+
+    override fun onDestroy() {
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+        super.onDestroy()
+    }
+
+    private fun initializeTextToSpeech() {
+        textToSpeech = TextToSpeech(applicationContext) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val result = textToSpeech?.setLanguage(Locale("es", "ES"))
+                isTtsInitialized =
+                    result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED
+                if (!isTtsInitialized) {
+                    Log.e(TAG, "El idioma español no está disponible para TTS")
+                }
+            } else {
+                Log.e(TAG, "Error al inicializar TextToSpeech")
+            }
+        }
+    }
+
+    private fun speakText(text: String) {
+        if (isTtsInitialized) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "fcm_notification_id")
+            } else {
+                @Suppress("DEPRECATION")
+                textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null)
+            }
+        }
+    }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
@@ -47,6 +88,15 @@ class CloudMessagingService : FirebaseMessagingService() {
                         PendingIntent.FLAG_IMMUTABLE
                     )
                     createNotification(fcmMessage.title, fcmMessage.message, pendingIntent)
+
+                }
+
+                FcmMessageType.INSTALLATION_ORDER -> {
+                    createNotification(fcmMessage.title, fcmMessage.message)
+                    val topic = remoteMessage.from?.substringAfterLast("/", "")
+                    if (topic == FcmTopics.TOPIC_INSTALLATION_ORDER) {
+                        speakText("Hay una nueva orden de instalación por atender")
+                    }
                 }
 
                 FcmMessageType.PAYMENT,
@@ -56,8 +106,7 @@ class CloudMessagingService : FirebaseMessagingService() {
                 FcmMessageType.PAYMENT_CRITICAL,
                 FcmMessageType.PAYMENT_WARNING,
                 FcmMessageType.PAYMENT_INFO,
-                FcmMessageType.INSTALLATION_ORDER,
-                        FcmMessageType.PAYMENT_SUCCESS -> {
+                FcmMessageType.PAYMENT_SUCCESS -> {
                     createNotification(fcmMessage.title, fcmMessage.message)
                 }
 
@@ -161,7 +210,7 @@ data class FcmMessage(
 )
 
 enum class FcmMessageType {
-    PAYMENT, ADVERTISING, GENERAL, INFO, ASSISTANCE_TICKET, PAYMENT_CRITICAL, PAYMENT_WARNING, PAYMENT_INFO, PAYMENT_SUCCESS, APP_MANAGEMENT,INSTALLATION_ORDER
+    PAYMENT, ADVERTISING, GENERAL, INFO, ASSISTANCE_TICKET, PAYMENT_CRITICAL, PAYMENT_WARNING, PAYMENT_INFO, PAYMENT_SUCCESS, APP_MANAGEMENT, INSTALLATION_ORDER
 }
 
 //keys

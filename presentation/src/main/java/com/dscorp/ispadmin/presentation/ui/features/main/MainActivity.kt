@@ -189,7 +189,6 @@ class MainActivity : AppCompatActivity() {
             User.UserType.TECHNICIAN -> {
                 messaging.subscribeToTopic(FcmTopics.FCM_TECHNICIAN_TOPIC)
                 messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
-                messaging.subscribeToTopic(FcmTopics.TOPIC_INSTALLATION_ORDER)
             }
             User.UserType.SECRETARY, User.UserType.ACCOUNTANT -> {
                 messaging.subscribeToTopic(FcmTopics.FCM_SECRETARY_TOPIC)
@@ -204,7 +203,6 @@ class MainActivity : AppCompatActivity() {
                 messaging.subscribeToTopic(FcmTopics.TOPIC_INSTALLATION_ORDER)
             }
             User.UserType.SALES ->{
-                messaging.subscribeToTopic(FcmTopics.TOPIC_INSTALLATION_ORDER)
             }
             else -> { /* No hay suscripciones especiales para otros tipos */ }
         }
