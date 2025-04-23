@@ -18,10 +18,22 @@ fun String.isValidIpv4(): Boolean {
     return ipv4Regex.matches(this)
 }
 
-fun String?.isValidDni(): Boolean {
-    val pattern = "^[0-9]{8}\$"
-    val dniRegex = Regex(pattern)
-    return dniRegex.matches(this ?: "")
+fun String?.isValidDni(strictValidation: Boolean = false): Boolean {
+    if (this == null || this.isEmpty()) return false
+    
+    // Durante la escritura, solo verificamos que sean dígitos (1-8)
+    val inputPattern = "^[0-9]{1,8}$"
+    val inputRegex = Regex(inputPattern)
+    
+    // Para validación completa, exigimos exactamente 8 dígitos
+    val validationPattern = "^[0-9]{8}$"
+    val validationRegex = Regex(validationPattern)
+    
+    return if (strictValidation) {
+        validationRegex.matches(this)
+    } else {
+        inputRegex.matches(this)
+    }
 }
 
 fun String?.isValidDouble(): Boolean {

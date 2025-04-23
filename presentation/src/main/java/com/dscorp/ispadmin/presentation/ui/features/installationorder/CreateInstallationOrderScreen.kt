@@ -47,6 +47,7 @@ fun CreateInstallationOrderScreen(
     onLastNameChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
+    onDniChange: (String) -> Unit,
     onPlaceChange: (Place) -> Unit,
     onErrorDismissed: () -> Unit,
     onSuccessDismissed: () -> Unit,
@@ -124,6 +125,18 @@ fun CreateInstallationOrderScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                         maxLength = FormValidations.Limits.NAME_MAX_LENGTH,
                         regex = FormValidations.NAME_REGEX,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    MyOutlinedTextField(
+                        value = uiState.form.dni,
+                        onValueChange = onDniChange,
+                        label = "DNI",
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        maxLength = FormValidations.Limits.DNI_MAX_LENGTH,
+                        regex = FormValidations.DNI_REGEX,
                         modifier = Modifier.fillMaxWidth()
                     )
 

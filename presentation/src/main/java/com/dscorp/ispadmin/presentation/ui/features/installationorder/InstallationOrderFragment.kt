@@ -39,6 +39,7 @@ class InstallationOrderFragment : Fragment() {
                             onLastNameChange = viewModel::onLastNameChange,
                             onAddressChange = viewModel::onAddressChange,
                             onPhoneChange = viewModel::onPhoneChange,
+                            onDniChange = viewModel::onDniChange,
                             onPlaceChange = viewModel::onPlaceChange,
                             onErrorDismissed = viewModel::dismissError,
                             onSuccessDismissed = viewModel::dismissSuccess,

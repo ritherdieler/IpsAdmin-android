@@ -48,7 +48,7 @@ data class RegisterSubscriptionFormState(
     fun isValid(): Boolean {
         val isFirstNameValid = firstName.isNotBlank() && firstName.isAValidName()
         val isLastNameValid = lastName.isNotBlank() && lastName.isAValidName()
-        val isDniValid = dni.isNotBlank() && dni.isValidDni()
+        val isDniValid = dni.isNotBlank() && dni.isValidDni(strictValidation = true)
         val isAddressValid = address.isNotBlank() && address.isAValidAddress()
         val isPhoneValid = phone.isNotBlank() && phone.isValidPhone()
 

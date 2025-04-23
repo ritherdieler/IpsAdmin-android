@@ -8,6 +8,7 @@ data class InstallationOrder(
     val customerLastName: String = "",
     val customerAddress: String = "",
     val customerPhone: String = "",
+    val customerDni: String = "",
     val seller: User? = null,
     val assignedBy: User? = null,
     val technician: User? = null,

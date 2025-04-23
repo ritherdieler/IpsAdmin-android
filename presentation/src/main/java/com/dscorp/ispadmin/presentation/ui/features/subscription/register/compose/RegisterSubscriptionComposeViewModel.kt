@@ -65,16 +65,23 @@ class RegisterSubscriptionComposeViewModel(
             currentUser = userSession.getOrThrow()
             cachedNapBoxList = napBoxList.getOrNull() ?: emptyList()
             cachedPlanList = planList.getOrNull() ?: emptyList()
+            
+            // Filtrar planes por tipo de instalación actual (FIBER por defecto)
+            val filteredPlans = cachedPlanList.filter { it.type == InstallationType.FIBER }
+            
+            // Seleccionar automáticamente el plan si solo hay uno disponible
+            val selectedPlan = if (filteredPlans.size == 1) filteredPlans.first() else null
 
             uiState.update { current ->
                 current.copy(
                     isLoading = false,
                     registerSubscriptionForm = current.registerSubscriptionForm.copy(
                         onuList = onuList.getOrNull() ?: emptyList(),
-                        planList = cachedPlanList.filter { it.type == InstallationType.FIBER },
+                        planList = filteredPlans,
                         placeList = placeList.getOrNull() ?: emptyList(),
                         napBoxList = cachedNapBoxList,
-                        selectedHostDevice = coreDevices.getOrThrow().firstOrNull()
+                        selectedHostDevice = coreDevices.getOrThrow().firstOrNull(),
+                        selectedPlan = selectedPlan
                     )
                 )
             }
@@ -307,13 +314,16 @@ class RegisterSubscriptionComposeViewModel(
             InstallationType.WIRELESS -> cachedPlanList.filter { it.type == InstallationType.WIRELESS }
             InstallationType.ONLY_TV_FIBER -> cachedPlanList.filter { it.type == InstallationType.ONLY_TV_FIBER }
         }
+        
+        // Seleccionar automáticamente el plan si solo hay uno disponible
+        val selectedPlan = if (filteredPlans.size == 1) filteredPlans.first() else null
 
         uiState.update {
             it.copy(
                 registerSubscriptionForm = it.registerSubscriptionForm.copy(
                     installationType = type,
                     planList = filteredPlans,
-                    selectedPlan = null,
+                    selectedPlan = selectedPlan,
                     selectedOnu = null,
                     selectedNapBox = null,
                 )
@@ -458,9 +468,14 @@ class RegisterSubscriptionComposeViewModel(
         
         try {
             val order = installationOrderUseCase.getInstallationOrderById(orderId)
-
             val selectedPlace = order.place
-
+            
+            // Filtrar planes por tipo de instalación actual
+            val filteredPlans = cachedPlanList.filter { it.type == uiState.value.registerSubscriptionForm.installationType }
+            
+            // Seleccionar automáticamente el plan si solo hay uno disponible
+            val selectedPlan = if (filteredPlans.size == 1) filteredPlans.first() else null
+            
             uiState.update { current ->
                 current.copy(
                     isLoading = false,
@@ -469,7 +484,9 @@ class RegisterSubscriptionComposeViewModel(
                         lastName = order.customerLastName,
                         address = order.customerAddress,
                         phone = order.customerPhone,
-                        selectedPlace = selectedPlace
+                        dni = order.customerDni,
+                        selectedPlace = selectedPlace,
+                        selectedPlan = selectedPlan
                     )
                 )
             }

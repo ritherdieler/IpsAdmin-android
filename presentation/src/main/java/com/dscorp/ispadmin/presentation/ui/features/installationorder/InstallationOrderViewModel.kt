@@ -23,6 +23,7 @@ data class InstallationOrderForm(
     val lastName: String = "",
     val address: String = "",
     val phone: String = "",
+    val dni: String = "",
     val place: Place? = null
 )
 
@@ -80,6 +81,13 @@ class InstallationOrderViewModel : ViewModel(), KoinComponent {
         validateForm()
     }
 
+    fun onDniChange(newDni: String) {
+        _uiState.update { currentState ->
+            currentState.copy(form = currentState.form.copy(dni = newDni))
+        }
+        validateForm()
+    }
+
     fun onPlaceChange(place: Place) {
         _uiState.update { currentState ->
             currentState.copy(form = currentState.form.copy(place = place))
@@ -94,6 +102,7 @@ class InstallationOrderViewModel : ViewModel(), KoinComponent {
                     form.lastName.isNotBlank() &&
                     form.address.isNotBlank() &&
                     form.phone.isNotBlank() &&
+                    form.dni.isNotBlank() &&
                     form.place != null
             currentState.copy(isFormValid = isValid)
         }
@@ -137,6 +146,7 @@ class InstallationOrderViewModel : ViewModel(), KoinComponent {
                     customerLastName = trimmedLastName,
                     customerAddress = trimmedAddress,
                     customerPhone = formState.phone,
+                    customerDni = formState.dni,
                     status = InstallationOrderStatus.SOLICITADO,
                     seller = User(id = currentUser.id),
                     assignedBy = null,
