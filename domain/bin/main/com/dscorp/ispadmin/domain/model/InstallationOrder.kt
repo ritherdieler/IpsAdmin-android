@@ -1,6 +1,6 @@
 package com.dscorp.ispadmin.domain.model
 
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 data class InstallationOrder(
     val id: Int = 0,
@@ -8,10 +8,11 @@ data class InstallationOrder(
     val customerLastName: String = "",
     val customerAddress: String = "",
     val customerPhone: String = "",
+    val customerDni: String = "",
     val seller: User? = null,
     val assignedBy: User? = null,
     val technician: User? = null,
-    val scheduledDate: LocalDate? = null,
+    val scheduledDate: LocalDateTime? = null,
     val status: InstallationOrderStatus = InstallationOrderStatus.SOLICITADO,
     val cancellationReason: String? = null,
     val subscription: Subscription? = null,
