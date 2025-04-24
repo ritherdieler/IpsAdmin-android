@@ -3,6 +3,7 @@ package com.dscorp.ispadmin.presentation.di.modules
 import com.dscorp.ispadmin.data.usecase.PlaceUseCaseImpl
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.PlaceUseCase
+import com.dscorp.ispadmin.domain.usecase.UpdateDeviceTokenUseCase
 import com.dscorp.ispadmin.domain.usecase.UserUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetAvailableOnuListUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetCoreDevicesUseCase
@@ -14,6 +15,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compos
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetUserSessionUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionUseCase
 import com.example.data2.data.usecase.InstallationOrderUseCaseImpl
+import com.example.data2.data.usecase.UpdateDeviceTokenUseCaseImpl
 import com.example.data2.data.usecase.UserUseCaseImpl
 import org.koin.dsl.module
 
@@ -30,4 +32,5 @@ val useCaseModule = module {
     single<InstallationOrderUseCase> { InstallationOrderUseCaseImpl(get()) }
     single<UserUseCase> { UserUseCaseImpl(get()) }
     single<PlaceUseCase> { PlaceUseCaseImpl(get()) }
+    single<UpdateDeviceTokenUseCase> { UpdateDeviceTokenUseCaseImpl(get()) }
 }

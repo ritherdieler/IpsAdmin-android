@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
@@ -18,9 +19,12 @@ import androidx.navigation.ui.setupWithNavController
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.ActivityMainBinding
 import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.domain.usecase.UpdateDeviceTokenUseCase
 import com.dscorp.ispadmin.presentation.fcm.FcmTopics
+import com.dscorp.ispadmin.presentation.fcm.updateFcmToken
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
 class MainActivity : AppCompatActivity() {
@@ -28,6 +32,8 @@ class MainActivity : AppCompatActivity() {
     private val binding: ActivityMainBinding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     private val firebaseAnalytics: FirebaseAnalytics by inject()
     private val viewModel: MainActivityViewModel by inject()
+    private val updateDeviceTokenUseCase: UpdateDeviceTokenUseCase by inject()
+    
     private lateinit var navController: NavController
     private lateinit var navHostFragment: NavHostFragment
 
@@ -43,6 +49,22 @@ class MainActivity : AppCompatActivity() {
         setupNavigation()
         checkNotificationPermission()
         setupUserProfile()
+        
+        // Actualizar token FCM
+        updateFcmToken()
+    }
+    
+    private fun updateFcmToken() {
+        val currentUser = viewModel.getCurrentUser()
+        currentUser?.let { user ->
+            lifecycleScope.launch {
+                updateFcmToken(
+                    context = this@MainActivity,
+                    user = user,
+                    updateDeviceTokenUseCase = updateDeviceTokenUseCase
+                )
+            }
+        }
     }
 
     private fun setupNavigation() {

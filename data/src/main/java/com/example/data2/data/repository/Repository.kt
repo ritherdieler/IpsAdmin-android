@@ -5,6 +5,7 @@ import com.dscorp.ispadmin.domain.model.AppVersion
 import com.dscorp.ispadmin.domain.model.Coupon
 import com.dscorp.ispadmin.domain.model.CustomerData
 import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
+import com.dscorp.ispadmin.domain.model.DeviceTokenRequest
 import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
 import com.dscorp.ispadmin.domain.model.FireBaseResponse
 import com.dscorp.ispadmin.domain.model.FirebaseBody
@@ -805,6 +806,15 @@ class Repository : IRepository, KoinComponent {
             restApiServices.updateSubscriptionLocation(subscriptionId, latitude, longitude)
         if (response.code() != HTTP_OK)
             throw Exception("No se pudo actualizar la ubicación geográfica")
+    }
+
+    override suspend fun updateDeviceToken(userId: Int, deviceToken: String): User {
+        val response = restApiServices.updateDeviceToken(DeviceTokenRequest(userId, deviceToken))
+        if (response.code() == HttpCodes.OK) {
+            return response.body()!!
+        } else {
+            throw Exception("Error al actualizar el token de dispositivo")
+        }
     }
 }
 

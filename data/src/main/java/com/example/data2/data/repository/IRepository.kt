@@ -166,4 +166,5 @@ interface IRepository {
     suspend fun findPaymentByElectronicPayerName(electronicPayerName: String): List<PayerFinderResult>
     suspend fun getPlaceFromLocation(latitude: Double, longitude: Double): Place
     suspend fun updateSubscriptionLocation(subscriptionId: Int, latitude: Double, longitude: Double)
+    suspend fun updateDeviceToken(userId: Int, deviceToken: String): User
 }

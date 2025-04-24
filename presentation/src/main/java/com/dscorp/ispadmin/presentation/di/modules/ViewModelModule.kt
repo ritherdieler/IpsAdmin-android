@@ -70,7 +70,7 @@ val viewModelModule = module {
     viewModel { RegisterPaymentViewModel(get()) }
     viewModel { IpPoolViewModel(get()) }
     viewModel { MyProfileViewModel() }
-    viewModel { MainActivityViewModel(get()) }
+    viewModel { MainActivityViewModel() }
     viewModel { ReportsViewModel(get()) }
     viewModel { DashBoardViewModel() }
     viewModel { IpListViewModel(get()) }

@@ -4,6 +4,7 @@ import com.dscorp.ispadmin.domain.model.AppVersion
 import com.dscorp.ispadmin.domain.model.Coupon
 import com.dscorp.ispadmin.domain.model.CustomerData
 import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
+import com.dscorp.ispadmin.domain.model.DeviceTokenRequest
 import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
 import com.dscorp.ispadmin.domain.model.FixedCost
 import com.dscorp.ispadmin.domain.model.InstallationOrder
@@ -351,6 +352,11 @@ interface RestApiServices {
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double
     ): Response<Void>
+
+    @PUT("users/device-token")
+    suspend fun updateDeviceToken(
+        @Body request: DeviceTokenRequest
+    ): Response<User>
 
 }
 

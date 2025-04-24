@@ -24,6 +24,8 @@ import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
 import org.koin.android.ext.android.inject
 import java.util.Locale
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 
 private const val TAG = "FcmService"
 
@@ -53,7 +55,21 @@ class CloudMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        // Aquí se podría implementar la lógica para guardar o actualizar el token en el servidor
+        // Guardar el nuevo token en el servidor
+        val user = repository.getUserSession()
+        if (user != null && user.id != null) {
+            try {
+                // Uso de un scope personalizado para las corrutinas en el servicio
+                MainScope().launch {
+                    repository.updateDeviceToken(user.id!!, token)
+                    Log.d(TAG, "Token FCM actualizado automáticamente en el servidor")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al actualizar token FCM: ${e.message}", e)
+            }
+        } else {
+            Log.d(TAG, "No se pudo actualizar el token FCM: usuario no autenticado")
+        }
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
