@@ -22,10 +22,10 @@ import com.example.data2.data.repository.IRepository
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson
-import org.koin.android.ext.android.inject
-import java.util.Locale
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
+import java.util.Locale
 
 private const val TAG = "FcmService"
 
@@ -115,7 +115,7 @@ data class FcmMessage(
  */
 enum class FcmMessageType {
     PAYMENT, ADVERTISING, GENERAL, INFO, ASSISTANCE_TICKET, PAYMENT_CRITICAL, 
-    PAYMENT_WARNING, PAYMENT_INFO, PAYMENT_SUCCESS, APP_MANAGEMENT, INSTALLATION_ORDER
+    PAYMENT_WARNING, PAYMENT_INFO, PAYMENT_SUCCESS, APP_MANAGEMENT, INSTALLATION_ORDER,TECHNICIAN_ASSIGNED_INSTALLATION_ORDER, SALES_ASSIGNED_INSTALLATION_ORDER
 }
 
 // Keys para la gestión de acciones
@@ -278,7 +278,9 @@ class MessageHandlerRegistryImpl : MessageHandlerRegistry {
  */
 class AssistanceTicketHandler(private val service: CloudMessagingService) : MessageHandler {
     private val notificationManager: NotificationManagerWrapper by lazy { NotificationManagerWrapperImpl(service) }
-    private val textToSpeechManager: TextToSpeechManager by lazy { TextToSpeechManagerImpl(service) }
+    private val textToSpeechManager: TextToSpeechManager by lazy { 
+        TextToSpeechManagerImpl(service).apply { initialize() } 
+    }
 
     override fun canHandle(messageType: FcmMessageType): Boolean {
         return messageType == FcmMessageType.ASSISTANCE_TICKET
@@ -308,19 +310,34 @@ class AssistanceTicketHandler(private val service: CloudMessagingService) : Mess
  */
 class InstallationOrderHandler(private val service: CloudMessagingService) : MessageHandler {
     private val notificationManager: NotificationManagerWrapper by lazy { NotificationManagerWrapperImpl(service) }
-    private val textToSpeechManager: TextToSpeechManager by lazy { TextToSpeechManagerImpl(service) }
+    private val textToSpeechManager: TextToSpeechManager by lazy { 
+        TextToSpeechManagerImpl(service).apply { initialize() } 
+    }
 
     override fun canHandle(messageType: FcmMessageType): Boolean {
-        return messageType == FcmMessageType.INSTALLATION_ORDER
+        return messageType == FcmMessageType.INSTALLATION_ORDER ||
+               messageType == FcmMessageType.TECHNICIAN_ASSIGNED_INSTALLATION_ORDER ||
+               messageType == FcmMessageType.SALES_ASSIGNED_INSTALLATION_ORDER
     }
 
     override fun handleMessage(message: FcmMessage, rawMessage: RemoteMessage) {
         notificationManager.showNotification(message.title, message.message)
         
-        // Verificar el topic y reproducir mensaje de voz si corresponde
-        val topic = rawMessage.from?.substringAfterLast("/", "")
-        if (topic == FcmTopics.TOPIC_INSTALLATION_ORDER) {
-            textToSpeechManager.speak("Hay una nueva orden de instalación por atender")
+        // Verificar el tipo de mensaje y reproducir mensaje de voz adecuado
+        when (message.type) {
+            FcmMessageType.INSTALLATION_ORDER -> {
+                // Verificar el topic y reproducir mensaje de voz si corresponde
+                val topic = rawMessage.from?.substringAfterLast("/", "")
+                if (topic == FcmTopics.TOPIC_INSTALLATION_ORDER) {
+                    textToSpeechManager.speak(message.message)
+                }
+            }
+            FcmMessageType.TECHNICIAN_ASSIGNED_INSTALLATION_ORDER, 
+            FcmMessageType.SALES_ASSIGNED_INSTALLATION_ORDER -> {
+                // Leer el mensaje recibido con voz para estos tipos específicos
+                textToSpeechManager.speak(message.message)
+            }
+            else -> { /* No hacer nada para otros tipos */ }
         }
     }
 }

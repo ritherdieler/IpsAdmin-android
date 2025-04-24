@@ -62,10 +62,10 @@ import retrofit2.http.Query
  **/
 interface RestApiServices {
 
-    @POST("user")
+    @POST("users")
     suspend fun registerUser(@Body user: User): Response<User>
 
-    @POST("login")
+    @POST("users/login")
     suspend fun doLoging(@Body loging: Loging): Response<User>
 
     @POST("plan")
