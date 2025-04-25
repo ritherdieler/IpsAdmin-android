@@ -119,14 +119,13 @@ class MainActivity : AppCompatActivity() {
                 menu.findItem(R.id.nav_see_plan_list).isVisible = false
                 menu.findItem(R.id.nav_mufa).isVisible = true
                 // Técnicos sólo pueden ver las órdenes cerrar/cancelar
-                configureInstallationOrdersForTechnician(menu)
+                menu.findItem(R.id.assignedInstallationOrdersFragment).isVisible = true
             }
             User.UserType.SECRETARY -> {
                 menu.findItem(R.id.nav_dashboard).isVisible = true
                 menu.findItem(R.id.nav_see_plan_list).isVisible = false
                 menu.findItem(R.id.nav_mufa).isVisible = false
-                // Secretarias pueden ver todas las opciones de órdenes
-                configureInstallationOrdersForAdmin(menu)
+                menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
             }
             User.UserType.ACCOUNTANT -> {
                 menu.findItem(R.id.nav_dashboard).isVisible = true
@@ -134,18 +133,16 @@ class MainActivity : AppCompatActivity() {
                 menu.findItem(R.id.nav_fixed_cost).isVisible = true
                 menu.findItem(R.id.nav_see_plan_list).isVisible = false
                 menu.findItem(R.id.nav_mufa).isVisible = false
-                // Contadores pueden ver/crear pero no asignar técnicos
-                configureInstallationOrdersForAccountant(menu)
+                menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
+
             }
             User.UserType.ADMIN -> {
                 menu.findItem(R.id.nav_outlays).isVisible = true
                 menu.findItem(R.id.nav_fixed_cost).isVisible = true
-                // Admins pueden ver todas las opciones de órdenes
                 configureInstallationOrdersForAdmin(menu)
             }
             User.UserType.SALES -> {
-                // Vendedores sólo pueden crear órdenes
-                configureInstallationOrdersForSales(menu)
+                menu.findItem(R.id.nav_create_installation_order).isVisible = true
             }
             else -> { /* No hacer cambios para otros tipos de usuario */ }
         }
@@ -165,42 +162,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun configureInstallationOrdersForAdmin(menu: Menu) {
         // Los administradores y secretarias pueden ver todas las opciones
-        menu.findItem(R.id.nav_installation_orders).isVisible = true
+        menu.findItem(R.id.assignedInstallationOrdersFragment).isVisible = true
         menu.findItem(R.id.nav_create_installation_order).isVisible = true
         menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
-        menu.findItem(R.id.nav_assign_technician).isVisible = true
-        menu.findItem(R.id.nav_close_installation_order).isVisible = true
-        menu.findItem(R.id.nav_cancel_installation_order).isVisible = true
-    }
-    
-    private fun configureInstallationOrdersForTechnician(menu: Menu) {
-        // Los técnicos sólo pueden cerrar/cancelar órdenes
-        menu.findItem(R.id.nav_installation_orders).isVisible = true
-        menu.findItem(R.id.nav_create_installation_order).isVisible = false
-        menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
-        menu.findItem(R.id.nav_assign_technician).isVisible = false
-        menu.findItem(R.id.nav_close_installation_order).isVisible = true
-        menu.findItem(R.id.nav_cancel_installation_order).isVisible = true
-    }
-    
-    private fun configureInstallationOrdersForAccountant(menu: Menu) {
-        // Los contadores pueden crear y ver, pero no pueden asignar técnicos
-        menu.findItem(R.id.nav_installation_orders).isVisible = true
-        menu.findItem(R.id.nav_create_installation_order).isVisible = true
-        menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
-        menu.findItem(R.id.nav_assign_technician).isVisible = false
-        menu.findItem(R.id.nav_close_installation_order).isVisible = true
-        menu.findItem(R.id.nav_cancel_installation_order).isVisible = true
-    }
-    
-    private fun configureInstallationOrdersForSales(menu: Menu) {
-        // Los vendedores sólo pueden crear órdenes
-        menu.findItem(R.id.nav_installation_orders).isVisible = true
-        menu.findItem(R.id.nav_create_installation_order).isVisible = true
-        menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
-        menu.findItem(R.id.nav_assign_technician).isVisible = false
-        menu.findItem(R.id.nav_close_installation_order).isVisible = false
-        menu.findItem(R.id.nav_cancel_installation_order).isVisible = false
+
     }
 
     private fun subscribeToFcmTopicsForUser(user: User) {
@@ -217,7 +182,6 @@ class MainActivity : AppCompatActivity() {
                 messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET_ADMINS)
                 messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
                 messaging.subscribeToTopic(FcmTopics.TOPIC_INSTALLATION_ORDER)
-
             }
             User.UserType.ADMIN -> {
                 messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET_ADMINS)

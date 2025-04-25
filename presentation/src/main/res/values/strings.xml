@@ -329,4 +329,5 @@
     <string name="close_installation_order">Cerrar Orden</string>
     <string name="cancel_installation_order">Cancelar Orden</string>
     <string name="installation_order_details">Detalles de Orden</string>
+    <string name="see_support_tickets">Ver tickets de soporte</string>
 </resources>

@@ -11,13 +11,20 @@
             android:icon="@drawable/ic_launcher_foreground"
             android:title="@string/dashboard" />
         <item
-            android:id="@+id/registerSubscriptionComposeFragment"
+            android:id="@+id/nav_subscriptions_menu"
             android:icon="@drawable/ic_launcher_foreground"
-            android:title="@string/menu_subscription" />
-        <item
-            android:id="@+id/nav_find_subscriptions"
-            android:icon="@drawable/ic_launcher_foreground"
-            android:title="@string/find_subscription" />
+            android:title="@string/installation_orders">
+            <menu>
+                <item
+                    android:id="@+id/registerSubscriptionComposeFragment"
+                    android:icon="@drawable/ic_launcher_foreground"
+                    android:title="@string/menu_subscription" />
+                <item
+                    android:id="@+id/nav_find_subscriptions"
+                    android:icon="@drawable/ic_launcher_foreground"
+                    android:title="@string/find_subscription" />
+            </menu>
+        </item>
 
         <!-- Sección de Órdenes de Instalación -->
         <item
@@ -28,27 +35,18 @@
                 <item
                     android:id="@+id/nav_create_installation_order"
                     android:icon="@drawable/ic_launcher_foreground"
-                    android:title="@string/create_installation_order" />
+                    android:title="@string/create_installation_order"
+                    android:visible="false" />
                 <item
                     android:id="@+id/pendingInstallationOrdersFragment"
                     android:icon="@drawable/ic_launcher_foreground"
-                    android:title="@string/view_pending_orders" />
+                    android:title="@string/view_pending_orders"
+                    android:visible="false" />
                 <item
                     android:id="@+id/assignedInstallationOrdersFragment"
                     android:icon="@drawable/ic_launcher_foreground"
-                    android:title="@string/assigned_orders" />
-                <item
-                    android:id="@+id/nav_assign_technician"
-                    android:icon="@drawable/ic_launcher_foreground"
-                    android:title="@string/assign_technician" />
-                <item
-                    android:id="@+id/nav_close_installation_order"
-                    android:icon="@drawable/ic_launcher_foreground"
-                    android:title="@string/close_installation_order" />
-                <item
-                    android:id="@+id/nav_cancel_installation_order"
-                    android:icon="@drawable/ic_launcher_foreground"
-                    android:title="@string/cancel_installation_order" />
+                    android:title="@string/assigned_orders"
+                    android:visible="false" />
             </menu>
         </item>
 
@@ -57,17 +55,23 @@
             android:icon="@drawable/ic_launcher_foreground"
             android:title="@string/delete_onu"
             android:visible="false" />
-
         <item
-            android:id="@+id/nav_create_support_ticket"
+            android:id="@+id/nav_support_tickets_menu"
             android:icon="@drawable/ic_launcher_foreground"
-            android:title="@string/create_support_tickets"
-            android:visible="false" />
-        <item
-            android:id="@+id/nav_support_assistance_tickets"
-            android:icon="@drawable/ic_launcher_foreground"
-            android:title="@string/support_tickets"
-            android:visible="false" />
+            android:title="@string/support_tickets">
+            <menu>
+                <item
+                    android:id="@+id/nav_create_support_ticket"
+                    android:icon="@drawable/ic_launcher_foreground"
+                    android:title="@string/create_support_tickets"
+                    android:visible="false" />
+                <item
+                    android:id="@+id/nav_support_assistance_tickets"
+                    android:icon="@drawable/ic_launcher_foreground"
+                    android:title="@string/see_support_tickets"
+                    android:visible="false" />
+            </menu>
+        </item>
         <item
             android:id="@+id/nav_find_payer"
             android:icon="@drawable/ic_launcher_foreground"
@@ -83,7 +87,7 @@
             android:id="@+id/nav_fixed_cost"
             android:icon="@drawable/ic_launcher_foreground"
             android:title="@string/fixed_costs"
-            android:visible="false"/>
+            android:visible="false" />
 
         <item
             android:id="@+id/nav_reports"

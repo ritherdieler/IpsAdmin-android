@@ -34,10 +34,14 @@ private const val TAG = "FcmService"
  */
 class CloudMessagingService : FirebaseMessagingService() {
     private val repository: IRepository by inject()
-    private val notificationManager: NotificationManagerWrapper by lazy { NotificationManagerWrapperImpl(this) }
+    private val notificationManager: NotificationManagerWrapper by lazy {
+        NotificationManagerWrapperImpl(
+            this
+        )
+    }
     private val textToSpeechManager: TextToSpeechManager by lazy { TextToSpeechManagerImpl(this) }
-    private val messageHandlerRegistry: MessageHandlerRegistry by lazy { 
-        MessageHandlerRegistryImpl().apply { registerDefaultHandlers(this@CloudMessagingService) } 
+    private val messageHandlerRegistry: MessageHandlerRegistry by lazy {
+        MessageHandlerRegistryImpl().apply { registerDefaultHandlers(this@CloudMessagingService) }
     }
 
     // Proporcionar acceso al repository para los handlers
@@ -78,9 +82,10 @@ class CloudMessagingService : FirebaseMessagingService() {
         if (fcmMessage != null) {
             // Crear un canal de notificación para Android 8.0+
             notificationManager.createNotificationChannel()
-            
+
             // Procesar el mensaje usando el handler apropiado
-            messageHandlerRegistry.getHandler(fcmMessage.type)?.handleMessage(fcmMessage, remoteMessage)
+            messageHandlerRegistry.getHandler(fcmMessage.type)
+                ?.handleMessage(fcmMessage, remoteMessage)
         }
 
         remoteMessage.notification?.let {
@@ -114,8 +119,8 @@ data class FcmMessage(
  * Tipos de mensajes FCM soportados
  */
 enum class FcmMessageType {
-    PAYMENT, ADVERTISING, GENERAL, INFO, ASSISTANCE_TICKET, PAYMENT_CRITICAL, 
-    PAYMENT_WARNING, PAYMENT_INFO, PAYMENT_SUCCESS, APP_MANAGEMENT, INSTALLATION_ORDER,TECHNICIAN_ASSIGNED_INSTALLATION_ORDER, SALES_ASSIGNED_INSTALLATION_ORDER
+    PAYMENT, ADVERTISING, GENERAL, INFO, ASSISTANCE_TICKET, PAYMENT_CRITICAL,
+    PAYMENT_WARNING, PAYMENT_INFO, PAYMENT_SUCCESS, APP_MANAGEMENT, INSTALLATION_ORDER, TECHNICIAN_ASSIGNED_INSTALLATION_ORDER, SALES_ASSIGNED_INSTALLATION_ORDER, SALES_CLOSED_INSTALLATION_ORDER
 }
 
 // Keys para la gestión de acciones
@@ -185,15 +190,16 @@ interface NotificationManagerWrapper {
  * Implementación de gestión de notificaciones
  */
 class NotificationManagerWrapperImpl(private val context: Context) : NotificationManagerWrapper {
-    
+
     override fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "GigafiberPeru"
             val descriptionText = "Por favor, activa las notificaciones para recibir alertas"
             val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(CloudMessagingService.CHANNEL_ID, name, importance).apply {
-                description = descriptionText
-            }
+            val channel =
+                NotificationChannel(CloudMessagingService.CHANNEL_ID, name, importance).apply {
+                    description = descriptionText
+                }
             val notificationManager: NotificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
@@ -206,19 +212,20 @@ class NotificationManagerWrapperImpl(private val context: Context) : Notificatio
         pendingIntent: PendingIntent?
     ) {
         // Crear una notificación
-        val notificationBuilder = NotificationCompat.Builder(context, CloudMessagingService.CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher_foreground)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
-            .setColor(
-                ContextCompat.getColor(
-                    context,
-                    R.color.colorPrimary
-                )
-            ) // Establecer el color aquí
-            .setAutoCancel(true)
+        val notificationBuilder =
+            NotificationCompat.Builder(context, CloudMessagingService.CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher_foreground)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(pendingIntent)
+                .setColor(
+                    ContextCompat.getColor(
+                        context,
+                        R.color.colorPrimary
+                    )
+                ) // Establecer el color aquí
+                .setAutoCancel(true)
 
 
         // Mostrar la notificación
@@ -277,9 +284,13 @@ class MessageHandlerRegistryImpl : MessageHandlerRegistry {
  * Handler para mensajes de tipo ASSISTANCE_TICKET
  */
 class AssistanceTicketHandler(private val service: CloudMessagingService) : MessageHandler {
-    private val notificationManager: NotificationManagerWrapper by lazy { NotificationManagerWrapperImpl(service) }
-    private val textToSpeechManager: TextToSpeechManager by lazy { 
-        TextToSpeechManagerImpl(service).apply { initialize() } 
+    private val notificationManager: NotificationManagerWrapper by lazy {
+        NotificationManagerWrapperImpl(
+            service
+        )
+    }
+    private val textToSpeechManager: TextToSpeechManager by lazy {
+        TextToSpeechManagerImpl(service).apply { initialize() }
     }
 
     override fun canHandle(messageType: FcmMessageType): Boolean {
@@ -309,20 +320,25 @@ class AssistanceTicketHandler(private val service: CloudMessagingService) : Mess
  * Handler para mensajes de tipo INSTALLATION_ORDER
  */
 class InstallationOrderHandler(private val service: CloudMessagingService) : MessageHandler {
-    private val notificationManager: NotificationManagerWrapper by lazy { NotificationManagerWrapperImpl(service) }
-    private val textToSpeechManager: TextToSpeechManager by lazy { 
-        TextToSpeechManagerImpl(service).apply { initialize() } 
+    private val notificationManager: NotificationManagerWrapper by lazy {
+        NotificationManagerWrapperImpl(
+            service
+        )
+    }
+    private val textToSpeechManager: TextToSpeechManager by lazy {
+        TextToSpeechManagerImpl(service).apply { initialize() }
     }
 
     override fun canHandle(messageType: FcmMessageType): Boolean {
         return messageType == FcmMessageType.INSTALLATION_ORDER ||
-               messageType == FcmMessageType.TECHNICIAN_ASSIGNED_INSTALLATION_ORDER ||
-               messageType == FcmMessageType.SALES_ASSIGNED_INSTALLATION_ORDER
+                messageType == FcmMessageType.TECHNICIAN_ASSIGNED_INSTALLATION_ORDER ||
+                messageType == FcmMessageType.SALES_ASSIGNED_INSTALLATION_ORDER ||
+                messageType == FcmMessageType.SALES_CLOSED_INSTALLATION_ORDER
     }
 
     override fun handleMessage(message: FcmMessage, rawMessage: RemoteMessage) {
         notificationManager.showNotification(message.title, message.message)
-        
+
         // Verificar el tipo de mensaje y reproducir mensaje de voz adecuado
         when (message.type) {
             FcmMessageType.INSTALLATION_ORDER -> {
@@ -332,12 +348,16 @@ class InstallationOrderHandler(private val service: CloudMessagingService) : Mes
                     textToSpeechManager.speak(message.message)
                 }
             }
-            FcmMessageType.TECHNICIAN_ASSIGNED_INSTALLATION_ORDER, 
+
+            FcmMessageType.TECHNICIAN_ASSIGNED_INSTALLATION_ORDER,
+            FcmMessageType.SALES_CLOSED_INSTALLATION_ORDER,
             FcmMessageType.SALES_ASSIGNED_INSTALLATION_ORDER -> {
                 // Leer el mensaje recibido con voz para estos tipos específicos
                 textToSpeechManager.speak(message.message)
             }
-            else -> { /* No hacer nada para otros tipos */ }
+
+            else -> { /* No hacer nada para otros tipos */
+            }
         }
     }
 }
@@ -355,7 +375,7 @@ class AppManagementHandler(private val service: CloudMessagingService) : Message
     override fun handleMessage(message: FcmMessage, rawMessage: RemoteMessage) {
         val map = message.data as? Map<String, String> ?: return
         val action = map[MANAGEMENT_ACTION]
-        
+
         when (action) {
             FORCE_LOGOUT -> {
                 repository.clearUserSession()
@@ -364,6 +384,7 @@ class AppManagementHandler(private val service: CloudMessagingService) : Message
                 }
                 service.startActivity(intent)
             }
+
             else -> {
                 Log.d(TAG, "No se encontró ninguna acción")
             }
@@ -375,8 +396,12 @@ class AppManagementHandler(private val service: CloudMessagingService) : Message
  * Handler predeterminado para tipos de mensajes simples que solo muestran notificaciones
  */
 class DefaultNotificationHandler(private val service: CloudMessagingService) : MessageHandler {
-    private val notificationManager: NotificationManagerWrapper by lazy { NotificationManagerWrapperImpl(service) }
-    
+    private val notificationManager: NotificationManagerWrapper by lazy {
+        NotificationManagerWrapperImpl(
+            service
+        )
+    }
+
     override fun canHandle(messageType: FcmMessageType): Boolean {
         return messageType in listOf(
             FcmMessageType.PAYMENT,
