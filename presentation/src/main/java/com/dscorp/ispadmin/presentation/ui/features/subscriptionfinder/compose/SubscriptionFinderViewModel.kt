@@ -407,14 +407,24 @@ class SubscriptionFinderViewModel(
 
     fun fetchCurrentLocation() = viewModelScope.launch {
         _uiState.update { it.copy(isFetchingCurrentLocation = true) }
-        try {
-            delay(1500)
-            val fakeCurrentLocation = LatLng(-11.107, -77.605)
-            updateCoordinatesFromMap(fakeCurrentLocation)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            _uiState.update { it.copy(isFetchingCurrentLocation = false) }
-        }
+        // Don't do anything here as the actual location fetch will be handled by the fragment/activity
+        // This just updates the UI state to show loading indicator
+    }
+
+    /**
+     * Updates coordinates from current location
+     * Called by the Fragment/Activity after getting location permission and retrieving coordinates
+     */
+    fun updateCurrentLocation(latitude: Double, longitude: Double) {
+        val location = LatLng(latitude, longitude)
+        updateCoordinatesFromMap(location)
+    }
+
+    /**
+     * Called if location retrieval fails
+     */
+    fun onLocationError() {
+        _uiState.update { it.copy(isFetchingCurrentLocation = false) }
     }
 
     fun updateSubscriptionLocation() = viewModelScope.launch {

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -75,7 +76,7 @@ fun MyCustomDialog(
                     onClick = { onDismissRequest() },
                     modifier = Modifier
                         .padding(8.dp)
-                        .zIndex(1f)
+                        .zIndex(3f)
                         .align(Alignment.TopEnd)
                 ) {
                     Icon(
@@ -88,8 +89,9 @@ fun MyCustomDialog(
             }
 
             Column(
-                modifier = modifier
-                    .fillMaxSize(),
+                modifier = modifier.padding(top=32.dp)
+                    .zIndex(2f)
+                    .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Spacer(modifier = Modifier.height(16.dp))

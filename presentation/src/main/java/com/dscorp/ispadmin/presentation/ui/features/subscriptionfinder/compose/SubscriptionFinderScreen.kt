@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -53,13 +52,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
+import com.dscorp.ispadmin.domain.model.GeoLocation
+import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyConfirmDialog
-import com.dscorp.ispadmin.presentation.ui.features.dialog.MyCustomDialog
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.MAP_SELECTION_REQUEST_KEY
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.MAP_SELECTION_RESULT_KEY
 import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
@@ -72,9 +70,6 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SEE_DETAILS
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SHOW_PAYMENT_HISTORY
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.UPDATE_LOCATION
-import com.dscorp.ispadmin.domain.model.GeoLocation
-import com.dscorp.ispadmin.domain.model.SubscriptionResume
-import com.example.data2.data.apirequestmodel.MoveOnuRequest
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -93,6 +88,7 @@ fun SubscriptionFinderScreen(
     navController: NavController,
     viewModel: SubscriptionFinderViewModel = koinViewModel(),
     onShowMapSelector: (GeoLocation?) -> Unit,
+    onGetCurrentLocation: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val coroutinesScope = rememberCoroutineScope()
@@ -420,8 +416,7 @@ fun SubscriptionFinderScreen(
             longitude = uiState.editableLongitude,
             onShowMap = showMapSelection,
             onGetCurrentLocationClick = { 
-                // TODO: Add permission check before calling fetchCurrentLocation
-                viewModel.fetchCurrentLocation() 
+                onGetCurrentLocation()
             },
             isFetchingCurrentLocation = uiState.isFetchingCurrentLocation,
             onDismiss = { viewModel.toggleLocationUpdateDialog(false) }
@@ -568,162 +563,6 @@ private fun CancelSubscriptionDialog(
         onDismissRequest = onDismiss,
         onAccept = onConfirm
     )
-}
-
-/**
- * Dialog to change NAP box - enhanced version with Material 3 styling
- */
-@Composable
-private fun ChangeNapBoxDialog(
-    viewModel: SubscriptionFinderViewModel,
-    selectedSubscription: SubscriptionResume?,
-    napBoxesState: NapBoxesState,
-    context: Context,
-    onDismiss: () -> Unit
-) {
-    // Fetch NAP boxes when dialog is shown
-    viewModel.getNapBoxes()
-
-    if (selectedSubscription == null) {
-        LaunchedEffect(Unit) {
-            Toast.makeText(context, "No hay suscripción seleccionada", Toast.LENGTH_LONG).show()
-            onDismiss()
-        }
-        return
-    }
-
-    MyCustomDialog(onDismissRequest = onDismiss) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Cambiar NAP Box",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-
-            when (napBoxesState) {
-                is NapBoxesState.Error -> {
-                    Text(text = "Error al cargar los NAP BOX")
-                    Button(onClick = onDismiss) {
-                        Text("Cerrar")
-                    }
-                }
-
-                is NapBoxesState.Loading -> {
-                    CircularProgressIndicator()
-                    Text(text = "Cargando...")
-                }
-
-                is NapBoxesState.NapBoxListLoaded -> {
-                    val currentNapBoxCode = selectedSubscription.napBox?.code ?: "Sin asignar"
-                    var selectedNapBoxIndex by remember { mutableStateOf(-1) }
-
-                    // Current NAP Box
-                    OutlinedTextField(
-                        value = "NAP Box actual: $currentNapBoxCode",
-                        onValueChange = { },
-                        readOnly = true,
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Simple dropdown with list of NAP Box options
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            "Seleccione nuevo NAP Box:",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-
-                        // Display options as a list of buttons
-                        napBoxesState.items.forEachIndexed { index, napBox ->
-                            if (napBox.code != currentNapBoxCode) {
-                                Button(
-                                    onClick = { selectedNapBoxIndex = index },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    colors = if (selectedNapBoxIndex == index) {
-                                        ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary
-                                        )
-                                    } else {
-                                        ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    },
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Text("${napBox.code} - ${napBox.address}")
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Confirm button
-                    MyButton(
-                        text = "Confirmar cambio",
-                        isLoading = false,
-                        enabled = selectedNapBoxIndex >= 0,
-                        onClick = {
-                            if (selectedNapBoxIndex >= 0) {
-                                val selectedNapBox = napBoxesState.items[selectedNapBoxIndex]
-                                val request = MoveOnuRequest(
-                                    subscriptionId = selectedSubscription.id,
-                                    newNapBoxId = selectedNapBox.id!!.toInt()
-                                )
-                                viewModel.changeNapBox(request)
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                is NapBoxesState.NapBoxChanged -> {
-                    Icon(
-                        imageVector = Icons.Outlined.CloudSync,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(48.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "NAP Box cambiado exitosamente",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    MyButton(
-                        text = "Aceptar",
-                        onClick = {
-                            onDismiss()
-                            viewModel.resetNapBoxFlow()
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    LaunchedEffect(Unit) {
-                        Toast.makeText(context, "NAP Box cambiado exitosamente", Toast.LENGTH_LONG)
-                            .show()
-                    }
-                }
-            }
-        }
-    }
 }
 
 /**
