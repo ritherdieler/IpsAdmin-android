@@ -30,10 +30,7 @@ class LoginActivity : AppCompatActivity() {
             MyTheme {
                 LoginScreen(
                     onCreatedAccountClicked = ::navigateToRegister,
-                    onLoginSuccess = ::handleLoginResponse,
-                    onAcceptUpdate = {
-                        finish()
-                    }
+                    onLoginSuccess = ::handleLoginResponse
                 )
             }
         }
