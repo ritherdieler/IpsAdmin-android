@@ -9,20 +9,23 @@
         <item
             android:id="@+id/nav_dashboard"
             android:icon="@drawable/ic_launcher_foreground"
-            android:title="@string/dashboard" />
+            android:title="@string/dashboard"
+            android:visible="false" />
         <item
             android:id="@+id/nav_subscriptions_menu"
             android:icon="@drawable/ic_launcher_foreground"
-            android:title="@string/installation_orders">
+            android:title="@string/subscription_menu">
             <menu>
                 <item
                     android:id="@+id/registerSubscriptionComposeFragment"
                     android:icon="@drawable/ic_launcher_foreground"
-                    android:title="@string/menu_subscription" />
+                    android:title="@string/menu_subscription"
+                    android:visible="false" />
                 <item
                     android:id="@+id/nav_find_subscriptions"
                     android:icon="@drawable/ic_launcher_foreground"
-                    android:title="@string/find_subscription" />
+                    android:title="@string/find_subscription"
+                    android:visible="false" />
             </menu>
         </item>
 
@@ -36,7 +39,7 @@
                     android:id="@+id/nav_create_installation_order"
                     android:icon="@drawable/ic_launcher_foreground"
                     android:title="@string/create_installation_order"
-                    android:visible="false" />
+                    android:visible="true" />
                 <item
                     android:id="@+id/pendingInstallationOrdersFragment"
                     android:icon="@drawable/ic_launcher_foreground"
@@ -92,7 +95,8 @@
         <item
             android:id="@+id/nav_reports"
             android:icon="@drawable/ic_launcher_foreground"
-            android:title="@string/reports" />
+            android:title="@string/reports"
+            android:visible="false" />
 
         <!--        <item
                     android:id="@+id/nav_plan"
@@ -143,7 +147,8 @@
         <item
             android:id="@+id/nav_mufa"
             android:icon="@drawable/ic_launcher_foreground"
-            android:title="@string/Mufas" />
+            android:title="@string/Mufas"
+            android:visible="false" />
 
         <!--        <item-->
         <!--            android:id="@+id/nav_ip_pool"-->
@@ -152,7 +157,8 @@
         <item
             android:id="@+id/nav_see_plan_list"
             android:icon="@drawable/ic_launcher_foreground"
-            android:title="@string/plans" />
+            android:title="@string/plans"
+            android:visible="false" />
 
         <item
             android:id="@+id/nav_my_profile"

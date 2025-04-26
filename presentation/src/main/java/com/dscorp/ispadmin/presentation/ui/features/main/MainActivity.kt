@@ -111,38 +111,42 @@ class MainActivity : AppCompatActivity() {
     private fun configureMenuBasedOnUserType(user: User) {
         val menu = binding.navView.menu
         
-        // Configuración común
+        // Estos elementos permanecen ocultos por defecto para todos los roles
+        menu.findItem(R.id.nav_dashboard).isVisible = false
+        menu.findItem(R.id.nav_reports).isVisible = false
+        menu.findItem(R.id.nav_see_plan_list).isVisible = false
+        menu.findItem(R.id.nav_mufa).isVisible = false
+        menu.findItem(R.id.registerSubscriptionComposeFragment).isVisible = false
+        menu.findItem(R.id.nav_find_subscriptions).isVisible = false
+        
+        // Configuración específica para cada tipo de usuario
         when (user.type) {
             User.UserType.TECHNICIAN -> {
-                menu.findItem(R.id.nav_dashboard).isVisible = false
-                menu.findItem(R.id.nav_reports).isVisible = false
-                menu.findItem(R.id.nav_see_plan_list).isVisible = false
-                menu.findItem(R.id.nav_mufa).isVisible = true
                 // Técnicos sólo pueden ver las órdenes cerrar/cancelar
                 menu.findItem(R.id.assignedInstallationOrdersFragment).isVisible = true
             }
             User.UserType.SECRETARY -> {
-                menu.findItem(R.id.nav_dashboard).isVisible = true
-                menu.findItem(R.id.nav_see_plan_list).isVisible = false
-                menu.findItem(R.id.nav_mufa).isVisible = false
                 menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
             }
             User.UserType.ACCOUNTANT -> {
-                menu.findItem(R.id.nav_dashboard).isVisible = true
                 menu.findItem(R.id.nav_outlays).isVisible = true
                 menu.findItem(R.id.nav_fixed_cost).isVisible = true
-                menu.findItem(R.id.nav_see_plan_list).isVisible = false
-                menu.findItem(R.id.nav_mufa).isVisible = false
                 menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
-
             }
             User.UserType.ADMIN -> {
+                // El administrador puede ver todas las opciones, pero mantenemos ocultas las especificadas
                 menu.findItem(R.id.nav_outlays).isVisible = true
                 menu.findItem(R.id.nav_fixed_cost).isVisible = true
                 configureInstallationOrdersForAdmin(menu)
+                
+                // Si el administrador necesita ver estas opciones, se podrían habilitar específicamente aquí
+                // Por ahora, permanecen ocultas según los requisitos
             }
             User.UserType.SALES -> {
+                // Los usuarios de ventas siempre deben ver la opción de crear órdenes de instalación
                 menu.findItem(R.id.nav_create_installation_order).isVisible = true
+                // Aseguramos que el menú padre sea visible
+                menu.findItem(R.id.nav_installation_orders).isVisible = true
             }
             else -> { /* No hacer cambios para otros tipos de usuario */ }
         }
@@ -195,18 +199,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun navigateToInitialDestination(user: User) {
+        // Como dashboard y find_subscriptions están ocultos, usamos nav_my_profile como destino inicial por defecto
         val destination = when (user.type) {
-            User.UserType.SECRETARY -> R.id.nav_find_subscriptions
-            User.UserType.ADMIN -> R.id.nav_dashboard
-            else -> R.id.nav_find_subscriptions
+            User.UserType.SECRETARY -> R.id.nav_my_profile
+            User.UserType.ADMIN -> R.id.nav_my_profile
+            User.UserType.TECHNICIAN -> R.id.assignedInstallationOrdersFragment
+            User.UserType.ACCOUNTANT -> R.id.nav_my_profile
+            User.UserType.SALES -> R.id.nav_create_installation_order
+            else -> R.id.nav_my_profile
         }
         
-        // Crear opciones de navegación para reemplazar la pila de navegación
-        val navOptions = NavOptions.Builder()
-            .setPopUpTo(navController.graph.startDestinationId, true)
-            .build()
-            
         // Navegar al destino inicial
+        val navOptions = NavOptions.Builder()
+            .setLaunchSingleTop(true)
+            .setPopUpTo(navController.graph.startDestinationId, false)
+            .build()
+        
         navController.navigate(destination, null, navOptions)
     }
 
