@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.view.Menu
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -118,6 +117,7 @@ class MainActivity : AppCompatActivity() {
                 // Técnicos sólo pueden ver las órdenes cerrar/cancelar
                 menu.findItem(R.id.assignedInstallationOrdersFragment).isVisible = true
                 menu.findItem(R.id.nav_subscriptions_menu).isVisible = true
+                menu.findItem(R.id.nav_deleteOnuFragment).isVisible = true
             }
 
             User.UserType.SECRETARY -> {
@@ -140,6 +140,10 @@ class MainActivity : AppCompatActivity() {
                 for (i in 0 until menu.size()) {
                     menu.getItem(i).isVisible = true
                 }
+                menu.findItem(R.id.sellerInProgressOrdersFragment).isVisible = true
+                menu.findItem(R.id.assignedInstallationOrdersFragment).isVisible = true
+                menu.findItem(R.id.nav_create_installation_order).isVisible = true
+
             }
 
             User.UserType.SALES -> {
@@ -176,14 +180,6 @@ class MainActivity : AppCompatActivity() {
 
         menu.findItem(R.id.nav_create_support_ticket).isVisible = showCreateTicket
         menu.findItem(R.id.nav_support_assistance_tickets).isVisible = showSupportTickets
-    }
-
-    private fun configureInstallationOrdersForAdmin(menu: Menu) {
-        // Los administradores y secretarias pueden ver todas las opciones
-        menu.findItem(R.id.assignedInstallationOrdersFragment).isVisible = true
-        menu.findItem(R.id.nav_create_installation_order).isVisible = true
-        menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
-
     }
 
     private fun subscribeToFcmTopicsForUser(user: User) {
