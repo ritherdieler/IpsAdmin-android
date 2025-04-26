@@ -39,7 +39,7 @@ class AssignedInstallationOrdersViewModel : ViewModel(), KoinComponent {
 
                 val currentUser = userUseCase.getCurrentUser()
 
-                val orders = installationOrderUseCase.getInstallationOrdersByUserAndStatus(
+                val orders = installationOrderUseCase.getInstallationOrdersByTechnicianAndStatus(
                     currentUser.id!!,
                     InstallationOrderStatus.EN_CURSO
                 )

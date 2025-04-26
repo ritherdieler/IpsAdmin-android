@@ -62,8 +62,8 @@ class InstallationOrderUseCaseImpl(
             repository.closeInstallationOrder(orderId)
         }
 
-    override suspend fun getInstallationOrdersByUserAndStatus(userId: Int, status: InstallationOrderStatus): List<InstallationOrder> {
-        return repository.getInstallationOrdersByUserAndStatus(userId, status)
+    override suspend fun getInstallationOrdersByTechnicianAndStatus(userId: Int, status: InstallationOrderStatus): List<InstallationOrder> {
+        return repository.getInstallationOrdersByTechnicianAndStatus(userId, status)
     }
 
 } 

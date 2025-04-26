@@ -43,8 +43,20 @@ interface InstallationOrderApiService {
         @Query("reason") cancellationReason: String?
     ): Response<InstallationOrder>
     
-    @GET("installation-order/by-user-and-status")
-    suspend fun getInstallationOrdersByUserAndStatus(
+    @GET("installation-order/by-technician-and-status")
+    suspend fun getInstallationOrdersByTechnicianAndStatus(
+        @Query("userId") userId: Int,
+        @Query("status") status: InstallationOrderStatus
+    ): Response<List<InstallationOrder>>
+    
+    @GET("installation-order/assigned-by-and-status")
+    suspend fun getInstallationOrdersByAssignedByAndStatus(
+        @Query("userId") userId: Int,
+        @Query("status") status: InstallationOrderStatus
+    ): Response<List<InstallationOrder>>
+    
+    @GET("installation-order/seller-and-status")
+    suspend fun getInstallationOrdersBySellerAndStatus(
         @Query("userId") userId: Int,
         @Query("status") status: InstallationOrderStatus
     ): Response<List<InstallationOrder>>

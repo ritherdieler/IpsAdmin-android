@@ -93,11 +93,11 @@ class InstallationOrderRepositoryImpl : InstallationOrderRepository, KoinCompone
         handleResponse(response, "Cancelar orden de instalación $orderId")
     }
 
-    override suspend fun getInstallationOrdersByUserAndStatus(
+    override suspend fun getInstallationOrdersByTechnicianAndStatus(
         userId: Int, 
         status: InstallationOrderStatus
     ): List<InstallationOrder> = withContext(Dispatchers.IO) {
-        val response = apiService.getInstallationOrdersByUserAndStatus(userId, status)
+        val response = apiService.getInstallationOrdersByTechnicianAndStatus(userId, status)
         handleResponse(response, "Obtener órdenes de instalación por usuario $userId y estado $status")
     }
 } 
