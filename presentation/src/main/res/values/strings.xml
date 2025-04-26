@@ -246,6 +246,8 @@
     <string name="Fiber">Int. Fibra</string>
     <string name="cancelledByUser">Cancel. manual</string>
     <string name="cancelledBySystem">Cancel. sistema</string>
+    <string name="see_in_progress_orders">Ver órdenes en progreso</string>
+    <string name="see_closed_orders">Ver órdenes cerradas</string>
 
     <string name="start_cut">Iniciar corte</string>
     <string name="active_customers_history">Clientes activos por mes</string>

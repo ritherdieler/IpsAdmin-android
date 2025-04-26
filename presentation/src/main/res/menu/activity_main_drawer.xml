@@ -14,18 +14,19 @@
         <item
             android:id="@+id/nav_subscriptions_menu"
             android:icon="@drawable/ic_launcher_foreground"
+            android:visible="false"
             android:title="@string/subscription_menu">
             <menu>
                 <item
                     android:id="@+id/registerSubscriptionComposeFragment"
                     android:icon="@drawable/ic_launcher_foreground"
                     android:title="@string/menu_subscription"
-                    android:visible="false" />
+                    android:visible="true" />
                 <item
                     android:id="@+id/nav_find_subscriptions"
                     android:icon="@drawable/ic_launcher_foreground"
                     android:title="@string/find_subscription"
-                    android:visible="false" />
+                    android:visible="true" />
             </menu>
         </item>
 
@@ -39,7 +40,7 @@
                     android:id="@+id/nav_create_installation_order"
                     android:icon="@drawable/ic_launcher_foreground"
                     android:title="@string/create_installation_order"
-                    android:visible="true" />
+                    android:visible="false" />
                 <item
                     android:id="@+id/pendingInstallationOrdersFragment"
                     android:icon="@drawable/ic_launcher_foreground"
@@ -49,6 +50,16 @@
                     android:id="@+id/assignedInstallationOrdersFragment"
                     android:icon="@drawable/ic_launcher_foreground"
                     android:title="@string/assigned_orders"
+                    android:visible="false" />
+                <item
+                    android:id="@+id/sellerInProgressOrdersFragment"
+                    android:icon="@drawable/ic_launcher_foreground"
+                    android:title="@string/see_in_progress_orders"
+                    android:visible="false" />
+                <item
+                    android:id="@+id/sellerClosedOrdersFragment"
+                    android:icon="@drawable/ic_launcher_foreground"
+                    android:title="@string/see_closed_orders"
                     android:visible="false" />
             </menu>
         </item>
@@ -144,11 +155,11 @@
                     android:icon="@drawable/ic_launcher_foreground"
                     android:title="Ver Lista de tecnicos"/>
         -->
-        <item
-            android:id="@+id/nav_mufa"
-            android:icon="@drawable/ic_launcher_foreground"
-            android:title="@string/Mufas"
-            android:visible="false" />
+<!--        <item-->
+<!--            android:id="@+id/nav_mufa"-->
+<!--            android:icon="@drawable/ic_launcher_foreground"-->
+<!--            android:title="@string/Mufas"-->
+<!--            android:visible="false" />-->
 
         <!--        <item-->
         <!--            android:id="@+id/nav_ip_pool"-->

@@ -100,4 +100,12 @@ class InstallationOrderRepositoryImpl : InstallationOrderRepository, KoinCompone
         val response = apiService.getInstallationOrdersByTechnicianAndStatus(userId, status)
         handleResponse(response, "Obtener órdenes de instalación por usuario $userId y estado $status")
     }
+    
+    override suspend fun getInstallationOrdersBySellerAndStatus(
+        userId: Int,
+        status: InstallationOrderStatus
+    ): List<InstallationOrder> = withContext(Dispatchers.IO) {
+        val response = apiService.getInstallationOrdersBySellerAndStatus(userId, status)
+        handleResponse(response, "Obtener órdenes de instalación por vendedor $userId y estado $status")
+    }
 } 

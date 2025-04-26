@@ -22,4 +22,5 @@ interface InstallationOrderUseCase {
     // Nuevos métodos que retornan Result
     suspend fun closeInstallationOrderAsResult(orderId: Int): Result<InstallationOrder>
     suspend fun getInstallationOrdersByTechnicianAndStatus(userId: Int, status: InstallationOrderStatus): List<InstallationOrder>
+    suspend fun getInstallationOrdersBySellerAndStatus(userId: Int, status: InstallationOrderStatus): List<InstallationOrder>
 } 

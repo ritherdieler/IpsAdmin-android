@@ -5,6 +5,8 @@ import com.dscorp.ispadmin.presentation.ui.features.fixedCost.FixedCostViewModel
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.AssignedInstallationOrdersViewModel
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.InstallationOrderViewModel
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.PendingInstallationOrdersViewModel
+import com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerClosedOrdersViewModel
+import com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerInProgressOrdersViewModel
 import com.dscorp.ispadmin.presentation.ui.features.ippool.register.IpPoolViewModel
 import com.dscorp.ispadmin.presentation.ui.features.ippool.seeip.IpListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginViewModel
@@ -90,4 +92,6 @@ val viewModelModule = module {
     viewModel { InstallationOrderViewModel() }
     viewModel { PendingInstallationOrdersViewModel() }
     viewModel { AssignedInstallationOrdersViewModel() }
+    viewModel { SellerInProgressOrdersViewModel() }
+    viewModel { SellerClosedOrdersViewModel() }
 }

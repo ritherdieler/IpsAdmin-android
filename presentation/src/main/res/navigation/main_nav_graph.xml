@@ -3,7 +3,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/nav_dashboard">
+    app:startDestination="@id/nav_my_profile">
+
+    <fragment
+        android:id="@+id/nav_my_profile"
+        android:name="com.dscorp.ispadmin.presentation.ui.features.profile.MyProfileFragment"
+       >
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_dashboard"
+        android:name="com.dscorp.ispadmin.presentation.ui.features.dashboard.DashBoardFragment"
+        android:label="fragment_dash_board"
+        tools:layout="@layout/fragment_dash_board" />
 
     <fragment
         android:id="@+id/nav_plan"
@@ -87,31 +99,11 @@
             android:id="@+id/findSubscription_to_editSubscriptionFragment"
             app:destination="@id/editSubscriptionFragment" />
 
-        <action android:id="@+id/findSubscription_to_registerPayment"
+        <action
+            android:id="@+id/findSubscription_to_registerPayment"
             app:destination="@id/register_payment" />
 
     </fragment>
-
-    <!--    <fragment-->
-    <!--        android:id="@+id/nav_find_subscriptions"-->
-    <!--        android:name="com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.FindSubscriptionFragment"-->
-    <!--        android:label="FindSubscription"-->
-    <!--        tools:layout="@layout/fragment_find_subscription">-->
-
-    <!--        <action-->
-    <!--            android:id="@+id/findSubscription_to_subscription_detail"-->
-    <!--            app:destination="@id/subscriptionDetail" />-->
-
-    <!--        <action-->
-    <!--            android:id="@+id/findSubscription_to_registerPayment"-->
-    <!--            app:destination="@id/register_payment" />-->
-    <!--        <action-->
-    <!--            android:id="@+id/findSubscription_to_paymentHistoryFragment"-->
-    <!--            app:destination="@id/paymentHistoryFragment" />-->
-    <!--        <action-->
-    <!--            android:id="@+id/action_nav_find_subscriptions_to_editSubscriptionFragment"-->
-    <!--            app:destination="@id/editSubscriptionFragment" />-->
-    <!--    </fragment>-->
 
     <fragment
         android:id="@+id/register_payment"
@@ -125,8 +117,7 @@
     <fragment
         android:id="@+id/nav_consult_payments"
         android:name="com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryComposeFragment"
-        android:label="Consultar Pagos"
-        />
+        android:label="Consultar Pagos" />
 
     <fragment
         android:id="@+id/payment_history_compose_fragment"
@@ -156,20 +147,10 @@
             app:destination="@+id/ipListFragment" />
     </fragment>
 
-
-    <fragment
-        android:id="@+id/nav_my_profile"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.profile.MyProfileFragment"
-        android:label="fragment_my_profile"
-        >
-        <argument android:name="user" />
-    </fragment>
-
     <fragment
         android:id="@+id/paymentDetailFragment"
         android:name="com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailFragment"
-        android:label="fragment_payment_detail"
-        >
+        android:label="fragment_payment_detail">
 
         <action
             android:id="@+id/action_paymentDetailFragment_to_registerPaymentFragment"
@@ -183,11 +164,7 @@
         android:name="com.dscorp.ispadmin.presentation.ui.features.report.ReportsFragment"
         android:label="fragment_reports"
         tools:layout="@layout/fragment_reports" />
-    <fragment
-        android:id="@+id/nav_dashboard"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.dashboard.DashBoardFragment"
-        android:label="fragment_dash_board"
-        tools:layout="@layout/fragment_dash_board" />
+
     <fragment
         android:id="@+id/editNapBoxFragment"
         android:name="com.dscorp.ispadmin.presentation.ui.features.napbox.edit.EditNapBoxFragment"
@@ -313,7 +290,7 @@
     <fragment
         android:id="@+id/registerSubscriptionComposeFragment"
         android:name="com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionComposeFragment"
-        android:label="RegisterSubscriptionComposeFragment" >
+        android:label="RegisterSubscriptionComposeFragment">
 
         <argument
             android:name="installationOrderId"
@@ -339,18 +316,28 @@
         android:label="Crear Orden de Instalación">
         <argument
             android:name="screen"
-            app:argType="string"
-            android:defaultValue="create" />
+            android:defaultValue="create"
+            app:argType="string" />
         <argument
             android:name="orderId"
-            app:argType="integer"
-            android:defaultValue="0" />
+            android:defaultValue="0"
+            app:argType="integer" />
     </fragment>
 
 
     <fragment
         android:id="@+id/pendingInstallationOrdersFragment"
         android:name="com.dscorp.ispadmin.presentation.ui.features.installationorder.PendingInstallationOrdersFragment"
-        android:label="Órdenes de Instalación Pendientes" />
+        android:label="Órdenes Pendientes" />
+
+    <fragment
+        android:id="@+id/sellerInProgressOrdersFragment"
+        android:name="com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerInProgressOrdersFragment"
+        android:label="Órdenes en Progreso" />
+
+    <fragment
+        android:id="@+id/sellerClosedOrdersFragment"
+        android:name="com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerClosedOrdersFragment"
+        android:label="Órdenes Cerradas" />
 
 </navigation> 
