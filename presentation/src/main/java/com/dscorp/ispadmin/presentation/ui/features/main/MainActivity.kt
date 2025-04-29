@@ -11,7 +11,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
-import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
@@ -21,6 +20,9 @@ import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.usecase.UpdateDeviceTokenUseCase
 import com.dscorp.ispadmin.presentation.fcm.FcmTopics
 import com.dscorp.ispadmin.presentation.fcm.updateFcmToken
+import com.dscorp.ispadmin.presentation.ui.features.main.permissions.FcmTopicManager
+import com.dscorp.ispadmin.presentation.ui.features.main.permissions.FeatureConfig
+import com.dscorp.ispadmin.presentation.ui.features.main.permissions.UserPermissionManager
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
@@ -32,6 +34,8 @@ class MainActivity : AppCompatActivity() {
     private val firebaseAnalytics: FirebaseAnalytics by inject()
     private val viewModel: MainActivityViewModel by inject()
     private val updateDeviceTokenUseCase: UpdateDeviceTokenUseCase by inject()
+    private lateinit var userPermissionManager: UserPermissionManager
+    private lateinit var fcmTopicManager: FcmTopicManager
 
     private lateinit var navController: NavController
     private lateinit var navHostFragment: NavHostFragment
@@ -47,6 +51,11 @@ class MainActivity : AppCompatActivity() {
 
         setupNavigation()
         checkNotificationPermission()
+        
+        // Inicializar gestores de permisos
+        userPermissionManager = UserPermissionManager()
+        fcmTopicManager = FcmTopicManager(FirebaseMessaging.getInstance())
+        
         setupUserProfile()
 
         // Actualizar token FCM
@@ -101,137 +110,51 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.user?.let { user ->
             firebaseAnalytics.setUserId(user.id.toString())
-            configureMenuBasedOnUserType(user)
-            subscribeToFcmTopicsForUser(user)
-//            navigateToInitialDestination(user)
+            
+            // Aplicar configuración de permisos y suscripción a tópicos FCM
+            applyUserConfiguration(user)
+            
+            // Aquí podríamos volver a habilitar la navegación inicial si se desea
+            // navigateToInitialDestination(user)
         }
     }
-
-    private fun configureMenuBasedOnUserType(user: User) {
+    
+    private fun applyUserConfiguration(user: User) {
+        // Aplicar configuración de menú según permisos
+        val featureConfig = userPermissionManager.getFeatureConfigForUser(user.type!!)
+        configureMenuWithFeatures(featureConfig)
+        
+        // Configurar suscripciones FCM
+        fcmTopicManager.subscribeToTopicsForUserType(user.type!!)
+    }
+    
+    private fun configureMenuWithFeatures(featureConfig: FeatureConfig) {
         val menu = binding.navView.menu
-
-
-        // Configuración específica para cada tipo de usuario
-        when (user.type) {
-            User.UserType.TECHNICIAN -> {
-                // Técnicos sólo pueden ver las órdenes cerrar/cancelar
-                menu.findItem(R.id.assignedInstallationOrdersFragment).isVisible = true
-                menu.findItem(R.id.nav_subscriptions_menu).isVisible = true
-                menu.findItem(R.id.nav_deleteOnuFragment).isVisible = true
-            }
-
-            User.UserType.SECRETARY -> {
-                menu.findItem(R.id.nav_dashboard).isVisible = true
-                menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
-                menu.findItem(R.id.nav_subscriptions_menu).isVisible = true
-
-            }
-
-            User.UserType.ACCOUNTANT -> {
-                menu.findItem(R.id.nav_dashboard).isVisible = true
-                menu.findItem(R.id.nav_outlays).isVisible = true
-                menu.findItem(R.id.nav_fixed_cost).isVisible = true
-                menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = true
-                menu.findItem(R.id.nav_subscriptions_menu).isVisible = true
-            }
-
-            User.UserType.ADMIN -> {
-                // Hacemos visible cualquier otra opción del menú que pueda estar oculta por defecto
-                for (i in 0 until menu.size()) {
-                    menu.getItem(i).isVisible = true
-                }
-                menu.findItem(R.id.sellerInProgressOrdersFragment).isVisible = true
-                menu.findItem(R.id.assignedInstallationOrdersFragment).isVisible = true
-                menu.findItem(R.id.nav_create_installation_order).isVisible = true
-
-            }
-
-            User.UserType.SALES -> {
-                // Los usuarios de ventas siempre deben ver la opción de crear órdenes de instalación
-                menu.findItem(R.id.nav_create_installation_order).isVisible = true
-                // Mostrar las opciones para ver órdenes en progreso y cerradas
-                menu.findItem(R.id.sellerInProgressOrdersFragment).isVisible = true
-                menu.findItem(R.id.sellerClosedOrdersFragment).isVisible = true
-                // Aseguramos que el menú padre sea visible
-                menu.findItem(R.id.nav_installation_orders).isVisible = true
-            }
-
-            else -> { /* No hacer cambios para otros tipos de usuario */
-            }
-        }
-
-        // Configurar visibilidad para tickets de soporte
-        configureSupportTicketVisibility(user)
-    }
-
-    private fun configureSupportTicketVisibility(user: User) {
-        val menu = binding.navView.menu
-        val showCreateTicket = user.type in listOf(
-            User.UserType.ADMIN,
-            User.UserType.SECRETARY,
-            User.UserType.ACCOUNTANT
-        )
-        val showSupportTickets = user.type in listOf(
-            User.UserType.ADMIN,
-            User.UserType.SECRETARY,
-            User.UserType.TECHNICIAN,
-            User.UserType.ACCOUNTANT
-        )
-
-        menu.findItem(R.id.nav_create_support_ticket).isVisible = showCreateTicket
-        menu.findItem(R.id.nav_support_assistance_tickets).isVisible = showSupportTickets
-    }
-
-    private fun subscribeToFcmTopicsForUser(user: User) {
-        val messaging = FirebaseMessaging.getInstance()
-
-        // Suscripciones específicas basadas en el tipo de usuario
-        when (user.type) {
-            User.UserType.TECHNICIAN -> {
-                messaging.subscribeToTopic(FcmTopics.FCM_TECHNICIAN_TOPIC)
-                messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
-            }
-
-            User.UserType.SECRETARY, User.UserType.ACCOUNTANT -> {
-                messaging.subscribeToTopic(FcmTopics.FCM_SECRETARY_TOPIC)
-                messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET_ADMINS)
-                messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
-                messaging.subscribeToTopic(FcmTopics.TOPIC_INSTALLATION_ORDER)
-            }
-
-            User.UserType.ADMIN -> {
-                messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET_ADMINS)
-                messaging.subscribeToTopic(FcmTopics.ASSISTANCE_TICKET)
-                messaging.subscribeToTopic(FcmTopics.TOPIC_INSTALLATION_ORDER)
-            }
-
-            User.UserType.SALES -> {
-                messaging.subscribeToTopic(FcmTopics.TOPIC_INSTALLATION_ORDER)
-            }
-
-            else -> { /* No hay suscripciones especiales para otros tipos */
-            }
-        }
-    }
-
-    private fun navigateToInitialDestination(user: User) {
-        // Como dashboard y find_subscriptions están ocultos, usamos nav_my_profile como destino inicial por defecto
-        val destination = when (user.type) {
-            User.UserType.SECRETARY -> R.id.nav_dashboard
-            User.UserType.ADMIN -> R.id.nav_dashboard
-            User.UserType.TECHNICIAN -> R.id.assignedInstallationOrdersFragment
-            User.UserType.ACCOUNTANT -> R.id.nav_dashboard
-            User.UserType.SALES -> R.id.nav_create_installation_order
-            else -> R.id.nav_my_profile
-        }
-
-        // Navegar al destino inicial
-        val navOptions = NavOptions.Builder()
-            .setLaunchSingleTop(true)
-            .setPopUpTo(navController.graph.startDestinationId, false)
-            .build()
-
-        navController.navigate(destination, null, navOptions)
+        
+        // Dashboard
+        menu.findItem(R.id.nav_dashboard).isVisible = featureConfig.hasDashboardAccess
+        
+        // Installation orders
+        menu.findItem(R.id.nav_create_installation_order).isVisible = featureConfig.canCreateInstallationOrders
+        menu.findItem(R.id.sellerInProgressOrdersFragment).isVisible = featureConfig.canViewSellerInProgressOrders
+        menu.findItem(R.id.sellerClosedOrdersFragment).isVisible = featureConfig.canViewSellerClosedOrders
+        menu.findItem(R.id.pendingInstallationOrdersFragment).isVisible = featureConfig.canViewPendingInstallationOrders
+        menu.findItem(R.id.assignedInstallationOrdersFragment).isVisible = featureConfig.canViewAssignedInstallationOrders
+        menu.findItem(R.id.nav_installation_orders).isVisible = featureConfig.hasAnyInstallationOrderAccess
+        
+        // Subscriptions
+        menu.findItem(R.id.nav_subscriptions_menu).isVisible = featureConfig.hasSubscriptionsAccess
+        
+        // Support tickets
+        menu.findItem(R.id.nav_create_support_ticket).isVisible = featureConfig.canCreateSupportTickets
+        menu.findItem(R.id.nav_support_assistance_tickets).isVisible = featureConfig.canViewSupportTickets
+        
+        // Financials
+        menu.findItem(R.id.nav_outlays).isVisible = featureConfig.hasOutlaysAccess
+        menu.findItem(R.id.nav_fixed_cost).isVisible = featureConfig.hasFixedCostAccess
+        
+        // Technical
+        menu.findItem(R.id.nav_deleteOnuFragment).isVisible = featureConfig.canDeleteOnu
     }
 
     override fun onBackPressed() {
@@ -252,3 +175,4 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+

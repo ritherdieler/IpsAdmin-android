@@ -13,5 +13,5 @@ fun String.encryptWithSHA384(): String {
 }
 
 fun main() {
-    println("Lisbeth12".encryptWithSHA384())
+    println("cintia123".encryptWithSHA384())
 }
