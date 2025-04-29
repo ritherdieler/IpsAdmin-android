@@ -84,8 +84,9 @@ class CloudMessagingService : FirebaseMessagingService() {
             notificationManager.createNotificationChannel()
 
             // Procesar el mensaje usando el handler apropiado
-            messageHandlerRegistry.getHandler(fcmMessage.type)
-                ?.handleMessage(fcmMessage, remoteMessage)
+            val handler = messageHandlerRegistry.getHandler(fcmMessage.type)
+
+            handler?.handleMessage(fcmMessage, remoteMessage)
         }
 
         remoteMessage.notification?.let {
@@ -311,7 +312,7 @@ class AssistanceTicketHandler(private val service: CloudMessagingService) : Mess
         // Verificar si pertenece al topic ASSISTANCE_TICKET y reproducir alerta
         val topic = rawMessage.from?.substringAfterLast("/", "")
         if (topic == FcmTopics.ASSISTANCE_TICKET) {
-            textToSpeechManager.speak("Hay una nueva orden de instalación por atender")
+            textToSpeechManager.speak("Se ha registrado un nuevo ticket de asistencia")
         }
     }
 }

@@ -472,11 +472,10 @@ private fun handleMenuAction(
 ) {
     when (menuItem) {
         SHOW_PAYMENT_HISTORY -> {
-            navController.navigate(
                 SubscriptionFinderFragmentDirections.findSubscriptionToPaymentHistoryFragment(
-                    subscription.id
+                    subscription.id,
+                    subscription.serviceStatus
                 )
-            )
         }
 
         EDIT_PLAN_SUBSCRIPTION -> {

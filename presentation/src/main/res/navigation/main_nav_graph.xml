@@ -7,9 +7,7 @@
 
     <fragment
         android:id="@+id/nav_my_profile"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.profile.MyProfileFragment"
-       >
-    </fragment>
+        android:name="com.dscorp.ispadmin.presentation.ui.features.profile.MyProfileFragment"></fragment>
 
     <fragment
         android:id="@+id/nav_dashboard"
@@ -115,15 +113,11 @@
     </fragment>
 
     <fragment
-        android:id="@+id/nav_consult_payments"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryComposeFragment"
-        android:label="Consultar Pagos" />
-
-    <fragment
         android:id="@+id/payment_history_compose_fragment"
         android:name="com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryComposeFragment"
         android:label="Payment History"
         tools:layout="@layout/fragment_payment_history">
+
         <action
             android:id="@+id/action_paymentHistoryFragment_to_paymentDetailFragment"
             app:destination="@id/paymentDetailFragment" />
@@ -135,6 +129,10 @@
         <argument
             android:name="subscriptionId"
             app:argType="java.lang.Integer" />
+
+        <argument
+            android:name="serviceStatus"
+            app:argType="com.dscorp.ispadmin.domain.model.ServiceStatus" />
 
     </fragment>
     <fragment

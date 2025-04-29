@@ -2,9 +2,9 @@ package com.dscorp.ispadmin.presentation.ui.features.payment.history
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
-import com.dscorp.ispadmin.domain.model.Payment
 import com.example.data2.data.apirequestmodel.SearchPaymentsRequest
 import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +18,8 @@ data class PaymentHistoryState(
     val payments: List<Payment> = emptyList(),
     val error: String? = null,
     val isReactivationButtonLoading: Boolean = false,
-    val isServiceReactivated: Boolean = false
+    val isServiceReactivated: Boolean = false,
+    val reactivationNotes: String = ""
 )
 
 class PaymentHistoryViewModel(val repository: IRepository) :
@@ -35,7 +36,7 @@ class PaymentHistoryViewModel(val repository: IRepository) :
 
     // Store the original unfiltered list of payments
     private var allPayments: List<Payment> = emptyList()
-    
+
     var subscriptionId: Int? = null
 
     fun getFilteredPaymentHistory(request: SearchPaymentsRequest) = viewModelScope.launch {
@@ -44,9 +45,10 @@ class PaymentHistoryViewModel(val repository: IRepository) :
             val response = repository.getFilteredPaymentHistory(request)
             allPayments = response // Store the original list
             _state.update { it.copy(isLoading = false, payments = response) }
-            
+
             // For backward compatibility
-            uiState.value = BaseUiState(PaymentHistoryUiState.OnPaymentHistoryFilteredResponse(response))
+            uiState.value =
+                BaseUiState(PaymentHistoryUiState.OnPaymentHistoryFilteredResponse(response))
         } catch (e: Exception) {
             _state.update { it.copy(isLoading = false, error = e.message) }
             uiState.value = BaseUiState(PaymentHistoryUiState.OnError(e.message))
@@ -59,12 +61,14 @@ class PaymentHistoryViewModel(val repository: IRepository) :
             val response = repository.getRecentPaymentsHistory(subscriptionId!!, itemsLimit)
             allPayments = response // Store the original list
             _state.update { it.copy(isLoading = false, payments = response) }
-            
+
             // For backward compatibility
-            uiState.value = BaseUiState(PaymentHistoryUiState.GetRecentPaymentsHistoryResponse(response))
+            uiState.value =
+                BaseUiState(PaymentHistoryUiState.GetRecentPaymentsHistoryResponse(response))
         } catch (e: Exception) {
             _state.update { it.copy(isLoading = false, error = e.message) }
-            uiState.value = BaseUiState(PaymentHistoryUiState.GetRecentPaymentsHistoryError(e.message))
+            uiState.value =
+                BaseUiState(PaymentHistoryUiState.GetRecentPaymentsHistoryError(e.message))
         }
     }
 
@@ -72,9 +76,10 @@ class PaymentHistoryViewModel(val repository: IRepository) :
         try {
             val pendingPayments = allPayments.filter { !it.paid }
             _state.update { it.copy(payments = pendingPayments) }
-            
+
             // For backward compatibility
-            uiState.value = BaseUiState(PaymentHistoryUiState.OnPaymentHistoryFilteredResponse(pendingPayments))
+            uiState.value =
+                BaseUiState(PaymentHistoryUiState.OnPaymentHistoryFilteredResponse(pendingPayments))
         } catch (e: Exception) {
             _state.update { it.copy(error = e.message) }
             uiState.value = BaseUiState(PaymentHistoryUiState.OnError(e.message))
@@ -85,23 +90,38 @@ class PaymentHistoryViewModel(val repository: IRepository) :
         try {
             // Use the stored original list
             _state.update { it.copy(payments = allPayments) }
-            
+
             // For backward compatibility
-            uiState.value = BaseUiState(PaymentHistoryUiState.OnPaymentHistoryFilteredResponse(allPayments))
+            uiState.value =
+                BaseUiState(PaymentHistoryUiState.OnPaymentHistoryFilteredResponse(allPayments))
         } catch (e: Exception) {
             _state.update { it.copy(error = e.message) }
             uiState.value = BaseUiState(PaymentHistoryUiState.OnError(e.message))
         }
     }
 
+    fun updateReactivationNotes(notes: String) {
+        _state.update { it.copy(reactivationNotes = notes) }
+    }
+
     fun reactivateService() = viewModelScope.launch {
         try {
             _state.update { it.copy(isReactivationButtonLoading = true) }
             reactivationButtonIsLoading.value = true
-            
+
             subscriptionId?.let {
-                repository.reactivateService(subscriptionId!!, repository.getUserSession()!!.id!!)
-                _state.update { it.copy(isReactivationButtonLoading = false, isServiceReactivated = true) }
+                repository.reactivateService(
+                    subscriptionId!!,
+                    repository.getUserSession()!!.id!!,
+                    _state.value.reactivationNotes
+                )
+                _state.update {
+                    it.copy(
+                        isReactivationButtonLoading = false,
+                        isServiceReactivated = true,
+                        reactivationNotes = "" // Clear notes after successful reactivation
+                    )
+                }
                 uiState.value = BaseUiState(PaymentHistoryUiState.ServiceReactivated)
             }
         } catch (e: Exception) {

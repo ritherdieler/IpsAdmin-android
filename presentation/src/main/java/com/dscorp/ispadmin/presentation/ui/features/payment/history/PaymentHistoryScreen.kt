@@ -23,6 +23,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -44,9 +45,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dscorp.ispadmin.R
+import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
-import com.dscorp.ispadmin.domain.model.Payment
 import kotlinx.coroutines.launch
 
 @Composable
@@ -154,21 +155,46 @@ fun PaymentHistoryScreen(
 
 
                 // Reactivate service button if needed
-                if (viewModel.subscriptionId != null) {
+                if (viewModel.subscriptionId != null ) {
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.reactivation_section_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
 
-                    // Reactivate service button if needed
-                    if (viewModel.subscriptionId != null) {
-                        Spacer(modifier = Modifier.height(16.dp))
+                            // Notes field for reactivation
+                            OutlinedTextField(
+                                value = state.reactivationNotes,
+                                onValueChange = { viewModel.updateReactivationNotes(it) },
+                                label = { Text(stringResource(R.string.reactivation_notes)) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 16.dp),
+                                maxLines = 3
+                            )
 
-                        MyButton(
-                            onClick = { viewModel.reactivateService() },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !state.isReactivationButtonLoading,
-                            text = stringResource(R.string.reactivate_service),
-                            isLoading = state.isReactivationButtonLoading
-                        )
+                            MyButton(
+                                onClick = { viewModel.reactivateService() },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !state.isReactivationButtonLoading,
+                                text = stringResource(R.string.reactivate_service),
+                                isLoading = state.isReactivationButtonLoading
+                            )
+                        }
                     }
                 }
             }

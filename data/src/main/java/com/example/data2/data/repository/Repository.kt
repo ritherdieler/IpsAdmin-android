@@ -565,8 +565,8 @@ class Repository : IRepository, KoinComponent {
         }
     }
 
-    override suspend fun reactivateService(subscriptionId: Int, responsibleId: Int) {
-        val response = restApiServices.reactivateService(subscriptionId, responsibleId)
+    override suspend fun reactivateService(subscriptionId: Int, responsibleId: Int, notes: String?) {
+        val response = restApiServices.reactivateService(subscriptionId, responsibleId, notes)
         when (response.status) {
             HttpCodes.OK -> {}
             else -> throw Exception(response.error)

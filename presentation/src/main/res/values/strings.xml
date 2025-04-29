@@ -333,4 +333,7 @@
     <string name="installation_order_details">Detalles de Orden</string>
     <string name="see_support_tickets">Ver tickets de soporte</string>
     <string name="subscription_menu">Subscripción</string>
+
+    <string name="reactivation_section_title">Reactivación de Servicio</string>
+    <string name="reactivation_notes">Notas de Reactivación</string>
 </resources>
