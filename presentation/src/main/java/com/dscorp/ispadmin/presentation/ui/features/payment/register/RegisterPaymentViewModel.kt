@@ -77,13 +77,27 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
                 }
             }
             is RegisterPaymentEvent.DiscountAmountChanged -> {
+                val amount = event.amount
+                val errors = if (amount.isNotEmpty()) {
+                    try {
+                        val amountDouble = amount.toDouble()
+                        if (amountDouble <= 0) {
+                            _state.value.errorMessages + ("discountAmount" to "El descuento debe ser mayor a 0")
+                        } else {
+                            validateDiscountAmount(amount, _state.value.payment?.amountToPay ?: 0.0)
+                                ?.let { error -> _state.value.errorMessages + ("discountAmount" to error) }
+                                ?: _state.value.errorMessages - "discountAmount"
+                        }
+                    } catch (e: Exception) {
+                        _state.value.errorMessages + ("discountAmount" to "Monto de descuento inválido")
+                    }
+                } else {
+                    _state.value.errorMessages - "discountAmount"
+                }
+                
                 _state.update { 
-                    val errors = validateDiscountAmount(event.amount, it.payment?.amountToPay ?: 0.0)
-                        ?.let { error -> it.errorMessages + ("discountAmount" to error) }
-                        ?: it.errorMessages - "discountAmount"
-                    
                     it.copy(
-                        discountAmount = event.amount,
+                        discountAmount = amount,
                         errorMessages = errors
                     ) 
                 }
@@ -164,7 +178,8 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
             errors["paymentMethod"] = "Debe seleccionar un método de pago"
         }
         
-        if (currentState.paymentMethod != "Efectivo" && currentState.electronicPayerName.isEmpty()) {
+        // Validar nombre del pagador solo para Yape o Plin
+        if ((currentState.paymentMethod == "Yape" || currentState.paymentMethod == "Plin") && currentState.electronicPayerName.isEmpty()) {
             errors["electronicPayerName"] = "Debe ingresar el nombre del pagador"
         }
         
@@ -174,7 +189,7 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
             if (currentState.discountAmount.isEmpty()) {
                 errors["discountAmount"] = "Debe ingresar un monto de descuento"
             } else {
-                // Validar que el monto de descuento no sea 0
+                // Validar que el monto de descuento sea válido
                 try {
                     val amountDouble = currentState.discountAmount.toDouble()
                     if (amountDouble <= 0) {

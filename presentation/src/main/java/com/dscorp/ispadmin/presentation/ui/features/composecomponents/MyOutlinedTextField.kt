@@ -7,6 +7,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,16 @@ fun MyOutlinedTextField(
 ) {
     var isError by remember { mutableStateOf(hasError) }
     var errorText by remember { mutableStateOf(errorMessage) }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            isError = true
+            errorText = errorMessage
+        } else {
+            isError = false
+            errorText = null
+        }
+    }
 
     OutlinedTextField(
         modifier = modifier,
