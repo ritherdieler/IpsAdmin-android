@@ -6,6 +6,7 @@ import java.util.Locale
 
 class Payment(
     var id: Int? = null,
+    var amountPaid: Double? = null,
     val discountAmount: Double? = 0.0,
     val discountReason: String? = null,
     var paymentDate: Long = 0,
@@ -13,6 +14,7 @@ class Payment(
     var method: String? = "",
     var paid: Boolean = false,
     var amountToPay: Double = 0.0,
+    var responsibleId: Int = 0,
     var service: String? = null,
     var responsibleName: String? = null,
     val subscriptionId: Int? = null,

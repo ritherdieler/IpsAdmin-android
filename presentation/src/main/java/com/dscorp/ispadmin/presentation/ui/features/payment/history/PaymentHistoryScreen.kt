@@ -49,6 +49,8 @@ import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun PaymentHistoryScreen(
@@ -56,152 +58,21 @@ fun PaymentHistoryScreen(
     onPaymentItemClicked: (Payment) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-
-    // States for UI components
-    var onlyPendingChecked by remember { mutableStateOf(false) }
-
-    // Show snackbar for errors and success messages
-    LaunchedEffect(state.error, state.isServiceReactivated) {
-        state.error?.let {
-            scope.launch {
-                snackbarHostState.showSnackbar(it)
+    
+    PaymentScreenContent(
+        state = state,
+        subscriptionId = viewModel.subscriptionId,
+        onPaymentItemClicked = onPaymentItemClicked,
+        onUpdateReactivationNotes = { viewModel.updateReactivationNotes(it) },
+        onReactivateService = { viewModel.reactivateService() },
+        onTogglePendingPaymentsFilter = { isChecked -> 
+            if (isChecked) {
+                viewModel.showOnlyPendingPayments()
+            } else {
+                viewModel.showAllPayments()
             }
         }
-
-        if (state.isServiceReactivated) {
-            val message = "El servicio fue reactivado con exito"
-            scope.launch {
-                snackbarHostState.showSnackbar(message)
-            }
-        }
-    }
-
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.filter),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ) {
-                    Checkbox(
-                        checked = onlyPendingChecked,
-                        onCheckedChange = { isChecked ->
-                            onlyPendingChecked = isChecked
-                            if (isChecked) {
-                                viewModel.showOnlyPendingPayments()
-                            } else {
-                                viewModel.showAllPayments()
-                            }
-                        }
-                    )
-                    Text(
-                        text = stringResource(R.string.only_pending),
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
-
-                if (!onlyPendingChecked) {
-                    Text(
-                        text = stringResource(
-                            R.string.disclaimer_payment_list,
-                            state.payments.size
-                        ),
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Payments list
-                if (state.isLoading) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        items(state.payments) { payment ->
-                            PaymentItem(
-                                payment = payment,
-                                onClick = { onPaymentItemClicked(payment) }
-                            )
-                        }
-                    }
-                }
-
-
-                // Reactivate service button if needed
-                if (viewModel.subscriptionId != null ) {
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.reactivation_section_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-
-                            // Notes field for reactivation
-                            OutlinedTextField(
-                                value = state.reactivationNotes,
-                                onValueChange = { viewModel.updateReactivationNotes(it) },
-                                label = { Text(stringResource(R.string.reactivation_notes)) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 16.dp),
-                                maxLines = 3
-                            )
-
-                            MyButton(
-                                onClick = { viewModel.reactivateService() },
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !state.isReactivationButtonLoading,
-                                text = stringResource(R.string.reactivate_service),
-                                isLoading = state.isReactivationButtonLoading
-                            )
-                        }
-                    }
-                }
-            }
-
-
-        }
-    }
+    )
 }
 
 @Composable
@@ -407,5 +278,236 @@ fun PaymentItemPendingPreview() {
 
     MyTheme {
         PaymentItem(payment = payment)
+    }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+fun PaymentHistoryScreenPreview() {
+    // Payments sample data
+    val payments = listOf(
+        Payment(
+            id = 1,
+            billingDate = System.currentTimeMillis(),
+            amountToPay = 100.0,
+            paid = true,
+            discountAmount = 20.0,
+            discountReason = "Descuento por pago anticipado",
+            method = "Transferencia bancaria",
+            responsibleName = "Carlos Rodríguez"
+        ),
+        Payment(
+            id = 2,
+            billingDate = System.currentTimeMillis() - 2592000000, // 30 días atrás
+            amountToPay = 150.0,
+            paid = false,
+            method = "Efectivo",
+            responsibleName = "Ana García"
+        ),
+        Payment(
+            id = 3,
+            billingDate = System.currentTimeMillis() - 5184000000, // 60 días atrás
+            amountToPay = 120.0,
+            paid = true,
+            method = "Yape",
+            responsibleName = "Miguel Sánchez"
+        )
+    )
+
+    // Preview del estado normal
+    val state = PaymentHistoryState(
+        isLoading = false,
+        payments = payments,
+        error = null,
+        isReactivationButtonLoading = false,
+        isServiceReactivated = false,
+        reactivationNotes = ""
+    )
+
+    MyTheme {
+        PaymentScreenContent(
+            state = state,
+            subscriptionId = 123,
+            onPaymentItemClicked = {},
+            onUpdateReactivationNotes = {},
+            onReactivateService = {},
+            onTogglePendingPaymentsFilter = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+fun PaymentHistoryScreenLoadingPreview() {
+    // Preview del estado de carga
+    val state = PaymentHistoryState(
+        isLoading = true,
+        payments = emptyList(),
+        error = null,
+        isReactivationButtonLoading = false,
+        isServiceReactivated = false,
+        reactivationNotes = ""
+    )
+
+    MyTheme {
+        PaymentScreenContent(
+            state = state,
+            subscriptionId = null,
+            onPaymentItemClicked = {},
+            onUpdateReactivationNotes = {},
+            onReactivateService = {},
+            onTogglePendingPaymentsFilter = {}
+        )
+    }
+}
+
+@Composable
+fun PaymentScreenContent(
+    state: PaymentHistoryState,
+    subscriptionId: Int?,
+    onPaymentItemClicked: (Payment) -> Unit,
+    onUpdateReactivationNotes: (String) -> Unit,
+    onReactivateService: () -> Unit,
+    onTogglePendingPaymentsFilter: (Boolean) -> Unit
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    // States for UI components
+    var onlyPendingChecked by remember { mutableStateOf(false) }
+
+    // Show snackbar for errors and success messages
+    LaunchedEffect(state.error, state.isServiceReactivated) {
+        state.error?.let {
+            scope.launch {
+                snackbarHostState.showSnackbar(it)
+            }
+        }
+
+        if (state.isServiceReactivated) {
+            val message = "El servicio fue reactivado con exito"
+            scope.launch {
+                snackbarHostState.showSnackbar(message)
+            }
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.filter),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    Checkbox(
+                        checked = onlyPendingChecked,
+                        onCheckedChange = { isChecked ->
+                            onlyPendingChecked = isChecked
+                            onTogglePendingPaymentsFilter(isChecked)
+                        }
+                    )
+                    Text(
+                        text = stringResource(R.string.only_pending),
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+
+                if (!onlyPendingChecked) {
+                    Text(
+                        text = stringResource(
+                            R.string.disclaimer_payment_list,
+                            state.payments.size
+                        ),
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Payments list
+                if (state.isLoading) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(state.payments) { payment ->
+                            PaymentItem(
+                                payment = payment,
+                                onClick = { onPaymentItemClicked(payment) }
+                            )
+                        }
+                    }
+                }
+
+
+                // Reactivate service button if needed
+                if (subscriptionId != null ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.reactivation_section_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+
+                            // Notes field for reactivation
+                            OutlinedTextField(
+                                value = state.reactivationNotes,
+                                onValueChange = { onUpdateReactivationNotes(it) },
+                                label = { Text(stringResource(R.string.reactivation_notes)) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 16.dp),
+                                maxLines = 3
+                            )
+
+                            MyButton(
+                                onClick = { onReactivateService() },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !state.isReactivationButtonLoading,
+                                text = stringResource(R.string.reactivate_service),
+                                isLoading = state.isReactivationButtonLoading
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 } 

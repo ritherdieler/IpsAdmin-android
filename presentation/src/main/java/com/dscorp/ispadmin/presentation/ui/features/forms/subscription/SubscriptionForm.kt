@@ -57,7 +57,14 @@ abstract class SubscriptionForm {
     val priceField = ReactiveFormField<String?>(
         hintResourceId = R.string.price,
         errorResourceId = R.string.invalidPrice,
-        validator = { (it != null) && it.isNotEmpty() && (it.toDouble() > 0) }
+        validator = { 
+            if (it == null || it.isEmpty() || it == "null") false
+            else try {
+                it.toDouble() > 0
+            } catch (e: NumberFormatException) {
+                false
+            }
+        }
     )
 
     val locationField = ReactiveFormField<LatLng?>(

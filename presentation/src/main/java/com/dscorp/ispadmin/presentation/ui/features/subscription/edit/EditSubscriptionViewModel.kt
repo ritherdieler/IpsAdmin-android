@@ -2,6 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.edit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.example.data2.data.apirequestmodel.UpdateSubscriptionPlanBody
@@ -60,7 +61,7 @@ class EditSubscriptionViewModel(
 
                 // Filtramos los planes por el mismo tipo de instalación de la suscripción
                 val filteredPlans = plans.filter { plan -> 
-                    plan.type == subscriptionResponse.installationType 
+                    plan.type == subscriptionResponse.installationType  || plan.type == InstallationType.ONLY_TV_FIBER
                 }
 
                 // Encontramos el plan actual del suscriptor

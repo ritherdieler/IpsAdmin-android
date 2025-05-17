@@ -28,6 +28,7 @@ alwaysApply: true
      - **Transiciones y animaciones sutiles** para ofrecer una experiencia fluida y placentera.  
    - Utilizar los componentes personalizados ubicados en  
      `com.dscorp.ispadmin.presentation.ui.features.composecomponents`.
+     - Usa MyTheme  para todas las screens y las preview
 
 4. **Arquitectura y Flujo de Datos**  
    - En los ViewModel, implementar **Unidirectional Data Flow (UDF)** para un manejo limpio y escalable del estado.  

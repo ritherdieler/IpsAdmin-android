@@ -226,6 +226,8 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
                         discountAmount = currentState.discountAmount.takeIf { it.isNotEmpty() && currentState.showDiscountFields }?.toDoubleOrNull() ?: 0.0,
                         discountReason = currentState.discountReason.takeIf { it.isNotEmpty() && currentState.showDiscountFields },
                         method = currentState.paymentMethod,
+                        responsibleId = user!!.id!!,
+                        responsibleName = user.name,
                         electronicPayerName = currentState.electronicPayerName.takeIf { it.isNotEmpty() }
                     )
 

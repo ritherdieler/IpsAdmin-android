@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.Loader
@@ -29,6 +30,13 @@ import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLined
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.EditSubscriptionUIState
 import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.SubscriptionResponse
+import com.dscorp.ispadmin.domain.model.ServiceStatus
+import com.dscorp.ispadmin.domain.model.InstallationType
+import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.PlanEditForm
+import com.dscorp.ispadmin.domain.model.Place
+import com.dscorp.ispadmin.domain.model.GeoLocation
+import com.dscorp.ispadmin.presentation.theme.MyTheme
 
 @Composable
 fun EditPlanSubscriptionScreen(
@@ -254,5 +262,87 @@ fun EditPlanSubscriptionScreen(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 400)
+@Composable
+fun EditPlanSubscriptionScreenPreview() {
+    val mockPlace = Place(
+        id = "1",
+        name = "Lima",
+        latitude = -12.0464f,
+        longitude = -77.0428f
+    )
+    val mockLocation = GeoLocation(latitude = -12.0464, longitude = -77.0428)
+    val mockPlan = PlanResponse(
+        id = "1",
+        name = "Plan Básico",
+        price = 50.0,
+        downloadSpeed = "100",
+        uploadSpeed = "20",
+        type = InstallationType.FIBER
+    )
+    val mockPlans = listOf(
+        mockPlan,
+        PlanResponse(id = "2", name = "Plan Premium", price = 100.0, downloadSpeed = "200", uploadSpeed = "40", type = InstallationType.FIBER),
+        PlanResponse(id = "3", name = "Plan VIP", price = 150.0, downloadSpeed = "300", uploadSpeed = "60", type = InstallationType.WIRELESS)
+    )
+    val mockSubscriptionData = SubscriptionResponse(
+        id = 1,
+        address = "Av. Principal 123",
+        dni = "12345678",
+        firstName = "Juan",
+        lastName = "Pérez",
+        location = mockLocation,
+        napBox = null,
+        networkDevices = null,
+        new = false,
+        password = null,
+        phone = "987654321",
+        place = mockPlace,
+        plan = mockPlan,
+        ip = "192.168.1.1",
+        serviceStatus = ServiceStatus.ACTIVE,
+        technician = null,
+        hostDevice = null,
+        subscriptionDate = 1717977600000L, // 2024-06-10
+        isMigration = false,
+        price = 50.0,
+        paymentCommitmentDate = null,
+        isPaymentCommitment = false,
+        lastCutOffDate = null,
+        isReactivation = false,
+        reactivationDate = null,
+        cpeDeviceId = null,
+        note = "Sin notas",
+        installationType = InstallationType.FIBER,
+        email = "juan@email.com",
+        pendingInvoiceQuantity = 0,
+        antiquityInMonths = 12,
+        qualification = "regular",
+        ics = 123,
+        totalDebt = 0.0,
+        lastPaymentDate = "2024-03-15"
+    )
+    val mockState = EditSubscriptionUIState(
+        subscriptionData = mockSubscriptionData,
+        plans = mockPlans,
+        form = PlanEditForm(
+            selectedPlan = mockPlans[0],
+            touched = false
+        ),
+        isLoading = false,
+        isSuccess = false,
+        error = null
+    )
+    MyTheme {
+        EditPlanSubscriptionScreen(
+            state = mockState,
+            onPlanSelected = {},
+            onEditClick = {},
+            onSuccessDialogDismiss = {},
+            onErrorDismiss = {}
+        )
     }
 } 
