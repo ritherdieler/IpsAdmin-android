@@ -5,11 +5,11 @@ plugins {
 
 android {
     namespace 'com.example.data2'
-    compileSdk 34
+    compileSdk rootProject.ext.compileSdk
 
     defaultConfig {
-        minSdk 26
-        targetSdk 34
+        minSdk rootProject.ext.minSdk
+        targetSdk rootProject.ext.targetSdk
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -42,38 +42,33 @@ android {
 
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility rootProject.ext.javaVersion
+        targetCompatibility rootProject.ext.javaVersion
     }
 
     kotlinOptions {
-        jvmTarget = '17'
+        jvmTarget = rootProject.ext.jvmTarget
     }
+}
 
-    dependencies {
+dependencies {
+    implementation project(':domain')
 
-        implementation project(':domain')
+    // Retrofit y networking
+    implementation "com.squareup.retrofit2:retrofit:${rootProject.ext.retrofitVersion}"
+    implementation "com.squareup.okhttp3:logging-interceptor:${rootProject.ext.okhttpVersion}"
+    implementation "com.squareup.retrofit2:converter-gson:${rootProject.ext.retrofitVersion}"
+    implementation "com.facebook.stetho:stetho-okhttp3:${rootProject.ext.stethoVersion}"
 
-        implementation 'com.squareup.retrofit2:retrofit:2.11.0'
-        implementation 'com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.11'
-        implementation 'com.squareup.retrofit2:converter-gson:2.11.0'
-        implementation 'com.facebook.stetho:stetho-okhttp3:1.6.0'
+    // Chucker para debugging de red
+    implementation "com.github.chuckerteam.chucker:library:${rootProject.ext.chuckerVersion}"
+    
+    // Koin para inyección de dependencias
+    api "io.insert-koin:koin-androidx-compose:${rootProject.ext.koinComposeVersion}"
 
-        implementation "com.github.chuckerteam.chucker:library:4.0.0"
-//        def koin_version = "3.3.1"
-//        api "io.insert-koin:koin-android:$koin_version"
-
-        def koin_compose_version = "3.5.0"
-        api "io.insert-koin:koin-androidx-compose:$koin_compose_version"
-
-        // Add JUnit dependency for unit tests
-        testImplementation 'junit:junit:4.13.2'
-        // Add AndroidJUnit4 runner for instrumented tests if needed
-        // androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-        // androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    }
+    // Test dependencies
+    testImplementation "junit:junit:${rootProject.ext.junitVersion}"
 }

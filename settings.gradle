@@ -1,21 +1,30 @@
 pluginManagement {
     repositories {
-
         gradlePluginPortal()
         google()
         mavenCentral()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         maven { url 'https://jitpack.io' }
-
         google()
         mavenCentral()
     }
+    
+    // Define repositorios adicionales si es necesario
+    versionCatalogs {
+        // Futura migración a catálogos de versiones en lugar de ext
+        // Por ahora mantenemos ext en archivo versions.gradle
+    }
 }
+
+// Proyecto principal
 rootProject.name = "ispAdminAndroid"
+
+// Módulos de la aplicación
 include ':presentation'
 include ':domain'
 include ':data'

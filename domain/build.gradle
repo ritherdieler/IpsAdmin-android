@@ -4,6 +4,17 @@ plugins {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = rootProject.ext.javaVersion
+    targetCompatibility = rootProject.ext.javaVersion
+}
+
+dependencies {
+    // Kotlin Standard Library
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
+    
+    // Coroutines para operaciones asíncronas
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${rootProject.ext.coroutinesTestVersion}"
+    
+    // Test dependencies
+    testImplementation "junit:junit:${rootProject.ext.junitVersion}"
 }

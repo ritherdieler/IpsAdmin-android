@@ -1,0 +1,84 @@
+ext {
+    // SDK y compilación
+    minSdk = 26
+    targetSdk = 34
+    compileSdk = 35
+    
+    // Versiones de Kotlin y Java
+    kotlinVersion = '2.1.0'
+    javaVersion = JavaVersion.VERSION_17
+    jvmTarget = '17'
+    
+    // Versiones de herramientas
+    gradleVersion = '8.9.2'
+    
+    // Versiones principales de las bibliotecas
+    coreKtxVersion = '1.16.0'
+    appCompatVersion = '1.7.0'
+    materialVersion = '1.12.0'
+    
+    // Jetpack Compose
+    composeBomVersion = '2025.04.01'
+    composeVersion = '1.8.0'
+    composeCompilerVersion = '1.5.0'
+    composeConstraintLayoutVersion = '1.1.1'
+    composeNavigationVersion = '2.8.9'
+    composeActivityVersion = '1.10.1'
+    accompanistVersion = '0.37.2'
+    composeIconsVersion = '1.7.8'
+    composeMapVersion = '6.1.2'
+    
+    // ViewModel y Lifecycle
+    lifecycleVersion = '2.8.7'
+    
+    // Navigation
+    navigationVersion = '2.8.9'
+    
+    // Koin
+    koinVersion = '3.5.0'
+    koinComposeVersion = '3.5.4'
+    
+    // Retrofit y networking
+    retrofitVersion = '2.11.0'
+    okhttpVersion = '5.0.0-alpha.11'
+    
+    // Firebase
+    firebaseCrashlyticsVersion = '19.4.3'
+    firebaseAnalyticsVersion = '22.4.0'
+    firebaseMessagingVersion = '24.1.1'
+    
+    // Google Play Services
+    playServicesMapsVersion = '19.2.0'
+    playServicesLocationVersion = '21.3.0'
+    
+    // Coil para imágenes
+    coilVersion = '2.7.0'
+    
+    // UI Components
+    constraintLayoutVersion = '2.2.1'
+    recyclerViewVersion = '1.4.0'
+    exifInterfaceVersion = '1.4.1'
+    shimmerVersion = '0.5.0'
+    lottieVersion = '6.1.0'
+    coreSplashscreenVersion = '1.0.1'
+    
+    // Legacy support
+    legacySupportVersion = '1.0.0'
+    
+    // Debugging
+    stethoVersion = '1.6.0'
+    chuckerVersion = '4.0.0'
+    
+    // Test dependencies
+    junitVersion = '4.13.2'
+    mockitoVersion = '5.2.0'
+    robolectricVersion = '4.10.3'
+    coroutinesTestVersion = '1.8.1'
+    truthVersion = '1.1.5'
+    archCoreTestingVersion = '2.2.0'
+    junitExtVersion = '1.2.1'
+    testCoreVersion = '1.6.1'
+    testRunnerVersion = '1.6.2'
+    espressoVersion = '3.6.1'
+    fragmentTestVersion = '1.8.6'
+} 
