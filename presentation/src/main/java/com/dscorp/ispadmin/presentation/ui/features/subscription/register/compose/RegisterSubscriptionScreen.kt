@@ -1,3 +1,5 @@
+package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
+
 import android.Manifest
 import android.content.Context
 import android.content.Intent

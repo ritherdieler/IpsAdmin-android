@@ -207,18 +207,18 @@
             android:name="ipPool"
             app:argType="com.dscorp.ispadmin.domain.model.IpPool" />
     </fragment>
-    <fragment
-        android:id="@+id/nav_mufa"
-        android:name="MufaMapFragment"
-        android:label="Mufas"
-        tools:layout="@layout/fragment_mufas_map">
-        <action
-            android:id="@+id/action_nav_mufa_to_mufaDialogFragment"
-            app:destination="@id/mufaDialogFragment" />
-        <action
-            android:id="@+id/nav_mufa_to_nap_box_dialog_fragment"
-            app:destination="@id/napBoxDetailDialogFragment" />
-    </fragment>
+<!--    <fragment-->
+<!--        android:id="@+id/nav_mufa"-->
+<!--        android:name="MufaMapFragment"-->
+<!--        android:label="Mufas"-->
+<!--        tools:layout="@layout/fragment_mufas_map">-->
+<!--        <action-->
+<!--            android:id="@+id/action_nav_mufa_to_mufaDialogFragment"-->
+<!--            app:destination="@id/mufaDialogFragment" />-->
+<!--        <action-->
+<!--            android:id="@+id/nav_mufa_to_nap_box_dialog_fragment"-->
+<!--            app:destination="@id/napBoxDetailDialogFragment" />-->
+<!--    </fragment>-->
     <dialog
         android:id="@+id/mufaDialogFragment"
         android:name="com.dscorp.ispadmin.presentation.ui.features.mufas.MufaDialogFragment"
@@ -255,16 +255,16 @@
             app:argType="boolean" />
     </dialog>
 
-    <fragment
-        android:id="@+id/napBoxMapDialogFragment"
-        android:name="NapBoxMapFragment"
-        android:label="NapBoxMapFragment">
+<!--    <fragment-->
+<!--        android:id="@+id/napBoxMapDialogFragment"-->
+<!--        android:name="NapBoxMapFragment"-->
+<!--        android:label="NapBoxMapFragment">-->
 
-        <action
-            android:id="@+id/mapBoxMap_to_NapBoxDetailDialog"
-            app:destination="@id/napBoxDetailDialogFragment" />
+<!--        <action-->
+<!--            android:id="@+id/mapBoxMap_to_NapBoxDetailDialog"-->
+<!--            app:destination="@id/napBoxDetailDialogFragment" />-->
 
-    </fragment>
+<!--    </fragment>-->
     <fragment
         android:id="@+id/nav_deleteOnuFragment"
         android:name="com.dscorp.ispadmin.presentation.ui.features.oltadministrator.DeleteOnuFragment"

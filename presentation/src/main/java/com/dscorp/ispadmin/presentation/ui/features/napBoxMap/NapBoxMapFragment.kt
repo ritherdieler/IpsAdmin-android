@@ -1,3 +1,4 @@
+package com.dscorp.ispadmin.presentation.ui.features.napBoxMap
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap

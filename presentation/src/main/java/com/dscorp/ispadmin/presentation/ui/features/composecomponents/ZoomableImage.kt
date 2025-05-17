@@ -1,3 +1,4 @@
+package com.dscorp.ispadmin.presentation.ui.features.composecomponents
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

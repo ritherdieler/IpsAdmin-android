@@ -1,4 +1,4 @@
-//package com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder
+package com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder
 //
 //import android.content.Intent
 //import android.os.Bundle
