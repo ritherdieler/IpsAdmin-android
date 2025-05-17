@@ -7,7 +7,6 @@ import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
 import com.dscorp.ispadmin.domain.model.DeviceTokenRequest
 import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
 import com.dscorp.ispadmin.domain.model.FixedCost
-import com.dscorp.ispadmin.domain.model.InstallationOrder
 import com.dscorp.ispadmin.domain.model.Ip
 import com.dscorp.ispadmin.domain.model.IpPool
 import com.dscorp.ispadmin.domain.model.Loging
@@ -15,7 +14,6 @@ import com.dscorp.ispadmin.domain.model.Mufa
 import com.dscorp.ispadmin.domain.model.NapBox
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.NetworkDevice
-import com.dscorp.ispadmin.domain.model.NetworkDeviceResponse
 import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Outlay
 import com.dscorp.ispadmin.domain.model.Payment
@@ -29,7 +27,6 @@ import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.model.extensions.PayerFinderResult
-import com.example.data2.data.apirequestmodel.AssignTechnicianRequest
 import com.example.data2.data.apirequestmodel.AssistanceTicketRequest
 import com.example.data2.data.apirequestmodel.FixedCostRequest
 import com.example.data2.data.apirequestmodel.IpPoolRequest
@@ -86,9 +83,6 @@ interface RestApiServices {
     @GET("networkDevice/fiber-and-wireless-devices")
     suspend fun getCpeDevices(): Response<List<NetworkDevice>>
 
-    @GET("networkDevice")
-    suspend fun getDevices(): Response<List<NetworkDeviceResponse>>
-
     @GET("subscription")
     suspend fun getSubscriptions(): Response<List<SubscriptionResponse>>
 
@@ -124,30 +118,6 @@ interface RestApiServices {
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double
     ): Response<List<NapBoxResponse>>
-
-    @GET("installation-order")
-    suspend fun getAllInstallationOrders(): Response<List<InstallationOrder>>
-    
-    @GET("installation-order/{id}")
-    suspend fun getInstallationOrderById(@Path("id") id: Int): Response<InstallationOrder>
-    
-    @POST("installation-order")
-    suspend fun createInstallationOrder(@Body installationOrder: InstallationOrder): Response<InstallationOrder>
-    
-    @PUT("installation-order/{id}/assign-technician")
-    suspend fun assignTechnician(
-        @Path("id") orderId: Int,
-        @Body request: AssignTechnicianRequest
-    ): Response<InstallationOrder>
-    
-    @PUT("installation-order/{id}/close")
-    suspend fun closeInstallationOrder(@Path("id") orderId: Int): Response<InstallationOrder>
-    
-    @PUT("installation-order/{id}/cancel")
-    suspend fun cancelInstallationOrder(
-        @Path("id") orderId: Int,
-        @Query("reason") cancellationReason: String?
-    ): Response<InstallationOrder>
 
     @GET("payment/filtered")
     suspend fun getFilteredPaymentHistory(

@@ -152,7 +152,7 @@ interface IRepository {
     suspend fun deleteOnuFromOlt(onuExternalId: String)
     suspend fun saveOutLay(apply: Outlay)
     suspend fun getElectronicPayers(subscriptionId: Int): List<String>
-    suspend fun updateCustomerData(customer: CustomerData): Unit
+    suspend fun updateCustomerData(customer: CustomerData)
     suspend fun subscriptionById(subscriptionId: Int): SubscriptionResponse
     suspend fun changeSubscriptionNapBox(request: MoveOnuRequest)
     suspend fun getRemoteAppVersion(): AppVersion

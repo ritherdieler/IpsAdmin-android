@@ -1,7 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.login.compose
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.dscorp.ispadmin.domain.model.User

@@ -152,7 +152,7 @@ class DashboardPaymentMethodsBarChart(private val chart: BarChart) {
         l.isEnabled = true
      //add margin top to legend
         chart.setExtraOffsets(0f, 0f, 0f, chart.context.resources.getDimension(R.dimen.barchart_legend_top_margin))
-        chart.description.isEnabled = false;
+        chart.description.isEnabled = false
         chart.setFitBars(true)
         chart.invalidate()
     }

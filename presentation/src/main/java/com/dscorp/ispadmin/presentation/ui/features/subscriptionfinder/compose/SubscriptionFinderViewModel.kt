@@ -17,7 +17,6 @@ import com.example.data2.data.apirequestmodel.MoveOnuRequest
 import com.example.data2.data.repository.IRepository
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -403,12 +402,6 @@ class SubscriptionFinderViewModel(
                 isFetchingCurrentLocation = false
             )
         }
-    }
-
-    fun fetchCurrentLocation() = viewModelScope.launch {
-        _uiState.update { it.copy(isFetchingCurrentLocation = true) }
-        // Don't do anything here as the actual location fetch will be handled by the fragment/activity
-        // This just updates the UI state to show loading indicator
     }
 
     /**

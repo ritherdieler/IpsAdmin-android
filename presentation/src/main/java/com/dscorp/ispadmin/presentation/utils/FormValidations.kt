@@ -18,32 +18,7 @@ object FormValidations {
      * Regex para DNI: solo dígitos (de 1 a 8)
      */
     val DNI_REGEX = Regex("^[0-9]{1,8}$")
-    
-    /**
-     * Regex para validación completa de DNI: exactamente 8 dígitos
-     */
-    val DNI_VALIDATION_REGEX = Regex("^[0-9]{8}$")
-    
-    /**
-     * Regex para correos electrónicos
-     */
-    val EMAIL_REGEX = Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")
-    
-    /**
-     * Regex para nombres de usuario: letras, números y guiones bajos
-     */
-    val USERNAME_REGEX = Regex("^[a-zA-Z0-9_]+$")
-    
-    /**
-     * Regex para códigos alfanuméricos
-     */
-    val ALPHANUMERIC_REGEX = Regex("^[a-zA-Z0-9]+$")
-    
-    /**
-     * Regex para URL
-     */
-    val URL_REGEX = Regex("^(https?|ftp)://[^\\s/$.?#].[^\\s]*$")
-    
+
     /**
      * Límites de caracteres comunes
      */

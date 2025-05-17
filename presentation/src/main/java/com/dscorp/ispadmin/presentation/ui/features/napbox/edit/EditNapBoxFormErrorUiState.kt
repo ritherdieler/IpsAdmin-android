@@ -1,8 +1,5 @@
 package com.dscorp.ispadmin.presentation.ui.features.napbox.edit
 
-import com.dscorp.ispadmin.presentation.ui.features.napbox.register.CleanFormErrors
-import com.dscorp.ispadmin.presentation.ui.features.napbox.register.NapBoxFormError
-
 /**
  * Created by Sergio Carrillo Diestra on 13/12/2022.
  * scarrillo.peruapps@gmail.com

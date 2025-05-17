@@ -7,8 +7,4 @@ package com.dscorp.ispadmin.presentation.ui.features.napbox.register
  * Huacho, Peru.
  *
  **/
-sealed class CleanFormErrors() {
-    object OnEtCodeCleanError : CleanFormErrors()
-    object OnEtAddressCleanError : CleanFormErrors()
-    object OnEtLocationCleanError : CleanFormErrors()
-}
+sealed class CleanFormErrors()

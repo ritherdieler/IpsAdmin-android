@@ -7,7 +7,7 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
-class FileStoreDataSourceImpl constructor(
+class FileStoreDataSourceImpl(
     private val firebaseStorageService: FirebaseStorageService
 ) : FileStoreDataSource {
 

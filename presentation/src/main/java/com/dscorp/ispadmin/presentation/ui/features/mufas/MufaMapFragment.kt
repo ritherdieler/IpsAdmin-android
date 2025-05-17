@@ -8,9 +8,6 @@ import androidx.navigation.fragment.findNavController
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.FragmentMufasMapBinding
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseFragment
-import com.dscorp.ispadmin.presentation.ui.features.mufas.MufaUiState
-import com.dscorp.ispadmin.presentation.ui.features.mufas.MufaViewModel
-import com.dscorp.ispadmin.presentation.ui.features.mufas.NapBoxDetailDialogFragment
 import com.dscorp.ispadmin.domain.model.Mufa
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -24,7 +21,6 @@ import com.google.android.gms.maps.model.MarkerOptions
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MufaMapFragment : BaseFragment<MufaUiState, FragmentMufasMapBinding>(), OnMapReadyCallback {
-    private var mufas: List<Mufa> = emptyList()
     private lateinit var mapView: MapView
     private lateinit var googleMap: GoogleMap
     private lateinit var selectedLatLng: LatLng
@@ -90,7 +86,7 @@ class MufaMapFragment : BaseFragment<MufaUiState, FragmentMufasMapBinding>(), On
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-        googleMap.mapType = GoogleMap.MAP_TYPE_HYBRID;
+        googleMap.mapType = GoogleMap.MAP_TYPE_HYBRID
         val santaRosa = LatLng(-11.234996, -77.380347)
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(santaRosa))
         googleMap.animateCamera(CameraUpdateFactory.zoomTo(11.5f))

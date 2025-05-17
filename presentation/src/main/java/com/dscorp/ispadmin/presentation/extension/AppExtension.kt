@@ -1,28 +1,19 @@
 package com.dscorp.ispadmin.presentation.extension
 
 import android.R
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Environment
-import android.os.Looper
 import android.provider.Settings
 import android.util.Base64
-import android.view.View
-import android.view.animation.Animation
-import android.view.animation.RotateAnimation
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.map
 import androidx.navigation.NavController
 import com.dscorp.ispadmin.CrossDialogFragment
 import com.dscorp.ispadmin.presentation.ui.features.formvalidation.ReactiveFormField
@@ -30,15 +21,11 @@ import com.dscorp.ispadmin.presentation.util.IDialogFactory
 import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.LocationSettingsResponse
 import com.google.android.gms.location.LocationSettingsStatusCodes
-import com.google.android.gms.location.Priority
 import com.google.android.gms.location.SettingsClient
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.Task
@@ -47,13 +34,6 @@ import org.koin.android.ext.android.inject
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Calendar
-
-fun Uri.getBase64FromUri(installationSheetUri: Uri, context: Context): String? {
-    val inputStream = context.contentResolver.openInputStream(installationSheetUri)
-    val bytes = inputStream?.readBytes()
-    val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
-    return base64
-}
 
 fun NavController.navigateSafe(destinationId: Int) {
     try {
@@ -64,7 +44,6 @@ fun NavController.navigateSafe(destinationId: Int) {
 }
 
 fun LatLng.toGeoLocation(): GeoLocation = GeoLocation(latitude, longitude)
-fun LatLng.toStringLocation(): String = "$latitude, $longitude"
 
 fun MaterialAutoCompleteTextView.fillWithList(data: List<Any>, onItemSelected: (Any) -> Unit) {
     val adapter = ArrayAdapter(context, R.layout.simple_spinner_item, data)
@@ -186,29 +165,6 @@ fun AppCompatActivity.showCrossDialog(
 }
 
 
-@SuppressLint("MissingPermission")
-fun FusedLocationProviderClient.getCurrentLocation(onLocation: (LatLng) -> Unit) {
-    this.requestLocationUpdates(
-        LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000)
-            .apply {
-                setWaitForAccurateLocation(true)
-                setMinUpdateIntervalMillis(LocationRequest.Builder.IMPLICIT_MIN_UPDATE_INTERVAL)
-                setMaxUpdateDelayMillis(1000)
-            }.build(),
-
-        object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                val location = locationResult.lastLocation
-                location?.let {
-                    onLocation(LatLng(it.latitude, location.longitude))
-                    removeLocationUpdates(this)
-                }
-            }
-        },
-        Looper.getMainLooper()
-    )
-}
-
 fun Fragment.withGpsEnabled(onGpsEnabled: () -> Unit) {
     if ((requireActivity().getSystemService(Context.LOCATION_SERVICE) as LocationManager).isProviderEnabled(
             LocationManager.GPS_PROVIDER
@@ -240,22 +196,6 @@ fun Fragment.withGpsEnabled(onGpsEnabled: () -> Unit) {
     }
 }
 
-fun ImageView.animateRotate360InLoop() {
-    startAnimation(
-        RotateAnimation(
-            0f,
-            360f,
-            Animation.RELATIVE_TO_SELF,
-            0.5f,
-            Animation.RELATIVE_TO_SELF,
-            0.5f
-        ).apply {
-            duration = 1000
-            repeatCount = Animation.INFINITE
-        }
-    )
-}
-
 fun Calendar.isSameMonthAndYear(calendar: Calendar) =
     get(Calendar.YEAR) == calendar.get(Calendar.YEAR) && get(Calendar.MONTH) == calendar.get(
         Calendar.MONTH
@@ -263,15 +203,6 @@ fun Calendar.isSameMonthAndYear(calendar: Calendar) =
 
 fun Calendar.isLastDayOfMonth() =
     get(Calendar.DAY_OF_MONTH) == getActualMaximum(Calendar.DAY_OF_MONTH)
-
-fun Long.asCalendar() = Calendar.getInstance().apply { timeInMillis = this@asCalendar }
-
-fun MutableLiveData<Boolean>.visibilityFromBoolean(): LiveData<Int> =
-    map { if (it) View.VISIBLE else View.GONE }
-
-fun Boolean.visibilityFromBoolean(): Int {
-    return if (this) View.VISIBLE else View.GONE
-}
 
 fun List<ReactiveFormField<*>>.formIsValid(): Boolean {
     forEach { it.isValid() }

@@ -52,7 +52,7 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
     private fun observeElectronicPayerSearch() = viewModelScope.launch {
         _electronicPayerSearchFlow.debounce(300).collect {
             if (it.isEmpty() || it.length < 3) return@collect
-            val response = repository.findPaymentByElectronicPayerName(it)
+            repository.findPaymentByElectronicPayerName(it)
             // Handle response if needed
         }
     }
@@ -226,11 +226,10 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
                         discountAmount = currentState.discountAmount.takeIf { it.isNotEmpty() && currentState.showDiscountFields }?.toDoubleOrNull() ?: 0.0,
                         discountReason = currentState.discountReason.takeIf { it.isNotEmpty() && currentState.showDiscountFields },
                         method = currentState.paymentMethod,
-                        responsibleId = user?.id ?: 0,
                         electronicPayerName = currentState.electronicPayerName.takeIf { it.isNotEmpty() }
                     )
-                    
-                    val response = repository.registerPayment(paymentToRegister)
+
+                    repository.registerPayment(paymentToRegister)
                     _state.update { it.copy(isLoading = false, isSuccess = true) }
                 }
             } catch (e: Exception) {

@@ -1,7 +1,5 @@
 package com.dscorp.ispadmin.presentation.ui.features.main.permissions
 
-import androidx.annotation.IdRes
-import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.User.UserType
 
 /**
@@ -25,24 +23,7 @@ class UserPermissionManager {
             else -> createDefaultConfig()
         }
     }
-    
-    /**
-     * Obtiene el destino inicial de navegación para un tipo de usuario específico.
-     * @param userType el tipo de usuario
-     * @return el ID del recurso del destino de navegación, o null para usar el destino predeterminado
-     */
-    @IdRes
-    fun getInitialDestination(userType: UserType): Int? {
-        return when (userType) {
-            UserType.SECRETARY -> R.id.nav_dashboard
-            UserType.ADMIN -> R.id.nav_dashboard
-            UserType.TECHNICIAN -> R.id.assignedInstallationOrdersFragment
-            UserType.ACCOUNTANT -> R.id.nav_dashboard
-            UserType.SALES -> R.id.nav_create_installation_order
-            else -> null // Usará el destino predeterminado (nav_my_profile)
-        }
-    }
-    
+
     private fun createAdminConfig(): FeatureConfig {
         return FeatureConfig(
             hasDashboardAccess = true,

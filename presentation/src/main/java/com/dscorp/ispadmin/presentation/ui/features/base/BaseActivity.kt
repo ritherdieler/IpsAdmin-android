@@ -6,12 +6,9 @@ import androidx.databinding.ViewDataBinding
 import com.dscorp.components.ProgressFullScreenDialogFragment
 import com.dscorp.ispadmin.presentation.extension.showCurrentSimpleName
 import com.dscorp.ispadmin.presentation.extension.showErrorDialog
-import com.google.firebase.analytics.FirebaseAnalytics
-import org.koin.android.ext.android.inject
 
 abstract class BaseActivity<T, U : ViewDataBinding> : AppCompatActivity() {
 
-    protected val firebaseAnalytics: FirebaseAnalytics by inject()
     protected abstract val viewModel: BaseViewModel<T>
     protected abstract val binding: U
     protected abstract fun handleState(state: T)

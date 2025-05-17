@@ -2,8 +2,6 @@ package com.dscorp.ispadmin.presentation.ui.features.supportTicket
 
 import android.content.Context
 import android.net.Uri
-import android.util.Base64
-import androidx.core.net.toUri
 import com.dscorp.ispadmin.presentation.extension.firstDayFromCurrentMonth
 import com.dscorp.ispadmin.presentation.extension.lastDayFromCurrentMonth
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
@@ -12,7 +10,6 @@ import com.dscorp.ispadmin.presentation.util.compressImage
 import com.dscorp.ispadmin.presentation.util.rotateImageIfNeeded
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
-import com.example.data2.data.apirequestmodel.AssistanceTicketRequest
 import com.example.data2.data.repository.IRepository
 import com.example.data2.data.response.AssistanceTicketResponse
 import com.example.data2.data.response.AssistanceTicketStatus
@@ -31,25 +28,6 @@ class SupportTicketViewModel(
     val placesFlow = MutableStateFlow<List<Place>>(value = emptyList())
 
     val user = repository.getUserSession()!!
-
-    val categories = listOf(
-        "Sin Conexión a Internet",
-        "Internet Lento",
-        "Migración a fibra óptica",
-        "Cambio de Domicilio",
-        "Cambio de Contraseña",
-        "Ruptura de cable última milla",
-        "Alineamiento de antena CPE",
-        "Instalación de Tv Cable",
-        "Añadir Tv Cable a su plan de internet",
-        "No tiene señal de Tv Cable",
-        "Cambio de Onu",
-        "Cambio de Router",
-        "Instalación de repetidor",
-        "Evaluar Factibilidad de Servicio",
-        "Instalación de Internet",
-        "Otros",
-    )
 
     init {
         getPlaces()
@@ -137,26 +115,6 @@ class SupportTicketViewModel(
         uiState.postValue(BaseUiState(SupportTicketState.TicketList(response)))
     }
 
-    fun createTicket(supportTicket: AssistanceTicketRequest) = executeWithProgress {
-        if (supportTicket.isValid()) {
-            repository.createTicket(supportTicket)
-            uiState.postValue(BaseUiState(SupportTicketState.TicketCreated))
-        } else {
-            uiState.postValue(BaseUiState(SupportTicketState.FormError("Los Datos son incorrectos")))
-        }
-    }
-
-    fun findSubscriptionByNames(names: String) = executeNoProgress {
-        val response = repository.findSubscriptionByNames(names)
-        uiState.postValue(BaseUiState(SupportTicketState.SearchSubscriptionResult(response)))
-    }
-
-}
-
-private fun File.toBase64(context: Context): String {
-    val inputStream = context.contentResolver.openInputStream(this.toUri())
-    val bytes = inputStream?.readBytes()
-    return Base64.encodeToString(bytes, Base64.DEFAULT)
 }
 
 sealed class SupportTicketState {

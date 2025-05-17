@@ -1,6 +1,5 @@
 package com.dscorp.ispadmin.presentation.ui.features.supportTicket.takenTickets
 
-import android.net.Uri
 import android.os.Bundle
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
@@ -12,8 +11,6 @@ import com.dscorp.ispadmin.presentation.ui.features.supportTicket.SupportTicketS
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.SupportTicketViewModel
 import com.dscorp.ispadmin.presentation.util.ImageCaptureManager
 import com.dscorp.ispadmin.presentation.util.PermissionManager
-import com.example.data2.data.response.AssistanceTicketResponse
-import com.example.data2.data.response.AssistanceTicketStatus
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 

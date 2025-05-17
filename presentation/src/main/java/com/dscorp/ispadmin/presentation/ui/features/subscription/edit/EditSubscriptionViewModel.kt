@@ -2,7 +2,6 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.edit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.example.data2.data.apirequestmodel.UpdateSubscriptionPlanBody
@@ -31,11 +30,7 @@ data class PlanEditForm(
 ) {
     // Validación del formulario
     val isValid: Boolean get() = selectedPlan != null
-    
-    // Mensaje de error
-    val errorMessage: Int? get() {
-        return if (!isValid && touched) R.string.must_select_plan else null
-    }
+
 }
 
 class EditSubscriptionViewModel(

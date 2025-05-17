@@ -46,8 +46,8 @@ fun MyDateTimePickerField(
     
     val datePickerState = rememberDatePickerState()
     val timePickerState = rememberTimePickerState()
-    
-    val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")
+
+    DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")
 
     MyClickableOutlineTextField(
         modifier = modifier,

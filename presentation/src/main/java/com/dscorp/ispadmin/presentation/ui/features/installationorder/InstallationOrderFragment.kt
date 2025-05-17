@@ -29,7 +29,7 @@ class InstallationOrderFragment : Fragment() {
                     val uiState by viewModel.uiState.collectAsState()
                     
                     val screen = args.screen
-                    val orderId = args.orderId
+                    args.orderId
                     
                     when (screen) {
                         "create" -> CreateInstallationOrderScreen(

@@ -208,13 +208,9 @@ public class Fill
                 LinearGradient gradient = new LinearGradient(
                         (int) (gradientDirection == Direction.RIGHT
                                 ? right
-                                : gradientDirection == Direction.LEFT
-                                ? left
                                 : left),
                         (int) (gradientDirection == Direction.UP
                                 ? bottom
-                                : gradientDirection == Direction.DOWN
-                                ? top
                                 : top),
                         (int) (gradientDirection == Direction.RIGHT
                                 ? left

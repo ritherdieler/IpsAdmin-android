@@ -45,9 +45,4 @@ class PermissionManager(
         singlePermissionLauncher?.launch(permission)
     }
 
-    fun requestMultiplePermissions(vararg permissions: String, onGranted: () -> Unit) {
-        this.onGranted = onGranted
-        (permissions as Array<String>?)?.let { multiplePermissionLauncher?.launch(it) }
-    }
-
 }

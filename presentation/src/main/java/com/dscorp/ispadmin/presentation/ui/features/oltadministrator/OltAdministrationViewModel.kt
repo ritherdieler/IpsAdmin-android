@@ -2,8 +2,11 @@ package com.dscorp.ispadmin.presentation.ui.features.oltadministrator
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
-import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdministrationUiState.*
+import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdministrationUiState.DeleteOnuSuccess
+import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdministrationUiState.Empty
+import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdministrationUiState.Error
+import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdministrationUiState.GetOnuSuccess
+import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdministrationUiState.Loading
 import com.example.data2.data.repository.IRepository
 import com.example.data2.data.response.AdministrativeOnuResponse
 import kotlinx.coroutines.flow.MutableStateFlow

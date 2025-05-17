@@ -13,7 +13,7 @@ fun String.isAValidAddress(): Boolean {
 
 fun String.isValidIpv4(): Boolean {
     val pattern =
-        "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\$"
+        "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
     val ipv4Regex = Regex(pattern)
     return ipv4Regex.matches(this)
 }
@@ -36,23 +36,14 @@ fun String?.isValidDni(strictValidation: Boolean = false): Boolean {
     }
 }
 
-fun String?.isValidDouble(): Boolean {
-    return try {
-        this!!.toDouble()
-        true
-    } catch (e: Exception) {
-        false
-    }
-}
-
 fun String?.isValidPhone(): Boolean {
-    val pattern = "^[0-9]{9}\$"
+    val pattern = "^[0-9]{9}$"
     val phoneRegex = Regex(pattern)
     return phoneRegex.matches(this ?: "")
 }
 
 fun String?.isValidEmail(): Boolean {
-    val pattern = "^[A-Za-z](.*)([@]{1})(.{1,})(\\.)(.{1,})\$"
+    val pattern = "^[A-Za-z](.*)([@]{1})(.{1,})(\\.)(.{1,})$"
     val emailRegex = Regex(pattern)
     return emailRegex.matches(this ?: "")
 }

@@ -1,6 +1,5 @@
 package com.example.data2.data.response
 
-import java.io.Serial
 import java.io.Serializable
 import java.util.Date
 
@@ -24,12 +23,6 @@ data class AssistanceTicketResponse(
         val dateFormatter =
             java.text.SimpleDateFormat("dd MMMM yyyy - hh:mm", java.util.Locale.getDefault())
         return dateFormatter.format(createdAt)
-    }
-
-    fun getResolvedAtDateAsString(): String {
-        val dateFormatter =
-            java.text.SimpleDateFormat("dd MMMM yyyy", java.util.Locale.getDefault())
-        return resolvedAt?.let { dateFormatter.format(it) } ?:""
     }
 
     fun getStatusAsString(): String {

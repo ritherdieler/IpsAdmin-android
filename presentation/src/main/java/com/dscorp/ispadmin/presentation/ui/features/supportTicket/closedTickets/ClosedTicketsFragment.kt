@@ -10,7 +10,6 @@ import com.dscorp.ispadmin.presentation.ui.features.supportTicket.SupportTicketA
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.SupportTicketHelper
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.SupportTicketState
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.SupportTicketViewModel
-import com.example.data2.data.response.AssistanceTicketResponse
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 

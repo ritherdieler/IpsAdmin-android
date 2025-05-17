@@ -84,7 +84,7 @@ class NapBoxMapFragment : BaseFragment<MufaUiState, FragmentNapboxMapBinding>(),
         googleMap = map
         googleMap.isMyLocationEnabled = true
 
-        googleMap.mapType = GoogleMap.MAP_TYPE_HYBRID;
+        googleMap.mapType = GoogleMap.MAP_TYPE_HYBRID
         val santaRosa = LatLng(-11.234324, -77.379349)
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(santaRosa, 15.5f))
         googleMap.setOnMarkerClickListener { marker ->

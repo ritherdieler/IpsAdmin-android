@@ -1,21 +1,12 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -29,63 +20,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.TimeZone
-
-@Composable
-fun SubscriptionFinderFilters(
-    modifier: Modifier = Modifier,
-    onSearch: (SubscriptionFilter) -> Unit = {}
-) {
-    var selectedOption by remember { mutableStateOf(filters[0]) }
-    val horizontalScrollState = rememberScrollState()
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(horizontalScrollState)
-        ) {
-            filters.forEach {
-                Row(
-                    modifier = Modifier.selectable(
-                        selected = (it == selectedOption),
-                        onClick = { selectedOption = it },
-                    ), verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = (it == selectedOption),
-                        onClick = { selectedOption = it },
-                        colors = RadioButtonDefaults.colors(
-                            selectedColor = Color(0xFFFF9100)
-                        )
-                    )
-                    Text(text = it.valueName)
-                }
-            }
-        }
-
-        Crossfade(targetState = selectedOption, label = "") { filter ->
-            when (filter) {
-                is SubscriptionFilter.BY_NAME -> NameAndLastNameFilterForm(onSearch = { onSearch(it) })
-                is SubscriptionFilter.BY_DOCUMENT -> DocumentFilterForm(onSearch = { onSearch(it) })
-                is SubscriptionFilter.BY_DATE -> DateFilterForm(onSearch = { onSearch(it) })
-            }
-
-        }
-    }
-}
 
 @Composable
 fun NameAndLastNameFilterForm(

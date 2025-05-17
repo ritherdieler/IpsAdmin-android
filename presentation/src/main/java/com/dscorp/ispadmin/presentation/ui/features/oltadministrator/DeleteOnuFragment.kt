@@ -192,8 +192,6 @@ class DeleteOnuFragment : Fragment() {
                 onu = "duo",
                 port = "auctor",
                 board = "graece",
-                olt_id = "porttitor",
-                olt_name = "Ivan Gates",
                 unique_external_id = "leo"
             ), modifier = Modifier
         )

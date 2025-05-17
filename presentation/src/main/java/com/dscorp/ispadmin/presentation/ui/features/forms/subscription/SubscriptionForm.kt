@@ -1,9 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.forms.subscription
 
 import com.dscorp.ispadmin.R
-import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.NetworkDevice
-import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.User
@@ -74,15 +72,6 @@ abstract class SubscriptionForm {
         validator = { it != null }
     )
 
-    val onuField = ReactiveFormField<Onu?>(
-        hintResourceId = R.string.select_onu,
-        errorResourceId = R.string.mustSelectOnu,
-        validator = {
-            if (planField.getValue()?.name?.contains("cable") == true) true
-            else (it != null)
-        }
-    )
-
     val placeField = ReactiveFormField<Place?>(
         hintResourceId = R.string.place,
         errorResourceId = R.string.mustSelectPlace,
@@ -113,25 +102,6 @@ abstract class SubscriptionForm {
         validator = { true }
     )
 
-    val cpeDeviceField = ReactiveFormField<NetworkDevice?>(
-        hintResourceId = R.string.select_cpe_device,
-        errorResourceId = R.string.mustSelectCpeDevice,
-        validator = { it != null }
-    )
-
-    val napBoxField = ReactiveFormField<NapBoxResponse?>(
-        hintResourceId = R.string.selec_nap_box,
-        errorResourceId = R.string.mustSelectNapBox,
-        validator = { it != null }
-    )
-
-
-
-    val additionalDevicesField = ReactiveFormField<NetworkDevice?>(
-        hintResourceId = R.string.additionalDevices,
-        errorResourceId = R.string.youCanSelectAdditionalNetworkDevices,
-        validator = { true }
-    )
 
     val noteField = ReactiveFormField<String?>(
         hintResourceId = R.string.note,
@@ -142,6 +112,6 @@ abstract class SubscriptionForm {
     val ipField = ReactiveFormField<String?>(
         hintResourceId = R.string.ip_address,
         errorResourceId = R.string.must_digit_a_valid_ip,
-        validator = { it?.isValidIpv4() ?: false }
+        validator = { it?.isValidIpv4() == true }
     )
 }

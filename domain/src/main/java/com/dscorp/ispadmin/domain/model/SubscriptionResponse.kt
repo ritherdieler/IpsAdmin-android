@@ -41,8 +41,6 @@ data class SubscriptionResponse(
 ) : java.io.Serializable {
     fun getFullName() = "$firstName $lastName"
 
-    fun migrationAsString() = if (isMigration) "Si" else "No"
-
     fun dateAsString() = subscriptionDate?.toFormattedDateString()
     fun toDomain() = SubscriptionResume(
         id = id,

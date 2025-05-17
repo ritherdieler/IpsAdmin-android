@@ -4,6 +4,5 @@ object HttpCodes {
     const val CONFLICT = 409
     const val OK = 200
     const val NOT_FOUND = 404
-    const val CREATED = 201
 }
 

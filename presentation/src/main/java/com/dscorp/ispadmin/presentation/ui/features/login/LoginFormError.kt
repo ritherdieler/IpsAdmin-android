@@ -7,7 +7,4 @@ package com.dscorp.ispadmin.presentation.ui.features.login
  * Huacho, Peru.
  *
  **/
-sealed class LoginFormError {
-    class OnEtUser(val error: String) : LoginFormError()
-    class OnEtPassword(val error: String) : LoginFormError()
-}
+sealed class LoginFormError

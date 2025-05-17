@@ -15,7 +15,4 @@ sealed class NapBoxFormError(val message: String) {
         const val LOCATION_ERROR = "La ubicación no puede estar vacio"
     }
 
-    class OnEtCodeError : NapBoxFormError(CODE_ERROR)
-    class OnEtAddressError : NapBoxFormError(ADDRESS_ERROR)
-    class OnEtLocationError : NapBoxFormError(LOCATION_ERROR)
 }

@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
-import com.example.data2.data.apirequestmodel.SearchPaymentsRequest
 import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,22 +38,6 @@ class PaymentHistoryViewModel(val repository: IRepository) :
 
     var subscriptionId: Int? = null
 
-    fun getFilteredPaymentHistory(request: SearchPaymentsRequest) = viewModelScope.launch {
-        try {
-            _state.update { it.copy(isLoading = true) }
-            val response = repository.getFilteredPaymentHistory(request)
-            allPayments = response // Store the original list
-            _state.update { it.copy(isLoading = false, payments = response) }
-
-            // For backward compatibility
-            uiState.value =
-                BaseUiState(PaymentHistoryUiState.OnPaymentHistoryFilteredResponse(response))
-        } catch (e: Exception) {
-            _state.update { it.copy(isLoading = false, error = e.message) }
-            uiState.value = BaseUiState(PaymentHistoryUiState.OnError(e.message))
-        }
-    }
-
     fun getLastPayments(itemsLimit: Int) = viewModelScope.launch {
         try {
             _state.update { it.copy(isLoading = true) }
@@ -64,7 +47,7 @@ class PaymentHistoryViewModel(val repository: IRepository) :
 
             // For backward compatibility
             uiState.value =
-                BaseUiState(PaymentHistoryUiState.GetRecentPaymentsHistoryResponse(response))
+                BaseUiState(PaymentHistoryUiState.GetRecentPaymentsHistoryResponse())
         } catch (e: Exception) {
             _state.update { it.copy(isLoading = false, error = e.message) }
             uiState.value =
@@ -79,7 +62,7 @@ class PaymentHistoryViewModel(val repository: IRepository) :
 
             // For backward compatibility
             uiState.value =
-                BaseUiState(PaymentHistoryUiState.OnPaymentHistoryFilteredResponse(pendingPayments))
+                BaseUiState(PaymentHistoryUiState.OnPaymentHistoryFilteredResponse())
         } catch (e: Exception) {
             _state.update { it.copy(error = e.message) }
             uiState.value = BaseUiState(PaymentHistoryUiState.OnError(e.message))
@@ -93,7 +76,7 @@ class PaymentHistoryViewModel(val repository: IRepository) :
 
             // For backward compatibility
             uiState.value =
-                BaseUiState(PaymentHistoryUiState.OnPaymentHistoryFilteredResponse(allPayments))
+                BaseUiState(PaymentHistoryUiState.OnPaymentHistoryFilteredResponse())
         } catch (e: Exception) {
             _state.update { it.copy(error = e.message) }
             uiState.value = BaseUiState(PaymentHistoryUiState.OnError(e.message))

@@ -10,7 +10,5 @@ class AdministrativeOnuResponse(
     val onu: String? = "",
     val port: String? = "",
     val board: String? = "",
-    val olt_id: String? = "",
-    val olt_name: String? = "",
     val unique_external_id: String=""
 )

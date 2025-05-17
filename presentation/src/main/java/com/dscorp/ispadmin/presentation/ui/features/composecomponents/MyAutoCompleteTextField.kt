@@ -68,15 +68,15 @@ fun <T> MyAutoCompleteTextViewCompose(
         factory = { originalContext ->
             // Creamos el TextInputLayout con estilo outline
             val textInputLayout = TextInputLayout(originalContext).apply {
-                setHint(label)
+                hint = label
                 isEnabled = enabled
                 isErrorEnabled = hasError
                 errorMessage?.let { error = errorMessage }
                 // Modo de caja Outline
                 boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
                 boxStrokeColor = primaryColor.toArgb()
-                setBoxBackgroundColor(surfaceColor.toArgb())
-                setHintTextColor(ColorStateList.valueOf(onSurfaceVariant.toArgb()))
+                boxBackgroundColor = surfaceColor.toArgb()
+                hintTextColor = ColorStateList.valueOf(onSurfaceVariant.toArgb())
                 boxStrokeWidth = 2
                 boxStrokeWidthFocused = 3
 
@@ -91,7 +91,7 @@ fun <T> MyAutoCompleteTextViewCompose(
 
             // MaterialAutoCompleteTextView
             val autoCompleteTextView = MaterialAutoCompleteTextView(originalContext).apply {
-                id = android.R.id.text1
+                id = R.id.text1
                 background = null
                 isSingleLine = true
                 threshold = 0 // Permite mostrar sugerencias incluso sin escribir
@@ -164,7 +164,7 @@ fun <T> MyAutoCompleteTextViewCompose(
             textInputLayout.isEnabled = enabled
             errorMessage?.let { textInputLayout.error = errorMessage }
             val autoCompleteTextView =
-                textInputLayout.findViewById<MaterialAutoCompleteTextView>(android.R.id.text1)
+                textInputLayout.findViewById<MaterialAutoCompleteTextView>(R.id.text1)
             textInputLayout.isErrorEnabled = hasError
             // Configurar un adaptador personalizado que nos permita acceder a los elementos filtrados
             val adapter = CustomItemAdapter(

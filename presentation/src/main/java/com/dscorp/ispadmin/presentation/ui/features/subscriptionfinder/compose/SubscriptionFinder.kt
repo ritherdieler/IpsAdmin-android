@@ -14,10 +14,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.dscorp.ispadmin.domain.model.CustomerData
-import com.dscorp.ispadmin.domain.model.GeoLocation
-import com.dscorp.ispadmin.domain.model.InstallationType
-import com.dscorp.ispadmin.domain.model.NapBox
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
@@ -127,38 +123,3 @@ private fun SubscriptionFinderPreview() {
     }
 }
 
-fun generateMockSubscriptions(): List<SubscriptionResume> {
-    val mockList = mutableListOf<SubscriptionResume>()
-    for (i in 1..5) {
-        val subscriptionResume = SubscriptionResume(
-            id = i,
-            planName = "Plan $i",
-            customerName = "Cliente $i",
-            antiquity = "${i} año(s)",
-            qualification = "${i} estrella(s)",
-            placeName = "Lugar $i",
-            ics = "12345$i",
-            lastPaymentDate = "12/12/2${i + 1}",
-            pendingInvoicesQuantity = i,
-            totalDebt = 100.0 * i,
-            ipAddress = "192.168.1.$i",
-            customer = CustomerData(
-                name = "Nombre $i",
-                lastName = "Apellido $i",
-                dni = "4827183$i",
-                place = "Lugar $i",
-                address = "Dirección $i",
-                phone = "98765432$i",
-                email = "cliente$i@gmail.com",
-                subscriptionId = i
-            ),
-            serviceStatus = ServiceStatus.ACTIVE, installationType = InstallationType.FIBER,
-            napBox = NapBox("NapBox $i", "Calle $i", placeName = "placeName", placeId = -1),
-            placeId = "",
-            location = GeoLocation()
-
-        )
-        mockList.add(subscriptionResume)
-    }
-    return mockList
-}

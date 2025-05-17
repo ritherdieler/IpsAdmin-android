@@ -11,10 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.koin.android.ext.android.getKoin
 import org.koin.android.ext.koin.androidContext
-import org.koin.core.context.loadKoinModules
 import org.koin.core.context.startKoin
-import org.koin.core.context.unloadKoinModules
-import org.koin.core.module.Module
 
 /**
  * Created by Sergio Carrillo Diestra on 25/12/2022.
@@ -50,9 +47,4 @@ class KoinAppForInstrumentation : Application() {
         }
     }
 
-    internal fun loadModules(module: Module, block: () -> Unit) {
-        loadKoinModules(module)
-        block()
-        unloadKoinModules(module)
-    }
 }

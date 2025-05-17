@@ -5,9 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import org.koin.java.KoinJavaComponent.inject
 
 class ReactiveFormField<T>(
-    private val hintResourceId: Int? = null,
+    hintResourceId: Int? = null,
     private val errorResourceId: Int? = null,
-    private val isEditable: Boolean = true,
+    isEditable: Boolean = true,
     private val validator: ((validation: T?) -> Boolean)? = null
 ) {
 
@@ -39,7 +39,7 @@ class ReactiveFormField<T>(
         return isValid
     }
 
-    private fun currentValueIsValid() = validator?.let { it(liveData.value) } ?: true
+    private fun currentValueIsValid() = validator?.let { it(liveData.value) } != false
 
     private fun validateField(fieldValue: T?): Boolean {
         return if (currentValueIsValid()) {

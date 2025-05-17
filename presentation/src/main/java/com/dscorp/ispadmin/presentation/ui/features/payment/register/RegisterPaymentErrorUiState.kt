@@ -11,14 +11,4 @@ sealed class RegisterPaymentErrorUiState(val message: String) {
         const val ERROR_AMOUNT_PAID_GREATER_THAN_PLAN_PRICE = "El monto pagado no puede ser mayor al precio del plan"
     }
 
-    object InvalidAmountError : RegisterPaymentErrorUiState(ERROR_INVALID_AMOUNT)
-    object InvalidDiscountError : RegisterPaymentErrorUiState(ERROR_INVALID_DISCOUNT)
-    object InvalidMethodError : RegisterPaymentErrorUiState(ERROR_INVALID_METHOD)
-    object GenericError : RegisterPaymentErrorUiState(ERROR_GENERIC)
-    object AmountPaidLessThanPlanPriceError : RegisterPaymentErrorUiState(
-        ERROR_AMOUNT_PAID_LESS_THAN_PLAN_PRICE
-    )
-    data class AmountPaidGreaterThanPlanPriceError(val netPayment: Float) : RegisterPaymentErrorUiState(
-        ERROR_AMOUNT_PAID_GREATER_THAN_PLAN_PRICE
-    )
 }

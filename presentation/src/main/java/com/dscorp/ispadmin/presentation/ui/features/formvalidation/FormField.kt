@@ -33,8 +33,6 @@ class FormField<T>(
             return field
         }
 
-    fun emitErrorIfExists() = isValid
-
     private fun validateField(fieldValue: T?): Boolean {
         return if (!fieldValidator.validate(fieldValue)) {
             errorLiveData.value = applicationContext.getString(errorResourceId)

@@ -46,7 +46,7 @@ abstract class LocationMapViewDialogFragment(
     @SuppressLint("MissingPermission")
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-        googleMap.mapType = GoogleMap.MAP_TYPE_HYBRID;
+        googleMap.mapType = GoogleMap.MAP_TYPE_HYBRID
         val location = LatLng(initialLocation?.latitude ?: 0.0, initialLocation?.longitude ?: 0.0)
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16f))
         afterMapReady()

@@ -2,13 +2,9 @@ package com.dscorp.ispadmin.presentation.ui.features.registration
 
 import android.os.Bundle
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.databinding.DataBindingUtil
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.ActivityRegisterBinding
-import com.dscorp.ispadmin.presentation.extension.analytics.AnalyticsConstants.REGISTER_USER
-import com.dscorp.ispadmin.presentation.extension.analytics.sendSignUpEvent
 import com.dscorp.ispadmin.presentation.extension.showCrossDialog
-import com.dscorp.ispadmin.presentation.extension.showErrorDialog
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseActivity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 

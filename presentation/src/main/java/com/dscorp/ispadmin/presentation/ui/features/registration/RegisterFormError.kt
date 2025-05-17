@@ -19,12 +19,6 @@ sealed class RegisterFormError(val error: String) {
         const val DIFFERENT_PASSWORDS = "Las contraseñas no coinciden"
     }
 
-    class OnEtUserError : RegisterFormError(USER_ERROR)
-    class OnEtFirstNameError : RegisterFormError(FIRST_NAME_ERROR)
     class OnEtLastNameError : RegisterFormError(LAST_NAME_ERROR)
     class OnEtPassword1Error : RegisterFormError(PASSWORD_ERROR)
-    class OnEtPassword2Error : RegisterFormError(VERIFY_PASSWORD_ERROR)
-    class OnEtFirstNameIsInvalidError : RegisterFormError(FIRST_NAME_INVALID)
-    class OnEtLastNameIsInvalidError : RegisterFormError(LAST_NAME_INVALID)
-    class OnDifferentPasswords : RegisterFormError(DIFFERENT_PASSWORDS)
 }

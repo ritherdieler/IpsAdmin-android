@@ -7,10 +7,4 @@ package com.dscorp.ispadmin.presentation.ui.features.registration
  * Huacho, Peru.
  *
  **/
-sealed class CleanFormErrors() {
-    object OnEtUserCleanError : CleanFormErrors()
-    object OnEtFirstNameCleanError : CleanFormErrors()
-    object OnEtLastNameCleanError : CleanFormErrors()
-    object OnEtPassword1CleanError : CleanFormErrors()
-    object OnEtPassword2CleanError : CleanFormErrors()
-}
+sealed class CleanFormErrors()

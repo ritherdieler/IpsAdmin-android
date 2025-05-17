@@ -23,7 +23,7 @@ fun SubscriptionResume.createReminderMessage(): String {
         val message = """
         ¡Hola ${customerName}! 🌟
 
-        Esperamos que estés bien. Queremos recordarte que tienes ${pendingInvoicesQuantity} facturas pendientes por un total de ${totalDebt} soles.
+        Esperamos que estés bien. Queremos recordarte que tienes $pendingInvoicesQuantity facturas pendientes por un total de $totalDebt soles.
 
         Para evitar interrupciones en tu servicio, te sugerimos realizar el pago a la brevedad. Puedes hacerlo fácilmente utilizando alguno de los siguientes métodos de pago:
 

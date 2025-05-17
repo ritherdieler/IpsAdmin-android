@@ -16,12 +16,6 @@ data class PlanResponse(
         return id == (other as PlanResponse).id
     }
 
-    fun getPlanType() = when (type) {
-        InstallationType.WIRELESS -> "W"
-        InstallationType.FIBER -> "F"
-        InstallationType.ONLY_TV_FIBER -> "TV"
-    }
-
     fun priceToString(): String {
         return "S/$price"
     }

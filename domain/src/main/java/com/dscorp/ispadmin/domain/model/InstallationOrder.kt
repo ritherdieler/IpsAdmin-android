@@ -29,6 +29,5 @@ enum class InstallationOrderStatus {
     SOLICITADO,
     EN_CURSO,
     CERRADO,
-    CANCELADO
 }
 

@@ -1,12 +1,10 @@
 package com.dscorp.components
 
 import android.content.Context
-import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.os.postDelayed
 import androidx.databinding.BindingAdapter
@@ -42,10 +40,10 @@ class ProgressButton @JvmOverloads constructor(
         set(value) {
             field = value
             if (field) {
-                binding.progressBar.visibility = View.VISIBLE
+                binding.progressBar.visibility = VISIBLE
                 binding.button.textSize = 0f
             } else {
-                binding.progressBar.visibility = View.GONE
+                binding.progressBar.visibility = GONE
                 binding.button.textSize = 14f
             }
         }
