@@ -415,7 +415,7 @@ fun SubscriptionFinderScreen(
             latitude = uiState.editableLatitude,
             longitude = uiState.editableLongitude,
             onShowMap = showMapSelection,
-            onGetCurrentLocationClick = { 
+            onGetCurrentLocationClick = {
                 onGetCurrentLocation()
             },
             isFetchingCurrentLocation = uiState.isFetchingCurrentLocation,
@@ -472,10 +472,12 @@ private fun handleMenuAction(
 ) {
     when (menuItem) {
         SHOW_PAYMENT_HISTORY -> {
+            navController.navigate(
                 SubscriptionFinderFragmentDirections.findSubscriptionToPaymentHistoryFragment(
                     subscription.id,
                     subscription.serviceStatus
                 )
+            )
         }
 
         EDIT_PLAN_SUBSCRIPTION -> {

@@ -5,7 +5,7 @@ ext {
     compileSdk = 35
     
     // Versiones de Kotlin y Java
-    kotlinVersion = '2.1.0'
+    kotlinVersion = '2.1.21'
     javaVersion = JavaVersion.VERSION_17
     jvmTarget = '17'
     
@@ -18,29 +18,29 @@ ext {
     materialVersion = '1.12.0'
     
     // Jetpack Compose
-    composeBomVersion = '2025.04.01'
-    composeVersion = '1.8.0'
+    composeBomVersion = '2025.05.00'
+    composeVersion = '1.8.1'
     composeCompilerVersion = '1.5.0'
     composeConstraintLayoutVersion = '1.1.1'
     composeNavigationVersion = '2.8.9'
     composeActivityVersion = '1.10.1'
-    accompanistVersion = '0.37.2'
+    accompanistVersion = '0.37.3'
     composeIconsVersion = '1.7.8'
-    composeMapVersion = '6.1.2'
+    composeMapVersion = '6.6.0'
     
     // ViewModel y Lifecycle
-    lifecycleVersion = '2.8.7'
+    lifecycleVersion = '2.9.0'
     
     // Navigation
-    navigationVersion = '2.8.9'
+    navigationVersion = '2.9.0'
     
     // Koin
-    koinVersion = '3.5.0'
-    koinComposeVersion = '3.5.4'
+    koinVersion = '4.0.4'
+    koinComposeVersion = '4.0.4'
     
     // Retrofit y networking
-    retrofitVersion = '2.11.0'
-    okhttpVersion = '5.0.0-alpha.11'
+    retrofitVersion = '3.0.0'
+    okhttpVersion = '5.0.0-alpha.14'
     
     // Firebase
     firebaseCrashlyticsVersion = '19.4.3'
@@ -59,7 +59,7 @@ ext {
     recyclerViewVersion = '1.4.0'
     exifInterfaceVersion = '1.4.1'
     shimmerVersion = '0.5.0'
-    lottieVersion = '6.1.0'
+    lottieVersion = '6.6.6'
     coreSplashscreenVersion = '1.0.1'
     
     // Legacy support
@@ -67,14 +67,14 @@ ext {
     
     // Debugging
     stethoVersion = '1.6.0'
-    chuckerVersion = '4.0.0'
+    chuckerVersion = '4.1.0'
     
     // Test dependencies
     junitVersion = '4.13.2'
     mockitoVersion = '5.2.0'
-    robolectricVersion = '4.10.3'
-    coroutinesTestVersion = '1.8.1'
-    truthVersion = '1.1.5'
+    robolectricVersion = '4.14.1'
+    coroutinesTestVersion = '1.10.2'
+    truthVersion = '1.4.4'
     archCoreTestingVersion = '2.2.0'
     junitExtVersion = '1.2.1'
     testCoreVersion = '1.6.1'

@@ -62,7 +62,6 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.internal.http.HTTP_OK
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import retrofit2.Response
@@ -70,13 +69,7 @@ import java.io.File
 import java.util.Date
 
 
-/**
- * Created by Sergio Carrillo Diestra on 19/11/2022.
- * scarrillo.peruapps@gmail.com
- * Peru Apps
- * Huacho, Peru.
- *
- **/
+const val HTTP_OK = 200
 
 const val MEDIA_TYPE = "multipart/form-data"
 
@@ -85,7 +78,6 @@ class Repository : IRepository, KoinComponent {
     private val restApiServices: RestApiServices by inject()
     private val sendMessagingCloudApi: SendMessagingCloudApi by inject()
     private val prefs: SharedPreferences by inject()
-    private val fileStoreDataSource: FileStoreDataSource by inject()
 
     override suspend fun registerUser(user: User): User {
         val response = restApiServices.registerUser(user)
