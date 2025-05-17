@@ -8,6 +8,12 @@ java {
     targetCompatibility = rootProject.ext.javaVersion
 }
 
+kotlin {
+    jvmToolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 dependencies {
     // Kotlin Standard Library
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
