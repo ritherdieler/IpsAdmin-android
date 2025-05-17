@@ -43,16 +43,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import com.dscorp.ispadmin.R
+import com.dscorp.ispadmin.domain.model.CustomerData
+import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.CustomOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
+import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CustomerFormData
 
 /**
  * Card component displaying a subscription with expandable details.
@@ -722,8 +726,7 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                         .padding(bottom = 8.dp)
                 )
                 
-                Spacer(modifier = Modifier.weight(1f))
-                
+
                 // Acciones rápidas: WhatsApp y Mapa
                 Row(
                     modifier = Modifier
@@ -852,6 +855,155 @@ private fun String.toIntOrNull(): Int? {
         this.toInt()
     } catch (e: NumberFormatException) {
         null
+    }
+}
+
+@Preview(showBackground = true, widthDp = 400)
+@Composable
+fun SubscriptionCardPreview() {
+    val subscriptionResume = SubscriptionResume(
+        id = 1,
+        planName = "Plan Básico",
+        installationType = InstallationType.FIBER,
+        serviceStatus = ServiceStatus.ACTIVE,
+        antiquity = "12",
+        placeName = "Lima",
+        ipAddress = "192.168.1.1",
+        ics = "ICS123",
+        lastPaymentDate = "2024-03-15",
+        totalDebt = 150.50,
+        pendingInvoicesQuantity = 2,
+        customerName = "Juan Pérez",
+        qualification = "regular",
+        customer = CustomerData(
+            subscriptionId = 1,
+            name = "Juan",
+            lastName = "Pérez",
+            dni = "12345678",
+            place = "Lima",
+            address = "Av. Principal 123",
+            phone = "987654321",
+            email = "juan@email.com"
+        ),
+        napBox = null,
+        placeId = "lima",
+        location = GeoLocation()
+    )
+
+    MaterialTheme {
+        SubscriptionCard(
+            subscriptionResume = subscriptionResume,
+            onMenuItemSelected = {},
+            onExpandChange = { _, _ -> },
+            expanded = false
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 400)
+@Composable
+fun SubscriptionCardExpandedPreview() {
+    val subscriptionResume = SubscriptionResume(
+        id = 1,
+        planName = "Plan Premium",
+        installationType = InstallationType.WIRELESS,
+        serviceStatus = ServiceStatus.CUT_OFF,
+        antiquity = "23",
+        placeName = "Arequipa",
+        ipAddress = "192.168.1.2",
+        ics = "ICS456",
+        lastPaymentDate = "2024-02-01",
+        totalDebt = 300.75,
+        pendingInvoicesQuantity = 3,
+        customerName = "Olivia Mathis",
+        qualification = "turpis",
+        customer = CustomerData(
+            subscriptionId = 1,
+            name = "Olivia",
+            lastName = "Mathis",
+            dni = "87654321",
+            place = "Arequipa",
+            address = "Av. Secundaria 456",
+            phone = "987654321",
+            email = "olivia@email.com"
+        ),
+        napBox = null,
+        placeId = "cras",
+        location = GeoLocation()
+    )
+
+    val customerFormData = CustomerFormData(
+        subscriptionId = 1,
+        name = "Olivia",
+        lastName = "Mathis",
+        phone = "987654321",
+        dni = "87654321",
+        address = "Av. Secundaria 456",
+        email = "olivia@email.com",
+        place = "Arequipa",
+        placeId = 1
+    )
+
+    val placesState = PlacesState(
+        places = listOf(
+            Place(id = "1", name = "Arequipa"),
+            Place(id = "2", name = "Lima"),
+            Place(id = "3", name = "Cusco")
+        ),
+        selectedPlace = Place(id = "1", name = "Arequipa")
+    )
+
+    MaterialTheme {
+        SubscriptionCard(
+            subscriptionResume = subscriptionResume,
+            onMenuItemSelected = {},
+            onExpandChange = { _, _ -> },
+            expanded = true,
+            customerFormData = customerFormData,
+            placesState = placesState
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 400)
+@Composable
+fun SubscriptionCardCancelledPreview() {
+    val subscriptionResume = SubscriptionResume(
+        id = 1,
+        planName = "Plan Básico",
+        installationType = InstallationType.FIBER,
+        serviceStatus = ServiceStatus.CANCELLED,
+        antiquity = "24",
+        placeName = "Trujillo",
+        ipAddress = "192.168.1.3",
+        ics = "ICS789",
+        lastPaymentDate = "2024-01-01",
+        totalDebt = 0.0,
+        pendingInvoicesQuantity = 0,
+        customerName = "María García",
+        qualification = "buena",
+        customer = CustomerData(
+            subscriptionId = 1,
+            name = "María",
+            lastName = "García",
+            dni = "76543210",
+            place = "Trujillo",
+            address = "Av. Terciaria 789",
+            phone = "987654321",
+            email = "maria@email.com"
+        ),
+        napBox = null,
+        placeId = "trujillo",
+        location = GeoLocation()
+    )
+
+    MaterialTheme {
+        SubscriptionCard(
+            subscriptionResume = subscriptionResume,
+            onMenuItemSelected = {},
+            onExpandChange = { _, _ -> },
+            expanded = false
+        )
     }
 }
 
