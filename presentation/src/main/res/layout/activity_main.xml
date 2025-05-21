@@ -31,10 +31,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="start"
-            android:background="#FFFFFF"
             tools:visibility="gone"
-            app:itemIconTint="#6750A4"
-            app:itemTextColor="#6750A4"
             android:fitsSystemWindows="true"
             app:menu="@menu/activity_main_drawer" />
 

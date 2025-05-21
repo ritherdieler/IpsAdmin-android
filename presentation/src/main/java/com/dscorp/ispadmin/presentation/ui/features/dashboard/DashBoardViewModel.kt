@@ -1,27 +1,65 @@
 package com.dscorp.ispadmin.presentation.ui.features.dashboard
 
-import androidx.lifecycle.MutableLiveData
-import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
-import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
-import com.example.data2.data.extensions.encryptWithSHA384
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
 import com.example.data2.data.repository.IRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-class DashBoardViewModel : BaseViewModel<DashBoardDataUiState>(), KoinComponent {
+class DashBoardViewModel : ViewModel(), KoinComponent {
     private val repository: IRepository by inject()
-    val userSession = repository.getUserSession()
-    val showDashBoardShimmerLiveData = MutableLiveData(true)
+    
+    private val _state = MutableStateFlow(DashboardState())
+    val state: StateFlow<DashboardState> = _state.asStateFlow()
 
     init {
         getDashBoardData()
     }
 
-    fun getDashBoardData() = executeNoProgress (doFinally = {
-        showDashBoardShimmerLiveData.value = false
-    }) {
-        val response = repository.getDashBoardData()
-        uiState.value = BaseUiState(DashBoardDataUiState.DashBoardData(response))
+    fun getDashBoardData() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            runCatching {
+                repository.getDashBoardData()
+            }.fold(
+                onSuccess = { response ->
+                    _state.update { 
+                        it.copy(
+                            dashboardData = response,
+                            isLoading = false
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _state.update { 
+                        it.copy(
+                            isLoading = false,
+                            event = DashboardEvent.ShowError(error.message)
+                        )
+                    }
+                }
+            )
+        }
     }
+    
+    fun onEventHandled() {
+        _state.update { it.copy(event = null) }
+    }
+}
 
+data class DashboardState(
+    val isLoading: Boolean = false,
+    val dashboardData: DashBoardDataResponse? = null,
+    val event: DashboardEvent? = null
+)
+
+sealed class DashboardEvent {
+    data class ShowError(val message: String?) : DashboardEvent()
+    object ServiceCutSuccess : DashboardEvent()
 }
