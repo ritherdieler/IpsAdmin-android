@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.dscorp.ispadmin.databinding.FragmentSubscriptionFinderBinding
+import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.SelectableLocationMapViewDialogFragment
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderScreen
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
@@ -38,15 +39,17 @@ class SubscriptionFinderFragment : Fragment() {
                 // Fine location permission granted
                 getCurrentLocation()
             }
+
             permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true -> {
                 // Only coarse location permission granted
                 getCurrentLocation()
             }
+
             else -> {
                 // No location permissions granted
                 Toast.makeText(
-                    requireContext(), 
-                    "Se requieren permisos de ubicación para esta función", 
+                    requireContext(),
+                    "Se requieren permisos de ubicación para esta función",
                     Toast.LENGTH_LONG
                 ).show()
                 viewModel.onLocationError()
@@ -65,28 +68,30 @@ class SubscriptionFinderFragment : Fragment() {
         val navController = findNavController()
 
         binding.root.setContent {
-            SubscriptionFinderScreen(
-                navController = navController, 
-                viewModel = viewModel,
-                onShowMapSelector = { geoLocation ->
-                    activity?.supportFragmentManager?.let { fm ->
-                        // Convert GeoLocation to LatLng before passing
-                        geoLocation?.let {
-                            val latLng = LatLng(it.latitude, it.longitude)
-                            SelectableLocationMapViewDialogFragment(latLng).show(
-                                fm, SelectableLocationMapViewDialogFragment::class.simpleName
-                            )
-                        } ?: run {
-                            SelectableLocationMapViewDialogFragment().show(
-                                fm, SelectableLocationMapViewDialogFragment::class.simpleName
-                            )
+            MyTheme {
+                SubscriptionFinderScreen(
+                    navController = navController,
+                    viewModel = viewModel,
+                    onShowMapSelector = { geoLocation ->
+                        activity?.supportFragmentManager?.let { fm ->
+                            // Convert GeoLocation to LatLng before passing
+                            geoLocation?.let {
+                                val latLng = LatLng(it.latitude, it.longitude)
+                                SelectableLocationMapViewDialogFragment(latLng).show(
+                                    fm, SelectableLocationMapViewDialogFragment::class.simpleName
+                                )
+                            } ?: run {
+                                SelectableLocationMapViewDialogFragment().show(
+                                    fm, SelectableLocationMapViewDialogFragment::class.simpleName
+                                )
+                            }
                         }
+                    },
+                    onGetCurrentLocation = {
+                        checkLocationPermissionsAndGetLocation()
                     }
-                },
-                onGetCurrentLocation = {
-                    checkLocationPermissionsAndGetLocation()
-                }
-            )
+                )
+            }
         }
         return binding.root
     }
@@ -100,6 +105,7 @@ class SubscriptionFinderFragment : Fragment() {
                 // Fine location permission already granted
                 getCurrentLocation()
             }
+
             ContextCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_COARSE_LOCATION
@@ -107,6 +113,7 @@ class SubscriptionFinderFragment : Fragment() {
                 // Coarse location permission already granted
                 getCurrentLocation()
             }
+
             else -> {
                 // Request location permissions
                 requestPermissionLauncher.launch(
@@ -122,12 +129,14 @@ class SubscriptionFinderFragment : Fragment() {
     @SuppressLint("MissingPermission")
     private fun getCurrentLocation() {
         // Check if location services are enabled
-        val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) && 
-            !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+        val locationManager =
+            requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) &&
+            !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        ) {
             Toast.makeText(
-                requireContext(), 
-                "Por favor active los servicios de ubicación", 
+                requireContext(),
+                "Por favor active los servicios de ubicación",
                 Toast.LENGTH_LONG
             ).show()
             viewModel.onLocationError()
@@ -145,8 +154,8 @@ class SubscriptionFinderFragment : Fragment() {
         }.addOnFailureListener {
             viewModel.onLocationError()
             Toast.makeText(
-                requireContext(), 
-                "No se pudo obtener la ubicación", 
+                requireContext(),
+                "No se pudo obtener la ubicación",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -157,8 +166,8 @@ class SubscriptionFinderFragment : Fragment() {
         // This would normally use LocationRequest and LocationCallback for more precise updates
         // For simplicity, we're just reporting the error
         Toast.makeText(
-            requireContext(), 
-            "No se pudo obtener la ubicación actual", 
+            requireContext(),
+            "No se pudo obtener la ubicación actual",
             Toast.LENGTH_LONG
         ).show()
         viewModel.onLocationError()

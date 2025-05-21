@@ -92,12 +92,12 @@ fun SubscriptionCard(
     // Calculate card background color based on service status
     val cardBackgroundColor = when (subscriptionResume.serviceStatus) {
         ServiceStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer
-        else -> MaterialTheme.colorScheme.primaryContainer
+        else -> MaterialTheme.colorScheme.surfaceContainer // Usar surfaceContainer para mejor armonía
     }
     
     val contentColor = when (subscriptionResume.serviceStatus) {
-        ServiceStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer
-        else -> MaterialTheme.colorScheme.onPrimaryContainer
+        ServiceStatus.CANCELLED -> MaterialTheme.colorScheme.onErrorContainer
+        else -> MaterialTheme.colorScheme.onSurface
     }
 
     ElevatedCard(
@@ -189,6 +189,7 @@ fun CustomerDataForm(
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         shadowElevation = 2.dp,
         tonalElevation = 2.dp,
         modifier = modifier
@@ -532,7 +533,7 @@ fun ExpandableCardFooter(
             modifier = Modifier
                 .size(32.dp)
                 .rotate(rotationDegree),
-            tint = MaterialTheme.colorScheme.onPrimaryContainer
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
         )
     }
 }
@@ -553,16 +554,25 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                 .padding(bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Indicator de tipo de servicio (Fibra o Inalámbrico)
+            // Indicator de tipo de servicio con colores más armoniosos
+            val installationColor = when (subscriptionResume.installationType) {
+                InstallationType.FIBER -> MaterialTheme.colorScheme.primaryContainer
+                InstallationType.WIRELESS -> MaterialTheme.colorScheme.secondaryContainer
+                else -> MaterialTheme.colorScheme.surfaceVariant
+            }
+            
+            val installationContentColor = when (subscriptionResume.installationType) {
+                InstallationType.FIBER -> MaterialTheme.colorScheme.onPrimaryContainer
+                InstallationType.WIRELESS -> MaterialTheme.colorScheme.onSecondaryContainer
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            }
+            
             Surface(
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
                     .padding(end = 8.dp),
-                color = when (subscriptionResume.installationType) {
-                    InstallationType.FIBER -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
-                    InstallationType.WIRELESS -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-                    else -> MaterialTheme.colorScheme.surfaceVariant
-                }
+                color = installationColor,
+                contentColor = installationContentColor
             ) {
                 Text(
                     text = when (subscriptionResume.installationType) {
@@ -572,27 +582,33 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                         else -> "Otro"
                     },
                     style = MaterialTheme.typography.labelMedium,
-                    color = when (subscriptionResume.installationType) {
-                        InstallationType.FIBER -> MaterialTheme.colorScheme.tertiary
-                        InstallationType.WIRELESS -> MaterialTheme.colorScheme.secondary
-                        else -> MaterialTheme.colorScheme.onSurfaceVariant
-                    },
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                 )
             }
             
             Spacer(modifier = Modifier.weight(1f))
             
-            // Indicador de estado del servicio
+            // Indicador de estado del servicio con mejor armonía
+            val statusColor = when (subscriptionResume.serviceStatus) {
+                ServiceStatus.ACTIVE -> MaterialTheme.colorScheme.primaryContainer
+                ServiceStatus.CUT_OFF -> MaterialTheme.colorScheme.errorContainer
+                ServiceStatus.SUSPENDED -> MaterialTheme.colorScheme.tertiaryContainer
+                ServiceStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer
+                else -> MaterialTheme.colorScheme.surfaceVariant
+            }
+            
+            val statusContentColor = when (subscriptionResume.serviceStatus) {
+                ServiceStatus.ACTIVE -> MaterialTheme.colorScheme.onPrimaryContainer
+                ServiceStatus.CUT_OFF -> MaterialTheme.colorScheme.onErrorContainer
+                ServiceStatus.SUSPENDED -> MaterialTheme.colorScheme.onTertiaryContainer
+                ServiceStatus.CANCELLED -> MaterialTheme.colorScheme.onErrorContainer
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            }
+            
             Surface(
                 modifier = Modifier.clip(RoundedCornerShape(16.dp)),
-                color = when (subscriptionResume.serviceStatus) {
-                    ServiceStatus.ACTIVE -> MaterialTheme.colorScheme.primaryContainer
-                    ServiceStatus.CUT_OFF -> MaterialTheme.colorScheme.errorContainer
-                    ServiceStatus.SUSPENDED -> MaterialTheme.colorScheme.tertiaryContainer
-                    ServiceStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer
-                    else -> MaterialTheme.colorScheme.surfaceVariant
-                }
+                color = statusColor,
+                contentColor = statusContentColor
             ) {
                 Text(
                     text = when (subscriptionResume.serviceStatus) {
@@ -603,25 +619,19 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                         else -> "Desconocido"
                     },
                     style = MaterialTheme.typography.labelMedium,
-                    color = when (subscriptionResume.serviceStatus) {
-                        ServiceStatus.ACTIVE -> MaterialTheme.colorScheme.onPrimaryContainer
-                        ServiceStatus.CUT_OFF -> MaterialTheme.colorScheme.onErrorContainer
-                        ServiceStatus.SUSPENDED -> MaterialTheme.colorScheme.onTertiaryContainer
-                        ServiceStatus.CANCELLED -> MaterialTheme.colorScheme.onErrorContainer
-                        else -> MaterialTheme.colorScheme.onSurfaceVariant
-                    },
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                 )
             }
         }
         
-        // Deuda destacada cuando existe
+        // Deuda destacada cuando existe con mejor armonía
         if (subscriptionResume.totalDebt > 0) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
+                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f),
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Column(
@@ -650,32 +660,30 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                         // Cantidad de facturas
                         Text(
                             text = "${subscriptionResume.pendingInvoicesQuantity} facturas",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
             }
         }
         
-        // Información principal en dos columnas
+        // Información principal en dos columnas - estilos más armoniosos
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = if (subscriptionResume.totalDebt > 0) 4.dp else 12.dp)
         ) {
-            // Primera columna: Información del plan
+            // Primera columna con colores armoniosos
             Column(modifier = Modifier.weight(0.6f)) {
-                // Plan con estilo destacado
                 Text(
                     text = "Plan",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
                 Text(
                     text = subscriptionResume.planName.capitalize(),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -684,16 +692,19 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                 SubscriptionInfoItem(
                     label = "Antigüedad",
                     value = "${subscriptionResume.antiquity} meses",
+                    labelColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                     alignment = Alignment.CenterStart
                 )
                 SubscriptionInfoItem(
                     label = "Lugar",
                     value = subscriptionResume.placeName.capitalize(),
+                    labelColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                     alignment = Alignment.CenterStart
                 )
                 SubscriptionInfoItem(
                     label = "IP",
                     value = subscriptionResume.ipAddress,
+                    labelColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                     isClickable = true,
                     onClick = { openInBrowser(subscriptionResume.ipAddress, context) },
                     alignment = Alignment.CenterStart
@@ -701,43 +712,42 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                 SubscriptionInfoItem(
                     label = "ICS",
                     value = subscriptionResume.ics,
+                    labelColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                     alignment = Alignment.CenterStart
                 )
             }
             
-            // Segunda columna: Acciones y último pago
+            // Segunda columna con mejor armonía
             Column(
                 modifier = Modifier.weight(0.5f),
                 horizontalAlignment = Alignment.End
             ) {
-                // Último pago destacado
                 Text(
                     text = "Último pago",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     modifier = Modifier.align(Alignment.End)
                 )
                 Text(
                     text = subscriptionResume.lastPaymentDate ?: "Sin pagos",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .align(Alignment.End)
                         .padding(bottom = 8.dp)
                 )
                 
-
-                // Acciones rápidas: WhatsApp y Mapa
+                // Acciones rápidas con colores adaptados
                 Row(
                     modifier = Modifier
                         .padding(vertical = 8.dp)
                         .align(Alignment.End)
                 ) {
-                    // Map button en un contenedor material
+                    // Map button con mejor armonía
                     Surface(
                         modifier = Modifier.clip(CircleShape),
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        contentColor = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     ) {
                         IconButton(onClick = { openMap(subscriptionResume, context) }) {
                             Icon(
@@ -750,11 +760,12 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                     
                     Spacer(modifier = Modifier.size(8.dp))
                     
-                    // WhatsApp button en un contenedor material
+                    // WhatsApp button adaptado al tema
+                    val whatsappColor = MaterialTheme.colorScheme.primary // Usar el color primario para mejor armonía
                     Surface(
                         modifier = Modifier.clip(CircleShape),
-                        color = Color(0xFF25D366).copy(alpha = 0.1f),
-                        contentColor = Color(0xFF25D366)
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = whatsappColor
                     ) {
                         IconButton(onClick = { sendWhatsapp(subscriptionResume, context) }) {
                             Icon(
@@ -777,6 +788,7 @@ fun SubscriptionInfoItem(
     isClickable: Boolean = false,
     onClick: () -> Unit = {},
     alignment: Alignment = Alignment.Center,
+    labelColor: Color = MaterialTheme.colorScheme.primary,
     modifier: Modifier = Modifier
 ) {
     val baseModifier = modifier
@@ -799,12 +811,12 @@ fun SubscriptionInfoItem(
             Text(
                 text = "$label: ",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = labelColor
             )
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (isClickable) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onPrimaryContainer
+                color = if (isClickable) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -826,8 +838,8 @@ private fun SaveButton(
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
-            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-            disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+            disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
         ),
         enabled = enabled,
         onClick = onSaveClick

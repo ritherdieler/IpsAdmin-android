@@ -77,7 +77,7 @@ fun CardHeader(
             text = subscription.customerName.capitalize(),
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -93,7 +93,7 @@ fun CardHeader(
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = "Ver opciones",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
             
@@ -144,7 +144,10 @@ private fun SubscriptionDropdownMenu(
             color = MaterialTheme.colorScheme.primary
         )
         
-        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 4.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+        )
         
         // Menu items
         menuItems.forEach { menuItem ->
@@ -165,7 +168,8 @@ private fun SubscriptionDropdownMenu(
                         
                         Text(
                             text = menuItem.getTitle(context),
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
