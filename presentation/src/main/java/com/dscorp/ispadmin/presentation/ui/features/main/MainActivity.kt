@@ -49,6 +49,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
+        // Asegurarse de que la ActionBar esté disponible para mostrar el título
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setHomeButtonEnabled(true)
+
         setupNavigation()
         checkNotificationPermission()
         
@@ -87,6 +91,14 @@ class MainActivity : AppCompatActivity() {
 
         // Configurar el NavigationView
         binding.navView.setupWithNavController(navController)
+        
+        // Actualizar el título según el destino de navegación
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            // Obtener el título del destino y actualizar la ActionBar
+            destination.label?.let { label ->
+                supportActionBar?.title = label
+            }
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)

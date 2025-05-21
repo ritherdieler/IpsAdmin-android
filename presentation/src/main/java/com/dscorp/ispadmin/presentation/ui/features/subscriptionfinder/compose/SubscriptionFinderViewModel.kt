@@ -39,7 +39,8 @@ data class SubscriptionFinderUiState(
     val showLocationUpdateDialog: Boolean = false,
     val editableLatitude: String = "",
     val editableLongitude: String = "",
-    val isFetchingCurrentLocation: Boolean = false
+    val isFetchingCurrentLocation: Boolean = false,
+    val lastUsedFilter: SubscriptionFilter? = null
 )
 
 data class CustomerFormData(
@@ -115,6 +116,9 @@ class SubscriptionFinderViewModel(
     fun findSubscription() = viewModelScope.launch {
         documentNumberFlow.debounce(REQUEST_DELAY)
             .collect { filterType ->
+                // Guardar el último filtro usado
+                _uiState.update { it.copy(lastUsedFilter = filterType) }
+                
                 val response = when (filterType) {
                     is SubscriptionFilter.BY_DATE -> {
                         if (filterType.startDate.isEmpty() || filterType.endDate.isEmpty()) {
@@ -152,6 +156,14 @@ class SubscriptionFinderViewModel(
             }
     }
 
+    // Función para recargar los datos con el último filtro usado
+    fun reloadLastSearch() {
+        viewModelScope.launch {
+            _uiState.value.lastUsedFilter?.let { filter ->
+                documentNumberFlow.emit(filter)
+            }
+        }
+    }
 
     fun setSelectedSubscription(subscription: SubscriptionResume?) {
         _uiState.update { it.copy(selectedSubscription = subscription) }
@@ -405,12 +417,17 @@ class SubscriptionFinderViewModel(
     }
 
     /**
-     * Updates coordinates from current location
-     * Called by the Fragment/Activity after getting location permission and retrieving coordinates
+     * Updates coordinates from current location received from location client
      */
-    fun updateCurrentLocation(latitude: Double, longitude: Double) {
-        val location = LatLng(latitude, longitude)
-        updateCoordinatesFromMap(location)
+    fun updateCurrentLocation(latLng: LatLng) {
+        updateCoordinatesFromMap(latLng)
+    }
+
+    /**
+     * Updates the loading state for fetching current location
+     */
+    fun setFetchingCurrentLocation(isFetching: Boolean) {
+        _uiState.update { it.copy(isFetchingCurrentLocation = isFetching) }
     }
 
     /**

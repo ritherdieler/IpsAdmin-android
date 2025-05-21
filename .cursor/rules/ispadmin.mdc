@@ -28,7 +28,7 @@ alwaysApply: true
      - **Transiciones y animaciones sutiles** para ofrecer una experiencia fluida y placentera.  
    - Utilizar los componentes personalizados ubicados en  
      `com.dscorp.ispadmin.presentation.ui.features.composecomponents`.
-     - Usa MyTheme  para todas las screens y las preview
+     - Usa MyTheme  para todas las  pantallas y las preview
 
 4. **Arquitectura y Flujo de Datos**  
    - En los ViewModel, implementar **Unidirectional Data Flow (UDF)** para un manejo limpio y escalable del estado.  
@@ -62,3 +62,5 @@ alwaysApply: true
      ```
    - Realizar **pruebas básicas** de las pantallas y flujos de datos para garantizar estabilidad y correcto funcionamiento.
 
+   9. Espacio de trabajo.
+   Dentro del espacio de trabajo hay 2 carpetas ipsAdmin contiene el app de android y wispadministrator es el backend hecho en springboot con kotlin

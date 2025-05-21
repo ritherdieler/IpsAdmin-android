@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.presentation.di.modules
 
 import com.dscorp.ispadmin.data.usecase.PlaceUseCaseImpl
+import com.dscorp.ispadmin.domain.usecase.GetPaymentByIdUseCase
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.PlaceUseCase
 import com.dscorp.ispadmin.domain.usecase.UpdateDeviceTokenUseCase
@@ -33,4 +34,5 @@ val useCaseModule = module {
     single<UserUseCase> { UserUseCaseImpl(get()) }
     single<PlaceUseCase> { PlaceUseCaseImpl(get()) }
     single<UpdateDeviceTokenUseCase> { UpdateDeviceTokenUseCaseImpl(get()) }
+    single { GetPaymentByIdUseCase(get()) }
 }

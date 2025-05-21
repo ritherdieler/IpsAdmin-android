@@ -7,7 +7,8 @@
 
     <fragment
         android:id="@+id/nav_my_profile"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.profile.MyProfileFragment" />
+        android:name="com.dscorp.ispadmin.presentation.ui.features.profile.MyProfileFragment"
+        android:label="@string/profile" />
 
     <fragment
         android:id="@+id/nav_dashboard"
@@ -16,15 +17,14 @@
         tools:layout="@layout/fragment_dash_board" />
 
     <fragment
-        android:id="@+id/nav_support_assistance_tickets"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.supportTicket.SupportTicketListFragment"
-        android:label="Tickets de soporte"
-        tools:layout="@layout/fragment_support_ticket_list" />
-
-    <fragment
         android:id="@+id/nav_create_support_ticket"
         android:name="com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.CreateSupportTicketFragment"
         android:label="Registrar tickets de soporte" />
+
+    <fragment
+        android:id="@+id/nav_support_assistance_tickets"
+        android:name="com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.SupportTicketListComposeFragment"
+        android:label="Tickets de soporte" />
 
     <fragment
         android:id="@+id/nav_to_register_nap_box"
@@ -132,8 +132,8 @@
             android:id="@+id/action_paymentDetailFragment_to_registerPaymentFragment"
             app:destination="@id/register_payment" />
         <argument
-            android:name="payment"
-            app:argType="com.dscorp.ispadmin.domain.model.Payment" />
+            android:name="paymentId"
+            app:argType="string" />
     </fragment>
     <fragment
         android:id="@+id/nav_reports"

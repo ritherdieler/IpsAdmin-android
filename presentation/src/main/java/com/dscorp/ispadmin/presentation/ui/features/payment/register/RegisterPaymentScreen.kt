@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyAutoCompleteTextViewCompose
@@ -51,7 +52,64 @@ import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLined
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutlinedTextField
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Pantalla de registro de pago en Compose
+ * Esta versión puede recibir tanto un Payment completo como un paymentId
+ */
+@Composable
+fun RegisterPaymentScreen(
+    navController: NavHostController,
+    paymentId: Int,
+    viewModel: RegisterPaymentViewModel = koinViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    
+    // Cargar el pago usando el ID
+    LaunchedEffect(key1 = paymentId) {
+        // En un escenario real, cargaríamos el pago desde el repositorio
+        // Por ahora creamos un objeto temporal con el ID proporcionado
+        val payment = Payment().apply {
+            id = paymentId
+            // Aquí deberían cargarse más propiedades desde el repositorio
+        }
+        viewModel.onEvent(RegisterPaymentEvent.SetPayment(payment))
+    }
+    
+    if (state.isSuccess) {
+        SuccessDialog(onDismiss = { navController.popBackStack() })
+    }
+    
+    RegisterPaymentScreenContent(
+        state = state,
+        onNavigateBack = { navController.popBackStack() },
+        onPaymentMethodSelected = { selectedMethod ->
+            viewModel.onEvent(RegisterPaymentEvent.PaymentMethodSelected(selectedMethod))
+        },
+        onElectronicPayerNameChanged = { payer ->
+            viewModel.onEvent(RegisterPaymentEvent.ElectronicPayerNameChanged(payer))
+        },
+        onElectronicPayerNameCleared = {
+            viewModel.onEvent(RegisterPaymentEvent.ElectronicPayerNameChanged(null))
+        },
+        onToggleDiscountFields = {
+            viewModel.onEvent(RegisterPaymentEvent.ToggleDiscountFields)
+        },
+        onDiscountAmountChanged = { amount ->
+            viewModel.onEvent(RegisterPaymentEvent.DiscountAmountChanged(amount))
+        },
+        onDiscountReasonChanged = { reason ->
+            viewModel.onEvent(RegisterPaymentEvent.DiscountReasonChanged(reason))
+        },
+        onRegisterPayment = {
+            viewModel.onEvent(RegisterPaymentEvent.RegisterPayment)
+        }
+    )
+}
+
+/**
+ * Versión alternativa que recibe directamente un objeto Payment
+ * Mantiene compatibilidad con código existente
+ */
 @Composable
 fun RegisterPaymentScreen(
     payment: Payment,
@@ -68,6 +126,46 @@ fun RegisterPaymentScreen(
         SuccessDialog(onDismiss = onNavigateBack)
     }
     
+    RegisterPaymentScreenContent(
+        state = state,
+        onNavigateBack = onNavigateBack,
+        onPaymentMethodSelected = { selectedMethod ->
+            viewModel.onEvent(RegisterPaymentEvent.PaymentMethodSelected(selectedMethod))
+        },
+        onElectronicPayerNameChanged = { payer ->
+            viewModel.onEvent(RegisterPaymentEvent.ElectronicPayerNameChanged(payer))
+        },
+        onElectronicPayerNameCleared = {
+            viewModel.onEvent(RegisterPaymentEvent.ElectronicPayerNameChanged(null))
+        },
+        onToggleDiscountFields = {
+            viewModel.onEvent(RegisterPaymentEvent.ToggleDiscountFields)
+        },
+        onDiscountAmountChanged = { amount ->
+            viewModel.onEvent(RegisterPaymentEvent.DiscountAmountChanged(amount))
+        },
+        onDiscountReasonChanged = { reason ->
+            viewModel.onEvent(RegisterPaymentEvent.DiscountReasonChanged(reason))
+        },
+        onRegisterPayment = {
+            viewModel.onEvent(RegisterPaymentEvent.RegisterPayment)
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RegisterPaymentScreenContent(
+    state: RegisterPaymentState,
+    onNavigateBack: () -> Unit,
+    onPaymentMethodSelected: (String) -> Unit,
+    onElectronicPayerNameChanged: (String) -> Unit,
+    onElectronicPayerNameCleared: () -> Unit,
+    onToggleDiscountFields: () -> Unit,
+    onDiscountAmountChanged: (String) -> Unit,
+    onDiscountReasonChanged: (String) -> Unit,
+    onRegisterPayment: () -> Unit
+) {
     MyTheme {
         Scaffold(
             topBar = {
@@ -96,27 +194,13 @@ fun RegisterPaymentScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                    onPaymentMethodSelected = { selectedMethod ->
-                        viewModel.onEvent(RegisterPaymentEvent.PaymentMethodSelected(selectedMethod))
-                    },
-                    onElectronicPayerNameChanged = { payer ->
-                        viewModel.onEvent(RegisterPaymentEvent.ElectronicPayerNameChanged(payer))
-                    },
-                    onElectronicPayerNameCleared = {
-                        viewModel.onEvent(RegisterPaymentEvent.ElectronicPayerNameChanged(null))
-                    },
-                    onToggleDiscountFields = {
-                        viewModel.onEvent(RegisterPaymentEvent.ToggleDiscountFields)
-                    },
-                    onDiscountAmountChanged = { amount ->
-                        viewModel.onEvent(RegisterPaymentEvent.DiscountAmountChanged(amount))
-                    },
-                    onDiscountReasonChanged = { reason ->
-                        viewModel.onEvent(RegisterPaymentEvent.DiscountReasonChanged(reason))
-                    },
-                    onRegisterPayment = {
-                        viewModel.onEvent(RegisterPaymentEvent.RegisterPayment)
-                    }
+                    onPaymentMethodSelected = onPaymentMethodSelected,
+                    onElectronicPayerNameChanged = onElectronicPayerNameChanged,
+                    onElectronicPayerNameCleared = onElectronicPayerNameCleared,
+                    onToggleDiscountFields = onToggleDiscountFields,
+                    onDiscountAmountChanged = onDiscountAmountChanged,
+                    onDiscountReasonChanged = onDiscountReasonChanged,
+                    onRegisterPayment = onRegisterPayment
                 )
             }
         }

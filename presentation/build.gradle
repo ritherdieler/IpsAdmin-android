@@ -7,6 +7,7 @@ plugins {
     id 'com.google.firebase.crashlytics'
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
     id 'org.jetbrains.kotlin.plugin.compose'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.0'
 }
 
 android {
@@ -96,6 +97,7 @@ dependencies {
     implementation "androidx.navigation:navigation-fragment-ktx:${rootProject.ext.navigationVersion}"
     implementation "androidx.navigation:navigation-ui-ktx:${rootProject.ext.navigationVersion}"
     implementation "androidx.navigation:navigation-compose:${rootProject.ext.navigationVersion}"
+    implementation "androidx.navigation:navigation-runtime-ktx:${rootProject.ext.navigationVersion}"
     
     // Koin para Compose
     implementation "io.insert-koin:koin-androidx-compose:${rootProject.ext.koinComposeVersion}"
@@ -151,6 +153,9 @@ dependencies {
     
     // Google Maps Compose
     implementation "com.google.maps.android:maps-compose:${rootProject.ext.composeMapVersion}"
+    
+    // Kotlin Serialization
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0"
     
     // Test dependencies
     testImplementation "com.squareup.okhttp3:mockwebserver:${rootProject.ext.okhttpVersion}"

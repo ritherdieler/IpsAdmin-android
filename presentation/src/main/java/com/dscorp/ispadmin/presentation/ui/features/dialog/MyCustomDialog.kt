@@ -55,7 +55,6 @@ fun MyCustomDialog(
     usePlatformDefaultWidth: Boolean = true,
     onDismissRequest: () -> Unit = {},
     content: @Composable (ColumnScope) -> Unit,
-
     ) {
     Dialog(
         onDismissRequest = {
@@ -89,13 +88,14 @@ fun MyCustomDialog(
             }
 
             Column(
-                modifier = modifier.padding(top=32.dp)
+                modifier = modifier
                     .zIndex(2f)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
                 if (title.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Text(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                         text = title,

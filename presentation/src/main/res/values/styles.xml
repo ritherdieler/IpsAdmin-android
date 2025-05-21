@@ -112,6 +112,16 @@
 
     </style>
 
+    <!-- Estilo para diálogos a pantalla completa -->
+    <style name="FullscreenDialogStyle" parent="Theme.MaterialComponents.Light.Dialog">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@color/colorPrimary</item>
+    </style>
+
     <!-- Define los demás estilos aquí -->
 
 

@@ -1,7 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose
 
 import android.content.Context
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,16 +52,13 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
+import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Payment
+import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyConfirmDialog
-import com.dscorp.ispadmin.presentation.ui.features.locationMapView.MAP_SELECTION_REQUEST_KEY
-import com.dscorp.ispadmin.presentation.ui.features.locationMapView.MAP_SELECTION_RESULT_KEY
 import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
-import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationActivity
-import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.SubscriptionFinderFragmentDirections
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.CANCEL_SUBSCRIPTION
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.CHANGE_NAP_BOX
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.EDIT_PLAN_SUBSCRIPTION
@@ -70,7 +66,6 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SEE_DETAILS
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SHOW_PAYMENT_HISTORY
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.UPDATE_LOCATION
-import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
@@ -109,18 +104,9 @@ fun SubscriptionFinderScreen(
         onShowMapSelector(initialGeoLocation)
     }
 
-    // Listen for the result from the map dialog
-    LaunchedEffect(lifecycleOwner) {
-        val activity = context as? FragmentActivity
-        activity?.supportFragmentManager?.setFragmentResultListener(
-            MAP_SELECTION_REQUEST_KEY,
-            lifecycleOwner
-        ) { _, bundle ->
-            val result = bundle.getParcelable<LatLng>(MAP_SELECTION_RESULT_KEY)
-            result?.let {
-                viewModel.updateCoordinatesFromMap(it)
-            }
-        }
+    // Recargar datos cuando se vuelve a la pantalla
+    LaunchedEffect(Unit) {
+        viewModel.reloadLastSearch()
     }
 
     Scaffold(
@@ -409,7 +395,6 @@ fun SubscriptionFinderScreen(
     // Location update dialog
     if (uiState.showLocationUpdateDialog) {
         LocationUpdateDialog(
-            viewModel = viewModel,
             selectedSubscription = uiState.selectedSubscription,
             saveState = uiState.saveSubscriptionState,
             latitude = uiState.editableLatitude,
@@ -419,6 +404,7 @@ fun SubscriptionFinderScreen(
                 onGetCurrentLocation()
             },
             isFetchingCurrentLocation = uiState.isFetchingCurrentLocation,
+            onUpdateLocation = { viewModel.updateSubscriptionLocation() },
             onDismiss = { viewModel.toggleLocationUpdateDialog(false) }
         )
     }
@@ -473,33 +459,29 @@ private fun handleMenuAction(
     when (menuItem) {
         SHOW_PAYMENT_HISTORY -> {
             navController.navigate(
-                SubscriptionFinderFragmentDirections.findSubscriptionToPaymentHistoryFragment(
+                Payment.History(
                     subscription.id,
-                    subscription.serviceStatus
+                    subscription.serviceStatus.toString()
                 )
             )
         }
 
         EDIT_PLAN_SUBSCRIPTION -> {
-            navController.navigate(
-                SubscriptionFinderFragmentDirections.findSubscriptionToEditSubscriptionFragment(
-                    subscription.id
-                )
-            )
+//            navController.navigate(
+//                Subscription.Edit(subscription.id)
+//            )
         }
 
         SEE_DETAILS -> {
             navController.navigate(
-                SubscriptionFinderFragmentDirections.findSubscriptionToSubscriptionDetail(
-                    subscription.id
-                )
+                Subscription.Details(subscription.id)
             )
         }
 
         MIGRATE_TO_FIBER -> {
-            val intent = Intent(context, MigrationActivity::class.java)
-            intent.putExtra(SUBSCRIPTION_ID, subscription.id)
-            context.startActivity(intent)
+            navController.navigate(
+                Subscription.Migrate(subscription.id)
+            )
         }
 
         CANCEL_SUBSCRIPTION -> {

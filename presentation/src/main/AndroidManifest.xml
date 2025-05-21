@@ -7,6 +7,7 @@
         android:required="false" />
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.RECEIVE_NOTIFICATIONS" />
@@ -29,39 +30,11 @@
         android:theme="@style/Theme.AppSplashScreen"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        
         <activity
-            android:name=".presentation.ui.features.supportTicket.closedTickets.PhotoViewer"
-            android:exported="false" />
-        <activity
-            android:name=".presentation.ui.features.migration.MigrationActivity"
-            android:exported="false"
-            android:label="@string/title_activity_migration_acitivty"
-            android:theme="@style/Theme.AppSplashScreen" />
-
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAXyouyT4cAxP6Rem17B1ocfKHTHKo0G8Q" /> <!-- <meta-data -->
-        <!-- android:name="com.google.firebase.messaging.default_notification_channel_id" -->
-        <!-- android:value="MyChannelId" /> -->
-        <activity
-            android:name=".presentation.ui.features.main.MainActivity"
-            android:exported="false"
-            android:label="@string/title_activity_main2"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.IspAdminAndroid.NoActionBar" />
-
-        <activity
-            android:name=".presentation.ui.features.registration.RegisterActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.IspAdminAndroid" />
-            
-        <activity
-            android:name=".presentation.ui.features.splash.SplashActivity"
+            android:name=".presentation.ui.features.main.ComposeMainActivity"
             android:exported="true"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppSplashScreen">
+            android:theme="@style/Theme.IpsAdmin">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -69,57 +42,125 @@
         </activity>
         
         <activity
+            android:name=".presentation.ui.features.migration.MigrationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAXyouyT4cAxP6Rem17B1ocfKHTHKo0G8Q" />
+            
+        <!-- FileProvider para la captura de imágenes -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+            
+        <activity
             android:name=".presentation.ui.features.login.LoginActivity"
             android:exported="false"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppSplashScreen">
-        </activity>
-        <activity
-            android:name=".presentation.ui.features.supportTicket.TicketActivity"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.IspAdminAndroid.NoActionBar" />
-        <!--
- Set custom default icon. This is used when no icon is set for incoming notification messages.
-             See README(https://goo.gl/l4GJaQ) for more.
-        -->
-        <!-- <meta-data -->
-        <!-- android:name="com.google.firebase.messaging.default_notification_icon" -->
-        <!-- android:resource="@drawable/ic_location" /> -->
-        <!--
- Set color used with incoming notification messages. This is used when no color is set for the incoming
-             notification message. See README(https://goo.gl/6BKBk7) for more.
-        -->
-        <!-- <meta-data -->
-        <!-- android:name="com.google.firebase.messaging.default_notification_color" -->
-        <!-- android:resource="@color/purple_200" /> -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="com.dscorp.ispadmin.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="com.dscorp.ispadmin.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
+            android:theme="@style/Theme.IpsAdmin" />
 
-        <service
-            android:name=".presentation.fcm.CloudMessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
+        <activity
+            android:name=".presentation.ui.features.supportTicket.list.TicketActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.main.MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.subscription.register.RegisterSubscriptionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.subscription.edit.EditSubscriptionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.subscriptiondetail.SubscriptionDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.subscriptionfinder.SubscriptionFinderActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.payment.register.RegisterPaymentActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.payment.history.PaymentHistoryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.payment.detail.PaymentDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.payment.payerFinder.FindPayerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.napbox.register.RegisterNapBoxActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.napbox.list.NapBoxListActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.napbox.edit.EditNapBoxActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.installationorder.create.CreateInstallationOrderActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.installationorder.pending.PendingInstallationOrdersActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.installationorder.assigned.AssignedInstallationOrdersActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.installationorder.inprogress.InProgressInstallationOrdersActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.installationorder.closed.ClosedInstallationOrdersActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
+        <activity
+            android:name=".presentation.ui.features.reports.ReportsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.IpsAdmin" />
+
     </application>
 
 </manifest>

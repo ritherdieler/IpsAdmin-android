@@ -167,4 +167,5 @@ interface IRepository {
     suspend fun getPlaceFromLocation(latitude: Double, longitude: Double): Place
     suspend fun updateSubscriptionLocation(subscriptionId: Int, latitude: Double, longitude: Double)
     suspend fun updateDeviceToken(userId: Int, deviceToken: String): User
+    suspend fun getPaymentById(paymentId: String): Payment
 }

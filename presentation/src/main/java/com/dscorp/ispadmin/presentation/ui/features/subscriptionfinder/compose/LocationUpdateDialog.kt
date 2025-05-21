@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.outlined.Map
@@ -28,6 +29,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -55,7 +57,6 @@ import com.google.android.gms.maps.model.LatLng
  */
 @Composable
 fun LocationUpdateDialog(
-    viewModel: SubscriptionFinderViewModel,
     selectedSubscription: SubscriptionResume?,
     saveState: SaveSubscriptionState,
     latitude: String,
@@ -63,6 +64,7 @@ fun LocationUpdateDialog(
     onShowMap: () -> Unit,
     onGetCurrentLocationClick: () -> Unit,
     isFetchingCurrentLocation: Boolean,
+    onUpdateLocation: () -> Unit,
     onDismiss: () -> Unit
 ) {
     if (selectedSubscription == null) {
@@ -103,49 +105,57 @@ fun LocationUpdateDialog(
         paddingValues = PaddingValues(0.dp),
         modifier = Modifier.fillMaxSize()
     ) {
-        Card(
-            modifier = Modifier.fillMaxSize(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        // Header con botón de volver
+        Surface(
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            // Header
-            Surface(
-                color = MaterialTheme.colorScheme.primary,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = "Volver",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
                 Text(
                     text = "Actualizar ubicación",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .weight(1f),
                     textAlign = TextAlign.Center
                 )
             }
+        }
 
-            // Content area
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                when (saveState) {
-                    SaveSubscriptionState.Loading -> LoadingContent()
-                    SaveSubscriptionState.Success -> LocationContent(
-                        currentLatLng = currentLatLng,
-                        newLatLng = newLatLng,
-                        isLocationChanged = isLocationChanged,
-                        isFetchingCurrentLocation = isFetchingCurrentLocation,
-                        onShowMap = onShowMap,
-                        onGetCurrentLocationClick = onGetCurrentLocationClick,
-                        onUpdateLocation = { viewModel.updateSubscriptionLocation() },
-                        onDismiss = onDismiss
-                    )
-                    SaveSubscriptionState.Error -> ErrorContent(onDismiss)
-                }
+        // Content area
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            when (saveState) {
+                SaveSubscriptionState.Loading -> LoadingContent()
+                SaveSubscriptionState.Success -> LocationContent(
+                    currentLatLng = currentLatLng,
+                    newLatLng = newLatLng,
+                    isLocationChanged = isLocationChanged,
+                    isFetchingCurrentLocation = isFetchingCurrentLocation,
+                    onShowMap = onShowMap,
+                    onGetCurrentLocationClick = onGetCurrentLocationClick,
+                    onUpdateLocation = onUpdateLocation,
+                    onDismiss = onDismiss
+                )
+                SaveSubscriptionState.Error -> ErrorContent(onDismiss)
             }
         }
     }

@@ -16,6 +16,10 @@
 
     </style>
 
+    <style name="Theme.IpsAdmin" parent="Theme.IspAdminAndroid">
+        <!-- Hereda todas las propiedades de Theme.IspAdminAndroid -->
+    </style>
+
     <style name="Theme.IspAdminAndroid.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>

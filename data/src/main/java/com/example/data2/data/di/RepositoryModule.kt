@@ -1,5 +1,7 @@
 package com.example.data2.data.di
 
+import com.dscorp.ispadmin.data.repository.PaymentRepositoryImpl
+import com.dscorp.ispadmin.domain.repository.PaymentRepository
 import com.example.data2.data.repository.IRepository
 import com.example.data2.data.repository.InstallationOrderRepository
 import com.example.data2.data.repository.InstallationOrderRepositoryImpl
@@ -20,4 +22,5 @@ val repositoryModule = module {
     single<IRepository> { Repository() }
     single<InstallationOrderRepository> { InstallationOrderRepositoryImpl() }
     single<UserRepository> { UserRepositoryImpl(get(), get()) }
+    single<PaymentRepository> { PaymentRepositoryImpl(get()) }
 }

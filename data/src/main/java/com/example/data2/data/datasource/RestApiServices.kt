@@ -329,5 +329,8 @@ interface RestApiServices {
         @Body request: DeviceTokenRequest
     ): Response<User>
 
+    @GET("payment/{id}")
+    suspend fun getPaymentById(@Path("id") paymentId: String): Response<Payment>
+
 }
 

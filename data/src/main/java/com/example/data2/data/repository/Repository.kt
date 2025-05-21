@@ -801,13 +801,30 @@ class Repository : IRepository, KoinComponent {
     }
 
     override suspend fun updateDeviceToken(userId: Int, deviceToken: String): User {
-        val response = restApiServices.updateDeviceToken(DeviceTokenRequest(userId, deviceToken))
-        if (response.code() == HttpCodes.OK) {
+        val request = DeviceTokenRequest(userId, deviceToken)
+        val response = restApiServices.updateDeviceToken(request)
+        if (response.isSuccessful && response.body() != null) {
             return response.body()!!
         } else {
             throw Exception("Error al actualizar el token de dispositivo")
         }
     }
+
+    override suspend fun getPaymentById(paymentId: String): Payment {
+        val response = restApiServices.getPaymentById(paymentId)
+        if (response.isSuccessful && response.body() != null) {
+            return response.body()!!
+        } else {
+            throw Exception("Error al obtener el pago con ID $paymentId")
+        }
+    }
+
+    // Método a implementar en el futuro
+    /*
+    override suspend fun searchInstallationOrders(searchString: String): List<InstallationOrderResponse> {
+        throw UnsupportedOperationException("Method not implemented")
+    }
+    */
 }
 
 private fun <T> Response<T>.successOrThrow(): T {

@@ -3,6 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.payment.history
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.domain.model.Payment
+import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
 import com.example.data2.data.repository.IRepository
@@ -37,6 +38,9 @@ class PaymentHistoryViewModel(val repository: IRepository) :
     private var allPayments: List<Payment> = emptyList()
 
     var subscriptionId: Int? = null
+    
+    // Añadimos la propiedad serviceStatus
+    var serviceStatus: ServiceStatus = ServiceStatus.ACTIVE
 
     fun getLastPayments(itemsLimit: Int) = viewModelScope.launch {
         try {

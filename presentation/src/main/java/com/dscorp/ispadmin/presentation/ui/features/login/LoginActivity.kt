@@ -10,6 +10,7 @@ import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.extension.showCrossDialog
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.features.login.compose.LoginScreen
+import com.dscorp.ispadmin.presentation.ui.features.main.ComposeMainActivity
 import com.dscorp.ispadmin.presentation.ui.features.main.MainActivity
 import com.dscorp.ispadmin.presentation.ui.features.registration.RegisterActivity
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -43,7 +44,7 @@ class LoginActivity : AppCompatActivity() {
             showCrossDialog(R.string.your_account_isnt_verified, lottieRes = R.raw.info)
         else {
             FirebaseCrashlytics.getInstance().setUserId(user.id.toString())
-            val intent = Intent(this, MainActivity::class.java)
+            val intent = Intent(this, ComposeMainActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
         }

@@ -21,6 +21,7 @@ import org.koin.android.ext.android.getKoin
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
+import com.dscorp.ispadmin.data.di.apiModule as wispApiModule
 
 /**
  * Created by Sergio Carrillo Diestra on 19/11/2022.
@@ -44,6 +45,7 @@ class KoinApplication : Application() {
             modules(
                 retrofitModule,
                 apiModule,
+                wispApiModule,
                 repositoryModule,
                 viewModelModule,
                 dialogFactoryModule,
