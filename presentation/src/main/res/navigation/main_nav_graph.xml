@@ -16,12 +16,6 @@
         tools:layout="@layout/fragment_dash_board" />
 
     <fragment
-        android:id="@+id/nav_plan"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.plan.RegisterPlanFragment"
-        android:label="PlanFragment"
-        tools:layout="@layout/fragment_plan" />
-
-    <fragment
         android:id="@+id/nav_support_assistance_tickets"
         android:name="com.dscorp.ispadmin.presentation.ui.features.supportTicket.SupportTicketListFragment"
         android:label="Tickets de soporte"
@@ -31,12 +25,6 @@
         android:id="@+id/nav_create_support_ticket"
         android:name="com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.CreateSupportTicketFragment"
         android:label="Registrar tickets de soporte" />
-
-    <fragment
-        android:id="@+id/nav_device"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.networkdevice.NetworkDeviceFragment"
-        android:label="NetworkDeviceFragment"
-        tools:layout="@layout/fragment_network_device" />
 
     <fragment
         android:id="@+id/nav_to_register_nap_box"
@@ -136,16 +124,6 @@
 
     </fragment>
     <fragment
-        android:id="@+id/nav_ip_pool"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.ippool.register.IpPoolFragment"
-        android:label="fragment_ip_pool"
-        tools:layout="@layout/fragment_ip_pool">
-        <action
-            android:id="@+id/toIpList"
-            app:destination="@+id/ipListFragment" />
-    </fragment>
-
-    <fragment
         android:id="@+id/paymentDetailFragment"
         android:name="com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailFragment"
         android:label="fragment_payment_detail">
@@ -173,40 +151,6 @@
             app:argType="com.dscorp.ispadmin.domain.model.NapBoxResponse" />
     </fragment>
 
-    <fragment
-        android:id="@+id/nav_see_plan_list"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.plan.planlist.PlanListFragment"
-        android:label="PlanListFragment"
-        tools:layout="@layout/item_plan_list">
-        <action
-            android:id="@+id/to_edit_plan"
-            app:destination="@+id/editPlanFragment" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/editPlanFragment"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.plan.edit.EditPlanFragment"
-        tools:layout="@layout/fragment_edit_plan">
-        <argument
-            android:name="plan"
-            app:argType="com.dscorp.ispadmin.domain.model.PlanResponse" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/see_network_device_list"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.networkdevice.networkdevicelist.NetworkDeviceListFragment"
-        android:label="NetworkDeviceListFragment"
-        tools:layout="@layout/item_network_device_list" />
-
-    <fragment
-        android:id="@+id/ipListFragment"
-        android:name="com.dscorp.ispadmin.presentation.ui.features.ippool.seeip.IpListFragment"
-        android:label="fragment_ip_list"
-        tools:layout="@layout/fragment_ip_list">
-        <argument
-            android:name="ipPool"
-            app:argType="com.dscorp.ispadmin.domain.model.IpPool" />
-    </fragment>
     <fragment
         android:id="@+id/nav_mufa"
         android:name="com.dscorp.ispadmin.presentation.ui.features.mufas.MufaMapFragment"

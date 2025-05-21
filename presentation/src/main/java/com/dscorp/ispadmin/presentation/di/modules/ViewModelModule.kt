@@ -7,24 +7,17 @@ import com.dscorp.ispadmin.presentation.ui.features.installationorder.Installati
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.PendingInstallationOrdersViewModel
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerClosedOrdersViewModel
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerInProgressOrdersViewModel
-import com.dscorp.ispadmin.presentation.ui.features.ippool.register.IpPoolViewModel
-import com.dscorp.ispadmin.presentation.ui.features.ippool.seeip.IpListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginViewModel
 import com.dscorp.ispadmin.presentation.ui.features.main.MainActivityViewModel
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationViewModel
 import com.dscorp.ispadmin.presentation.ui.features.mufas.MufaViewModel
 import com.dscorp.ispadmin.presentation.ui.features.napbox.NapBoxViewModel
 import com.dscorp.ispadmin.presentation.ui.features.napboxeslist.NapBoxesListViewModel
-import com.dscorp.ispadmin.presentation.ui.features.networkdevice.NetworkDeviceViewModel
-import com.dscorp.ispadmin.presentation.ui.features.networkdevice.networkdevicelist.NetworkDeviceListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdministrationViewModel
 import com.dscorp.ispadmin.presentation.ui.features.outlay.OutLayViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.register.RegisterPaymentViewModel
 
-import com.dscorp.ispadmin.presentation.ui.features.plan.PlanViewModel
-import com.dscorp.ispadmin.presentation.ui.features.plan.edit.EditPlanViewModel
-import com.dscorp.ispadmin.presentation.ui.features.plan.planlist.PlanListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.profile.MyProfileViewModel
 import com.dscorp.ispadmin.presentation.ui.features.registration.RegisterViewModel
 import com.dscorp.ispadmin.presentation.ui.features.report.ReportsViewModel
@@ -47,8 +40,6 @@ import org.koin.dsl.module
  **/
 val viewModelModule = module {
     viewModel { LoginViewModel(get()) }
-    viewModel { NetworkDeviceViewModel() }
-    viewModel { PlanViewModel() }
     viewModel { RegisterViewModel(get(), get()) }
     viewModel {
         RegisterSubscriptionComposeViewModel(
@@ -70,17 +61,12 @@ val viewModelModule = module {
     viewModel { PaymentHistoryViewModel(get()) }
 //    viewModel { FindSubscriptionViewModel(get(), get()) }
     viewModel { RegisterPaymentViewModel(get()) }
-    viewModel { IpPoolViewModel(get()) }
     viewModel { MyProfileViewModel() }
     viewModel { MainActivityViewModel() }
     viewModel { ReportsViewModel(get()) }
     viewModel { DashBoardViewModel() }
-    viewModel { IpListViewModel(get()) }
-    viewModel { PlanListViewModel(get()) }
-    viewModel { NetworkDeviceListViewModel() }
     viewModel { MufaViewModel(get()) }
     viewModel { EditSubscriptionViewModel(get()) }
-    viewModel { EditPlanViewModel(get()) }
     viewModel { SubscriptionDetailViewModel(get(), get()) }
     viewModel { SupportTicketViewModel(get(), get()) }
     viewModel { CreateSupportTicketViewModel(get()) }

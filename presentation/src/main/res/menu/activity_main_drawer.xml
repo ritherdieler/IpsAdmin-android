@@ -165,11 +165,6 @@
         <!--            android:id="@+id/nav_ip_pool"-->
         <!--            android:icon="@drawable/ic_launcher_foreground"-->
         <!--            android:title="@string/ip_pool" />-->
-        <item
-            android:id="@+id/nav_see_plan_list"
-            android:icon="@drawable/ic_launcher_foreground"
-            android:title="@string/plans"
-            android:visible="false" />
 
         <item
             android:id="@+id/nav_my_profile"

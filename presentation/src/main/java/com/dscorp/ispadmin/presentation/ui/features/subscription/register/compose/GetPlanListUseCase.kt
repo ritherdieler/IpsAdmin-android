@@ -5,12 +5,8 @@ import com.example.data2.data.repository.IRepository
 
 class GetPlanListUseCase(private val repository: IRepository) {
 
-    suspend operator fun invoke(): Result<List<PlanResponse>> {
-        return try {
-            val planList = repository.getPlans()
-            Result.success(planList)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+    suspend operator fun invoke(): Result<List<PlanResponse>> = runCatching {
+        val planList = repository.getPlans()
+        planList
     }
 }
