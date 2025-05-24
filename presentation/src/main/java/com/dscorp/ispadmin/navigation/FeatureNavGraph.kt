@@ -24,24 +24,33 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.dscorp.ispadmin.domain.model.GeoLocation
+import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.AsyncImageViewer
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Dashboard
+import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Installation
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Payment
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Profile
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.SupportTicket
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashBoardComposeScreen
+import com.dscorp.ispadmin.presentation.ui.features.installationorder.AssignedInstallationOrdersScreen
+import com.dscorp.ispadmin.presentation.ui.features.installationorder.CreateInstallationOrderScreen
+import com.dscorp.ispadmin.presentation.ui.features.installationorder.InstallationOrderViewModel
+import com.dscorp.ispadmin.presentation.ui.features.installationorder.PendingInstallationOrdersScreen
+import com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerClosedOrdersScreen
+import com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerInProgressOrdersScreen
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.LocationSelectorComposeDialog
 import com.dscorp.ispadmin.presentation.ui.features.main.MenuDrawerContent
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationComposeScreen
@@ -71,10 +80,41 @@ import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FeatureNavGraph(navController: NavHostController = rememberNavController(), onLoggedOut : () -> Unit = {}) {
+fun FeatureNavGraph(
+    navController: NavHostController = rememberNavController(),
+    onLoggedOut: () -> Unit = {}
+) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var title by remember { mutableStateOf("IPS Admin") }
+
+    val currentEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = FeatureRoutes.FromString(currentEntry?.destination?.route)
+    val title = when (currentRoute) {
+        is Dashboard -> "Panel"
+        is Profile -> "Perfil"
+        is Subscription.Register -> "Registrar Suscripción"
+        is Subscription.Find -> "Buscar Suscripción"
+        is Subscription.Details -> "Suscripción #${currentRoute.subscriptionId}"
+        is Subscription.ChangePlan -> "Cambiar Plan"
+        is Subscription.Migrate -> "Migrar Suscripción"
+        is Subscription.Edit -> "Editar Suscripción"
+        is Payment.Register -> "Registrar Pago"
+        is Payment.History -> "Historial de Pagos"
+        is Payment.Detail -> "Detalle de Pago"
+        is Payment.FindPayer -> "Buscar Pagador"
+        is SupportTicket.List -> "Tickets de Soporte"
+        is SupportTicket.Create -> "Nuevo Ticket"
+        is SupportTicket.Detail -> "Detalle de Ticket"
+        is SupportTicket.Close -> "Cerrar Ticket"
+        is AsyncImageViewer -> "Imagen"
+        is Installation.Create -> "Crear Orden de Instalación"
+        is Installation.Pending -> "Órdenes Pendientes"
+        is Installation.Assigned -> "Órdenes Asignadas"
+        is Installation.InProgress -> "Órdenes en Progreso"
+        is Installation.Closed -> "Órdenes Cerradas"
+        null -> "ISP Admin"
+        else -> "ISP Admin"
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -135,7 +175,7 @@ fun FeatureNavGraph(navController: NavHostController = rememberNavController(), 
 }
 
 @Composable
-private fun NavGraphContent(navController: NavHostController,onLoggedOut : () -> Unit = {}) {
+private fun NavGraphContent(navController: NavHostController, onLoggedOut: () -> Unit = {}) {
     NavHost(
         navController = navController,
         startDestination = Profile,
@@ -295,39 +335,33 @@ private fun NavGraphContent(navController: NavHostController,onLoggedOut : () ->
                 onDismissError = viewModel::dismissError,
                 onTicketCardClick = { ticket ->
                     if (ticket.status == AssistanceTicketStatus.CLOSED && ticket.sheetImageUrl.isNotEmpty()) {
-                        navController.navigate("ticket/image/${ticket.sheetImageUrl}")
+                        navController.navigate(AsyncImageViewer(ticket.sheetImageUrl))
                     }
                 }
             )
         }
-        // Aquí puedes agregar más rutas de soporte
-         composable<SupportTicket.Create> {
-             val viewModel: CreateSupportTicketViewModel = koinViewModel()
-             val uiState by viewModel.uiState.collectAsState()
+        composable<SupportTicket.Create> {
+            val viewModel: CreateSupportTicketViewModel = koinViewModel()
+            val uiState by viewModel.uiState.collectAsState()
 
-              if(uiState.isTicketCreated){
-                    LaunchedEffect(Unit) {
-                        navController.popBackStack()
-                    }
-              }
-
-             CreateSupportTicketScreen(
-                 uiState = uiState,
-                 onPhoneChange = viewModel::updatePhone,
-                 onCategoryChange =  viewModel ::updateCategory,
-                 onDescriptionChange =  viewModel::updateDescription,
-                 onIsClientChange =  viewModel::updateIsClient,
-                 onPlaceSelected =  viewModel::updateSelectedPlace,
-                 onSubscriptionSelected =  viewModel::updateSelectedSubscription,
-                 onSearchTextChange = viewModel::findSubscriptionByNames,
-                 onCustomerNameChange = viewModel::updateCustomerName,
-                 onCreateTicket = viewModel::createTicket,
-                 onDismissError = viewModel::resetError,
-                 categories = viewModel.categories
-             )
-         }
-
-        // RUTA PARA VER UNA IMAGEN DE TICKET
+            CreateSupportTicketScreen(
+                uiState = uiState,
+                onPhoneChange = viewModel::updatePhone,
+                onCategoryChange = viewModel::updateCategory,
+                onDescriptionChange = viewModel::updateDescription,
+                onIsClientChange = viewModel::updateIsClient,
+                onPlaceSelected = viewModel::updateSelectedPlace,
+                onSubscriptionSelected = viewModel::updateSelectedSubscription,
+                onSearchTextChange = viewModel::findSubscriptionByNames,
+                onCustomerNameChange = viewModel::updateCustomerName,
+                onCreateTicket = viewModel::createTicket,
+                onDismissError = viewModel::resetError,
+                categories = viewModel.categories,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
         composable<AsyncImageViewer> { backStackEntry ->
             val imageUrl = backStackEntry.toRoute<AsyncImageViewer>().imageUrl
             TicketImageDialog(
@@ -335,6 +369,81 @@ private fun NavGraphContent(navController: NavHostController,onLoggedOut : () ->
                 onDismiss = { navController.popBackStack() }
             )
         }
-        // ...puedes seguir agregando features aquí
+
+        // INSTALLATION MODULE
+        composable<Installation.Create> {
+
+            val viewModel: InstallationOrderViewModel = koinViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            CreateInstallationOrderScreen(
+                uiState = uiState,
+                onCreateOrderClicked = {
+                    viewModel.createOrder()
+                },
+                onFirstNameChange = {
+                    viewModel.onFirstNameChange(it)
+                },
+                onLastNameChange = {
+                    viewModel.onLastNameChange(it)
+                },
+                onAddressChange = {
+                    viewModel.onAddressChange(it)
+                },
+                onPhoneChange = {
+                    viewModel.onPhoneChange(it)
+                },
+                onDniChange = {
+                    viewModel.onDniChange(it)
+                },
+                onPlaceChange = {
+                    viewModel.onPlaceChange(it)
+                },
+                onErrorDismissed = {
+                    viewModel.dismissError()
+                },
+                onSuccessDismissed = {
+                    viewModel.dismissSuccess()
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+//
+//        composable<Installation.Pending> {
+//            PendingInstallationOrdersScreen(
+//                navController = navController,
+//                onSuccess = {
+//                    navController.popBackStack()
+//                }
+//            )
+//        }
+//
+//        composable<Installation.Assigned> {
+//            AssignedInstallationOrdersScreen(
+//                navController = navController,
+//                onSuccess = {
+//                    navController.popBackStack()
+//                }
+//            )
+//        }
+//
+//        composable<Installation.InProgress> {
+//            SellerInProgressOrdersScreen(
+//                navController = navController,
+//                onSuccess = {
+//                    navController.popBackStack()
+//                }
+//            )
+//        }
+//
+//        composable<Installation.Closed> {
+//            SellerClosedOrdersScreen(
+//                navController = navController,
+//                onSuccess = {
+//                    navController.popBackStack()
+//                }
+//            )
+//        }
     }
 }

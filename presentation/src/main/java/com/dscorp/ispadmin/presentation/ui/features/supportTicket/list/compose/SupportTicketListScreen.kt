@@ -35,7 +35,6 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,11 +45,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyCustomDialog
-import java.io.File
 import com.example.data2.data.response.AssistanceTicketResponse
+import java.io.File
 
 @Composable
 fun SupportTicketListScreen(
@@ -64,7 +62,7 @@ fun SupportTicketListScreen(
     onDismissError: () -> Unit
 ) {
     var selectedTicket by remember { mutableStateOf<AssistanceTicketResponse?>(null) }
-    
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
@@ -111,7 +109,7 @@ fun SupportTicketListScreen(
                         )
                     }
                 }
-                
+
                 // Contenido según la pestaña seleccionada
                 when (uiState.activeTab) {
                     0 -> PendingTicketsTab(
@@ -120,8 +118,10 @@ fun SupportTicketListScreen(
                         currentUser = uiState.user!!,
                         onTakeTicket = onTakeTicket,
                         onCloseTicket = onCloseUnattendedTicket,
-                        onTicketCardClick = onTicketCardClick
+                        onTicketCardClick = onTicketCardClick,
+                        gettingTicketsFromServer = uiState.isLoading
                     )
+
                     1 -> InProgressTicketsTab(
                         tickets = uiState.inProgressTickets,
                         loadingTickets = uiState.inProgressTicketsLoading,
@@ -129,28 +129,19 @@ fun SupportTicketListScreen(
                         onCloseTicket = { ticket ->
                             selectedTicket = ticket
                         },
-                        onTicketCardClick = onTicketCardClick
+                        onTicketCardClick = onTicketCardClick,
+                        gettingTicketsFromServer = uiState.isLoading
                     )
+
                     2 -> ClosedTicketsTab(
                         tickets = uiState.closedTickets,
                         currentUser = uiState.user!!,
-                        onTicketCardClick = onTicketCardClick
+                        onTicketCardClick = onTicketCardClick,
+                        gettingTicketsFromServer = uiState.isLoading
                     )
                 }
             }
-            
-            // Loading y error
-            if (uiState.isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-            
+
             // Dialog de error
             uiState.error?.let { error ->
                 ErrorDialog(
@@ -158,7 +149,7 @@ fun SupportTicketListScreen(
                     onDismiss = onDismissError
                 )
             }
-            
+
             // Dialog para cerrar ticket
             selectedTicket?.let { ticket ->
                 CloseTicketDialog(
@@ -193,17 +184,17 @@ fun ErrorDialog(
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.error
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 MyButton(
                     onClick = onDismiss,
                     text = "Aceptar",
@@ -222,7 +213,7 @@ fun CloseTicketDialog(
 ) {
     val context = LocalContext.current
     var imageUri by remember { mutableStateOf<Uri?>(null) }
-    
+
     // Crear un archivo temporal para la imagen
     val file = remember {
         File(context.getExternalFilesDir(null), "image_${System.currentTimeMillis()}.jpg").apply {
@@ -230,7 +221,7 @@ fun CloseTicketDialog(
             deleteOnExit()
         }
     }
-    
+
     // URI para la imagen capturada
     val uri = remember {
         FileProvider.getUriForFile(
@@ -239,7 +230,7 @@ fun CloseTicketDialog(
             file
         )
     }
-    
+
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = { success ->
@@ -248,7 +239,7 @@ fun CloseTicketDialog(
             }
         }
     )
-    
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
@@ -257,7 +248,7 @@ fun CloseTicketDialog(
             }
         }
     )
-    
+
     MyCustomDialog(
         onDismissRequest = onDismissRequest,
         content = { columnScope ->
@@ -272,34 +263,34 @@ fun CloseTicketDialog(
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Text(
                     text = "Para cerrar el ticket, es necesario tomar una foto de la orden de trabajo firmada por el cliente",
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 MyButton(
                     onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
                     text = "Tomar Foto",
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 if (imageUri != null) {
                     Text(
                         text = "✅ Imagen capturada correctamente",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     MyButton(
                         onClick = { imageUri?.let { onConfirm(it) } },
                         text = "Cerrar Ticket",
@@ -319,11 +310,13 @@ fun PendingTicketsTab(
     currentUser: com.dscorp.ispadmin.domain.model.User,
     onTakeTicket: (Int) -> Unit,
     onCloseTicket: (AssistanceTicketResponse) -> Unit,
-    onTicketCardClick: (AssistanceTicketResponse) -> Unit
+    onTicketCardClick: (AssistanceTicketResponse) -> Unit,
+    gettingTicketsFromServer: Boolean = false
 ) {
     AnimatedTicketList(
         tickets = tickets,
         emptyMessage = "No hay tickets pendientes",
+        gettingTicketsFromServer = gettingTicketsFromServer,
         content = { ticket ->
             TicketCard(
                 ticket = ticket,
@@ -343,7 +336,8 @@ fun InProgressTicketsTab(
     loadingTickets: Map<Int, Boolean>,
     currentUser: com.dscorp.ispadmin.domain.model.User,
     onCloseTicket: (AssistanceTicketResponse) -> Unit,
-    onTicketCardClick: (AssistanceTicketResponse) -> Unit
+    onTicketCardClick: (AssistanceTicketResponse) -> Unit,
+    gettingTicketsFromServer: Boolean = false
 ) {
     AnimatedTicketList(
         tickets = tickets,
@@ -356,7 +350,8 @@ fun InProgressTicketsTab(
                 onCardClick = { onTicketCardClick(ticket) },
                 onCloseTicket = { onCloseTicket(ticket) }
             )
-        }
+        },
+        gettingTicketsFromServer = gettingTicketsFromServer
     )
 }
 
@@ -364,7 +359,8 @@ fun InProgressTicketsTab(
 fun ClosedTicketsTab(
     tickets: List<AssistanceTicketResponse>,
     currentUser: com.dscorp.ispadmin.domain.model.User,
-    onTicketCardClick: (AssistanceTicketResponse) -> Unit
+    onTicketCardClick: (AssistanceTicketResponse) -> Unit,
+    gettingTicketsFromServer: Boolean = false
 ) {
     AnimatedTicketList(
         tickets = tickets,
@@ -375,7 +371,8 @@ fun ClosedTicketsTab(
                 currentUser = currentUser,
                 onCardClick = { onTicketCardClick(ticket) }
             )
-        }
+        },
+        gettingTicketsFromServer = gettingTicketsFromServer
     )
 }
 
@@ -383,11 +380,20 @@ fun ClosedTicketsTab(
 fun AnimatedTicketList(
     tickets: List<AssistanceTicketResponse>,
     emptyMessage: String,
-    content: @Composable (AssistanceTicketResponse) -> Unit
+    content: @Composable (AssistanceTicketResponse) -> Unit,
+    gettingTicketsFromServer: Boolean
 ) {
     val listState = rememberLazyListState()
-    
-    if (tickets.isEmpty()) {
+    if (gettingTicketsFromServer) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    } else if (tickets.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center

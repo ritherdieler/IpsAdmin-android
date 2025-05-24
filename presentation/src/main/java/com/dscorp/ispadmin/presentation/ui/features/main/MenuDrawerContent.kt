@@ -44,6 +44,7 @@ import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Payment
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Profile
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.SupportTicket
+import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Installation
 import kotlinx.coroutines.launch
 
 /**
@@ -196,6 +197,74 @@ fun MenuDrawerContent(
                 scope.launch {
                     selectedRoute = SupportTicket.List
                     navController.navigate(SupportTicket.List)
+                    onItemClicked()
+                }
+            }
+        )
+
+        // Sección de órdenes de instalación
+        DrawerSectionTitle(title = "Órdenes de Instalación")
+        
+        MenuItem(
+            icon = Icons.Default.Receipt,
+            title = "Crear orden",
+            isSelected = selectedRoute == Installation.Create,
+            onClick = {
+                scope.launch {
+                    selectedRoute = Installation.Create
+                    navController.navigate(Installation.Create)
+                    onItemClicked()
+                }
+            }
+        )
+        
+        MenuItem(
+            icon = Icons.Default.Receipt,
+            title = "Órdenes pendientes",
+            isSelected = selectedRoute == Installation.Pending,
+            onClick = {
+                scope.launch {
+                    selectedRoute = Installation.Pending
+                    navController.navigate(Installation.Pending)
+                    onItemClicked()
+                }
+            }
+        )
+        
+        MenuItem(
+            icon = Icons.Default.Receipt,
+            title = "Órdenes asignadas",
+            isSelected = selectedRoute == Installation.Assigned,
+            onClick = {
+                scope.launch {
+                    selectedRoute = Installation.Assigned
+                    navController.navigate(Installation.Assigned)
+                    onItemClicked()
+                }
+            }
+        )
+        
+        MenuItem(
+            icon = Icons.Default.Receipt,
+            title = "Órdenes en progreso",
+            isSelected = selectedRoute == Installation.InProgress,
+            onClick = {
+                scope.launch {
+                    selectedRoute = Installation.InProgress
+                    navController.navigate(Installation.InProgress)
+                    onItemClicked()
+                }
+            }
+        )
+        
+        MenuItem(
+            icon = Icons.Default.Receipt,
+            title = "Órdenes cerradas",
+            isSelected = selectedRoute == Installation.Closed,
+            onClick = {
+                scope.launch {
+                    selectedRoute = Installation.Closed
+                    navController.navigate(Installation.Closed)
                     onItemClicked()
                 }
             }

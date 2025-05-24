@@ -55,6 +55,7 @@ fun CreateSupportTicketScreen(
     onCustomerNameChange: (String) -> Unit,
     onCreateTicket: () -> Unit,
     onDismissError: () -> Unit,
+    onNavigateBack: () -> Unit,
     categories: List<String>
 ) {
     Box(
@@ -404,6 +405,36 @@ fun CreateSupportTicketScreen(
                 }
             )
         }
+
+        // Mostrar diálogo de éxito cuando el ticket se crea correctamente
+        if (uiState.isTicketCreated) {
+            MyCustomDialog(
+                onDismissRequest = { /* No permitir cerrar el diálogo */ },
+                content = {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "¡Éxito!",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "El ticket ha sido creado exitosamente",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        MyButton(
+                            onClick = { onNavigateBack() },
+                            text = "Aceptar",
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -454,6 +485,7 @@ fun CreateSupportTicketScreenPreview() {
             onCustomerNameChange = {},
             onCreateTicket = {},
             onDismissError = {},
+            onNavigateBack = {},
             categories = listOf("Internet", "Telefonía", "Cable TV", "Otros")
         )
     }
@@ -497,6 +529,7 @@ fun CreateSupportTicketScreenWithErrorsPreview() {
             onCustomerNameChange = {},
             onCreateTicket = {},
             onDismissError = {},
+            onNavigateBack = {},
             categories = listOf("Internet", "Telefonía", "Cable TV", "Otros")
         )
     }
@@ -537,6 +570,7 @@ fun CreateSupportTicketScreenWithDialogPreview() {
             onCustomerNameChange = {},
             onCreateTicket = {},
             onDismissError = {},
+            onNavigateBack = {},
             categories = listOf("Internet", "Telefonía", "Cable TV", "Otros")
         )
     }
@@ -580,6 +614,7 @@ fun CreateSupportTicketScreenNonClientPreview() {
             onCustomerNameChange = {},
             onCreateTicket = {},
             onDismissError = {},
+            onNavigateBack = {},
             categories = listOf("Internet", "Telefonía", "Cable TV", "Otros")
         )
     }

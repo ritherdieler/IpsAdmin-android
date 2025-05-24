@@ -2,18 +2,20 @@ package com.dscorp.ispadmin.navigation
 
 import kotlinx.serialization.Serializable
 
-sealed interface NavRoutes {
+@Serializable
+sealed class NavRoutes {
 
     @Serializable
-    object Splash
+    object Splash : NavRoutes()
 
     @Serializable
-    object Features
+    object Features : NavRoutes()
 
     @Serializable
-    object Auth
+    object Auth : NavRoutes()
 
-    sealed class AuthRoutes : NavRoutes {
+    @Serializable
+    sealed class AuthRoutes : NavRoutes() {
         @Serializable
         object Login : AuthRoutes()
 
@@ -22,8 +24,7 @@ sealed interface NavRoutes {
     }
 
     @Serializable
-    sealed class FeatureRoutes : NavRoutes {
-
+    sealed class FeatureRoutes : NavRoutes() {
         @Serializable
         object Home : FeatureRoutes()
 
@@ -40,7 +41,7 @@ sealed interface NavRoutes {
         data class AsyncImageViewer(val imageUrl: String) : FeatureRoutes()
 
         @Serializable
-        sealed class Subscription : NavRoutes {
+        sealed class Subscription : FeatureRoutes() {
 
             @Serializable
             object Register : Subscription()
@@ -62,7 +63,7 @@ sealed interface NavRoutes {
         }
 
         @Serializable
-        sealed class Payment : NavRoutes {
+        sealed class Payment : FeatureRoutes() {
 
             @Serializable
             data class Register(val paymentId: Int) : Payment()
@@ -79,7 +80,7 @@ sealed interface NavRoutes {
 
 
         @Serializable
-        sealed class Installation : NavRoutes {
+        sealed class Installation : FeatureRoutes() {
 
             @Serializable
             object Create : Installation()
@@ -98,7 +99,7 @@ sealed interface NavRoutes {
         }
 
         @Serializable
-        sealed class SupportTicket : NavRoutes {
+        sealed class SupportTicket : FeatureRoutes() {
 
             @Serializable
             object List : SupportTicket()
@@ -111,11 +112,43 @@ sealed interface NavRoutes {
 
             @Serializable
             data class Close(val ticketId: Int) : SupportTicket()
+        }
 
-            @Serializable
-            data class ViewImage(val imageUrl: String) : SupportTicket()
+        companion object {
+            fun FromString(string: String?): FeatureRoutes {
+                return when (string) {
+                    Home::class.qualifiedName -> Home
+                    Dashboard::class.qualifiedName -> Dashboard
+                    Profile::class.qualifiedName -> Profile
+                    Reports::class.qualifiedName -> Reports
+                    AsyncImageViewer::class.qualifiedName -> AsyncImageViewer("")
+
+                    Subscription.Register::class.qualifiedName -> Subscription.Register
+                    Subscription.Find::class.qualifiedName -> Subscription.Find
+                    Subscription.Details::class.qualifiedName -> Subscription.Details(0)
+                    Subscription.ChangePlan::class.qualifiedName -> Subscription.ChangePlan(0)
+                    Subscription.Migrate::class.qualifiedName -> Subscription.Migrate(0)
+                    Subscription.Edit::class.qualifiedName -> Subscription.Edit(0)
+
+                    Payment.Register::class.qualifiedName -> Payment.Register(0)
+                    Payment.History::class.qualifiedName -> Payment.History(0, "")
+                    Payment.Detail::class.qualifiedName -> Payment.Detail("")
+                    Payment.FindPayer::class.qualifiedName -> Payment.FindPayer
+
+                    Installation.Create::class.qualifiedName -> Installation.Create
+                    Installation.Pending::class.qualifiedName -> Installation.Pending
+                    Installation.Assigned::class.qualifiedName -> Installation.Assigned
+                    Installation.InProgress::class.qualifiedName -> Installation.InProgress
+                    Installation.Closed::class.qualifiedName -> Installation.Closed
+
+                    SupportTicket.List::class.qualifiedName -> SupportTicket.List
+                    SupportTicket.Create::class.qualifiedName -> SupportTicket.Create
+                    SupportTicket.Detail::class.qualifiedName -> SupportTicket.Detail(0)
+                    SupportTicket.Close::class.qualifiedName -> SupportTicket.Close(0)
+                    else -> Home // Default case
+                }
+            }
+
         }
     }
-
 }
-
