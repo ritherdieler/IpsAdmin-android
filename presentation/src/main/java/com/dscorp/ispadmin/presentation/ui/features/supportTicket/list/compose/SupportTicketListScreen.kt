@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyCustomDialog
-import com.example.data2.data.response.AssistanceTicketResponse
+import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import java.io.File
 
 @Composable

@@ -2,12 +2,12 @@ package com.dscorp.ispadmin.presentation.ui.features.migration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dscorp.ispadmin.data.apirequestmodel.MigrationRequest
+import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
-import com.example.data2.data.apirequestmodel.MigrationRequest
-import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

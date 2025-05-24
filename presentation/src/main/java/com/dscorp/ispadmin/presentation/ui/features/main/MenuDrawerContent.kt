@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Support
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -206,18 +207,18 @@ fun MenuDrawerContent(
         DrawerSectionTitle(title = "Órdenes de Instalación")
         
         MenuItem(
-            icon = Icons.Default.Receipt,
-            title = "Crear orden",
-            isSelected = selectedRoute == Installation.Create,
+            icon = Icons.Default.Build,
+            title = "Lista de órdenes",
+            isSelected = selectedRoute == Installation.List,
             onClick = {
                 scope.launch {
-                    selectedRoute = Installation.Create
-                    navController.navigate(Installation.Create)
+                    selectedRoute = Installation.List
+                    navController.navigate(Installation.List)
                     onItemClicked()
                 }
             }
         )
-        
+
         MenuItem(
             icon = Icons.Default.Receipt,
             title = "Órdenes pendientes",

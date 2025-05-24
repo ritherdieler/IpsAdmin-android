@@ -1,6 +1,9 @@
 package com.dscorp.ispadmin.presentation.di.modules
 
+import com.dscorp.ispadmin.data.usecase.InstallationOrderUseCaseImpl
 import com.dscorp.ispadmin.data.usecase.PlaceUseCaseImpl
+import com.dscorp.ispadmin.data.usecase.UpdateDeviceTokenUseCaseImpl
+import com.dscorp.ispadmin.data.usecase.UserUseCaseImpl
 import com.dscorp.ispadmin.domain.usecase.GetPaymentByIdUseCase
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.PlaceUseCase
@@ -15,9 +18,6 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compos
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetPlanListUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetUserSessionUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionUseCase
-import com.example.data2.data.usecase.InstallationOrderUseCaseImpl
-import com.example.data2.data.usecase.UpdateDeviceTokenUseCaseImpl
-import com.example.data2.data.usecase.UserUseCaseImpl
 import org.koin.dsl.module
 
 val useCaseModule = module {

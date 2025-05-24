@@ -25,7 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import com.example.data2.data.response.AssistanceTicketResponse
+import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

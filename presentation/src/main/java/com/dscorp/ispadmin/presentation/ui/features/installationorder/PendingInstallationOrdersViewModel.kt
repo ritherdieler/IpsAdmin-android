@@ -2,8 +2,8 @@ package com.dscorp.ispadmin.presentation.ui.features.installationorder
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dscorp.ispadmin.data.model.InstallationOrderStatus
 import com.dscorp.ispadmin.domain.model.InstallationOrder
-import com.dscorp.ispadmin.domain.model.InstallationOrderStatus
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.UserUseCase
@@ -45,18 +45,23 @@ class PendingInstallationOrdersViewModel : ViewModel(), KoinComponent {
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true) }
-                
-                val pendingOrders = installationOrderUseCase.getInstallationOrdersByStatus(InstallationOrderStatus.SOLICITADO)
-                
-                _uiState.update { it.copy(
-                    pendingOrders = pendingOrders,
-                    isLoading = false
-                ) }
+
+                val pendingOrders =
+                    installationOrderUseCase.getInstallationOrdersByStatus(InstallationOrderStatus.SOLICITADO)
+
+                _uiState.update {
+                    it.copy(
+                        pendingOrders = pendingOrders,
+                        isLoading = false
+                    )
+                }
             } catch (e: Exception) {
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    error = e.message ?: "Error al cargar órdenes pendientes"
-                ) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Error al cargar órdenes pendientes"
+                    )
+                }
             }
         }
     }
@@ -67,18 +72,22 @@ class PendingInstallationOrdersViewModel : ViewModel(), KoinComponent {
                 val technicians = userUseCase.getTechnicianUsers()
                 _uiState.update { it.copy(technicians = technicians) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(
-                    error = e.message ?: "Error al cargar técnicos"
-                ) }
+                _uiState.update {
+                    it.copy(
+                        error = e.message ?: "Error al cargar técnicos"
+                    )
+                }
             }
         }
     }
 
     fun onOrderSelected(order: InstallationOrder) {
-        _uiState.update { it.copy(
-            selectedOrder = order,
-            showAssignDialog = true
-        ) }
+        _uiState.update {
+            it.copy(
+                selectedOrder = order,
+                showAssignDialog = true
+            )
+        }
     }
 
     fun onTechnicianSelected(technician: User) {
@@ -90,12 +99,14 @@ class PendingInstallationOrdersViewModel : ViewModel(), KoinComponent {
     }
 
     fun onCloseDialog() {
-        _uiState.update { it.copy(
-            showAssignDialog = false,
-            selectedOrder = null,
-            selectedTechnician = null,
-            scheduledDate = null
-        ) }
+        _uiState.update {
+            it.copy(
+                showAssignDialog = false,
+                selectedOrder = null,
+                selectedTechnician = null,
+                scheduledDate = null
+            )
+        }
     }
 
     fun assignTechnician() {
@@ -104,41 +115,49 @@ class PendingInstallationOrdersViewModel : ViewModel(), KoinComponent {
         val scheduledDate = _uiState.value.scheduledDate
 
         if (order == null || technician == null || scheduledDate == null) {
-            _uiState.update { it.copy(
-                error = "Debe seleccionar un técnico y una fecha"
-            ) }
+            _uiState.update {
+                it.copy(
+                    error = "Debe seleccionar un técnico y una fecha"
+                )
+            }
             return
         }
 
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true) }
-                
+
                 val currentUser = userUseCase.getCurrentUser()
                 val result = installationOrderUseCase.assignTechnician(
                     orderId = order.id,
-                    technicianId = technician.id ?: throw IllegalStateException("El técnico no tiene ID"),
-                    assignedById = currentUser.id ?: throw IllegalStateException("El usuario actual no tiene ID"),
+                    technicianId = technician.id
+                        ?: throw IllegalStateException("El técnico no tiene ID"),
+                    assignedById = currentUser.id
+                        ?: throw IllegalStateException("El usuario actual no tiene ID"),
                     scheduledDate = scheduledDate
                 )
-                
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    successMessage = "Técnico asignado correctamente",
-                    orderUpdated = result,
-                    showAssignDialog = false
-                ) }
-                
+
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        successMessage = "Técnico asignado correctamente",
+                        orderUpdated = result,
+                        showAssignDialog = false
+                    )
+                }
+
                 // Recargar la lista de órdenes pendientes
                 loadPendingOrders()
-                
+
             } catch (e: Exception) {
                 e.printStackTrace()
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    error = e.message ?: "Error al asignar técnico",
-                    showAssignDialog = false
-                ) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Error al asignar técnico",
+                        showAssignDialog = false
+                    )
+                }
             }
         }
     }
@@ -148,9 +167,11 @@ class PendingInstallationOrdersViewModel : ViewModel(), KoinComponent {
     }
 
     fun dismissSuccess() {
-        _uiState.update { it.copy(
-            successMessage = null,
-            orderUpdated = null
-        ) }
+        _uiState.update {
+            it.copy(
+                successMessage = null,
+                orderUpdated = null
+            )
+        }
     }
 } 

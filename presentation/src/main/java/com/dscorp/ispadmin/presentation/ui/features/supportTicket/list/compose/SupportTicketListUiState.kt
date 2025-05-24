@@ -1,7 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose
 
 import com.dscorp.ispadmin.domain.model.User
-import com.example.data2.data.response.AssistanceTicketResponse
+import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 
 /**
  * Clase que representa el estado de la UI para la lista de tickets de soporte

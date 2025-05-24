@@ -1,18 +1,19 @@
 package com.dscorp.ispadmin.presentation.di.app
 
 import android.app.Application
+import com.dscorp.ispadmin.BuildConfig
+import com.dscorp.ispadmin.data.di.BASE_URL
+import com.dscorp.ispadmin.data.di.STORAGE_BASE_URL
+import com.dscorp.ispadmin.data.di.apiModule
+import com.dscorp.ispadmin.data.di.localDataModule
+import com.dscorp.ispadmin.data.di.repositoryModule
+import com.dscorp.ispadmin.data.di.retrofitModule
 import com.dscorp.ispadmin.presentation.di.modules.applicationModule
 import com.dscorp.ispadmin.presentation.di.modules.dialogFactoryModule
 import com.dscorp.ispadmin.presentation.di.modules.formFieldModule
 import com.dscorp.ispadmin.presentation.di.modules.useCaseModule
 import com.dscorp.ispadmin.presentation.di.modules.viewModelModule
-import com.example.data2.data.di.BASE_URL
-import com.example.data2.data.di.STORAGE_BASE_URL
-import com.example.data2.data.di.apiModule
 import com.example.data2.data.di.fileStorageModule
-import com.example.data2.data.di.localDataModule
-import com.example.data2.data.di.repositoryModule
-import com.example.data2.data.di.retrofitModule
 import com.facebook.stetho.Stetho
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.analytics
@@ -22,6 +23,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import com.dscorp.ispadmin.data.di.apiModule as wispApiModule
+import com.dscorp.ispadmin.di.viewModelModule as installationOrderViewModelModule
 
 /**
  * Created by Sergio Carrillo Diestra on 19/11/2022.
@@ -48,6 +50,7 @@ class KoinApplication : Application() {
                 wispApiModule,
                 repositoryModule,
                 viewModelModule,
+                installationOrderViewModelModule,
                 dialogFactoryModule,
                 localDataModule,
                 applicationModule,
@@ -61,8 +64,8 @@ class KoinApplication : Application() {
         }
 
         getKoin().run {
-            setProperty(BASE_URL, com.example.data2.BuildConfig.BASE_URL)
-            setProperty(STORAGE_BASE_URL, com.example.data2.BuildConfig.FIREBASE_STORAGE_BUCKET)
+            setProperty(BASE_URL, BuildConfig.BASE_URL)
+            setProperty(STORAGE_BASE_URL, BuildConfig.FIREBASE_STORAGE_BUCKET)
         }
     }
 }

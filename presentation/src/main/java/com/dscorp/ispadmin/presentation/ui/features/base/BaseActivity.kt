@@ -3,7 +3,6 @@ package com.dscorp.ispadmin.presentation.ui.features.base
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.ViewDataBinding
-import com.dscorp.components.ProgressFullScreenDialogFragment
 import com.dscorp.ispadmin.presentation.extension.showCurrentSimpleName
 import com.dscorp.ispadmin.presentation.extension.showErrorDialog
 
@@ -13,9 +12,7 @@ abstract class BaseActivity<T, U : ViewDataBinding> : AppCompatActivity() {
     protected abstract val binding: U
     protected abstract fun handleState(state: T)
 
-    private val fullScreenProgressDialog: ProgressFullScreenDialogFragment by lazy {
-        ProgressFullScreenDialogFragment()
-    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,11 +25,7 @@ abstract class BaseActivity<T, U : ViewDataBinding> : AppCompatActivity() {
     }
 
     protected open fun onLoading(isLoading: Boolean) {
-        if (supportFragmentManager.isStateSaved)
-            if (isLoading) fullScreenProgressDialog.show(supportFragmentManager,
-                "BaseFragmentFullScreenProgress"
-            )
-            else fullScreenProgressDialog.dismiss()
+
     }
 
     protected open fun onViewReady(savedInstanceState: Bundle?) {}

@@ -15,10 +15,10 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.dscorp.ispadmin.R
+import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginActivity
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.TICKET_ID
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.TicketActivity
-import com.example.data2.data.repository.IRepository
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.google.gson.Gson

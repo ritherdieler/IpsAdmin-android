@@ -41,7 +41,7 @@ import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
-import com.example.data2.data.apirequestmodel.MigrationRequest
+import com.dscorp.ispadmin.data.apirequestmodel.MigrationRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

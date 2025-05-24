@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
-import com.dscorp.components.ProgressFullScreenDialogFragment
 import com.dscorp.ispadmin.presentation.extension.analytics.sendScreen
 import com.dscorp.ispadmin.presentation.extension.showCurrentSimpleName
 import com.dscorp.ispadmin.presentation.extension.showErrorDialog
@@ -20,9 +19,7 @@ abstract class BaseFragment<T, U : ViewDataBinding> : Fragment() {
 
     protected abstract fun handleState(state: T)
 
-    private val fullScreenProgressDialog: ProgressFullScreenDialogFragment by lazy {
-        ProgressFullScreenDialogFragment()
-    }
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,11 +35,7 @@ abstract class BaseFragment<T, U : ViewDataBinding> : Fragment() {
     }
 
     protected open fun onLoading(isLoading: Boolean) {
-        if (isLoading) fullScreenProgressDialog.show(
-            childFragmentManager,
-            "BaseFragmentFullScreenProgress"
-        )
-        else fullScreenProgressDialog.dismiss()
+
     }
 
     protected open fun onViewReady(savedInstanceState: Bundle?) {}

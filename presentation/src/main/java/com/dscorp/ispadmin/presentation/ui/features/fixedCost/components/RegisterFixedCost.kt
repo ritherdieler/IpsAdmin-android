@@ -21,7 +21,7 @@ import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.theme.myTypography
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyDropDown
 import com.dscorp.ispadmin.domain.model.FixedCostType
-import com.example.data2.data.apirequestmodel.FixedCostRequest
+import com.dscorp.ispadmin.data.apirequestmodel.FixedCostRequest
 
 @Composable
 fun RegisterFixedCostForm(

@@ -7,6 +7,7 @@ import com.dscorp.ispadmin.presentation.ui.features.installationorder.Installati
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.PendingInstallationOrdersViewModel
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerClosedOrdersViewModel
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerInProgressOrdersViewModel
+import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginViewModel
 import com.dscorp.ispadmin.presentation.ui.features.main.MainActivityViewModel
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationViewModel
@@ -18,7 +19,6 @@ import com.dscorp.ispadmin.presentation.ui.features.outlay.OutLayViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.register.RegisterPaymentViewModel
-
 import com.dscorp.ispadmin.presentation.ui.features.profile.ProfileViewModel
 import com.dscorp.ispadmin.presentation.ui.features.registration.RegisterViewModel
 import com.dscorp.ispadmin.presentation.ui.features.report.ReportsViewModel
@@ -26,10 +26,9 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.EditSubscr
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionComposeViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.SubscriptionDetailViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
-import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.SupportTicketViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.CreateSupportTicketViewModel
+import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.SupportTicketViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.SupportTicketListViewModel
-
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -84,4 +83,5 @@ val viewModelModule = module {
     viewModel { SellerInProgressOrdersViewModel() }
     viewModel { SellerClosedOrdersViewModel() }
     viewModel { SupportTicketListViewModel(get(), get()) }
+    viewModel { InstallationOrderListViewModel(get(), get()) }
 }

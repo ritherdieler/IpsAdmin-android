@@ -2,8 +2,8 @@ package com.dscorp.ispadmin.presentation.ui.features.installationorder
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dscorp.ispadmin.data.model.InstallationOrderStatus
 import com.dscorp.ispadmin.domain.model.InstallationOrder
-import com.dscorp.ispadmin.domain.model.InstallationOrderStatus
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.UserUseCase
 import kotlinx.coroutines.flow.MutableStateFlow

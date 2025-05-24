@@ -83,6 +83,9 @@ sealed class NavRoutes {
         sealed class Installation : FeatureRoutes() {
 
             @Serializable
+            object List : Installation()
+
+            @Serializable
             object Create : Installation()
 
             @Serializable
@@ -135,6 +138,7 @@ sealed class NavRoutes {
                     Payment.Detail::class.qualifiedName -> Payment.Detail("")
                     Payment.FindPayer::class.qualifiedName -> Payment.FindPayer
 
+                    Installation.List::class.qualifiedName -> Installation.List
                     Installation.Create::class.qualifiedName -> Installation.Create
                     Installation.Pending::class.qualifiedName -> Installation.Pending
                     Installation.Assigned::class.qualifiedName -> Installation.Assigned

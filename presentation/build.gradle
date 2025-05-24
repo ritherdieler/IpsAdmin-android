@@ -26,8 +26,30 @@ android {
     }
 
     buildTypes {
+        debug {
+            //FirebaseUrl
+            buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
+
+//            DEVELOP
+            buildConfigField 'String', "BASE_URL", '"http://192.168.0.160:8080/"'
+
+//            RELEASE
+//            buildConfigField 'String', "BASE_URL", '"http://191.101.234.130:8080/ispadmin/"'
+
+            buildConfigField 'String', "FIREBASE_STORAGE_BUCKET", '"https://firebasestorage.googleapis.com/v0/b/ispadmin-687ca.appspot.com/"'
+            buildConfigField 'String', "OLT_SERVICE_API_KET", OLT_SERVICE_API_KEY
+            buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", SEND_CLOUD_MESSAGING_API_KEY
+
+        }
         release {
             minifyEnabled false
+            buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
+            buildConfigField 'String', "BASE_URL", '"http://191.101.234.130:8080/ispadmin/"'
+            buildConfigField 'String', "FIREBASE_STORAGE_BUCKET", '"https://firebasestorage.googleapis.com/v0/b/ispadmin-687ca.appspot.com/"'
+
+            buildConfigField 'String', "OLT_SERVICE_API_KET", OLT_SERVICE_API_KEY
+            buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", SEND_CLOUD_MESSAGING_API_KEY
+
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -74,11 +96,7 @@ android {
 }
 
 dependencies {
-    // Módulos del proyecto
-    implementation project(':data')
-    implementation project(':domain')
-    implementation project(':components')
-    
+
     // Accompanist
     implementation "com.google.accompanist:accompanist-permissions:${rootProject.ext.accompanistVersion}"
     
@@ -93,6 +111,10 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:${rootProject.ext.lifecycleVersion}"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:${rootProject.ext.lifecycleVersion}"
     
+    // Paging 3
+    implementation "androidx.paging:paging-runtime-ktx:3.2.1"
+    implementation "androidx.paging:paging-compose:3.2.1"
+    
     // Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:${rootProject.ext.navigationVersion}"
     implementation "androidx.navigation:navigation-ui-ktx:${rootProject.ext.navigationVersion}"
@@ -105,7 +127,9 @@ dependencies {
     // Google Play Services
     implementation "com.google.android.gms:play-services-maps:${rootProject.ext.playServicesMapsVersion}"
     implementation "com.google.android.gms:play-services-location:${rootProject.ext.playServicesLocationVersion}"
-    
+ // Debugging de red con Chucker
+     debugImplementation "com.github.chuckerteam.chucker:library:4.1.0"
+     releaseImplementation "com.github.chuckerteam.chucker:library-no-op:4.1.0"
     // Retrofit y networking
     implementation "com.squareup.retrofit2:retrofit:${rootProject.ext.retrofitVersion}"
     implementation "com.squareup.okhttp3:logging-interceptor:${rootProject.ext.okhttpVersion}"

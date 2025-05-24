@@ -37,7 +37,7 @@ import androidx.navigation.fragment.findNavController
 import com.dscorp.ispadmin.databinding.FragmentDeleteOnuBinding
 import com.dscorp.ispadmin.presentation.ui.features.migration.ErrorDialog
 import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
-import com.example.data2.data.response.AdministrativeOnuResponse
+import com.dscorp.ispadmin.data.response.AdministrativeOnuResponse
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 

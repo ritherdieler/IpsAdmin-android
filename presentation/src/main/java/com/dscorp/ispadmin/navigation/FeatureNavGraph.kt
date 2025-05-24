@@ -45,12 +45,8 @@ import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Profile
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.SupportTicket
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashBoardComposeScreen
-import com.dscorp.ispadmin.presentation.ui.features.installationorder.AssignedInstallationOrdersScreen
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.CreateInstallationOrderScreen
 import com.dscorp.ispadmin.presentation.ui.features.installationorder.InstallationOrderViewModel
-import com.dscorp.ispadmin.presentation.ui.features.installationorder.PendingInstallationOrdersScreen
-import com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerClosedOrdersScreen
-import com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerInProgressOrdersScreen
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.LocationSelectorComposeDialog
 import com.dscorp.ispadmin.presentation.ui.features.main.MenuDrawerContent
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationComposeScreen
@@ -72,7 +68,9 @@ import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.SupportTicketListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.TicketImageDialog
 import com.dscorp.ispadmin.presentation.utils.PermissionUtils
-import com.example.data2.data.response.AssistanceTicketStatus
+import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
+import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListScreen
+import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
@@ -112,6 +110,7 @@ fun FeatureNavGraph(
         is Installation.Assigned -> "Órdenes Asignadas"
         is Installation.InProgress -> "Órdenes en Progreso"
         is Installation.Closed -> "Órdenes Cerradas"
+        is Installation.List -> "Órdenes de Instalación"
         null -> "ISP Admin"
         else -> "ISP Admin"
     }
@@ -371,8 +370,16 @@ private fun NavGraphContent(navController: NavHostController, onLoggedOut: () ->
         }
 
         // INSTALLATION MODULE
-        composable<Installation.Create> {
+        composable<Installation.List> {
+            val viewModel: InstallationOrderListViewModel = koinViewModel()
+            InstallationOrderListScreen(viewModel = viewModel, onCreateOrderClicked = {
+                navController.navigate(Installation.Create) {
+                    launchSingleTop = true
+                }
+            })
+        }
 
+        composable<Installation.Create> {
             val viewModel: InstallationOrderViewModel = koinViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             CreateInstallationOrderScreen(

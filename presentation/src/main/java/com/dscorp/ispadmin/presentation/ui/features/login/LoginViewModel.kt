@@ -3,11 +3,11 @@ package com.dscorp.ispadmin.presentation.ui.features.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.BuildConfig
+import com.dscorp.ispadmin.data.extensions.encryptWithSHA384
+import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.domain.model.Loging
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.ui.features.login.compose.LoginForm
-import com.example.data2.data.extensions.encryptWithSHA384
-import com.example.data2.data.repository.IRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 

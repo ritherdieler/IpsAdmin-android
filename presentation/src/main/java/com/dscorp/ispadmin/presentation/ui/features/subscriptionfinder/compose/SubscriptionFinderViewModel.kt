@@ -2,7 +2,8 @@ package com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dscorp.ispadmin.presentation.extension.removeAccents
+import com.dscorp.ispadmin.data.apirequestmodel.MoveOnuRequest
+import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.domain.model.CustomerData
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.Place
@@ -13,8 +14,7 @@ import com.dscorp.ispadmin.domain.model.extensions.isAValidName
 import com.dscorp.ispadmin.domain.model.extensions.isValidDni
 import com.dscorp.ispadmin.domain.model.extensions.isValidEmail
 import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
-import com.example.data2.data.apirequestmodel.MoveOnuRequest
-import com.example.data2.data.repository.IRepository
+import com.dscorp.ispadmin.presentation.extension.removeAccents
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow

@@ -1,8 +1,8 @@
 package com.dscorp.ispadmin.presentation.ui.features.report
 
+import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
-import com.example.data2.data.repository.IRepository
 
 class ReportsViewModel(private val repository: IRepository) : BaseViewModel<ReportsUiState>() {
 

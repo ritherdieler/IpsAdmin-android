@@ -42,7 +42,7 @@ import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyCustomDialog
-import com.example.data2.data.apirequestmodel.MoveOnuRequest
+import com.dscorp.ispadmin.data.apirequestmodel.MoveOnuRequest
 
 /**
  * Dialog to change NAP box - Material 3 implementation
