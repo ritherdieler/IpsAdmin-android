@@ -57,6 +57,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.dscorp.ispadmin.data.model.InstallationOrderStatus
 import com.dscorp.ispadmin.domain.model.InstallationOrder
+import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.Loader
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
@@ -64,6 +65,7 @@ import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLined
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+
 
 /**
  * Pantalla principal para mostrar la lista paginada de órdenes de instalación.
@@ -74,11 +76,13 @@ fun InstallationOrderListScreen(
     onCreateOrderClicked: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val canCreateOrder = viewModel.canCreateOrder()
 
     InstallationOrderList(
         uiState = uiState,
         onFilterChange = { viewModel.filterByStatus(it) },
-        onCreateOrderClicked = onCreateOrderClicked
+        onCreateOrderClicked = onCreateOrderClicked,
+        canCreateOrder = canCreateOrder
     )
 }
 
@@ -90,7 +94,8 @@ fun InstallationOrderListScreen(
 fun InstallationOrderList(
     uiState: InstallationOrderListUiState,
     onFilterChange: (InstallationOrderStatus?) -> Unit,
-    onCreateOrderClicked: () -> Unit
+    onCreateOrderClicked: () -> Unit,
+    canCreateOrder: Boolean
 ) {
     var selectedStatus by remember { mutableStateOf<InstallationOrderStatus?>(null) }
     val pagingItems = uiState.installationOrders?.collectAsLazyPagingItems()
@@ -132,19 +137,21 @@ fun InstallationOrderList(
                     }
                 }
 
-                // Botón para crear nueva orden
-                ExtendedFloatingActionButton(
-                    onClick = onCreateOrderClicked,
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Agregar"
-                        )
-                    },
-                    text = { Text("Nueva orden") },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                // Botón para crear nueva orden - solo visible para usuarios autorizados
+                AnimatedVisibility(visible = canCreateOrder) {
+                    ExtendedFloatingActionButton(
+                        onClick = onCreateOrderClicked,
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Agregar"
+                            )
+                        },
+                        text = { Text("Nueva orden") },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         }
     ) { padding ->
@@ -153,6 +160,19 @@ fun InstallationOrderList(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+
+            // Lista de opciones para el dropdown
+            val dropDownStatusFilterOptions = listOf(
+                StatusOption(null, "Todos"),
+                StatusOption(InstallationOrderStatus.CERRADO, "Cerrado"),
+                StatusOption(InstallationOrderStatus.EN_CURSO, "En curso")
+            ).toMutableList().apply {
+                if (uiState.currentUser!!.type != User.UserType.TECHNICIAN) {
+                    add(StatusOption(InstallationOrderStatus.SOLICITADO, "Solicitado"))
+                    add(StatusOption(InstallationOrderStatus.CANCELADO, "Cancelado"))
+                }
+            }.toList()
+
             if (pagingItems != null) {
                 LazyColumn(
                     state = lazyListState,
@@ -163,6 +183,7 @@ fun InstallationOrderList(
                     item {
                         // Filtro de estado con dropdown
                         StatusDropDown(
+                            options = dropDownStatusFilterOptions,
                             selectedStatus = selectedStatus,
                             onStatusSelected = { status ->
                                 selectedStatus = status
@@ -260,27 +281,19 @@ fun EmptyStateMessage() {
 /**
  * Dropdown para filtrar por estado
  */
+// Clase personalizada para manejar la opción "Todos"
+data class StatusOption(val status: InstallationOrderStatus?, val displayText: String) {
+    override fun toString(): String {
+        return displayText
+    }
+}
+
 @Composable
 fun StatusDropDown(
+    options: List<StatusOption>,
     selectedStatus: InstallationOrderStatus?,
     onStatusSelected: (InstallationOrderStatus?) -> Unit
 ) {
-    // Clase personalizada para manejar la opción "Todos"
-    data class StatusOption(val status: InstallationOrderStatus?, val displayText: String) {
-        override fun toString(): String {
-            return displayText
-        }
-    }
-
-    // Lista de opciones para el dropdown
-    val options = listOf(
-        StatusOption(null, "Todos"),
-        StatusOption(InstallationOrderStatus.SOLICITADO, "Solicitado"),
-        StatusOption(InstallationOrderStatus.EN_CURSO, "En curso"),
-        StatusOption(InstallationOrderStatus.CERRADO, "Cerrado"),
-        StatusOption(InstallationOrderStatus.CANCELADO, "Cancelado")
-    )
-
     // Encontrar la opción seleccionada actualmente
     val selectedOption = options.find { it.status == selectedStatus } ?: options.first()
 
@@ -551,7 +564,8 @@ fun InstallationOrderListPreview() {
                 isLoading = false
             ),
             onFilterChange = {},
-           onCreateOrderClicked = {}
+            onCreateOrderClicked = {},
+            canCreateOrder = true
         )
     }
 } 

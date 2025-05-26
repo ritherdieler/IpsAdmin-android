@@ -1,14 +1,13 @@
-package com.dscorp.ispadmin.data.di
+package com.dscorp.ispadmin.di
 
 import com.dscorp.ispadmin.BuildConfig
 import com.dscorp.ispadmin.data.datasource.remote.InstallationOrderApi
-import com.dscorp.ispadmin.data.datasource.remote.WispApiService
 import com.dscorp.ispadmin.data.datasource.remote.InstallationOrderApiService
 import com.dscorp.ispadmin.data.datasource.remote.SendMessagingCloudApi
+import com.dscorp.ispadmin.data.datasource.remote.WispApiService
 import com.example.data2.data.datasource.RestApiServices
 import org.koin.dsl.module
 import retrofit2.Retrofit
-import kotlin.jvm.java
 
 val apiModule = module {
     single { providesApi(get()) }

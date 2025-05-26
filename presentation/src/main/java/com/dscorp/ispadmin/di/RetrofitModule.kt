@@ -1,8 +1,7 @@
-package com.dscorp.ispadmin.data.di
+package com.dscorp.ispadmin.di
 
 import android.content.Context
 import com.chuckerteam.chucker.api.ChuckerInterceptor
-import com.dscorp.ispadmin.BuildConfig
 import com.dscorp.ispadmin.data.utils.LocalDateTimeAdapter
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient

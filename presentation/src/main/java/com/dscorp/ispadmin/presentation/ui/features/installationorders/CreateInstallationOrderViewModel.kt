@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.presentation.ui.features.installationorder
+package com.dscorp.ispadmin.presentation.ui.features.installationorders
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -39,7 +39,7 @@ data class InstallationOrderUiState(
     val orderUpdated: InstallationOrder? = null
 )
 
-class InstallationOrderViewModel : ViewModel(), KoinComponent {
+class CreateInstallationOrderViewModel : ViewModel(), KoinComponent {
     private val installationOrderUseCase: InstallationOrderUseCase by inject()
     private val userUseCase: UserUseCase by inject()
     private val placeUseCase: PlaceUseCase by inject()
@@ -171,57 +171,6 @@ class InstallationOrderViewModel : ViewModel(), KoinComponent {
                     it.copy(
                         isLoading = false,
                         error = e.message ?: "Error al crear la orden de instalación"
-                    )
-                }
-            }
-        }
-    }
-
-
-    fun closeInstallationOrder(orderId: Int) {
-        viewModelScope.launch {
-            try {
-                _uiState.update { it.copy(isLoading = true) }
-                val result =
-                    installationOrderUseCase.closeInstallationOrder(orderId = orderId) // Use named argument
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        successMessage = "Orden de instalación cerrada correctamente",
-                        orderUpdated = result
-                    )
-                }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message ?: "Error al cerrar la orden de instalación"
-                    )
-                }
-            }
-        }
-    }
-
-    fun cancelInstallationOrder(orderId: Int, cancellationReason: String? = null) {
-        viewModelScope.launch {
-            try {
-                _uiState.update { it.copy(isLoading = true) }
-                val result = installationOrderUseCase.cancelInstallationOrder(
-                    orderId = orderId,
-                    cancellationReason = cancellationReason
-                ) // Use named arguments
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        successMessage = "Orden de instalación cancelada correctamente",
-                        orderUpdated = result
-                    )
-                }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message ?: "Error al cancelar la orden de instalación"
                     )
                 }
             }

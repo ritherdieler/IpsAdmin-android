@@ -1,26 +1,20 @@
 package com.dscorp.ispadmin.data.usecase
 
-import com.dscorp.ispadmin.data.model.InstallationOrderStatus
+import androidx.paging.PagingData
 import com.dscorp.ispadmin.data.repository.InstallationOrderRepository
 import com.dscorp.ispadmin.domain.model.InstallationOrder
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
+import kotlinx.coroutines.flow.Flow
 import java.time.LocalDateTime
 
 class InstallationOrderUseCaseImpl(
     private val repository: InstallationOrderRepository
 ) : InstallationOrderUseCase {
 
-    override suspend fun getAllInstallationOrders(): List<InstallationOrder> {
-        return repository.getAllInstallationOrders()
-    }
 
     override suspend fun getInstallationOrderById(id: Int): InstallationOrder {
         return repository.getInstallationOrderById(id)
             ?: throw IllegalArgumentException("Installation order with id $id not found")
-    }
-
-    override suspend fun getInstallationOrdersByStatus(status: InstallationOrderStatus): List<InstallationOrder> {
-        return repository.getInstallationOrdersByStatus(status)
     }
 
     override suspend fun createInstallationOrder(installationOrder: InstallationOrder): InstallationOrder {
@@ -46,34 +40,25 @@ class InstallationOrderUseCaseImpl(
     ): InstallationOrder {
         return repository.cancelInstallationOrder(orderId, cancellationReason)
     }
-
-    override suspend fun getInstallationOrdersByTechnicianId(technicianId: String?): List<InstallationOrder> {
-        // Si el técnico no tiene ID, retornar lista vacía
-        if (technicianId == null) return emptyList()
-
-        // Obtener todas las órdenes y filtrar por técnico
-        val allOrders = repository.getAllInstallationOrders()
-        return allOrders.filter { it.id == technicianId.toInt() }
+    
+    /**
+     * Obtiene todas las órdenes de instalación sin filtros de forma paginada
+     */
+    override fun getAllInstallationOrdersPaginated(): Flow<PagingData<InstallationOrder>> {
+        return repository.getAllInstallationOrdersPaginated()
     }
-
-
-    override suspend fun closeInstallationOrderAsResult(orderId: Int): Result<InstallationOrder> =
-        runCatching {
-            repository.closeInstallationOrder(orderId)
-        }
-
-    override suspend fun getInstallationOrdersByTechnicianAndStatus(
-        userId: Int,
-        status: InstallationOrderStatus
-    ): List<InstallationOrder> {
-        return repository.getInstallationOrdersByTechnicianAndStatus(userId, status)
+    
+    /**
+     * Obtiene las órdenes de instalación de un vendedor específico de forma paginada
+     */
+    override fun getInstallationOrdersBySellerPaginated(sellerId: Int): Flow<PagingData<InstallationOrder>> {
+        return repository.getInstallationOrdersBySellerPaginated(sellerId)
     }
-
-    override suspend fun getInstallationOrdersBySellerAndStatus(
-        userId: Int,
-        status: InstallationOrderStatus
-    ): List<InstallationOrder> {
-        return repository.getInstallationOrdersBySellerAndStatus(userId, status)
+    
+    /**
+     * Obtiene las órdenes de instalación de un técnico específico de forma paginada
+     */
+    override fun getInstallationOrdersByTechnicianPaginated(technicianId: Int): Flow<PagingData<InstallationOrder>> {
+        return repository.getInstallationOrdersByTechnicianPaginated(technicianId)
     }
-
-} 
+}

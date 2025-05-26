@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.data.di
+package com.dscorp.ispadmin.di
 
 import android.content.Context
 import android.content.SharedPreferences

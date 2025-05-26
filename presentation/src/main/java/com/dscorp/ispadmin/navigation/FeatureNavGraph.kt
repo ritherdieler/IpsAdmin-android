@@ -45,8 +45,8 @@ import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Profile
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.SupportTicket
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashBoardComposeScreen
-import com.dscorp.ispadmin.presentation.ui.features.installationorder.CreateInstallationOrderScreen
-import com.dscorp.ispadmin.presentation.ui.features.installationorder.InstallationOrderViewModel
+import com.dscorp.ispadmin.presentation.ui.features.installationorders.CreateInstallationOrderScreen
+import com.dscorp.ispadmin.presentation.ui.features.installationorders.CreateInstallationOrderViewModel
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.LocationSelectorComposeDialog
 import com.dscorp.ispadmin.presentation.ui.features.main.MenuDrawerContent
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationComposeScreen
@@ -380,7 +380,7 @@ private fun NavGraphContent(navController: NavHostController, onLoggedOut: () ->
         }
 
         composable<Installation.Create> {
-            val viewModel: InstallationOrderViewModel = koinViewModel()
+            val viewModel: CreateInstallationOrderViewModel = koinViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             CreateInstallationOrderScreen(
                 uiState = uiState,

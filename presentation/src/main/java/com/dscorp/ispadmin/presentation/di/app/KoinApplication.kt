@@ -2,12 +2,12 @@ package com.dscorp.ispadmin.presentation.di.app
 
 import android.app.Application
 import com.dscorp.ispadmin.BuildConfig
-import com.dscorp.ispadmin.data.di.BASE_URL
-import com.dscorp.ispadmin.data.di.STORAGE_BASE_URL
-import com.dscorp.ispadmin.data.di.apiModule
-import com.dscorp.ispadmin.data.di.localDataModule
-import com.dscorp.ispadmin.data.di.repositoryModule
-import com.dscorp.ispadmin.data.di.retrofitModule
+import com.dscorp.ispadmin.di.BASE_URL
+import com.dscorp.ispadmin.di.STORAGE_BASE_URL
+import com.dscorp.ispadmin.di.apiModule
+import com.dscorp.ispadmin.di.localDataModule
+import com.dscorp.ispadmin.di.repositoryModule
+import com.dscorp.ispadmin.di.retrofitModule
 import com.dscorp.ispadmin.presentation.di.modules.applicationModule
 import com.dscorp.ispadmin.presentation.di.modules.dialogFactoryModule
 import com.dscorp.ispadmin.presentation.di.modules.formFieldModule
@@ -22,16 +22,8 @@ import org.koin.android.ext.android.getKoin
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
-import com.dscorp.ispadmin.data.di.apiModule as wispApiModule
-import com.dscorp.ispadmin.di.viewModelModule as installationOrderViewModelModule
+import com.dscorp.ispadmin.di.apiModule as wispApiModule
 
-/**
- * Created by Sergio Carrillo Diestra on 19/11/2022.
- * scarrillo.peruapps@gmail.com
- * Peru Apps
- * Huacho, Peru.
- *
- **/
 class KoinApplication : Application() {
     private lateinit var firebaseAnalytics: FirebaseAnalytics
 
@@ -50,7 +42,6 @@ class KoinApplication : Application() {
                 wispApiModule,
                 repositoryModule,
                 viewModelModule,
-                installationOrderViewModelModule,
                 dialogFactoryModule,
                 localDataModule,
                 applicationModule,

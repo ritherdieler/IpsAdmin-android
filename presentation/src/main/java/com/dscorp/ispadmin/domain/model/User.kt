@@ -15,12 +15,12 @@ data class User(
 ) {
     enum class UserType(val value: String) {
         ADMIN("Administrador"),
-        TECHNICIAN("Tecnico"),
-        CLIENT("Cliente"),
-        LOGISTIC("Logistica"),
         SALES("Ventas"),
         SECRETARY("Secretario"),
         ACCOUNTANT("Contador"),
+        LOGISTIC("Logistica"),
+        TECHNICIAN("Tecnico"),
+        CLIENT("Cliente"),
     }
 
     fun typeAsString() = type?.value

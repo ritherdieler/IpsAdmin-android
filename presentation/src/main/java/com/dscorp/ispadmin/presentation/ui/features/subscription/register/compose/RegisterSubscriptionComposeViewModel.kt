@@ -505,7 +505,7 @@ class RegisterSubscriptionComposeViewModel(
      */
     fun closeInstallationOrder(orderId: Int) = viewModelScope.launch {
         try {
-            installationOrderUseCase.closeInstallationOrderAsResult(orderId)
+            installationOrderUseCase.closeInstallationOrder(orderId)
         } catch (e: Exception) {
             uiState.update { current ->
                 current.copy(

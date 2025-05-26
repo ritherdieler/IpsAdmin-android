@@ -2,11 +2,7 @@ package com.dscorp.ispadmin.presentation.di.modules
 
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashBoardViewModel
 import com.dscorp.ispadmin.presentation.ui.features.fixedCost.FixedCostViewModel
-import com.dscorp.ispadmin.presentation.ui.features.installationorder.AssignedInstallationOrdersViewModel
-import com.dscorp.ispadmin.presentation.ui.features.installationorder.InstallationOrderViewModel
-import com.dscorp.ispadmin.presentation.ui.features.installationorder.PendingInstallationOrdersViewModel
-import com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerClosedOrdersViewModel
-import com.dscorp.ispadmin.presentation.ui.features.installationorder.SellerInProgressOrdersViewModel
+import com.dscorp.ispadmin.presentation.ui.features.installationorders.CreateInstallationOrderViewModel
 import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginViewModel
 import com.dscorp.ispadmin.presentation.ui.features.main.MainActivityViewModel
@@ -77,11 +73,7 @@ val viewModelModule = module {
     viewModel { OutLayViewModel(get()) }
     viewModel { SubscriptionFinderViewModel(get()) }
     viewModel { FixedCostViewModel(get()) }
-    viewModel { InstallationOrderViewModel() }
-    viewModel { PendingInstallationOrdersViewModel() }
-    viewModel { AssignedInstallationOrdersViewModel() }
-    viewModel { SellerInProgressOrdersViewModel() }
-    viewModel { SellerClosedOrdersViewModel() }
+    viewModel { CreateInstallationOrderViewModel() }
     viewModel { SupportTicketListViewModel(get(), get()) }
     viewModel { InstallationOrderListViewModel(get(), get()) }
 }

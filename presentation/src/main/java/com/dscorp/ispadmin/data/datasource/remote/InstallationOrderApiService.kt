@@ -68,6 +68,35 @@ interface InstallationOrderApiService {
         @Query("page") page: Int,
         @Query("size") size: Int
     ): Response<PageResponse<InstallationOrder>>
+    
+    /**
+     * Obtiene todas las órdenes de instalación paginadas
+     */
+    @GET("installation-order/all-paginated")
+    suspend fun getAllInstallationOrdersPaginated(
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): Response<PageResponse<InstallationOrder>>
+    
+    /**
+     * Obtiene las órdenes de instalación de un vendedor específico paginadas
+     */
+    @GET("installation-order/seller/{sellerId}")
+    suspend fun getInstallationOrdersBySellerPaginated(
+        @Path("sellerId") sellerId: Int,
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): Response<PageResponse<InstallationOrder>>
+    
+    /**
+     * Obtiene las órdenes de instalación de un técnico específico paginadas
+     */
+    @GET("installation-order/technician/{technicianId}")
+    suspend fun getInstallationOrdersByTechnicianPaginated(
+        @Path("technicianId") technicianId: Int,
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): Response<PageResponse<InstallationOrder>>
 }
 
 data class PageResponse<T>(

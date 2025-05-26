@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.presentation.ui.features.installationorder
+package com.dscorp.ispadmin.presentation.ui.features.installationorders
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
