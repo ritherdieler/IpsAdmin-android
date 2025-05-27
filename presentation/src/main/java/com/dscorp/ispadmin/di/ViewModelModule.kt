@@ -71,7 +71,7 @@ val viewModelModule = module {
     viewModel { OutLayViewModel(get()) }
     viewModel { SubscriptionFinderViewModel(get()) }
     viewModel { FixedCostViewModel(get()) }
-    viewModel { CreateInstallationOrderViewModel() }
+    viewModel { CreateInstallationOrderViewModel(get(), get(), get()) }
     viewModel { SupportTicketListViewModel(get(), get()) }
     viewModel { InstallationOrderListViewModel(get(), get()) }
     viewModel { PayerFinderViewmodel(get()) }

@@ -194,6 +194,7 @@ dependencies {
     testImplementation "androidx.arch.core:core-testing:${rootProject.ext.archCoreTestingVersion}"
     testImplementation 'com.jakewharton.espresso:okhttp3-idling-resource:1.0.0'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
+    testImplementation "io.mockk:mockk:1.13.9"
     testImplementation "io.insert-koin:koin-test:${rootProject.ext.koinVersion}"
     testImplementation "io.insert-koin:koin-test-junit4:${rootProject.ext.koinVersion}"
     testImplementation "com.google.truth:truth:${rootProject.ext.truthVersion}"

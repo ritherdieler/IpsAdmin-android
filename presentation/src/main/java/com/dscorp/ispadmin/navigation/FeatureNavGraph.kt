@@ -390,6 +390,10 @@ private fun NavGraphContent(navController: NavHostController, onLoggedOut: () ->
         composable<Installation.Create> {
             val viewModel: CreateInstallationOrderViewModel = koinViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) {
+                viewModel.loadPlaces()
+            }
             CreateInstallationOrderScreen(
                 uiState = uiState,
                 onCreateOrderClicked = {

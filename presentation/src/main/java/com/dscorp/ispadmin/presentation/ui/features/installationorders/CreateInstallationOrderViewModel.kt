@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 data class InstallationOrderForm(
     val firstName: String = "",
@@ -39,19 +38,16 @@ data class InstallationOrderUiState(
     val orderUpdated: InstallationOrder? = null
 )
 
-class CreateInstallationOrderViewModel : ViewModel(), KoinComponent {
-    private val installationOrderUseCase: InstallationOrderUseCase by inject()
-    private val userUseCase: UserUseCase by inject()
-    private val placeUseCase: PlaceUseCase by inject()
+class CreateInstallationOrderViewModel(
+    private val installationOrderUseCase: InstallationOrderUseCase,
+    private val userUseCase: UserUseCase,
+    private val placeUseCase: PlaceUseCase
+) : ViewModel(), KoinComponent {
 
     private val _uiState = MutableStateFlow(InstallationOrderUiState())
     val uiState: StateFlow<InstallationOrderUiState> = _uiState.asStateFlow()
 
     val currentUser = runBlocking { userUseCase.getCurrentUser() }
-
-    init {
-        loadPlaces()
-    }
 
     fun onFirstNameChange(newName: String) {
         _uiState.update { currentState ->
@@ -88,7 +84,7 @@ class CreateInstallationOrderViewModel : ViewModel(), KoinComponent {
         validateForm()
     }
 
-    fun onPlaceChange(place: Place) {
+    fun onPlaceChange(place: Place?) {
         _uiState.update { currentState ->
             currentState.copy(form = currentState.form.copy(place = place))
         }
@@ -108,7 +104,7 @@ class CreateInstallationOrderViewModel : ViewModel(), KoinComponent {
         }
     }
 
-    private fun loadPlaces() {
+     fun loadPlaces() {
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true) }
