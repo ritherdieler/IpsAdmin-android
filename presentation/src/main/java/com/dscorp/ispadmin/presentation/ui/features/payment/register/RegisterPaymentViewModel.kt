@@ -4,11 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.domain.model.Payment
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
@@ -40,22 +38,9 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
     private val _state = MutableStateFlow(RegisterPaymentState())
     val state: StateFlow<RegisterPaymentState> = _state.asStateFlow()
 
-    private val _electronicPayerSearchFlow = MutableStateFlow("")
-    
+
     val user = repository.getUserSession()
 
-    init {
-        observeElectronicPayerSearch()
-    }
-
-    @OptIn(FlowPreview::class)
-    private fun observeElectronicPayerSearch() = viewModelScope.launch {
-        _electronicPayerSearchFlow.debounce(300).collect {
-            if (it.isEmpty() || it.length < 3) return@collect
-            repository.findPaymentByElectronicPayerName(it)
-            // Handle response if needed
-        }
-    }
 
     fun getElectronicPayers() {
         viewModelScope.launch {

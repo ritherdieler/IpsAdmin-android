@@ -1,18 +1,8 @@
-package com.dscorp.ispadmin.presentation.di.app
+package com.dscorp.ispadmin.di
 
 import android.app.Application
 import com.dscorp.ispadmin.BuildConfig
-import com.dscorp.ispadmin.di.BASE_URL
-import com.dscorp.ispadmin.di.STORAGE_BASE_URL
 import com.dscorp.ispadmin.di.apiModule
-import com.dscorp.ispadmin.di.localDataModule
-import com.dscorp.ispadmin.di.repositoryModule
-import com.dscorp.ispadmin.di.retrofitModule
-import com.dscorp.ispadmin.presentation.di.modules.applicationModule
-import com.dscorp.ispadmin.presentation.di.modules.dialogFactoryModule
-import com.dscorp.ispadmin.presentation.di.modules.formFieldModule
-import com.dscorp.ispadmin.presentation.di.modules.useCaseModule
-import com.dscorp.ispadmin.presentation.di.modules.viewModelModule
 import com.example.data2.data.di.fileStorageModule
 import com.facebook.stetho.Stetho
 import com.google.firebase.analytics.FirebaseAnalytics

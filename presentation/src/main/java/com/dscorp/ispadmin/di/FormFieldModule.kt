@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.presentation.di.modules
+package com.dscorp.ispadmin.di
 
 import com.dscorp.ispadmin.presentation.ui.features.forms.subscription.EditSubscriptionDataForm
 import com.dscorp.ispadmin.presentation.ui.features.forms.subscription.RegisterSubscriptionForm

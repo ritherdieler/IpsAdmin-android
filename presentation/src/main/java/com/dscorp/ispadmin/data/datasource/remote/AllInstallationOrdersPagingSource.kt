@@ -2,7 +2,7 @@ package com.dscorp.ispadmin.data.datasource.remote
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.dscorp.ispadmin.data.model.InstallationOrderDto
+import com.dscorp.ispadmin.data.extensions.toDomain
 import com.dscorp.ispadmin.data.repository.InstallationOrderRepositoryImpl.Companion.PAGE_SIZE
 import com.dscorp.ispadmin.domain.model.InstallationOrder
 import retrofit2.HttpException
@@ -45,18 +45,5 @@ class AllInstallationOrdersPagingSource(
         }
     }
     
-    /**
-     * Extensión para convertir un DTO a un modelo de dominio
-     */
-    private fun InstallationOrderDto.toDomain(): InstallationOrder {
-        return InstallationOrder(
-            id = id,
-            customerFirstName = customerFirstName,
-            customerLastName = customerLastName,
-            customerAddress = customerAddress,
-            customerPhone = customerPhone,
-            status = status,
-            scheduledDate = scheduledDate
-        )
-    }
+
 } 

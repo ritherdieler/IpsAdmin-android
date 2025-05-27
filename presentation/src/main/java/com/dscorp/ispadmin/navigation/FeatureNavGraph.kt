@@ -59,7 +59,7 @@ import com.dscorp.ispadmin.presentation.ui.features.profile.ProfileScreen
 import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.EditSubscriptionViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.compose.EditPlanSubscriptionScreen
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionFormScreen
-import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.compose.SubscriptionDetailForm
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.SubscriptionDetailForm
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderScreen
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.CreateSupportTicketScreen
@@ -189,9 +189,10 @@ private fun NavGraphContent(navController: NavHostController, onLoggedOut: () ->
         }
         // SUBSCRIPTION MODULE
         composable<Subscription.Register> {
+            val installationOrder = it.toRoute<Subscription.Register>().installationOrderId
             RegisterSubscriptionFormScreen(
                 viewModel = koinViewModel(),
-                installationOrderId = null,
+                installationOrderId = installationOrder,
                 onSubscriptionRegisterSuccess = {
                     navController.popBackStack()
                 }
@@ -372,11 +373,18 @@ private fun NavGraphContent(navController: NavHostController, onLoggedOut: () ->
         // INSTALLATION MODULE
         composable<Installation.List> {
             val viewModel: InstallationOrderListViewModel = koinViewModel()
+
             InstallationOrderListScreen(viewModel = viewModel, onCreateOrderClicked = {
                 navController.navigate(Installation.Create) {
                     launchSingleTop = true
                 }
-            })
+            },
+                onNavigateToRegisterSubscription = {
+                    viewModel.resetSelectedOrder()
+                    navController.navigate(Subscription.Register(it.id)) {
+                        launchSingleTop = true
+                    }
+                })
         }
 
         composable<Installation.Create> {

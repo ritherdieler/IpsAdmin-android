@@ -65,6 +65,21 @@ class InstallationOrderRepositoryImpl(
         handleResponse(response, "Cancelar orden de instalación $orderId")
     }
 
+    override suspend fun transferInstallationOrder(
+        orderId: Int,
+        newTechnicianId: Int,
+        transferredById: Int,
+        scheduledDate: LocalDateTime
+    ): InstallationOrder = withContext(Dispatchers.IO) {
+        val response = apiService.transferInstallationOrder(
+            orderId = orderId,
+            newTechnicianId = newTechnicianId,
+            transferredById = transferredById,
+            scheduledDateTime = scheduledDate.format(formatter)
+        )
+        handleResponse(response, "Transferir orden de instalación $orderId")
+    }
+
     /**
      * Obtiene todas las órdenes de instalación sin filtros de forma paginada
      */

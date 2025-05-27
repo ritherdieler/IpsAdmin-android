@@ -20,28 +20,41 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.outlined.Engineering
+import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.TransferWithinAStation
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,7 +63,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -61,10 +76,14 @@ import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.Loader
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
+import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyCustomDialog
+import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyDateTimePickerField
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 /**
@@ -73,17 +92,65 @@ import kotlinx.coroutines.launch
 @Composable
 fun InstallationOrderListScreen(
     viewModel: InstallationOrderListViewModel,
-    onCreateOrderClicked: () -> Unit
+    onCreateOrderClicked: () -> Unit,
+    onNavigateToRegisterSubscription: (InstallationOrder) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val canCreateOrder = viewModel.canCreateOrder()
 
+    // Detectar cuando la actividad se reanuda
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                viewModel.loadInstallationOrders()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.loadTechnicians()
+    }
     InstallationOrderList(
         uiState = uiState,
         onFilterChange = { viewModel.filterByStatus(it) },
         onCreateOrderClicked = onCreateOrderClicked,
-        canCreateOrder = canCreateOrder
+        canCreateOrder = canCreateOrder,
+        onOrderSelected = viewModel::onOrderSelected,
+        onTransferOrderClicked = viewModel::onTransferOrderClicked
     )
+
+    if (uiState.showAssignDialog) {
+        AssignTechnicianDialog(
+            order = uiState.selectedOrder,
+            technicians = uiState.technicians,
+            selectedTechnician = uiState.selectedTechnician,
+            onTechnicianSelected = viewModel::onTechnicianSelected,
+            onScheduledDateSelected = viewModel::onScheduledDateSelected,
+            onAssign = viewModel::assignTechnician,
+            onDismiss = viewModel::onCloseDialog
+        )
+    }
+
+    if (uiState.showTransferDialog) {
+        TransferOrderDialog(
+            order = uiState.selectedOrder,
+            technicians = uiState.technicians,
+            selectedTechnician = uiState.selectedTechnician,
+            onTechnicianSelected = viewModel::onTechnicianSelected,
+            onScheduledDateSelected = viewModel::onScheduledDateSelected,
+            onTransfer = viewModel::transferOrder,
+            onDismiss = viewModel::onCloseTransferDialog
+        )
+    }
+    LaunchedEffect(uiState.navigateToRegisterSubscription) {
+        if (uiState.navigateToRegisterSubscription)
+            onNavigateToRegisterSubscription(uiState.selectedOrder!!)
+    }
 }
 
 /**
@@ -95,7 +162,9 @@ fun InstallationOrderList(
     uiState: InstallationOrderListUiState,
     onFilterChange: (InstallationOrderStatus?) -> Unit,
     onCreateOrderClicked: () -> Unit,
-    canCreateOrder: Boolean
+    canCreateOrder: Boolean,
+    onOrderSelected: (InstallationOrder) -> Unit,
+    onTransferOrderClicked: (InstallationOrder) -> Unit
 ) {
     var selectedStatus by remember { mutableStateOf<InstallationOrderStatus?>(null) }
     val pagingItems = uiState.installationOrders?.collectAsLazyPagingItems()
@@ -164,13 +233,19 @@ fun InstallationOrderList(
             // Lista de opciones para el dropdown
             val dropDownStatusFilterOptions = listOf(
                 StatusOption(null, "Todos"),
-                StatusOption(InstallationOrderStatus.CERRADO, "Cerrado"),
-                StatusOption(InstallationOrderStatus.EN_CURSO, "En curso")
-            ).toMutableList().apply {
-                if (uiState.currentUser!!.type != User.UserType.TECHNICIAN) {
+
+                ).toMutableList().apply {
+
+                if (uiState.currentUser!!.type != User.UserType.TECHNICIAN)
                     add(StatusOption(InstallationOrderStatus.SOLICITADO, "Solicitado"))
+
+                add(StatusOption(InstallationOrderStatus.EN_CURSO, "En curso"))
+
+                add(StatusOption(InstallationOrderStatus.CERRADO, "Cerrado"))
+
+                if (uiState.currentUser.type != User.UserType.TECHNICIAN)
                     add(StatusOption(InstallationOrderStatus.CANCELADO, "Cancelado"))
-                }
+
             }.toList()
 
             if (pagingItems != null) {
@@ -197,7 +272,12 @@ fun InstallationOrderList(
                         key = pagingItems.itemKey { it.id }
                     ) { index ->
                         pagingItems[index]?.let { order ->
-                            InstallationOrderItem(order = order)
+                            InstallationOrderItem(
+                                order = order,
+                                uiState = uiState,
+                                onOrderSelected = onOrderSelected,
+                                onTransferOrderClicked = onTransferOrderClicked
+                            )
                         }
                     }
 
@@ -326,7 +406,14 @@ fun StatusDropDown(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InstallationOrderItem(order: InstallationOrder) {
+fun InstallationOrderItem(
+    order: InstallationOrder,
+    uiState: InstallationOrderListUiState,
+    onOrderSelected: (InstallationOrder) -> Unit,
+    onTransferOrderClicked: (InstallationOrder) -> Unit
+) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -334,12 +421,11 @@ fun InstallationOrderItem(order: InstallationOrder) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        onClick = { /* Navigate to detail */ }
+        onClick = { onOrderSelected(order) }
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Encabezado con ID y estado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -352,7 +438,89 @@ fun InstallationOrderItem(order: InstallationOrder) {
                         color = MaterialTheme.colorScheme.primary
                     )
                 )
-                StatusChip(status = order.status)
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    StatusChip(status = order.status)
+                    
+                    Box {
+                        IconButton(
+                            onClick = { showMenu = true }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "Más opciones",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false },
+                            offset = DpOffset(x = 0.dp, y = 4.dp)
+                        ) {
+                            // Opciones para técnicos
+                            if (uiState.currentUser?.type == User.UserType.TECHNICIAN) {
+                                if (order.status == InstallationOrderStatus.EN_CURSO) {
+                                    DropdownMenuItem(
+                                        text = { Text("Transferir a otro técnico") },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Outlined.TransferWithinAStation,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            showMenu = false
+                                            onTransferOrderClicked(order)
+                                        }
+                                    )
+                                }
+                            }
+                            
+                            // Opciones para administradores, ventas y contadores
+                            if (uiState.currentUser?.type in listOf(
+                                User.UserType.ADMIN,
+                                User.UserType.SALES,
+                                User.UserType.ACCOUNTANT
+                            )) {
+                                if (order.status == InstallationOrderStatus.SOLICITADO) {
+                                    DropdownMenuItem(
+                                        text = { Text("Asignar técnico") },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Outlined.Engineering,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            showMenu = false
+                                            onOrderSelected(order)
+                                        }
+                                    )
+                                }
+                                
+                                if (order.status == InstallationOrderStatus.EN_CURSO) {
+                                    DropdownMenuItem(
+                                        text = { Text("Transferir a otro técnico") },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Outlined.TransferWithinAStation,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            showMenu = false
+                                            onTransferOrderClicked(order)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -379,6 +547,48 @@ fun InstallationOrderItem(order: InstallationOrder) {
                 label = order.customerPhone,
                 contentDescription = "Teléfono"
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Fecha de creación
+            InfoRow(
+                icon = Icons.Outlined.Schedule,
+                label = "Creado: ${order.createdAt?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",
+                contentDescription = "Fecha de creación"
+            )
+
+            // Mostrar fecha programada solo si está en curso
+            if (order.status == InstallationOrderStatus.EN_CURSO && order.scheduledDate != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                InfoRow(
+                    icon = Icons.Outlined.Event,
+                    label = "Programado: ${order.scheduledDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",
+                    contentDescription = "Fecha programada"
+                )
+            }
+
+            // Mostrar lugar si está disponible
+            if (order.place != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                InfoRow(
+                    icon = Icons.Outlined.Place,
+                    label = "Lugar: ${order.place}",
+                    contentDescription = "Lugar"
+                )
+            }
+
+            // Mostrar técnico asignado si el usuario no es técnico
+            order.technician?.let {
+                if ((order.status == InstallationOrderStatus.EN_CURSO || order.status != InstallationOrderStatus.CERRADO) && uiState.currentUser!!.type != User.UserType.TECHNICIAN) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    InfoRow(
+                        icon = Icons.Outlined.Engineering,
+                        label = "Técnico: ${order.technician!!.name}",
+                        contentDescription = "Técnico asignado"
+                    )
+                }
+            }
+
         }
     }
 }
@@ -515,6 +725,203 @@ fun ErrorItem(
     }
 }
 
+
+@Composable
+fun AssignTechnicianDialog(
+    order: InstallationOrder?,
+    technicians: List<User>,
+    selectedTechnician: User?,
+    onTechnicianSelected: (User) -> Unit,
+    onScheduledDateSelected: (LocalDateTime) -> Unit,
+    onAssign: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (order == null) return
+
+    var dateTimeText by rememberSaveable { mutableStateOf("") }
+    val isFormValid = selectedTechnician != null && dateTimeText.isNotEmpty()
+
+    MyCustomDialog(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Asignar Técnico",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            Text(
+                text = "Cliente: ${order.customerFirstName} ${order.customerLastName}",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            )
+
+            Text(
+                text = "Dirección: ${order.customerAddress}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            )
+
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+            MyOutLinedDropDown(
+                items = technicians,
+                selected = selectedTechnician,
+                label = "Técnico",
+                onItemSelected = onTechnicianSelected,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            MyDateTimePickerField(
+                label = "Fecha y Hora Programada",
+                dateTime = dateTimeText,
+                onDateTimeSelected = {
+                    dateTimeText = it
+                    // Convertir a LocalDate para el ViewModel
+                    try {
+                        // Extraer solo la fecha (ignorar la hora para la conversión a LocalDate)
+                        val date =
+                            LocalDateTime.parse(it, DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"))
+                        onScheduledDateSelected(date)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        // Manejar error de análisis de fecha
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                MyButton(
+                    text = "Cancelar",
+                    onClick = onDismiss,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+
+                MyButton(
+                    text = "Asignar",
+                    enabled = isFormValid,
+                    onClick = onAssign
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TransferOrderDialog(
+    order: InstallationOrder?,
+    technicians: List<User>,
+    selectedTechnician: User?,
+    onTechnicianSelected: (User) -> Unit,
+    onScheduledDateSelected: (LocalDateTime) -> Unit,
+    onTransfer: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (order == null) return
+
+    var dateTimeText by rememberSaveable { mutableStateOf("") }
+    val isFormValid = selectedTechnician != null && dateTimeText.isNotEmpty()
+
+    MyCustomDialog(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Transferir Orden",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            Text(
+                text = "Cliente: ${order.customerFirstName} ${order.customerLastName}",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            )
+
+            Text(
+                text = "Dirección: ${order.customerAddress}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            )
+
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+            MyOutLinedDropDown(
+                items = technicians,
+                selected = selectedTechnician,
+                label = "Nuevo Técnico",
+                onItemSelected = onTechnicianSelected,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            MyDateTimePickerField(
+                label = "Nueva Fecha y Hora Programada",
+                dateTime = dateTimeText,
+                onDateTimeSelected = {
+                    dateTimeText = it
+                    try {
+                        val date = LocalDateTime.parse(it, DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"))
+                        onScheduledDateSelected(date)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                MyButton(
+                    text = "Cancelar",
+                    onClick = onDismiss,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+
+                MyButton(
+                    text = "Transferir",
+                    enabled = isFormValid,
+                    onClick = onTransfer
+                )
+            }
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun InstallationOrderListPreview() {
@@ -565,7 +972,9 @@ fun InstallationOrderListPreview() {
             ),
             onFilterChange = {},
             onCreateOrderClicked = {},
-            canCreateOrder = true
+            canCreateOrder = true,
+            onOrderSelected = {},
+            onTransferOrderClicked = {}
         )
     }
 } 

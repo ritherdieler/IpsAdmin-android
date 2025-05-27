@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.presentation.di.modules
+package com.dscorp.ispadmin.di
 
 import com.dscorp.ispadmin.presentation.util.DialogFactory
 import com.dscorp.ispadmin.presentation.util.IDialogFactory

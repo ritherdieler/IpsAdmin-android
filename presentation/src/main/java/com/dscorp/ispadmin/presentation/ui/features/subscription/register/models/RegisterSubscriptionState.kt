@@ -8,10 +8,12 @@ data class RegisterSubscriptionState(
     val error: String? = null,
     val registeredSubscription: Subscription? = null,
     val registerSubscriptionForm: RegisterSubscriptionFormState = RegisterSubscriptionFormState(
-//        firstName = "Sergio",
+
+        //        firstName = "Sergio",
 //        lastName = "carrillo",
 //        dni = "12345678",
 //        address = "Av. Siempre Viva 123",
 //        phone = "123456789",
-    )
+    ),
+    val orderId: Int?=null
 )

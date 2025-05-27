@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.presentation.ui.features.payment.payerFinder.compose
+package com.dscorp.ispadmin.presentation.ui.features.payment.payerFinder
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

@@ -44,7 +44,7 @@ sealed class NavRoutes {
         sealed class Subscription : FeatureRoutes() {
 
             @Serializable
-            object Register : Subscription()
+            data class Register(val installationOrderId: Int) : Subscription()
 
             @Serializable
             object Find : Subscription()
@@ -126,7 +126,7 @@ sealed class NavRoutes {
                     Reports::class.qualifiedName -> Reports
                     AsyncImageViewer::class.qualifiedName -> AsyncImageViewer("")
 
-                    Subscription.Register::class.qualifiedName -> Subscription.Register
+                    Subscription.Register::class.qualifiedName -> Subscription.Register(0)
                     Subscription.Find::class.qualifiedName -> Subscription.Find
                     Subscription.Details::class.qualifiedName -> Subscription.Details(0)
                     Subscription.ChangePlan::class.qualifiedName -> Subscription.ChangePlan(0)

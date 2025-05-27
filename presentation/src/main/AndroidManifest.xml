@@ -17,7 +17,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
 
     <application
-        android:name=".presentation.di.app.KoinApplication"
+        android:name=".di.KoinApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"

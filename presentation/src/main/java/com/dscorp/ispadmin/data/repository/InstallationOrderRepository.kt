@@ -19,6 +19,21 @@ interface InstallationOrderRepository {
     suspend fun cancelInstallationOrder(orderId: Int, cancellationReason: String?): InstallationOrder
 
     /**
+     * Transfiere una orden de instalación a otro técnico
+     * @param orderId ID de la orden a transferir
+     * @param newTechnicianId ID del nuevo técnico
+     * @param transferredById ID del usuario que realiza la transferencia
+     * @param scheduledDate Nueva fecha programada para la instalación
+     * @return La orden de instalación actualizada
+     */
+    suspend fun transferInstallationOrder(
+        orderId: Int,
+        newTechnicianId: Int,
+        transferredById: Int,
+        scheduledDate: LocalDateTime
+    ): InstallationOrder
+
+    /**
      * Obtiene todas las órdenes de instalación sin filtros de forma paginada
      * @return Flow de PagingData con todas las órdenes de instalación
      */

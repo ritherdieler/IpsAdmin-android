@@ -97,6 +97,14 @@ interface InstallationOrderApiService {
         @Query("page") page: Int,
         @Query("size") size: Int
     ): Response<PageResponse<InstallationOrder>>
+
+    @PUT("installation-order/{id}/transfer")
+    suspend fun transferInstallationOrder(
+        @Path("id") orderId: Int,
+        @Query("newTechnicianId") newTechnicianId: Int,
+        @Query("transferredById") transferredById: Int,
+        @Query("scheduledDateTime") scheduledDateTime: String
+    ): Response<InstallationOrder>
 }
 
 data class PageResponse<T>(

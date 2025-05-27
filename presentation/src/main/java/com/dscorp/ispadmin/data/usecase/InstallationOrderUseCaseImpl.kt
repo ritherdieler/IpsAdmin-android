@@ -40,6 +40,20 @@ class InstallationOrderUseCaseImpl(
     ): InstallationOrder {
         return repository.cancelInstallationOrder(orderId, cancellationReason)
     }
+
+    override suspend fun transferInstallationOrder(
+        orderId: Int,
+        newTechnicianId: Int,
+        transferredById: Int,
+        scheduledDate: LocalDateTime
+    ): InstallationOrder {
+        return repository.transferInstallationOrder(
+            orderId = orderId,
+            newTechnicianId = newTechnicianId,
+            transferredById = transferredById,
+            scheduledDate = scheduledDate
+        )
+    }
     
     /**
      * Obtiene todas las órdenes de instalación sin filtros de forma paginada

@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.presentation.di.modules
+package com.dscorp.ispadmin.di
 
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashBoardViewModel
 import com.dscorp.ispadmin.presentation.ui.features.fixedCost.FixedCostViewModel
@@ -9,11 +9,11 @@ import com.dscorp.ispadmin.presentation.ui.features.main.MainActivityViewModel
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationViewModel
 import com.dscorp.ispadmin.presentation.ui.features.mufas.MufaViewModel
 import com.dscorp.ispadmin.presentation.ui.features.napbox.NapBoxViewModel
-import com.dscorp.ispadmin.presentation.ui.features.napboxeslist.NapBoxesListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdministrationViewModel
 import com.dscorp.ispadmin.presentation.ui.features.outlay.OutLayViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryViewModel
+import com.dscorp.ispadmin.presentation.ui.features.payment.payerFinder.PayerFinderViewmodel
 import com.dscorp.ispadmin.presentation.ui.features.payment.register.RegisterPaymentViewModel
 import com.dscorp.ispadmin.presentation.ui.features.profile.ProfileViewModel
 import com.dscorp.ispadmin.presentation.ui.features.registration.RegisterViewModel
@@ -54,10 +54,8 @@ val viewModelModule = module {
     }
 
     viewModel { NapBoxViewModel(get()) }
-    viewModel { NapBoxesListViewModel() }
     viewModel { PaymentHistoryViewModel(get()) }
     viewModel { PaymentDetailViewModel(get()) }
-//    viewModel { FindSubscriptionViewModel(get(), get()) }
     viewModel { RegisterPaymentViewModel(get()) }
     viewModel { ProfileViewModel() }
     viewModel { MainActivityViewModel() }
@@ -76,4 +74,5 @@ val viewModelModule = module {
     viewModel { CreateInstallationOrderViewModel() }
     viewModel { SupportTicketListViewModel(get(), get()) }
     viewModel { InstallationOrderListViewModel(get(), get()) }
+    viewModel { PayerFinderViewmodel(get()) }
 }

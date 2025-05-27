@@ -65,10 +65,10 @@ class RegisterSubscriptionComposeViewModel(
             currentUser = userSession.getOrThrow()
             cachedNapBoxList = napBoxList.getOrNull() ?: emptyList()
             cachedPlanList = planList.getOrNull() ?: emptyList()
-            
+
             // Filtrar planes por tipo de instalación actual (FIBER por defecto)
             val filteredPlans = cachedPlanList.filter { it.type == InstallationType.FIBER }
-            
+
             // Seleccionar automáticamente el plan si solo hay uno disponible
             val selectedPlan = if (filteredPlans.size == 1) filteredPlans.first() else null
 
@@ -314,7 +314,7 @@ class RegisterSubscriptionComposeViewModel(
             InstallationType.WIRELESS -> cachedPlanList.filter { it.type == InstallationType.WIRELESS }
             InstallationType.ONLY_TV_FIBER -> cachedPlanList.filter { it.type == InstallationType.ONLY_TV_FIBER }
         }
-        
+
         // Seleccionar automáticamente el plan si solo hay uno disponible
         val selectedPlan = if (filteredPlans.size == 1) filteredPlans.first() else null
 
@@ -362,15 +362,17 @@ class RegisterSubscriptionComposeViewModel(
         val subscription = createSubscriptionFromForm(form)
 
         viewModelScope.launch {
-            registerSubscriptionUseCase(subscription).fold(
+            registerSubscriptionUseCase(subscription,uiState.value.orderId).fold(
                 onSuccess = { registeredSubscription ->
                     uiState.update {
                         it.copy(
                             isLoading = false,
                             registeredSubscription = registeredSubscription,
-                            error = ""
+                            error = "",
+                            orderId = null
                         )
                     }
+
                 },
                 onFailure = { error ->
                     uiState.update {
@@ -464,18 +466,19 @@ class RegisterSubscriptionComposeViewModel(
      * Carga los datos de una orden de instalación para prellenar el formulario
      */
     fun loadInstallationOrderData(orderId: Int) = viewModelScope.launch {
-        uiState.update { it.copy(isLoading = true) }
-        
+        uiState.update { it.copy(isLoading = true, orderId = orderId) }
+
         try {
             val order = installationOrderUseCase.getInstallationOrderById(orderId)
             val selectedPlace = order.place
-            
+
             // Filtrar planes por tipo de instalación actual
-            val filteredPlans = cachedPlanList.filter { it.type == uiState.value.registerSubscriptionForm.installationType }
-            
+            val filteredPlans =
+                cachedPlanList.filter { it.type == uiState.value.registerSubscriptionForm.installationType }
+
             // Seleccionar automáticamente el plan si solo hay uno disponible
             val selectedPlan = if (filteredPlans.size == 1) filteredPlans.first() else null
-            
+
             uiState.update { current ->
                 current.copy(
                     isLoading = false,
@@ -499,7 +502,7 @@ class RegisterSubscriptionComposeViewModel(
             }
         }
     }
-    
+
     /**
      * Cierra una orden de instalación después de registrar la suscripción
      */

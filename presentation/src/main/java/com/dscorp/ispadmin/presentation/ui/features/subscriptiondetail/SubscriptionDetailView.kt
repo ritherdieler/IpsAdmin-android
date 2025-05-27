@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.compose
+package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.asFlow
-import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.SubscriptionDetailViewModel
 import com.dscorp.ispadmin.domain.model.extensions.toFormattedDateString
 import org.koin.androidx.compose.koinViewModel
 

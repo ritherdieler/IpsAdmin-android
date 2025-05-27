@@ -16,13 +16,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Support
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -41,11 +41,11 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.dscorp.ispadmin.navigation.NavRoutes
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Dashboard
+import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Installation
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Payment
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Profile
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.SupportTicket
-import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Installation
 import kotlinx.coroutines.launch
 
 /**
@@ -214,58 +214,6 @@ fun MenuDrawerContent(
                 scope.launch {
                     selectedRoute = Installation.List
                     navController.navigate(Installation.List)
-                    onItemClicked()
-                }
-            }
-        )
-
-        MenuItem(
-            icon = Icons.Default.Receipt,
-            title = "Órdenes pendientes",
-            isSelected = selectedRoute == Installation.Pending,
-            onClick = {
-                scope.launch {
-                    selectedRoute = Installation.Pending
-                    navController.navigate(Installation.Pending)
-                    onItemClicked()
-                }
-            }
-        )
-        
-        MenuItem(
-            icon = Icons.Default.Receipt,
-            title = "Órdenes asignadas",
-            isSelected = selectedRoute == Installation.Assigned,
-            onClick = {
-                scope.launch {
-                    selectedRoute = Installation.Assigned
-                    navController.navigate(Installation.Assigned)
-                    onItemClicked()
-                }
-            }
-        )
-        
-        MenuItem(
-            icon = Icons.Default.Receipt,
-            title = "Órdenes en progreso",
-            isSelected = selectedRoute == Installation.InProgress,
-            onClick = {
-                scope.launch {
-                    selectedRoute = Installation.InProgress
-                    navController.navigate(Installation.InProgress)
-                    onItemClicked()
-                }
-            }
-        )
-        
-        MenuItem(
-            icon = Icons.Default.Receipt,
-            title = "Órdenes cerradas",
-            isSelected = selectedRoute == Installation.Closed,
-            onClick = {
-                scope.launch {
-                    selectedRoute = Installation.Closed
-                    navController.navigate(Installation.Closed)
                     onItemClicked()
                 }
             }

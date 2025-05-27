@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.presentation.di.modules
+package com.dscorp.ispadmin.di
 
 import com.dscorp.ispadmin.data.usecase.InstallationOrderUseCaseImpl
 import com.dscorp.ispadmin.data.usecase.PlaceUseCaseImpl
@@ -26,7 +26,7 @@ val useCaseModule = module {
     single { GetPlaceListUseCase(get()) }
     single { GetPlaceFromLocationUseCase(get()) }
     single { GetNapBoxListUseCase(get()) }
-    single { RegisterSubscriptionUseCase(get()) }
+    single { RegisterSubscriptionUseCase(get(),get()) }
     single { GetUserSessionUseCase(get()) }
     single { GetCoreDevicesUseCase(get()) }
     single { GetNearNapBoxesUseCase(get()) }
