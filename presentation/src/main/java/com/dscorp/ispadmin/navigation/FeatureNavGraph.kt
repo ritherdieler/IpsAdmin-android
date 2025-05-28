@@ -75,6 +75,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -392,36 +393,36 @@ private fun NavGraphContent(navController: NavHostController, onLoggedOut: () ->
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             LaunchedEffect(Unit) {
-                viewModel.loadPlaces()
+                viewModel.onEvent(InstallationOrderEvent.OnLoadPlaces)
             }
             CreateInstallationOrderScreen(
                 uiState = uiState,
                 onCreateOrderClicked = {
-                    viewModel.createOrder()
+                    viewModel.onEvent(InstallationOrderEvent.OnCreateOrder)
                 },
                 onFirstNameChange = {
-                    viewModel.onFirstNameChange(it)
+                    viewModel.onEvent(InstallationOrderEvent.OnFirstNameChange(it))
                 },
                 onLastNameChange = {
-                    viewModel.onLastNameChange(it)
+                    viewModel.onEvent(InstallationOrderEvent.OnLastNameChange(it))
                 },
                 onAddressChange = {
-                    viewModel.onAddressChange(it)
+                    viewModel.onEvent(InstallationOrderEvent.OnAddressChange(it))
                 },
                 onPhoneChange = {
-                    viewModel.onPhoneChange(it)
+                    viewModel.onEvent(InstallationOrderEvent.OnPhoneChange(it))
                 },
                 onDniChange = {
-                    viewModel.onDniChange(it)
+                    viewModel.onEvent(InstallationOrderEvent.OnDniChange(it))
                 },
                 onPlaceChange = {
-                    viewModel.onPlaceChange(it)
+                    viewModel.onEvent(InstallationOrderEvent.OnPlaceChange(it))
                 },
                 onErrorDismissed = {
-                    viewModel.dismissError()
+                    viewModel.onEvent(InstallationOrderEvent.OnDismissError)
                 },
                 onSuccessDismissed = {
-                    viewModel.dismissSuccess()
+                    viewModel.onEvent(InstallationOrderEvent.OnDismissSuccess)
                 },
                 onNavigateBack = {
                     navController.popBackStack()

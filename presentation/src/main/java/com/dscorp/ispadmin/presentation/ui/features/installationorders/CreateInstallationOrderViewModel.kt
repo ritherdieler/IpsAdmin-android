@@ -15,8 +15,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.koin.core.component.KoinComponent
 
+// Eventos que pueden ocurrir en la UI
+sealed class InstallationOrderEvent {
+    data class OnFirstNameChange(val firstName: String) : InstallationOrderEvent()
+    data class OnLastNameChange(val lastName: String) : InstallationOrderEvent()
+    data class OnAddressChange(val address: String) : InstallationOrderEvent()
+    data class OnPhoneChange(val phone: String) : InstallationOrderEvent()
+    data class OnDniChange(val dni: String) : InstallationOrderEvent()
+    data class OnPlaceChange(val place: Place?) : InstallationOrderEvent()
+    object OnCreateOrder : InstallationOrderEvent()
+    object OnDismissError : InstallationOrderEvent()
+    object OnDismissSuccess : InstallationOrderEvent()
+    object OnLoadPlaces : InstallationOrderEvent()
+}
+
+// Estado de la UI
 data class InstallationOrderForm(
     val firstName: String = "",
     val lastName: String = "",
@@ -32,63 +46,64 @@ data class InstallationOrderUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null,
-    val technicians: List<User> = emptyList(),
     val places: List<Place> = emptyList(),
-    val orderCreated: InstallationOrder? = null,
-    val orderUpdated: InstallationOrder? = null
+    val orderCreated: InstallationOrder? = null
 )
 
 class CreateInstallationOrderViewModel(
     private val installationOrderUseCase: InstallationOrderUseCase,
     private val userUseCase: UserUseCase,
     private val placeUseCase: PlaceUseCase
-) : ViewModel(), KoinComponent {
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InstallationOrderUiState())
     val uiState: StateFlow<InstallationOrderUiState> = _uiState.asStateFlow()
 
-    val currentUser = runBlocking { userUseCase.getCurrentUser() }
+    private val currentUser = runBlocking { userUseCase.getCurrentUser() }
 
-    fun onFirstNameChange(newName: String) {
-        _uiState.update { currentState ->
-            currentState.copy(form = currentState.form.copy(firstName = newName))
+    fun onEvent(event: InstallationOrderEvent) {
+        when (event) {
+            is InstallationOrderEvent.OnFirstNameChange -> {
+                _uiState.update { currentState ->
+                    currentState.copy(form = currentState.form.copy(firstName = event.firstName))
+                }
+                validateForm()
+            }
+            is InstallationOrderEvent.OnLastNameChange -> {
+                _uiState.update { currentState ->
+                    currentState.copy(form = currentState.form.copy(lastName = event.lastName))
+                }
+                validateForm()
+            }
+            is InstallationOrderEvent.OnAddressChange -> {
+                _uiState.update { currentState ->
+                    currentState.copy(form = currentState.form.copy(address = event.address))
+                }
+                validateForm()
+            }
+            is InstallationOrderEvent.OnPhoneChange -> {
+                _uiState.update { currentState ->
+                    currentState.copy(form = currentState.form.copy(phone = event.phone))
+                }
+                validateForm()
+            }
+            is InstallationOrderEvent.OnDniChange -> {
+                _uiState.update { currentState ->
+                    currentState.copy(form = currentState.form.copy(dni = event.dni))
+                }
+                validateForm()
+            }
+            is InstallationOrderEvent.OnPlaceChange -> {
+                _uiState.update { currentState ->
+                    currentState.copy(form = currentState.form.copy(place = event.place))
+                }
+                validateForm()
+            }
+            InstallationOrderEvent.OnCreateOrder -> createOrder()
+            InstallationOrderEvent.OnDismissError -> dismissError()
+            InstallationOrderEvent.OnDismissSuccess -> dismissSuccess()
+            InstallationOrderEvent.OnLoadPlaces -> loadPlaces()
         }
-        validateForm()
-    }
-
-    fun onLastNameChange(newLastName: String) {
-        _uiState.update { currentState ->
-            currentState.copy(form = currentState.form.copy(lastName = newLastName))
-        }
-        validateForm()
-    }
-
-    fun onAddressChange(newAddress: String) {
-        _uiState.update { currentState ->
-            currentState.copy(form = currentState.form.copy(address = newAddress))
-        }
-        validateForm()
-    }
-
-    fun onPhoneChange(newPhone: String) {
-        _uiState.update { currentState ->
-            currentState.copy(form = currentState.form.copy(phone = newPhone))
-        }
-        validateForm()
-    }
-
-    fun onDniChange(newDni: String) {
-        _uiState.update { currentState ->
-            currentState.copy(form = currentState.form.copy(dni = newDni))
-        }
-        validateForm()
-    }
-
-    fun onPlaceChange(place: Place?) {
-        _uiState.update { currentState ->
-            currentState.copy(form = currentState.form.copy(place = place))
-        }
-        validateForm()
     }
 
     private fun validateForm() {
@@ -104,7 +119,7 @@ class CreateInstallationOrderViewModel(
         }
     }
 
-     fun loadPlaces() {
+    private fun loadPlaces() {
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true) }
@@ -121,7 +136,7 @@ class CreateInstallationOrderViewModel(
         }
     }
 
-    fun createOrder() {
+    private fun createOrder() {
         if (!_uiState.value.isFormValid) {
             _uiState.update { it.copy(error = "Por favor, complete todos los campos.") }
             return
@@ -132,15 +147,10 @@ class CreateInstallationOrderViewModel(
                 _uiState.update { it.copy(isLoading = true) }
                 val formState = _uiState.value.form
 
-                // Eliminar espacios en blanco al final de los campos
-                val trimmedFirstName = formState.firstName.trim()
-                val trimmedLastName = formState.lastName.trim()
-                val trimmedAddress = formState.address.trim()
-
                 val newOrder = InstallationOrder(
-                    customerFirstName = trimmedFirstName,
-                    customerLastName = trimmedLastName,
-                    customerAddress = trimmedAddress,
+                    customerFirstName = formState.firstName.trim(),
+                    customerLastName = formState.lastName.trim(),
+                    customerAddress = formState.address.trim(),
                     customerPhone = formState.phone,
                     customerDni = formState.dni,
                     status = InstallationOrderStatus.SOLICITADO,
@@ -150,8 +160,9 @@ class CreateInstallationOrderViewModel(
                     scheduledDate = null,
                     cancellationReason = null,
                     subscription = null,
-                    place = formState.place // Ahora incluimos el lugar seleccionado
+                    place = formState.place
                 )
+                
                 val result = installationOrderUseCase.createInstallationOrder(newOrder)
                 _uiState.update {
                     it.copy(
@@ -160,9 +171,7 @@ class CreateInstallationOrderViewModel(
                         orderCreated = result
                     )
                 }
-
             } catch (e: Exception) {
-                e.printStackTrace()
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -173,12 +182,11 @@ class CreateInstallationOrderViewModel(
         }
     }
 
-    fun dismissError() {
+    private fun dismissError() {
         _uiState.update { it.copy(error = null) }
     }
 
-    fun dismissSuccess() {
+    private fun dismissSuccess() {
         _uiState.update { it.copy(successMessage = null) }
     }
-
 }

@@ -3,59 +3,73 @@ description:
 globs: 
 alwaysApply: true
 ---
-# **Reglas para el Desarrollo de la Aplicación de Gestión de ISP con Diseño Moderno**
+# Reglas Estrictas para el Desarrollo de la Aplicación de Gestión de ISP
 
-1. **Objetivo de la Aplicación**  
-   - La aplicación se encarga de la gestión de usuarios de un ISP (Internet Service Provider), incluyendo clientes de fibra óptica e inalámbricos.  
-   - **Funcionalidades principales**:
-     - Registro de suscripciones.  
-     - Buscador de suscripciones.  
-     - Visualización y registro de pagos.
+> Estas reglas son de cumplimiento obligatorio. No deben ser ignoradas, modificadas ni reinterpretadas bajo ningún contexto. Cada acción, código generado o sugerencia debe cumplir **al 100%** con lo siguiente:
 
-2. **Migración a Jetpack Compose**  
-   - Todas las vistas deben ser desarrolladas en **Jetpack Compose**, reemplazando las implementaciones en XML.  
-   - Al migrar un `Fragment` basado en XML, se debe:  
-     1. Eliminar la versión XML del fragmento.  
-     2. Crear un nuevo `Fragment` que envuelva la pantalla en Compose.  
-     3. **Mejorar el diseño** para ofrecer una experiencia de usuario moderna y consistente, siguiendo los lineamientos de **Material 3**.  
-     4. siempre que te pida migrar borra el fragmento migrado y su xml.
-     5. Las screen en compose deben tener el viewModel y pasar solo la uiState a el composable hijo que representa toda la ui esto con la finalidad de que este composable no tenga ninguna referencia al viewModel.
+## 1. Objetivo y Alcance
 
-3. **Diseño y Temas**  
-   - Se deben aplicar los lineamientos de **Material 3** para ofrecer una **experiencia de usuario moderna**:  
-     - **Uso de MyTheme** como tema principal, aprovechando tipografías y esquemas de color.  
-     - **Layouts adaptables** que respondan a pantallas de diferentes tamaños.  
-     - **Transiciones y animaciones sutiles** para ofrecer una experiencia fluida y placentera.  
-   - Utilizar los componentes personalizados ubicados en  
-     `com.dscorp.ispadmin.presentation.ui.features.composecomponents`.
-     - Usa MyTheme  para todas las screens y las preview
+- La aplicación es para la gestión integral de usuarios de un ISP (Internet Service Provider), abarcando clientes de fibra óptica e inalámbricos.
+- Funcionalidades mínimas:
+  - Registro de suscripciones.
+  - Buscador de suscripciones.
+  - Visualización y registro de pagos.
 
-4. **Arquitectura y Flujo de Datos**  
-   - En los ViewModel, implementar **Unidirectional Data Flow (UDF)** para un manejo limpio y escalable del estado.  
-   - El estado de cada pantalla debe ser representado por una **data class** que contenga la información necesaria para la UI.  
-   - Exponer el estado a la UI a través de `State<T>`, `Flow` o `LiveData`.  
+## 2. Jetpack Compose como Única Herramienta de UI
 
-5. **Koin como Inyector de Dependencias**  
-   - Utilizar **Koin** para la inyección de dependencias en ViewModels y otros componentes.  
-   - Configurar los módulos de Koin necesarios (red, repositorios, casos de uso, etc.) y proveer las dependencias adecuadas a cada ViewModel.
+- **Todas** las vistas y pantallas deben desarrollarse exclusivamente en Jetpack Compose.
+- **Prohibido** el uso de XML o cualquier otro sistema de vistas.
 
-6. **Buenas Prácticas de Código**  
-   - Mantener el código **modular**, separando responsabilidades en capas:  
-     - **Datos** (repositorios, servicios de red, bases de datos).  
-     - **Dominio** (casos de uso, lógica de negocio).  
-     - **Presentación** (ViewModels y pantallas Compose).  
-   - Asegurar que cada ViewModel contenga solo la **lógica de presentación** y no dependa directamente de la capa de UI.  
-   - Utilizar nombres claros y descriptivos para clases, funciones y variables, y seguir un estilo de código coherente.
-   - Todos los casos de uso deben devolver un Result<T> usando un runCatching y no un T, esto para manejar los errores de forma correcta y no tener que hacer un try catch en el viewModel.
+## 3. Buenas Prácticas y Material 3
 
-7. **Modernización del Diseño**  
-   - Enfocarse en una **experiencia de usuario excelente** con:
-     - **Elementos visuales limpios** y consistentes con Material 3.  
-     - **Uso de íconos y tipografías** que refuercen la identidad visual de la aplicación.  
-     - **Animaciones y transiciones** que enriquezcan la navegación sin distraer al usuario.  
-   - Asegurarse de que los colores, espaciados y tamaños de letra sean accesibles y brinden **legibilidad óptima**.
+- Cada pantalla debe seguir **estrictamente** los lineamientos de Material 3 para una experiencia moderna, coherente y accesible.
+- Siempre usar el tema `MyTheme` para toda pantalla, incluyendo Previews.
+- Las pantallas deben ser adaptables a todos los tamaños de pantalla (responsive).
+- Incluir animaciones y transiciones sutiles sólo cuando sumen valor a la UX, siguiendo Material 3.
+- Usar componentes personalizados desde:
+  - `com.dscorp.ispadmin.presentation.ui.features.composecomponents`
+- Elementos visuales: limpios, legibles, consistentes.
+- Íconos y tipografías: deben reforzar la identidad visual de la app.
+- **Prohibido** usar colores, espaciados o tipografías que comprometan la legibilidad o accesibilidad.
 
-8. **Compilación y Verificación**  
-   - Antes de finalizar cualquier tarea , compilar el código para asegurarse de que no haya errores: ./gradlew compileDebugSources
-   - Realizar **pruebas básicas** de las pantallas y flujos de datos para garantizar estabilidad y correcto funcionamiento.
+## 4. Patrón de Arquitectura y Flujo de Datos
 
+- Implementar Unidirectional Data Flow (UDF) en todos los ViewModel.
+- El estado de cada pantalla debe estar representado por una `data class`.
+- El ViewModel debe exponer el estado mediante `State<T>`, `Flow` o `LiveData`.
+- Las screens Compose deben recibir **solo el uiState**.
+  - El composable hijo **jamás** debe tener referencia directa al ViewModel.
+  - **Prohibido** acceder al ViewModel fuera de la Screen principal.
+
+## 5. Inyección de Dependencias con Koin
+
+- Utilizar siempre Koin para la inyección de dependencias en ViewModels y otros componentes.
+- Definir módulos Koin para red, repositorios, casos de uso, etc.
+
+## 6. Buenas Prácticas de Código
+
+- Código modular, con responsabilidades **bien separadas**:
+  - Datos: repositorios, servicios de red, base de datos.
+  - Dominio: casos de uso, lógica de negocio.
+  - Presentación: ViewModels y pantallas Compose.
+- ViewModel: solo lógica de presentación, sin referencias directas a UI.
+- Usar nombres claros, descriptivos y consistentes.
+- **Todos** los casos de uso deben devolver un `Result<T>` usando `runCatching`.
+  - **Prohibido** devolver directamente `T` o gestionar errores con try-catch en el ViewModel.
+  - El manejo de errores debe estar centralizado en el dominio, no en la presentación.
+
+## 7. Compilación, Pruebas y Verificación
+
+- Antes de finalizar cualquier tarea, compilar obligatoriamente el código:
+  - `./gradlew compileDebugSources`
+- Realizar siempre pruebas funcionales básicas sobre pantallas y flujos de datos desarrollados, asegurando estabilidad y funcionamiento correcto.
+
+## 8. Cumplimiento y Validación
+
+- **No se aceptan desviaciones** ni omisiones bajo ninguna circunstancia.
+- Si alguna regla no puede cumplirse, informar explícitamente el motivo antes de proceder.
+- **Nunca avanzar** si alguna regla no se cumple al 100%.
+
+---
+
+> **Prioridad absoluta:** Cumplir todas estas reglas, garantizando calidad, cohesión arquitectónica y experiencia de usuario moderna y accesible.
