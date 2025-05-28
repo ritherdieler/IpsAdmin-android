@@ -11,7 +11,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,6 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
@@ -52,6 +59,7 @@ fun Login(
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var checkedState by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(false) }
     val userNameError by remember { derivedStateOf { username.isEmpty() } }
     val passwordError by remember { derivedStateOf { password.isEmpty() } }
 
@@ -92,6 +100,7 @@ fun Login(
                     color = Color.Red,
                     style = myTypography.labelSmall
                 ) else Spacer(modifier = Modifier.height(16.dp))
+
             OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -100,6 +109,15 @@ fun Login(
                 value = password,
                 onValueChange = { password = it },
                 isError = passwordError,
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                        )
+                    }
+                }
             )
             if (passwordError) {
                 Text(
@@ -144,7 +162,7 @@ fun Login(
                     )
                 })
 
-            MyButton (
+            MyButton(
                 modifier = Modifier.fillMaxWidth(),
                 text = "Crear cuenta",
                 onClick = {

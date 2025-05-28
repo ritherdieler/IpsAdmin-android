@@ -55,8 +55,16 @@ data class InstallationOrderListUiState(
     val scheduledDate: LocalDateTime? = null,
     val successMessage: String? = null,
     val navigateToRegisterSubscription: Boolean = false,
-    val canCreateOrder: Boolean = false
-)
+) {
+    fun canCreateInstallationOrder(): Boolean = currentUser?.type in listOf(
+        User.UserType.ACCOUNTANT,
+        User.UserType.SECRETARY,
+        User.UserType.ADMIN,
+        User.UserType.SALES
+    )
+
+}
+
 
 /**
  * ViewModel para la lista de órdenes de instalación.
@@ -67,7 +75,8 @@ class InstallationOrderListViewModel(
     private val userUseCase: UserUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(InstallationOrderListUiState(currentUser = runBlocking {   userUseCase.getCurrentUser()}))
+    private val _uiState =
+        MutableStateFlow(InstallationOrderListUiState(currentUser = runBlocking { userUseCase.getCurrentUser() }))
     val uiState: StateFlow<InstallationOrderListUiState> = _uiState.asStateFlow()
 
     private var currentStatusFilter: InstallationOrderStatus? = null
@@ -98,11 +107,14 @@ class InstallationOrderListViewModel(
                 User.UserType.TECHNICIAN -> installationOrderUseCase.getInstallationOrdersByTechnicianPaginated(
                     currentUser.id ?: throw IllegalStateException("ID de técnico no disponible")
                 )
+
                 User.UserType.SALES -> installationOrderUseCase.getInstallationOrdersBySellerPaginated(
                     currentUser.id ?: throw IllegalStateException("ID de vendedor no disponible")
                 )
-                User.UserType.ADMIN, User.UserType.SECRETARY, User.UserType.ACCOUNTANT -> 
+
+                User.UserType.ADMIN, User.UserType.SECRETARY, User.UserType.ACCOUNTANT ->
                     installationOrderUseCase.getAllInstallationOrdersPaginated()
+
                 else -> throw IllegalStateException("Tipo de usuario no soportado: ${currentUser.type}")
             }.cachedIn(viewModelScope)
 
@@ -138,7 +150,7 @@ class InstallationOrderListViewModel(
 
     private fun onOrderSelected(order: InstallationOrder) {
         when {
-            order.status == InstallationOrderStatus.SOLICITADO && canAsignInstallationOrder() -> {
+            order.status == InstallationOrderStatus.SOLICITADO  -> {
                 _uiState.update {
                     it.copy(
                         selectedOrder = order,
@@ -147,8 +159,9 @@ class InstallationOrderListViewModel(
                     )
                 }
             }
-            uiState.value.currentUser?.type == User.UserType.TECHNICIAN && 
-            order.status == InstallationOrderStatus.EN_CURSO -> {
+
+            uiState.value.currentUser?.type == User.UserType.TECHNICIAN &&
+                    order.status == InstallationOrderStatus.EN_CURSO -> {
                 _uiState.update {
                     it.copy(
                         selectedOrder = order,
@@ -185,12 +198,12 @@ class InstallationOrderListViewModel(
             try {
                 _uiState.update { it.copy(isLoading = true) }
                 val technicians = userUseCase.getTechnicianUsers()
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
                         technicians = technicians,
                         isLoading = false,
                         error = null
-                    ) 
+                    )
                 }
             } catch (e: Exception) {
                 _uiState.update {
@@ -236,6 +249,7 @@ class InstallationOrderListViewModel(
                         isLoading = false,
                         successMessage = "Técnico asignado correctamente",
                         orderUpdated = result,
+                        selectedTechnician = null,
                         showAssignDialog = false,
                         error = null
                     )
@@ -311,7 +325,7 @@ class InstallationOrderListViewModel(
                         error = null
                     )
                 }
-                loadInstallationOrders()
+//                loadInstallationOrders()
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -335,10 +349,5 @@ class InstallationOrderListViewModel(
         }
     }
 
-    private fun canAsignInstallationOrder(): Boolean =
-        _uiState.value.currentUser?.type in listOf(
-            User.UserType.ACCOUNTANT,
-            User.UserType.SECRETARY,
-            User.UserType.ADMIN
-        )
+
 }

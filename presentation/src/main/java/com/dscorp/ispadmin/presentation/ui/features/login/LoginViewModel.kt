@@ -15,6 +15,7 @@ sealed class LoginState {
     object Loading : LoginState()
     data class Error(val message: String) : LoginState()
     data class LoginSuccess(val data: User) : LoginState()
+    data class UnverifiedAccount(val user: User) : LoginState()
 }
 
 sealed class CheckVersionState {
@@ -27,6 +28,7 @@ class LoginViewModel(private val repository: IRepository) : ViewModel() {
 
     val loginRequestFlow = MutableStateFlow<LoginState>(LoginState.Empty)
     val checkVersionFlow = MutableStateFlow<CheckVersionState>(CheckVersionState.Loading)
+
     fun checkSessionStatus(): Pair<Boolean, User?> {
         val status = repository.getRememberSessionCheckBoxStatus()
         if (status) {
@@ -48,7 +50,12 @@ class LoginViewModel(private val repository: IRepository) : ViewModel() {
                 loginData.checkedState
             )
             val response = repository.doLogin(login)
-            loginRequestFlow.value = LoginState.LoginSuccess(response)
+            
+            if (!response.verified) {
+                loginRequestFlow.value = LoginState.UnverifiedAccount(response)
+            } else {
+                loginRequestFlow.value = LoginState.LoginSuccess(response)
+            }
 
         } catch (e: Exception) {
             e.printStackTrace()
@@ -70,4 +77,7 @@ class LoginViewModel(private val repository: IRepository) : ViewModel() {
         }
     }
 
+    fun resetLoginState() {
+        loginRequestFlow.value = LoginState.Empty
+    }
 }

@@ -37,8 +37,27 @@ data class RegisterState(
     val confirmPassword: String = "",
     val confirmPasswordError: Int? = null,
     val isLoading: Boolean = false,
-    val user: User? = null
-)
+    val registeredUser: User? = null,
+    val registerError: String? = null,
+){
+    fun isValid() = firstNameError == null &&
+    lastNameError == null &&
+    emailError == null &&
+    phoneError == null &&
+    dniError == null &&
+    usernameError == null &&
+    passwordError == null &&
+    confirmPasswordError == null &&
+    firstName.isAValidName() &&
+    lastName.isAValidName() &&
+    email.isValidEmail() &&
+    phone.isValidPhone() &&
+    dni.isValidDni() &&
+    username.isNotBlank() &&
+    password.isNotBlank() &&
+    confirmPassword.isNotBlank() &&
+    password == confirmPassword
+}
 
 sealed class RegisterEvent {
     data class OnFirstNameChange(val value: String) : RegisterEvent()
@@ -63,87 +82,135 @@ class RegisterViewModel(
     fun onEvent(event: RegisterEvent) {
         when (event) {
             is RegisterEvent.OnFirstNameChange -> {
-                _state.update { currentState ->
-                    currentState.copy(
-                        firstName = event.value,
-                        firstNameError = if (!event.value.isAValidName()) R.string.invalidName else null
-                    )
-                }
+                updateField(
+                    value = event.value,
+                    isValid = { it.isAValidName() },
+                    errorMessage = R.string.invalidName,
+                    updateField = { currentState, value, error ->
+                        currentState.copy(
+                            firstName = value,
+                            firstNameError = error,
+                        )
+                    }
+                )
             }
+
             is RegisterEvent.OnLastNameChange -> {
-                _state.update { currentState ->
-                    currentState.copy(
-                        lastName = event.value,
-                        lastNameError = if (!event.value.isAValidName()) R.string.invalidLastName else null
-                    )
-                }
+                updateField(
+                    value = event.value,
+                    isValid = { it.isAValidName() },
+                    errorMessage = R.string.invalidLastName,
+                    updateField = { currentState, value, error ->
+                        currentState.copy(
+                            lastName = value,
+                            lastNameError = error,
+                        )
+                    }
+                )
             }
+
             is RegisterEvent.OnEmailChange -> {
-                _state.update { currentState ->
-                    currentState.copy(
-                        email = event.value,
-                        emailError = if (!event.value.isValidEmail()) R.string.invalidEmail else null
-                    )
-                }
+                updateField(
+                    value = event.value,
+                    isValid = { it.isValidEmail() },
+                    errorMessage = R.string.invalidEmail,
+                    updateField = { currentState, value, error ->
+                        currentState.copy(
+                            email = value,
+                            emailError = error,
+                        )
+                    }
+                )
             }
+
             is RegisterEvent.OnPhoneChange -> {
-                _state.update { currentState ->
-                    currentState.copy(
-                        phone = event.value,
-                        phoneError = if (!event.value.isValidPhone()) R.string.invalidPhone else null
-                    )
-                }
+                updateField(
+                    value = event.value,
+                    isValid = { it.isValidPhone() },
+                    errorMessage = R.string.invalidPhone,
+                    updateField = { currentState, value, error ->
+                        currentState.copy(
+                            phone = value,
+                            phoneError = error,
+                        )
+                    }
+                )
             }
+
             is RegisterEvent.OnDniChange -> {
-                _state.update { currentState ->
-                    currentState.copy(
-                        dni = event.value,
-                        dniError = if (!event.value.isValidDni()) R.string.invalidDNI else null
-                    )
-                }
+                updateField(
+                    value = event.value,
+                    isValid = { it.isValidDni() },
+                    errorMessage = R.string.invalidDNI,
+                    updateField = { currentState, value, error ->
+                        currentState.copy(
+                            dni = value,
+                            dniError = error,
+                        )
+                    }
+                )
             }
+
             is RegisterEvent.OnUsernameChange -> {
-                _state.update { currentState ->
-                    currentState.copy(
-                        username = event.value,
-                        usernameError = if (event.value.isBlank()) R.string.mustDigitUserName else null
-                    )
-                }
+                updateField(
+                    value = event.value,
+                    isValid = { it.isNotBlank() },
+                    errorMessage = R.string.mustDigitUserName,
+                    updateField = { currentState, value, error ->
+                        currentState.copy(
+                            username = value,
+                            usernameError = error,
+                        )
+                    }
+                )
             }
+
             is RegisterEvent.OnPasswordChange -> {
-                _state.update { currentState ->
-                    currentState.copy(
-                        password = event.value,
-                        passwordError = if (event.value.isBlank()) R.string.mustDigitPassword else null
-                    )
-                }
+                updateField(
+                    value = event.value,
+                    isValid = { it.isNotBlank() },
+                    errorMessage = R.string.mustDigitPassword,
+                    updateField = { currentState, value, error ->
+                        currentState.copy(
+                            password = value,
+                            passwordError = error,
+                        )
+                    }
+                )
             }
+
             is RegisterEvent.OnConfirmPasswordChange -> {
-                _state.update { currentState ->
-                    currentState.copy(
-                        confirmPassword = event.value,
-                        confirmPasswordError = if (event.value != state.value.password) R.string.passwordsMustBeEquals else null
-                    )
-                }
+                updateField(
+                    value = event.value,
+                    isValid = { it == state.value.password },
+                    errorMessage = R.string.passwordsMustBeEquals,
+                    updateField = { currentState, value, error ->
+                        currentState.copy(
+                            confirmPassword = value,
+                            confirmPasswordError = error,
+                        )
+                    }
+                )
             }
+
             RegisterEvent.OnRegister -> {
-                if (isFormValid()) {
+                if (_state.value.isValid()) {
                     registerUser()
                 }
             }
         }
     }
 
-    private fun isFormValid(): Boolean {
-        val currentState = state.value
-        return currentState.firstNameError == null &&
-                currentState.lastNameError == null &&
-                currentState.emailError == null &&
-                currentState.phoneError == null &&
-                currentState.dniError == null &&
-                currentState.usernameError == null &&
-                currentState.passwordError == null &&
-                currentState.confirmPasswordError == null
+    private fun <T> updateField(
+        value: T,
+        isValid: (T) -> Boolean,
+        errorMessage: Int,
+        updateField: (RegisterState, T, Int?) -> RegisterState
+    ) {
+        _state.update { currentState ->
+            val error = if (!isValid(value)) errorMessage else null
+            updateField(currentState, value, error)
+        }
     }
 
     private fun registerUser() {
@@ -152,10 +219,10 @@ class RegisterViewModel(
             try {
                 val user = createUser()
                 val registeredUser = repository.registerUser(user)
-                _state.update { it.copy(user = registeredUser, isLoading = false) }
+                _state.update { it.copy(registeredUser = registeredUser, isLoading = false, registerError = null) }
                 firebaseAnalytics.sendSignUpEvent(AnalyticsConstants.REGISTER_USER)
             } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false) }
+                _state.update { it.copy(isLoading = false, registerError = "Ocurrió un error al registrar el usuario") }
             }
         }
     }
@@ -171,4 +238,27 @@ class RegisterViewModel(
         email = state.value.email,
         phone = state.value.phone
     )
+
+    fun clearError() {
+
+        _state.update { it.copy(registerError = null)
+    }}
+
+    fun clearRegisterForm() {
+
+        _state.update {
+            RegisterState(
+                firstName = "",
+                lastName = "",
+                email = "",
+                phone = "",
+                dni = "",
+                username = "",
+                password = "",
+                confirmPassword = "",
+                registeredUser = null,
+                registerError = null
+            )
+        }
+    }
 }

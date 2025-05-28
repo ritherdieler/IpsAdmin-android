@@ -35,6 +35,10 @@ fun AuthNavGraph(
         composable<Register> {
             RegisterScreen(onNavigateBack = {
                 navController.navigateUp()
+            }, onRegisterSuccess = {
+                navController.navigate(Login) {
+                    popUpTo(Login) { inclusive = true }
+                }
             })
         }
     }

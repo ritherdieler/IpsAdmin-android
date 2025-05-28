@@ -117,14 +117,15 @@ fun InstallationOrderListScreen(
         uiState = uiState,
         onFilterChange = { status -> viewModel.onEvent(InstallationOrderListEvent.FilterByStatus(status)) },
         onCreateOrderClicked = onCreateOrderClicked,
-        canCreateOrder = uiState.canCreateOrder,
         onOrderSelected = { order -> viewModel.onEvent(InstallationOrderListEvent.OrderSelected(order)) },
         onTransferOrderClicked = { order -> viewModel.onEvent(InstallationOrderListEvent.TransferOrderClicked(order)) }
     )
 
     // Diálogos condicionales
+
     if (uiState.showAssignDialog) {
         AssignTechnicianDialog(
+            order = uiState.selectedOrder!!,
             technicians = uiState.technicians,
             selectedTechnician = uiState.selectedTechnician,
             scheduledDate = uiState.scheduledDate,
@@ -137,6 +138,7 @@ fun InstallationOrderListScreen(
 
     if (uiState.showTransferDialog) {
         TransferOrderDialog(
+            order = uiState.selectedOrder!!,
             technicians = uiState.technicians,
             selectedTechnician = uiState.selectedTechnician,
             scheduledDate = uiState.scheduledDate,
@@ -165,7 +167,6 @@ fun InstallationOrderList(
     uiState: InstallationOrderListUiState,
     onFilterChange: (InstallationOrderStatus?) -> Unit,
     onCreateOrderClicked: () -> Unit,
-    canCreateOrder: Boolean,
     onOrderSelected: (InstallationOrder) -> Unit,
     onTransferOrderClicked: (InstallationOrder) -> Unit
 ) {
@@ -229,7 +230,7 @@ fun InstallationOrderList(
                 }
 
                 // Botón para crear nueva orden - solo visible para usuarios autorizados
-                AnimatedVisibility(visible = canCreateOrder) {
+                AnimatedVisibility(visible = uiState.canCreateInstallationOrder()) {
                     ExtendedFloatingActionButton(
                         onClick = onCreateOrderClicked,
                         icon = {
@@ -750,7 +751,7 @@ fun ErrorItem(
  */
 @Composable
 private fun TechnicianAssignmentDialog(
-    order: InstallationOrder?,
+    order: InstallationOrder,
     technicians: List<User>,
     selectedTechnician: User?,
     isTransfer: Boolean,
@@ -759,8 +760,6 @@ private fun TechnicianAssignmentDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    if (order == null) return
-
     var dateTimeText by rememberSaveable { mutableStateOf("") }
     val isFormValid = selectedTechnician != null && dateTimeText.isNotEmpty()
 
@@ -871,13 +870,14 @@ fun AssignTechnicianDialog(
     technicians: List<User>,
     selectedTechnician: User?,
     scheduledDate: LocalDateTime?,
+    order: InstallationOrder,
     onTechnicianSelected: (User) -> Unit,
     onScheduledDateSelected: (LocalDateTime) -> Unit,
     onAssign: () -> Unit,
     onDismiss: () -> Unit
 ) {
     TechnicianAssignmentDialog(
-        order = null,
+        order = order,
         technicians = technicians,
         selectedTechnician = selectedTechnician,
         isTransfer = false,
@@ -896,13 +896,14 @@ fun TransferOrderDialog(
     technicians: List<User>,
     selectedTechnician: User?,
     scheduledDate: LocalDateTime?,
+    order : InstallationOrder,
     onTechnicianSelected: (User) -> Unit,
     onScheduledDateSelected: (LocalDateTime) -> Unit,
     onTransfer: () -> Unit,
     onDismiss: () -> Unit
 ) {
     TechnicianAssignmentDialog(
-        order = null,
+        order = order,
         technicians = technicians,
         selectedTechnician = selectedTechnician,
         isTransfer = true,
@@ -963,7 +964,6 @@ fun InstallationOrderListPreview() {
             ),
             onFilterChange = {},
             onCreateOrderClicked = {},
-            canCreateOrder = true,
             onOrderSelected = {},
             onTransferOrderClicked = {}
         )
