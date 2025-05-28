@@ -17,155 +17,185 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.time.LocalDateTime
 
 /**
+ * Eventos que pueden ocurrir en la UI
+ */
+sealed class InstallationOrderListEvent {
+    object LoadInstallationOrders : InstallationOrderListEvent()
+    data class FilterByStatus(val status: InstallationOrderStatus?) : InstallationOrderListEvent()
+    data class OrderSelected(val order: InstallationOrder) : InstallationOrderListEvent()
+    object CloseAssignDialog : InstallationOrderListEvent()
+    data class TechnicianSelected(val technician: User) : InstallationOrderListEvent()
+    data class ScheduledDateSelected(val date: LocalDateTime) : InstallationOrderListEvent()
+    object LoadTechnicians : InstallationOrderListEvent()
+    object AssignTechnician : InstallationOrderListEvent()
+    object ResetSelectedOrder : InstallationOrderListEvent()
+    data class TransferOrderClicked(val order: InstallationOrder) : InstallationOrderListEvent()
+    object TransferOrder : InstallationOrderListEvent()
+    object CloseTransferDialog : InstallationOrderListEvent()
+}
+
+/**
+ * Estado de la UI para la lista de órdenes de instalación
+ */
+data class InstallationOrderListUiState(
+    val installationOrders: Flow<PagingData<InstallationOrder>>? = null,
+    val isLoading: Boolean = true,
+    val error: String? = null,
+    val currentUser: User? = null,
+    val showAssignDialog: Boolean = false,
+    val showTransferDialog: Boolean = false,
+    val orderUpdated: InstallationOrder? = null,
+    val selectedOrder: InstallationOrder? = null,
+    val technicians: List<User> = emptyList(),
+    val selectedTechnician: User? = null,
+    val scheduledDate: LocalDateTime? = null,
+    val successMessage: String? = null,
+    val navigateToRegisterSubscription: Boolean = false,
+    val canCreateOrder: Boolean = false
+)
+
+/**
  * ViewModel para la lista de órdenes de instalación.
- * Implementa la paginación utilizando Paging 3.
+ * Implementa UDF (Unidirectional Data Flow) y paginación utilizando Paging 3.
  */
 class InstallationOrderListViewModel(
     private val installationOrderUseCase: InstallationOrderUseCase,
     private val userUseCase: UserUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(InstallationOrderListUiState())
+    private val _uiState = MutableStateFlow(InstallationOrderListUiState(currentUser = runBlocking {   userUseCase.getCurrentUser()}))
     val uiState: StateFlow<InstallationOrderListUiState> = _uiState.asStateFlow()
 
-    /**
-     * Estado actual del filtro de estado
-     */
     private var currentStatusFilter: InstallationOrderStatus? = null
 
-    /**
-     * Inicializa la carga de datos
-     */
-    init {
-        loadCurrentUser()
-    }
-
-    /**
-     * Carga las órdenes de instalación utilizando la paginación de acuerdo al tipo de usuario.
-     * El resultado se almacena en el uiState.
-     */
-    internal fun loadInstallationOrders() {
-        val ordersFlow = when (uiState.value.currentUser?.type) {
-            User.UserType.TECHNICIAN -> installationOrderUseCase.getInstallationOrdersByTechnicianPaginated(
-                uiState.value.currentUser?.id!!
-            )
-
-            User.UserType.SALES -> installationOrderUseCase.getInstallationOrdersBySellerPaginated(
-                uiState.value.currentUser?.id!!
-            )
-
-            User.UserType.ADMIN, User.UserType.SECRETARY, User.UserType.ACCOUNTANT -> installationOrderUseCase.getAllInstallationOrdersPaginated()
-            else -> throw Exception("Tipo de usuario no soportado para cargar órdenes de instalación")
-        }.cachedIn(viewModelScope)
-
-        val filteredFlow = if (currentStatusFilter != null) {
-            // Aplicamos el filtro por estado si existe
-            ordersFlow.map { pagingData ->
-                pagingData.filter { order -> order.status == currentStatusFilter }
-            }
-        } else {
-            // Si no hay filtro, usamos el flujo original
-            ordersFlow
-        }
-
-        _uiState.update { state ->
-            state.copy(
-                installationOrders = filteredFlow,
-                isLoading = false
-            )
+    fun onEvent(event: InstallationOrderListEvent) {
+        when (event) {
+            is InstallationOrderListEvent.LoadInstallationOrders -> loadInstallationOrders()
+            is InstallationOrderListEvent.FilterByStatus -> onFilterByStatus(event.status)
+            is InstallationOrderListEvent.OrderSelected -> onOrderSelected(event.order)
+            is InstallationOrderListEvent.CloseAssignDialog -> onCloseDialog()
+            is InstallationOrderListEvent.TechnicianSelected -> onTechnicianSelected(event.technician)
+            is InstallationOrderListEvent.ScheduledDateSelected -> onScheduledDateSelected(event.date)
+            is InstallationOrderListEvent.LoadTechnicians -> onLoadTechnicians()
+            is InstallationOrderListEvent.AssignTechnician -> onAssignTechnician()
+            is InstallationOrderListEvent.ResetSelectedOrder -> onResetSelectedOrder()
+            is InstallationOrderListEvent.TransferOrderClicked -> onTransferOrderClicked(event.order)
+            is InstallationOrderListEvent.TransferOrder -> onTransferOrder()
+            is InstallationOrderListEvent.CloseTransferDialog -> onCloseTransferDialog()
         }
     }
 
-    /**
-     * Carga el usuario actual y actualiza el estado
-     */
-    internal fun loadCurrentUser() {
-        viewModelScope.launch {
-            try {
-                val currentUser = userUseCase.getCurrentUser()
-                _uiState.update { state ->
-                    state.copy(
-                        currentUser = currentUser
-                    )
+    private fun loadInstallationOrders() {
+        try {
+            val currentUser = _uiState.value.currentUser
+                ?: throw IllegalStateException("Usuario no cargado")
+
+            val ordersFlow = when (currentUser.type) {
+                User.UserType.TECHNICIAN -> installationOrderUseCase.getInstallationOrdersByTechnicianPaginated(
+                    currentUser.id ?: throw IllegalStateException("ID de técnico no disponible")
+                )
+                User.UserType.SALES -> installationOrderUseCase.getInstallationOrdersBySellerPaginated(
+                    currentUser.id ?: throw IllegalStateException("ID de vendedor no disponible")
+                )
+                User.UserType.ADMIN, User.UserType.SECRETARY, User.UserType.ACCOUNTANT -> 
+                    installationOrderUseCase.getAllInstallationOrdersPaginated()
+                else -> throw IllegalStateException("Tipo de usuario no soportado: ${currentUser.type}")
+            }.cachedIn(viewModelScope)
+
+            val filteredFlow = currentStatusFilter?.let { status ->
+                ordersFlow.map { pagingData ->
+                    pagingData.filter { order -> order.status == status }
                 }
-            } catch (e: Exception) {
-                // Manejar error si es necesario
+            } ?: ordersFlow
+
+            _uiState.update { state ->
+                state.copy(
+                    installationOrders = filteredFlow,
+                    isLoading = false,
+                    error = null
+                )
+            }
+        } catch (e: Exception) {
+            _uiState.update { state ->
+                state.copy(
+                    isLoading = false,
+                    error = e.message ?: "Error desconocido al cargar órdenes"
+                )
             }
         }
     }
 
-    /**
-     * Aplica un filtro por estado a las órdenes de instalación
-     */
-    fun filterByStatus(status: InstallationOrderStatus?) {
+    private fun onFilterByStatus(status: InstallationOrderStatus?) {
         if (currentStatusFilter != status) {
             currentStatusFilter = status
             loadInstallationOrders()
         }
     }
 
-    /**
-     * Verifica si el usuario actual puede crear órdenes de instalación
-     */
-    fun canCreateOrder(): Boolean {
-        val userType = _uiState.value.currentUser!!.type
-        return userType == User.UserType.ADMIN ||
-                userType == User.UserType.SALES ||
-                userType == User.UserType.SECRETARY ||
-                userType == User.UserType.ACCOUNTANT
-    }
-
-    fun onOrderSelected(order: InstallationOrder) {
-        if (order.status == InstallationOrderStatus.SOLICITADO && canAsignInstallationOrder()) {
-            _uiState.update {
-                it.copy(
-                    selectedOrder = order,
-                    showAssignDialog = true
-                )
+    private fun onOrderSelected(order: InstallationOrder) {
+        when {
+            order.status == InstallationOrderStatus.SOLICITADO && canAsignInstallationOrder() -> {
+                _uiState.update {
+                    it.copy(
+                        selectedOrder = order,
+                        showAssignDialog = true,
+                        error = null
+                    )
+                }
             }
-        } else if (uiState.value.currentUser?.type == User.UserType.TECHNICIAN && order.status == InstallationOrderStatus.EN_CURSO) {
-            _uiState.update {
-                it.copy(
-                    selectedOrder = order,
-                    navigateToRegisterSubscription = true
-                )
+            uiState.value.currentUser?.type == User.UserType.TECHNICIAN && 
+            order.status == InstallationOrderStatus.EN_CURSO -> {
+                _uiState.update {
+                    it.copy(
+                        selectedOrder = order,
+                        navigateToRegisterSubscription = true,
+                        error = null
+                    )
+                }
             }
         }
     }
 
-    private fun canAsignInstallationOrder(): Boolean =
-        uiState.value.currentUser!!.type == User.UserType.ACCOUNTANT || uiState.value.currentUser!!.type == User.UserType.SECRETARY || uiState.value.currentUser!!.type == User.UserType.ADMIN
-
-    fun onCloseDialog() {
+    private fun onCloseDialog() {
         _uiState.update {
             it.copy(
                 showAssignDialog = false,
                 selectedOrder = null,
                 selectedTechnician = null,
-                scheduledDate = null
+                scheduledDate = null,
+                error = null
             )
         }
     }
 
-    fun onTechnicianSelected(technician: User) {
-        _uiState.update { it.copy(selectedTechnician = technician) }
+    private fun onTechnicianSelected(technician: User) {
+        _uiState.update { it.copy(selectedTechnician = technician, error = null) }
     }
 
-    fun onScheduledDateSelected(date: LocalDateTime) {
-        _uiState.update { it.copy(scheduledDate = date) }
+    private fun onScheduledDateSelected(date: LocalDateTime) {
+        _uiState.update { it.copy(scheduledDate = date, error = null) }
     }
 
-    internal fun loadTechnicians() {
+    private fun onLoadTechnicians() {
         viewModelScope.launch {
             try {
+                _uiState.update { it.copy(isLoading = true) }
                 val technicians = userUseCase.getTechnicianUsers()
-                _uiState.update { it.copy(technicians = technicians) }
+                _uiState.update { 
+                    it.copy(
+                        technicians = technicians,
+                        isLoading = false,
+                        error = null
+                    ) 
+                }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
+                        isLoading = false,
                         error = e.message ?: "Error al cargar técnicos"
                     )
                 }
@@ -173,12 +203,13 @@ class InstallationOrderListViewModel(
         }
     }
 
-    fun assignTechnician() {
+    private fun onAssignTechnician() {
         val order = _uiState.value.selectedOrder
         val technician = _uiState.value.selectedTechnician
         val scheduledDate = _uiState.value.scheduledDate
+        val currentUser = _uiState.value.currentUser
 
-        if (order == null || technician == null || scheduledDate == null) {
+        if (order == null || technician == null || scheduledDate == null || currentUser == null) {
             _uiState.update {
                 it.copy(
                     error = "Debe seleccionar un técnico y una fecha"
@@ -191,7 +222,6 @@ class InstallationOrderListViewModel(
             try {
                 _uiState.update { it.copy(isLoading = true) }
 
-                val currentUser = userUseCase.getCurrentUser()
                 val result = installationOrderUseCase.assignTechnician(
                     orderId = order.id,
                     technicianId = technician.id
@@ -206,14 +236,14 @@ class InstallationOrderListViewModel(
                         isLoading = false,
                         successMessage = "Técnico asignado correctamente",
                         orderUpdated = result,
-                        showAssignDialog = false
+                        showAssignDialog = false,
+                        error = null
                     )
                 }
 
                 loadInstallationOrders()
 
             } catch (e: Exception) {
-                e.printStackTrace()
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -225,30 +255,32 @@ class InstallationOrderListViewModel(
         }
     }
 
-    fun resetSelectedOrder() {
+    private fun onResetSelectedOrder() {
         _uiState.update {
             it.copy(
                 selectedOrder = null,
                 selectedTechnician = null,
                 scheduledDate = null,
                 showAssignDialog = false,
-                navigateToRegisterSubscription = false
+                navigateToRegisterSubscription = false,
+                error = null
             )
         }
     }
 
-    fun onTransferOrderClicked(order: InstallationOrder) {
+    private fun onTransferOrderClicked(order: InstallationOrder) {
         if (order.status == InstallationOrderStatus.EN_CURSO) {
             _uiState.update {
                 it.copy(
                     selectedOrder = order,
-                    showTransferDialog = true
+                    showTransferDialog = true,
+                    error = null
                 )
             }
         }
     }
 
-    fun transferOrder() {
+    private fun onTransferOrder() {
         val order = _uiState.value.selectedOrder
         val technician = _uiState.value.selectedTechnician
         val scheduledDate = _uiState.value.scheduledDate
@@ -275,7 +307,8 @@ class InstallationOrderListViewModel(
                         selectedOrder = null,
                         selectedTechnician = null,
                         scheduledDate = null,
-                        successMessage = "Orden transferida exitosamente"
+                        successMessage = "Orden transferida exitosamente",
+                        error = null
                     )
                 }
                 loadInstallationOrders()
@@ -290,33 +323,22 @@ class InstallationOrderListViewModel(
         }
     }
 
-    fun onCloseTransferDialog() {
+    private fun onCloseTransferDialog() {
         _uiState.update {
             it.copy(
                 showTransferDialog = false,
                 selectedOrder = null,
                 selectedTechnician = null,
-                scheduledDate = null
+                scheduledDate = null,
+                error = null
             )
         }
     }
-}
 
-/**
- * Representa el estado de la UI para la lista de órdenes de instalación
- */
-data class InstallationOrderListUiState(
-    val installationOrders: Flow<PagingData<InstallationOrder>>? = null,
-    val isLoading: Boolean = true,
-    val error: String? = null,
-    val currentUser: User? = null,
-    val showAssignDialog: Boolean = false,
-    val showTransferDialog: Boolean = false,
-    val orderUpdated: InstallationOrder? = null,
-    val selectedOrder: InstallationOrder? = null,
-    val technicians: List<User> = emptyList(),
-    val selectedTechnician: User? = null,
-    val scheduledDate: LocalDateTime? = null,
-    val successMessage: String? = null,
-    val navigateToRegisterSubscription: Boolean = false
-)
+    private fun canAsignInstallationOrder(): Boolean =
+        _uiState.value.currentUser?.type in listOf(
+            User.UserType.ACCOUNTANT,
+            User.UserType.SECRETARY,
+            User.UserType.ADMIN
+        )
+}

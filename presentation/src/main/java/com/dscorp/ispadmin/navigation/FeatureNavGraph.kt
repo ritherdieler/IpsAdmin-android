@@ -76,6 +76,7 @@ import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderEvent
+import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -381,7 +382,7 @@ private fun NavGraphContent(navController: NavHostController, onLoggedOut: () ->
                 }
             },
                 onNavigateToRegisterSubscription = {
-                    viewModel.resetSelectedOrder()
+                    viewModel.onEvent(InstallationOrderListEvent.ResetSelectedOrder)
                     navController.navigate(Subscription.Register(it.id)) {
                         launchSingleTop = true
                     }

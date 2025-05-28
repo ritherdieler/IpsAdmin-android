@@ -5,71 +5,65 @@ alwaysApply: true
 ---
 # Reglas Estrictas para el Desarrollo de la Aplicación de Gestión de ISP
 
-> Estas reglas son de cumplimiento obligatorio. No deben ser ignoradas, modificadas ni reinterpretadas bajo ningún contexto. Cada acción, código generado o sugerencia debe cumplir **al 100%** con lo siguiente:
+> Estas reglas deben cumplirse al 100%. No se permite ignorarlas, modificarlas ni reinterpretarlas. Toda acción, código o sugerencia debe respetar lo siguiente:
 
-## 1. Objetivo y Alcance
+## 1. Alcance y funcionalidades
+- La app es para gestionar usuarios de un ISP (clientes de fibra óptica e inalámbricos).
+- Funcionalidades mínimas: registro de suscripciones, buscador de suscripciones, registro y visualización de pagos.
 
-- La aplicación es para la gestión integral de usuarios de un ISP (Internet Service Provider), abarcando clientes de fibra óptica e inalámbricos.
-- Funcionalidades mínimas:
-  - Registro de suscripciones.
-  - Buscador de suscripciones.
-  - Visualización y registro de pagos.
+## 2. UI y Jetpack Compose
+- Todas las vistas se desarrollan exclusivamente en Jetpack Compose.  
+- Prohibido usar XML u otros sistemas de vistas.
 
-## 2. Jetpack Compose como Única Herramienta de UI
+## 3. Material 3, diseño moderno y experiencia de usuario
+- Todas las pantallas usan el tema `MyTheme` y siguen los lineamientos de Material 3.
+- El diseño debe ser siempre **moderno**, atractivo y ofrecer una experiencia de usuario actual.
+- UI adaptable a cualquier tamaño de pantalla.
+- Usar componentes personalizados sólo desde `com.dscorp.ispadmin.presentation.ui.features.composecomponents`.
+- Animaciones y transiciones sólo cuando aporten valor y siguiendo Material 3.
+- Visuales limpios y accesibles. Prohibido usar colores, espaciados o tipografías que dificulten la legibilidad.
+- Usar siempre íconos y tipografías alineados a la identidad visual de la app.
 
-- **Todas** las vistas y pantallas deben desarrollarse exclusivamente en Jetpack Compose.
-- **Prohibido** el uso de XML o cualquier otro sistema de vistas.
+## 4. Arquitectura y flujo de datos
+- Todos los ViewModel deben implementar siempre Unidirectional Data Flow (UDF). No se permite ningún otro patrón de manejo de estado.
+- El estado de pantalla se representa con una `data class` y se expone solo como `State<T>` o `Flow`.
+- Las screens Compose reciben únicamente el `uiState`. El composable hijo nunca referencia el ViewModel ni accede a él directamente.
+- Los ViewModel nunca contienen código en el bloque `init`. Ninguna lógica ni carga de datos debe estar en `init`. Toda la inicialización debe ser disparada desde la UI.
 
-## 3. Buenas Prácticas y Material 3
+## 5. Comunicación y casos de uso
+- Los ViewModel sólo pueden comunicarse con los servicios a través de casos de uso.  
+- Prohibido que el ViewModel invoque repositorios, servicios de red o cualquier fuente de datos directamente.
+- Toda lógica de acceso a datos debe estar encapsulada en los casos de uso.
 
-- Cada pantalla debe seguir **estrictamente** los lineamientos de Material 3 para una experiencia moderna, coherente y accesible.
-- Siempre usar el tema `MyTheme` para toda pantalla, incluyendo Previews.
-- Las pantallas deben ser adaptables a todos los tamaños de pantalla (responsive).
-- Incluir animaciones y transiciones sutiles sólo cuando sumen valor a la UX, siguiendo Material 3.
-- Usar componentes personalizados desde:
-  - `com.dscorp.ispadmin.presentation.ui.features.composecomponents`
-- Elementos visuales: limpios, legibles, consistentes.
-- Íconos y tipografías: deben reforzar la identidad visual de la app.
-- **Prohibido** usar colores, espaciados o tipografías que comprometan la legibilidad o accesibilidad.
+## 6. Manejo de errores y casos de uso
+- Todos los casos de uso deben devolver `Result<T>` usando `runCatching`.
+- Prohibido devolver directamente `T` o hacer try-catch en el ViewModel.
+- El manejo de errores está centralizado en el dominio, nunca en la presentación.
 
-## 4. Patrón de Arquitectura y Flujo de Datos
+## 7. Inyección de dependencias
+- Usar Koin para inyección de dependencias en todos los componentes.
+- Definir módulos de Koin para red, repositorios, casos de uso, etc.
 
-- Implementar Unidirectional Data Flow (UDF) en todos los ViewModel.
-- El estado de cada pantalla debe estar representado por una `data class`.
-- El ViewModel debe exponer el estado mediante `State<T>`, `Flow` o `LiveData`.
-- Las screens Compose deben recibir **solo el uiState**.
-  - El composable hijo **jamás** debe tener referencia directa al ViewModel.
-  - **Prohibido** acceder al ViewModel fuera de la Screen principal.
-
-## 5. Inyección de Dependencias con Koin
-
-- Utilizar siempre Koin para la inyección de dependencias en ViewModels y otros componentes.
-- Definir módulos Koin para red, repositorios, casos de uso, etc.
-
-## 6. Buenas Prácticas de Código
-
-- Código modular, con responsabilidades **bien separadas**:
+## 8. Modularidad y buenas prácticas
+- Mantener el código modular y con responsabilidades separadas:
   - Datos: repositorios, servicios de red, base de datos.
-  - Dominio: casos de uso, lógica de negocio.
+  - Dominio: casos de uso y lógica de negocio.
   - Presentación: ViewModels y pantallas Compose.
-- ViewModel: solo lógica de presentación, sin referencias directas a UI.
-- Usar nombres claros, descriptivos y consistentes.
-- **Todos** los casos de uso deben devolver un `Result<T>` usando `runCatching`.
-  - **Prohibido** devolver directamente `T` o gestionar errores con try-catch en el ViewModel.
-  - El manejo de errores debe estar centralizado en el dominio, no en la presentación.
+- Usar nombres claros y descriptivos.
 
-## 7. Compilación, Pruebas y Verificación
-
-- Antes de finalizar cualquier tarea, compilar obligatoriamente el código:
+## 9. Compilación y pruebas
+- Antes de finalizar cualquier tarea, compilar el código con:
   - `./gradlew compileDebugSources`
-- Realizar siempre pruebas funcionales básicas sobre pantallas y flujos de datos desarrollados, asegurando estabilidad y funcionamiento correcto.
+- Realizar siempre pruebas funcionales básicas de pantallas y flujos.
+- **Agregar pruebas obligatorias para los ViewModel y para la UI.**  
+  - Los ViewModel deben tener pruebas unitarias.
+  - La UI debe tener pruebas instrumentadas o de integración.
+  - **Todas las pruebas unitarias y de integración deben usar MockK para mocks y stubs.**
 
-## 8. Cumplimiento y Validación
-
-- **No se aceptan desviaciones** ni omisiones bajo ninguna circunstancia.
-- Si alguna regla no puede cumplirse, informar explícitamente el motivo antes de proceder.
-- **Nunca avanzar** si alguna regla no se cumple al 100%.
+## 10. Cumplimiento
+- No avanzar si alguna regla no se cumple.
+- Informar explícitamente cualquier excepción antes de seguir.
 
 ---
 
-> **Prioridad absoluta:** Cumplir todas estas reglas, garantizando calidad, cohesión arquitectónica y experiencia de usuario moderna y accesible.
+> Cumple todas estas reglas al pie de la letra. No omitas, ignores ni modifiques ninguna bajo ninguna circunstancia.

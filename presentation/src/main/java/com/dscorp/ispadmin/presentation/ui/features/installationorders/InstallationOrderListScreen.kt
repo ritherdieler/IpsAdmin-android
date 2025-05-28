@@ -96,62 +96,63 @@ fun InstallationOrderListScreen(
     onNavigateToRegisterSubscription: (InstallationOrder) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val canCreateOrder = viewModel.canCreateOrder()
+
+    LaunchedEffect(Unit) {
+        viewModel.onEvent(InstallationOrderListEvent.LoadTechnicians)
+    }
 
     // Optimización: Uso de DisposableEffect con clave específica para mejorar recomposiciones
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                viewModel.loadInstallationOrders()
+                viewModel.onEvent(InstallationOrderListEvent.LoadInstallationOrders)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadTechnicians()
-    }
-
     InstallationOrderList(
         uiState = uiState,
-        onFilterChange = viewModel::filterByStatus,
+        onFilterChange = { status -> viewModel.onEvent(InstallationOrderListEvent.FilterByStatus(status)) },
         onCreateOrderClicked = onCreateOrderClicked,
-        canCreateOrder = canCreateOrder,
-        onOrderSelected = viewModel::onOrderSelected,
-        onTransferOrderClicked = viewModel::onTransferOrderClicked
+        canCreateOrder = uiState.canCreateOrder,
+        onOrderSelected = { order -> viewModel.onEvent(InstallationOrderListEvent.OrderSelected(order)) },
+        onTransferOrderClicked = { order -> viewModel.onEvent(InstallationOrderListEvent.TransferOrderClicked(order)) }
     )
 
     // Diálogos condicionales
     if (uiState.showAssignDialog) {
         AssignTechnicianDialog(
-            order = uiState.selectedOrder,
             technicians = uiState.technicians,
             selectedTechnician = uiState.selectedTechnician,
-            onTechnicianSelected = viewModel::onTechnicianSelected,
-            onScheduledDateSelected = viewModel::onScheduledDateSelected,
-            onAssign = viewModel::assignTechnician,
-            onDismiss = viewModel::onCloseDialog
+            scheduledDate = uiState.scheduledDate,
+            onTechnicianSelected = { technician -> viewModel.onEvent(InstallationOrderListEvent.TechnicianSelected(technician)) },
+            onScheduledDateSelected = { date -> viewModel.onEvent(InstallationOrderListEvent.ScheduledDateSelected(date)) },
+            onAssign = { viewModel.onEvent(InstallationOrderListEvent.AssignTechnician) },
+            onDismiss = { viewModel.onEvent(InstallationOrderListEvent.CloseAssignDialog) }
         )
     }
 
     if (uiState.showTransferDialog) {
         TransferOrderDialog(
-            order = uiState.selectedOrder,
             technicians = uiState.technicians,
             selectedTechnician = uiState.selectedTechnician,
-            onTechnicianSelected = viewModel::onTechnicianSelected,
-            onScheduledDateSelected = viewModel::onScheduledDateSelected,
-            onTransfer = viewModel::transferOrder,
-            onDismiss = viewModel::onCloseTransferDialog
+            scheduledDate = uiState.scheduledDate,
+            onTechnicianSelected = { technician -> viewModel.onEvent(InstallationOrderListEvent.TechnicianSelected(technician)) },
+            onScheduledDateSelected = { date -> viewModel.onEvent(InstallationOrderListEvent.ScheduledDateSelected(date)) },
+            onTransfer = { viewModel.onEvent(InstallationOrderListEvent.TransferOrder) },
+            onDismiss = { viewModel.onEvent(InstallationOrderListEvent.CloseTransferDialog) }
         )
     }
 
-    // Navegación condicional
+    // Navegación a registro de suscripción
     LaunchedEffect(uiState.navigateToRegisterSubscription) {
-        if (uiState.navigateToRegisterSubscription)
+        if (uiState.navigateToRegisterSubscription && uiState.selectedOrder != null) {
             onNavigateToRegisterSubscription(uiState.selectedOrder!!)
+            viewModel.onEvent(InstallationOrderListEvent.ResetSelectedOrder)
+        }
     }
 }
 
@@ -867,16 +868,16 @@ private fun TechnicianAssignmentDialog(
  */
 @Composable
 fun AssignTechnicianDialog(
-    order: InstallationOrder?,
     technicians: List<User>,
     selectedTechnician: User?,
+    scheduledDate: LocalDateTime?,
     onTechnicianSelected: (User) -> Unit,
     onScheduledDateSelected: (LocalDateTime) -> Unit,
     onAssign: () -> Unit,
     onDismiss: () -> Unit
 ) {
     TechnicianAssignmentDialog(
-        order = order,
+        order = null,
         technicians = technicians,
         selectedTechnician = selectedTechnician,
         isTransfer = false,
@@ -892,16 +893,16 @@ fun AssignTechnicianDialog(
  */
 @Composable
 fun TransferOrderDialog(
-    order: InstallationOrder?,
     technicians: List<User>,
     selectedTechnician: User?,
+    scheduledDate: LocalDateTime?,
     onTechnicianSelected: (User) -> Unit,
     onScheduledDateSelected: (LocalDateTime) -> Unit,
     onTransfer: () -> Unit,
     onDismiss: () -> Unit
 ) {
     TechnicianAssignmentDialog(
-        order = order,
+        order = null,
         technicians = technicians,
         selectedTechnician = selectedTechnician,
         isTransfer = true,
