@@ -19,7 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.theme.myTypography
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyDropDown
+import com.dscorp.ispadmin.presentation.ui.components.MyDropDown
 import com.dscorp.ispadmin.domain.model.FixedCostType
 import com.dscorp.ispadmin.data.apirequestmodel.FixedCostRequest
 

@@ -1,9 +1,10 @@
-package com.dscorp.ispadmin.presentation.ui.features.composecomponents
+package com.dscorp.ispadmin.presentation.ui.components
 
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -85,7 +86,7 @@ fun MyOutlinedTextField(
         },
         trailingIcon = {
             if (isError) {
-                Icon(Icons.Filled.Error, "Error", tint = androidx.compose.material3.MaterialTheme.colorScheme.error)
+                Icon(Icons.Filled.Error, "Error", tint = MaterialTheme.colorScheme.error)
             }
         },
         singleLine = singleLine,

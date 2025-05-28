@@ -61,10 +61,6 @@
                 android:resource="@xml/file_paths" />
         </provider>
             
-        <activity
-            android:name=".presentation.ui.features.login.LoginActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
 
         <activity
             android:name=".presentation.ui.features.supportTicket.list.TicketActivity"
@@ -73,91 +69,6 @@
 
         <activity
             android:name=".presentation.ui.features.main.MainActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.subscription.register.RegisterSubscriptionActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.subscription.edit.EditSubscriptionActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.subscriptiondetail.SubscriptionDetailActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.subscriptionfinder.SubscriptionFinderActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.payment.register.RegisterPaymentActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.payment.history.PaymentHistoryActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.payment.detail.PaymentDetailActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.payment.payerFinder.FindPayerActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.napbox.register.RegisterNapBoxActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.napbox.list.NapBoxListActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.napbox.edit.EditNapBoxActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.installationorder.create.CreateInstallationOrderActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.installationorder.pending.PendingInstallationOrdersActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.installationorder.assigned.AssignedInstallationOrdersActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.installationorder.inprogress.InProgressInstallationOrdersActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.installationorder.closed.ClosedInstallationOrdersActivity"
-            android:exported="false"
-            android:theme="@style/Theme.IpsAdmin" />
-
-        <activity
-            android:name=".presentation.ui.features.reports.ReportsActivity"
             android:exported="false"
             android:theme="@style/Theme.IpsAdmin" />
 

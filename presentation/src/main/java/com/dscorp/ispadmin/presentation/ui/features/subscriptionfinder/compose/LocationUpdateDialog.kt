@@ -18,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.MyLocation
@@ -47,7 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MiniMap
+import com.dscorp.ispadmin.presentation.ui.components.MiniMap
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyCustomDialog
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.google.android.gms.maps.model.LatLng

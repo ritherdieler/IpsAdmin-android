@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.presentation.ui.features.composecomponents
+package com.dscorp.ispadmin.presentation.ui.components
 
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable

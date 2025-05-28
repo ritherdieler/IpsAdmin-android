@@ -36,7 +36,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import com.dscorp.ispadmin.R
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyIconButton
+import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
 
 @Composable
 fun MyCustomDialog(

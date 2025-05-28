@@ -336,4 +336,8 @@
 
     <string name="reactivation_section_title">Reactivación de Servicio</string>
     <string name="reactivation_notes">Notas de Reactivación</string>
+    <string name="invalidName">Nombre no valido</string>
+    <string name="invalidLastName">Apellidos no validos</string>
+    <string name="invalidEmail">Correo no valido</string>
+    <string name="invalidPhone">El teléfono no es valido</string>
 </resources>

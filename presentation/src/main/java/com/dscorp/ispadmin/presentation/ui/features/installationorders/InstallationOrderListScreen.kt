@@ -74,11 +74,11 @@ import com.dscorp.ispadmin.data.model.InstallationOrderStatus
 import com.dscorp.ispadmin.domain.model.InstallationOrder
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.theme.MyTheme
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.Loader
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyCustomDialog
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyDateTimePickerField
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
+import com.dscorp.ispadmin.presentation.ui.components.Loader
+import com.dscorp.ispadmin.presentation.ui.components.MyButton
+import com.dscorp.ispadmin.presentation.ui.components.MyCustomDialog
+import com.dscorp.ispadmin.presentation.ui.components.MyDateTimePickerField
+import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch

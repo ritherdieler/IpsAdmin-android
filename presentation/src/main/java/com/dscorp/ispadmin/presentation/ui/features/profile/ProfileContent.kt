@@ -26,7 +26,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -37,8 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyCustomDialog
+import com.dscorp.ispadmin.presentation.ui.components.MyButton
+import com.dscorp.ispadmin.presentation.ui.components.MyCustomDialog
 
 @Composable
 fun ProfileContent(

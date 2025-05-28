@@ -39,8 +39,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
+import com.dscorp.ispadmin.presentation.ui.components.MyButton
+import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyCustomDialog
 import com.dscorp.ispadmin.data.apirequestmodel.MoveOnuRequest
 

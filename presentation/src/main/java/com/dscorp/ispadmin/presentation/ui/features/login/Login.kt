@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.presentation.ui.features.login.compose
+package com.dscorp.ispadmin.presentation.ui.features.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -31,8 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.theme.myTypography
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
-import com.dscorp.ispadmin.presentation.ui.features.login.LoginState
+import com.dscorp.ispadmin.presentation.ui.components.MyButton
 
 data class LoginForm(
     var username: String = "",

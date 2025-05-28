@@ -37,11 +37,11 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.presentation.theme.MyTheme
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyAutoCompleteTextViewCompose
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyIconButton
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutlinedTextField
+import com.dscorp.ispadmin.presentation.ui.components.MyAutoCompleteTextViewCompose
+import com.dscorp.ispadmin.presentation.ui.components.MyButton
+import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
+import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
+import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 import com.dscorp.ispadmin.domain.model.InstallationType

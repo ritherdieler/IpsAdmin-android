@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.ZoomableImage
+import com.dscorp.ispadmin.presentation.ui.components.ZoomableImage
 
 @Composable
 fun TicketImageDialog(

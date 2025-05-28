@@ -16,7 +16,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.data.repository.IRepository
-import com.dscorp.ispadmin.presentation.ui.features.login.LoginActivity
+import com.dscorp.ispadmin.presentation.ui.features.main.MainActivity
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.TICKET_ID
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.TicketActivity
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -380,7 +380,7 @@ class AppManagementHandler(private val service: CloudMessagingService) : Message
         when (action) {
             FORCE_LOGOUT -> {
                 repository.clearUserSession()
-                val intent = Intent(service, LoginActivity::class.java).apply {
+                val intent = Intent(service, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 }
                 service.startActivity(intent)

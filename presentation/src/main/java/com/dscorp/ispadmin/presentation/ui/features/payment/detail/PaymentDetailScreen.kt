@@ -37,9 +37,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.presentation.theme.MyTheme
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.DetailField
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyCustomDialog
+import com.dscorp.ispadmin.presentation.ui.components.DetailField
+import com.dscorp.ispadmin.presentation.ui.components.MyButton
+import com.dscorp.ispadmin.presentation.ui.components.MyCustomDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -50,13 +50,12 @@ import androidx.constraintlayout.compose.Dimension
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.CustomerData
 import com.dscorp.ispadmin.domain.model.GeoLocation
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.CustomOutlinedTextField
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyOutLinedDropDown
+import com.dscorp.ispadmin.presentation.ui.components.CustomOutlinedTextField
+import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
-import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CustomerFormData
 
 /**
  * Card component displaying a subscription with expandable details.

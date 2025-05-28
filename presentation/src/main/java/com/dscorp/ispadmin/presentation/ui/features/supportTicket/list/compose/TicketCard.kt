@@ -40,7 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.domain.model.User
-import com.dscorp.ispadmin.presentation.ui.features.composecomponents.MyButton
+import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 

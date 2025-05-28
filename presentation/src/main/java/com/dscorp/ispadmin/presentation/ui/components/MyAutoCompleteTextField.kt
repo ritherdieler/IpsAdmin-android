@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.presentation.ui.features.composecomponents
+package com.dscorp.ispadmin.presentation.ui.components
 
 import android.R
 import android.content.Context
@@ -6,6 +6,7 @@ import android.content.res.ColorStateList
 import android.graphics.Typeface
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
@@ -229,7 +230,7 @@ private fun <T> MaterialAutoCompleteTextView.setupAdapter(context: Context, item
 }
 
 // Función para ocultar el teclado
-private fun hideKeyboard(context: Context, view: android.view.View) {
+private fun hideKeyboard(context: Context, view: View) {
     val inputMethodManager =
         context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
     inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)

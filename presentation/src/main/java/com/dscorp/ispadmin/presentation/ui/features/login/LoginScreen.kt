@@ -1,11 +1,9 @@
-package com.dscorp.ispadmin.presentation.ui.features.login.compose
+package com.dscorp.ispadmin.presentation.ui.features.login
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.dscorp.ispadmin.domain.model.User
-import com.dscorp.ispadmin.presentation.ui.features.login.LoginState
-import com.dscorp.ispadmin.presentation.ui.features.login.LoginViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable

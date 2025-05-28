@@ -9,12 +9,13 @@ import androidx.navigation.compose.rememberNavController
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.navigation.NavRoutes.AuthRoutes.Login
 import com.dscorp.ispadmin.navigation.NavRoutes.AuthRoutes.Register
-import com.dscorp.ispadmin.presentation.ui.features.login.compose.LoginScreen
+import com.dscorp.ispadmin.presentation.ui.features.login.LoginScreen
+import com.dscorp.ispadmin.presentation.ui.features.registration.RegisterScreen
 
 @Composable
 fun AuthNavGraph(
     navController: NavHostController = rememberNavController(),
-    onLoginSuccess  : (user: User) -> Unit = {},
+    onLoginSuccess: (user: User) -> Unit = {},
 ) {
     NavHost(
         navController = navController,
@@ -29,6 +30,12 @@ fun AuthNavGraph(
                     onLoginSuccess(user)
                 }
             )
+        }
+
+        composable<Register> {
+            RegisterScreen(onNavigateBack = {
+                navController.navigateUp()
+            })
         }
     }
 }
