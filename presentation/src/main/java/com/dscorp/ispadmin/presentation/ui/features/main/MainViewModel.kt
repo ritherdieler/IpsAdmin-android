@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.usecase.UserUseCase
-import com.dscorp.ispadmin.presentation.navigation.DrawerItem
+import com.dscorp.ispadmin.presentation.navigation.DrawerGroup
 import com.dscorp.ispadmin.presentation.navigation.DrawerNavigation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,8 +21,8 @@ data class MainUiState(
     val isLoading: Boolean = true,
     val error: String? = null
 ) {
-    fun getDrawerItems(): List<DrawerItem> =
-        currentUser?.type?.let { DrawerNavigation.getDrawerItemsForUser(it) } ?: emptyList()
+    fun getDrawerGroups(): List<DrawerGroup> =
+        currentUser?.type?.let { DrawerNavigation.getDrawerGroupsForUser(it) } ?: emptyList()
 }
 
 class MainViewModel(

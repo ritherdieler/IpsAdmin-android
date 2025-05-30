@@ -133,7 +133,7 @@ fun FeatureNavGraph(
             ModalDrawerSheet {
                 MenuDrawerContent(
                     currentUser = uiState.currentUser,
-                    drawerItems = uiState.getDrawerItems(),
+                    drawerItems = uiState.getDrawerGroups(),
                     navController = navController,
                     onItemClicked = {
                         scope.launch {

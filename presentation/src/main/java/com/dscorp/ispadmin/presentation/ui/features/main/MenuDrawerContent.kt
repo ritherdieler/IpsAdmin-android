@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.presentation.navigation.DrawerGroup
 import com.dscorp.ispadmin.presentation.navigation.DrawerItem
 
 /**
@@ -38,7 +39,7 @@ import com.dscorp.ispadmin.presentation.navigation.DrawerItem
 @Composable
 fun MenuDrawerContent(
     currentUser: User?,
-    drawerItems: List<DrawerItem>,
+    drawerItems: List<DrawerGroup>,
     navController: NavHostController,
     onItemClicked: () -> Unit
 ) {
@@ -92,19 +93,23 @@ fun MenuDrawerContent(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Opciones del menú
-        drawerItems.forEach { item ->
-            MenuItem(
-                icon = item.icon,
-                title = item.title,
-                isSelected = navController.currentBackStackEntry?.destination?.route == item.route.toString(),
-                onClick = {
-                    navController.navigate(item.route) {
-                        launchSingleTop = true
+        // Grupos del menú
+        drawerItems.forEach { group ->
+            DrawerSectionTitle(title = group.title)
+            group.items.forEach { item ->
+                MenuItem(
+                    icon = item.icon,
+                    title = item.title,
+                    isSelected = navController.currentBackStackEntry?.destination?.route == item.route.toString(),
+                    onClick = {
+                        navController.navigate(item.route) {
+                            launchSingleTop = true
+                        }
+                        onItemClicked()
                     }
-                    onItemClicked()
-                }
-            )
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
