@@ -6,6 +6,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import com.dscorp.ispadmin.domain.model.ServiceStatus
+import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Payment
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import org.koin.androidx.compose.koinViewModel
@@ -26,6 +27,7 @@ fun PaymentHistoryComposeScreen(
 ) {
     // Obtiene el ViewModel con los parámetros necesarios
     val viewModel: PaymentHistoryViewModel = koinViewModel { parametersOf(subscriptionId) }
+    val currentUser = viewModel.repository.getUserSession()
 
     // Convertir el string a ServiceStatus
     val serviceStatusEnum = try {
@@ -44,12 +46,20 @@ fun PaymentHistoryComposeScreen(
     // Obtener el estado de la UI
     val state by viewModel.state.collectAsState()
 
+    val canManagePayments = currentUser?.type in listOf(
+        User.UserType.ADMIN,
+        User.UserType.ACCOUNTANT,
+        User.UserType.SECRETARY
+    )
+
     // Renderizar la pantalla
     MyTheme {
         PaymentScreenContent(
             state = state,
             subscriptionId = viewModel.subscriptionId,
             onPaymentItemClicked = { payment ->
+                if (!canManagePayments) return@PaymentScreenContent
+                
                 if (!payment.paid) {
                     // Navegar a la pantalla de registro de pago
                     // Necesitamos proporcionar el ID del pago para la ruta
@@ -74,7 +84,8 @@ fun PaymentHistoryComposeScreen(
                 } else {
                     viewModel.showAllPayments()
                 }
-            }
+            },
+            showReactivationSection = canManagePayments
         )
     }
 } 

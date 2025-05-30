@@ -29,7 +29,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +46,6 @@ import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
-import kotlinx.coroutines.launch
 
 
 @Composable
@@ -306,7 +304,8 @@ fun PaymentHistoryScreenPreview() {
             onPaymentItemClicked = {},
             onUpdateReactivationNotes = {},
             onReactivateService = {},
-            onTogglePendingPaymentsFilter = {}
+            onTogglePendingPaymentsFilter = {},
+            showReactivationSection = true
         )
     }
 }
@@ -331,7 +330,8 @@ fun PaymentHistoryScreenLoadingPreview() {
             onPaymentItemClicked = {},
             onUpdateReactivationNotes = {},
             onReactivateService = {},
-            onTogglePendingPaymentsFilter = {}
+            onTogglePendingPaymentsFilter = {},
+            showReactivationSection = true
         )
     }
 }
@@ -343,34 +343,17 @@ fun PaymentScreenContent(
     onPaymentItemClicked: (Payment) -> Unit,
     onUpdateReactivationNotes: (String) -> Unit,
     onReactivateService: () -> Unit,
-    onTogglePendingPaymentsFilter: (Boolean) -> Unit
+    onTogglePendingPaymentsFilter: (Boolean) -> Unit,
+    showReactivationSection: Boolean = true
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-
-    // States for UI components
     var onlyPendingChecked by remember { mutableStateOf(false) }
-
-    // Show snackbar for errors and success messages
-    LaunchedEffect(state.error, state.isServiceReactivated) {
-        state.error?.let {
-            scope.launch {
-                snackbarHostState.showSnackbar(it)
-            }
-        }
-
-        if (state.isServiceReactivated) {
-            val message = "El servicio fue reactivado con exito"
-            scope.launch {
-                snackbarHostState.showSnackbar(message)
-            }
-        }
-    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -438,9 +421,8 @@ fun PaymentScreenContent(
                     }
                 }
 
-
                 // Reactivate service button if needed
-                if (subscriptionId != null ) {
+                if (showReactivationSection && subscriptionId != null) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Card(
@@ -455,29 +437,25 @@ fun PaymentScreenContent(
                                 .padding(16.dp)
                         ) {
                             Text(
-                                text = stringResource(R.string.reactivation_section_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.padding(bottom = 8.dp)
+                                text = stringResource(R.string.reactivate_service),
+                                style = MaterialTheme.typography.titleMedium
                             )
 
-                            // Notes field for reactivation
+                            Spacer(modifier = Modifier.height(8.dp))
+
                             OutlinedTextField(
                                 value = state.reactivationNotes,
-                                onValueChange = { onUpdateReactivationNotes(it) },
+                                onValueChange = onUpdateReactivationNotes,
                                 label = { Text(stringResource(R.string.reactivation_notes)) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 16.dp),
-                                maxLines = 3
+                                modifier = Modifier.fillMaxWidth()
                             )
 
+                            Spacer(modifier = Modifier.height(16.dp))
+
                             MyButton(
-                                onClick = { onReactivateService() },
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !state.isReactivationButtonLoading,
                                 text = stringResource(R.string.reactivate_service),
-                                isLoading = state.isReactivationButtonLoading
+                                isLoading = state.isReactivationButtonLoading,
+                                onClick = onReactivateService
                             )
                         }
                     }
