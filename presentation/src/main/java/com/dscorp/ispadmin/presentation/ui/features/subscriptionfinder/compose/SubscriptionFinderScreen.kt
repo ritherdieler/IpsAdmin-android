@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -57,7 +59,6 @@ import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Payment
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription
-import com.dscorp.ispadmin.presentation.ui.features.dialog.MyConfirmDialog
 import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.CANCEL_SUBSCRIPTION
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.CHANGE_NAP_BOX
@@ -538,13 +539,60 @@ private fun CancelSubscriptionDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    MyConfirmDialog(
-        title = "Cancelar suscripción",
-        body = {
-            Text(text = "¿Está seguro de cancelar la suscripción?")
-        },
+    AlertDialog(
         onDismissRequest = onDismiss,
-        onAccept = onConfirm
+        title = {
+            Text(
+                text = "Cancelar Suscripción",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        },
+        text = {
+            Column(modifier = Modifier.padding(top = 0.dp)) {
+                Text(
+                    text = "¿Está seguro que desea cancelar esta suscripción?",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "Esta acción no se puede deshacer y el servicio se suspenderá inmediatamente.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.85f)
+                )
+            }
+        },
+        confirmButton = {
+            Row(
+                modifier = Modifier.padding(end = 4.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(
+                        text = "Volver",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(
+                    onClick = onConfirm,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(
+                        text = "Cancelar Suscripción",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
     )
 }
 

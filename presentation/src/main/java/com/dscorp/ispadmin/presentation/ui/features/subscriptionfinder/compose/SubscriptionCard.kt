@@ -50,12 +50,13 @@ import androidx.constraintlayout.compose.Dimension
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.CustomerData
 import com.dscorp.ispadmin.domain.model.GeoLocation
-import com.dscorp.ispadmin.presentation.ui.components.CustomOutlinedTextField
-import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
+import com.dscorp.ispadmin.presentation.theme.MyTheme
+import com.dscorp.ispadmin.presentation.ui.components.CustomOutlinedTextField
+import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 
 /**
  * Card component displaying a subscription with expandable details.
@@ -769,6 +770,7 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                         IconButton(onClick = { sendWhatsapp(subscriptionResume, context) }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_whatsapp),
+                                tint = MaterialTheme.colorScheme.surface,
                                 contentDescription = "Enviar mensaje por WhatsApp",
                                 modifier = Modifier.size(24.dp)
                             )
@@ -901,7 +903,7 @@ fun SubscriptionCardPreview() {
         location = GeoLocation()
     )
 
-    MaterialTheme {
+    MyTheme {
         SubscriptionCard(
             subscriptionResume = subscriptionResume,
             onMenuItemSelected = {},
@@ -964,7 +966,7 @@ fun SubscriptionCardExpandedPreview() {
         selectedPlace = Place(id = "1", name = "Arequipa")
     )
 
-    MaterialTheme {
+    MyTheme {
         SubscriptionCard(
             subscriptionResume = subscriptionResume,
             onMenuItemSelected = {},
@@ -1008,7 +1010,7 @@ fun SubscriptionCardCancelledPreview() {
         location = GeoLocation()
     )
 
-    MaterialTheme {
+    MyTheme {
         SubscriptionCard(
             subscriptionResume = subscriptionResume,
             onMenuItemSelected = {},

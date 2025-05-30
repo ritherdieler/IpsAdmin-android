@@ -106,8 +106,4 @@ object DrawerNavigation {
         }
     }
 
-    // Método de compatibilidad para mantener la funcionalidad existente
-    fun getDrawerItemsForUser(userType: User.UserType): List<DrawerItem> {
-        return getDrawerGroupsForUser(userType).flatMap { it.items }
-    }
-} 
+}
