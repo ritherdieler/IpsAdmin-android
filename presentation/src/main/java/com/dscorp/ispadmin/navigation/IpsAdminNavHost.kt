@@ -52,7 +52,8 @@ fun IpsAdminNavHost(
         composable<NavRoutes.Auth> {
             AuthNavGraph(onLoginSuccess = {
                 navController.navigate(Features) {
-                    popUpTo(Splash) { inclusive = true }
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
                 }
             })
         }

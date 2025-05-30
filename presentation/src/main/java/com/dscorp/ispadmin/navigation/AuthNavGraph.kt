@@ -1,6 +1,5 @@
 package com.dscorp.ispadmin.navigation
 
-
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -17,6 +16,7 @@ fun AuthNavGraph(
     navController: NavHostController = rememberNavController(),
     onLoginSuccess: (user: User) -> Unit = {},
 ) {
+
     NavHost(
         navController = navController,
         startDestination = Login,
