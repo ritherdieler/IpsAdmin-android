@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -48,23 +50,38 @@ fun LoginScreen(
                     dismissOnClickOutside = false
                 ),
                 onDismissRequest = { },
-                title = { Text("Cuenta no verificada") },
+                title = { 
+                    Text(
+                        "Cuenta no verificada",
+                        color = MaterialTheme.colorScheme.onSurface
+                    ) 
+                },
                 text = {
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Su cuenta aún no ha sido verificada por un administrador.")
+                        Text(
+                            "Su cuenta aún no ha sido verificada por un administrador.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "IMPORTANTE: Debe esperar a que un administrador verifique su cuenta antes de poder ingresar al sistema.",
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                 },
                 confirmButton = {
-                    Button(onClick = {
-                        viewModel.resetLoginState()
-                    }) {
+                    Button(
+                        onClick = {
+                            viewModel.resetLoginState()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
                         Text("Entendido")
                     }
                 }
@@ -75,14 +92,28 @@ fun LoginScreen(
                 onDismissRequest = {
                     viewModel.resetLoginState()
                 },
-                title = { Text("Error de inicio de sesión") },
+                title = { 
+                    Text(
+                        "Error de inicio de sesión",
+                        color = MaterialTheme.colorScheme.onSurface
+                    ) 
+                },
                 text = {
-                    Text((loginState as LoginState.Error).message)
+                    Text(
+                        (loginState as LoginState.Error).message,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 },
                 confirmButton = {
-                    Button(onClick = {
-                        viewModel.resetLoginState()
-                    }) {
+                    Button(
+                        onClick = {
+                            viewModel.resetLoginState()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
                         Text("Aceptar")
                     }
                 }

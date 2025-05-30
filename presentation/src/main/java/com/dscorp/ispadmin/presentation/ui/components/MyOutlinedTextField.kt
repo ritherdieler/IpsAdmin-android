@@ -33,6 +33,7 @@ fun MyOutlinedTextField(
     enabled: Boolean = true,
     readOnly: Boolean = false,
     supportingText: (@Composable () -> Unit)? = null,
+    trailingIcon: (@Composable () -> Unit)? = null,
 ) {
     var isError by remember { mutableStateOf(hasError) }
     var errorText by remember { mutableStateOf(errorMessage) }
@@ -87,6 +88,8 @@ fun MyOutlinedTextField(
         trailingIcon = {
             if (isError) {
                 Icon(Icons.Filled.Error, "Error", tint = MaterialTheme.colorScheme.error)
+            } else {
+                trailingIcon?.invoke()
             }
         },
         singleLine = singleLine,

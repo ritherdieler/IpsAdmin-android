@@ -770,7 +770,7 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                         IconButton(onClick = { sendWhatsapp(subscriptionResume, context) }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_whatsapp),
-                                tint = MaterialTheme.colorScheme.surface,
+                                tint = Color.White,
                                 contentDescription = "Enviar mensaje por WhatsApp",
                                 modifier = Modifier.size(24.dp)
                             )

@@ -15,9 +15,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -37,8 +37,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.theme.MyTheme
-import com.dscorp.ispadmin.presentation.theme.myTypography
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
+import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
 
 data class LoginForm(
     var username: String = "",
@@ -66,13 +66,14 @@ fun Login(
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp), color = Color.White
+            ,
+        color = MaterialTheme.colorScheme.surface
     ) {
         Column(
+            modifier =  Modifier.padding(16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Image(
                 modifier = Modifier
                     .padding(bottom = 16.dp)
@@ -82,53 +83,37 @@ fun Login(
                 contentDescription = "",
             )
 
-            OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                label = { Text(text = "Usuario") },
-                placeholder = { Text(text = "Usuario") },
+            MyOutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
                 value = username,
+                label = "Usuario",
                 onValueChange = { username = it },
-                isError = userNameError,
+                hasError = userNameError,
+                errorMessage = if (userNameError) "Debe ingresar un usuario válido" else null
             )
-            if (userNameError)
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp, top = 8.dp),
-                    text = "*Debe ingresar un usuario valido",
-                    color = Color.Red,
-                    style = myTypography.labelSmall
-                ) else Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                label = { Text(text = "Contraseña") },
-                placeholder = { Text(text = "Contraseña") },
+            Spacer(modifier = Modifier.height(16.dp))
+
+            MyOutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
                 value = password,
+                label = "Contraseña",
                 onValueChange = { password = it },
-                isError = passwordError,
+                hasError = passwordError,
+                errorMessage = if (passwordError) "La contraseña no puede estar vacía" else null,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                            contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             )
-            if (passwordError) {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp, top = 8.dp),
-                    text = "*La contraseña no puede estar vacia",
-                    color = Color.Red,
-                    style = myTypography.labelSmall
-                )
-            } else Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -138,18 +123,25 @@ fun Login(
             ) {
                 Checkbox(
                     checked = checkedState,
-                    onCheckedChange = { checkedState = it }
+                    onCheckedChange = { checkedState = it },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = MaterialTheme.colorScheme.primary,
+                        uncheckedColor = MaterialTheme.colorScheme.outline,
+                        checkmarkColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 )
                 Text(
-                    text = "Mantener sesion iniciada",
-                    modifier = Modifier.padding(start = 8.dp)
+                    text = "Mantener sesión iniciada",
+                    modifier = Modifier.padding(start = 8.dp),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
+
             MyButton(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
-                text = "Iniciar sesion",
+                text = "Iniciar sesión",
                 enabled = true,
                 isLoading = loginState is LoginState.Loading,
                 onClick = {
@@ -160,7 +152,8 @@ fun Login(
                             checkedState = checkedState
                         )
                     )
-                })
+                }
+            )
 
             MyButton(
                 modifier = Modifier.fillMaxWidth(),
