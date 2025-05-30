@@ -62,9 +62,7 @@ data class InstallationOrderListUiState(
         User.UserType.ADMIN,
         User.UserType.SALES
     )
-
 }
-
 
 /**
  * ViewModel para la lista de órdenes de instalación.
@@ -75,8 +73,11 @@ class InstallationOrderListViewModel(
     private val userUseCase: UserUseCase
 ) : ViewModel() {
 
-    private val _uiState =
-        MutableStateFlow(InstallationOrderListUiState(currentUser = runBlocking { userUseCase.getCurrentUser() }))
+    private val _uiState = MutableStateFlow(
+        InstallationOrderListUiState(
+            currentUser = runBlocking { userUseCase.getCurrentUser() }
+        )
+    )
     val uiState: StateFlow<InstallationOrderListUiState> = _uiState.asStateFlow()
 
     private var currentStatusFilter: InstallationOrderStatus? = null
@@ -99,45 +100,49 @@ class InstallationOrderListViewModel(
     }
 
     private fun loadInstallationOrders() {
-        try {
-            val currentUser = _uiState.value.currentUser
-                ?: throw IllegalStateException("Usuario no cargado")
+        viewModelScope.launch {
+            try {
+                val currentUser = _uiState.value.currentUser
+                    ?: throw IllegalStateException("Usuario no cargado")
 
-            val ordersFlow = when (currentUser.type) {
-                User.UserType.TECHNICIAN -> installationOrderUseCase.getInstallationOrdersByTechnicianPaginated(
-                    currentUser.id ?: throw IllegalStateException("ID de técnico no disponible")
-                )
+                val ordersFlow = getOrdersFlowForUser(currentUser)
+                    .cachedIn(viewModelScope)
 
-                User.UserType.SALES -> installationOrderUseCase.getInstallationOrdersBySellerPaginated(
-                    currentUser.id ?: throw IllegalStateException("ID de vendedor no disponible")
-                )
+                val filteredFlow = currentStatusFilter?.let { status ->
+                    ordersFlow.map { pagingData ->
+                        pagingData.filter { order -> order.status == status }
+                    }
+                } ?: ordersFlow
 
-                User.UserType.ADMIN, User.UserType.SECRETARY, User.UserType.ACCOUNTANT ->
-                    installationOrderUseCase.getAllInstallationOrdersPaginated()
-
-                else -> throw IllegalStateException("Tipo de usuario no soportado: ${currentUser.type}")
-            }.cachedIn(viewModelScope)
-
-            val filteredFlow = currentStatusFilter?.let { status ->
-                ordersFlow.map { pagingData ->
-                    pagingData.filter { order -> order.status == status }
+                _uiState.update { state ->
+                    state.copy(
+                        installationOrders = filteredFlow,
+                        isLoading = false,
+                        error = null
+                    )
                 }
-            } ?: ordersFlow
+            } catch (e: Exception) {
+                _uiState.update { state ->
+                    state.copy(
+                        isLoading = false,
+                        error = e.message ?: "Error desconocido al cargar órdenes"
+                    )
+                }
+            }
+        }
+    }
 
-            _uiState.update { state ->
-                state.copy(
-                    installationOrders = filteredFlow,
-                    isLoading = false,
-                    error = null
-                )
-            }
-        } catch (e: Exception) {
-            _uiState.update { state ->
-                state.copy(
-                    isLoading = false,
-                    error = e.message ?: "Error desconocido al cargar órdenes"
-                )
-            }
+    private fun getOrdersFlowForUser(user: User): Flow<PagingData<InstallationOrder>> {
+        return when (user.type) {
+            User.UserType.TECHNICIAN -> installationOrderUseCase.getInstallationOrdersByTechnicianPaginated(
+                user.id ?: throw IllegalStateException("ID de técnico no disponible")
+            )
+            User.UserType.SALES -> installationOrderUseCase.getInstallationOrdersBySellerPaginated(
+                user.id ?: throw IllegalStateException("ID de vendedor no disponible")
+            )
+            User.UserType.ADMIN, User.UserType.SECRETARY, User.UserType.ACCOUNTANT ->
+                installationOrderUseCase.getAllInstallationOrdersPaginated()
+            else -> throw IllegalStateException("Tipo de usuario no soportado: ${user.type}")
         }
     }
 
@@ -150,7 +155,7 @@ class InstallationOrderListViewModel(
 
     private fun onOrderSelected(order: InstallationOrder) {
         when {
-            order.status == InstallationOrderStatus.SOLICITADO  -> {
+            order.status == InstallationOrderStatus.SOLICITADO -> {
                 _uiState.update {
                     it.copy(
                         selectedOrder = order,
@@ -159,7 +164,6 @@ class InstallationOrderListViewModel(
                     )
                 }
             }
-
             uiState.value.currentUser?.type == User.UserType.TECHNICIAN &&
                     order.status == InstallationOrderStatus.EN_CURSO -> {
                 _uiState.update {
@@ -217,6 +221,14 @@ class InstallationOrderListViewModel(
     }
 
     private fun onAssignTechnician() {
+        handleTechnicianOperation(isTransfer = false)
+    }
+
+    private fun onTransferOrder() {
+        handleTechnicianOperation(isTransfer = true)
+    }
+
+    private fun handleTechnicianOperation(isTransfer: Boolean) {
         val order = _uiState.value.selectedOrder
         val technician = _uiState.value.selectedTechnician
         val scheduledDate = _uiState.value.scheduledDate
@@ -225,7 +237,7 @@ class InstallationOrderListViewModel(
         if (order == null || technician == null || scheduledDate == null || currentUser == null) {
             _uiState.update {
                 it.copy(
-                    error = "Debe seleccionar un técnico y una fecha"
+                    error = if (isTransfer) "Faltan datos para transferir la orden" else "Debe seleccionar un técnico y una fecha"
                 )
             }
             return
@@ -235,22 +247,30 @@ class InstallationOrderListViewModel(
             try {
                 _uiState.update { it.copy(isLoading = true) }
 
-                val result = installationOrderUseCase.assignTechnician(
-                    orderId = order.id,
-                    technicianId = technician.id
-                        ?: throw IllegalStateException("El técnico no tiene ID"),
-                    assignedById = currentUser.id
-                        ?: throw IllegalStateException("El usuario actual no tiene ID"),
-                    scheduledDate = scheduledDate
-                )
+                val result = if (isTransfer) {
+                    installationOrderUseCase.transferInstallationOrder(
+                        orderId = order.id,
+                        newTechnicianId = technician.id!!,
+                        transferredById = currentUser.id!!,
+                        scheduledDate = scheduledDate
+                    )
+                } else {
+                    installationOrderUseCase.assignTechnician(
+                        orderId = order.id,
+                        technicianId = technician.id!!,
+                        assignedById = currentUser.id!!,
+                        scheduledDate = scheduledDate
+                    )
+                }
 
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        successMessage = "Técnico asignado correctamente",
+                        successMessage = if (isTransfer) "Orden transferida exitosamente" else "Técnico asignado correctamente",
                         orderUpdated = result,
                         selectedTechnician = null,
                         showAssignDialog = false,
+                        showTransferDialog = false,
                         error = null
                     )
                 }
@@ -261,8 +281,9 @@ class InstallationOrderListViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = e.message ?: "Error al asignar técnico",
-                        showAssignDialog = false
+                        error = e.message ?: if (isTransfer) "Error al transferir la orden" else "Error al asignar técnico",
+                        showAssignDialog = false,
+                        showTransferDialog = false
                     )
                 }
             }
@@ -294,49 +315,6 @@ class InstallationOrderListViewModel(
         }
     }
 
-    private fun onTransferOrder() {
-        val order = _uiState.value.selectedOrder
-        val technician = _uiState.value.selectedTechnician
-        val scheduledDate = _uiState.value.scheduledDate
-        val currentUser = _uiState.value.currentUser
-
-        if (order == null || technician == null || scheduledDate == null || currentUser == null) {
-            _uiState.update { it.copy(error = "Faltan datos para transferir la orden") }
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                _uiState.update { it.copy(isLoading = true) }
-                installationOrderUseCase.transferInstallationOrder(
-                    orderId = order.id,
-                    newTechnicianId = technician.id!!,
-                    transferredById = currentUser.id!!,
-                    scheduledDate = scheduledDate
-                )
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        showTransferDialog = false,
-                        selectedOrder = null,
-                        selectedTechnician = null,
-                        scheduledDate = null,
-                        successMessage = "Orden transferida exitosamente",
-                        error = null
-                    )
-                }
-//                loadInstallationOrders()
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message ?: "Error al transferir la orden"
-                    )
-                }
-            }
-        }
-    }
-
     private fun onCloseTransferDialog() {
         _uiState.update {
             it.copy(
@@ -348,6 +326,4 @@ class InstallationOrderListViewModel(
             )
         }
     }
-
-
 }

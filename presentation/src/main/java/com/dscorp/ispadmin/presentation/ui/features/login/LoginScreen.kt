@@ -70,6 +70,24 @@ fun LoginScreen(
                 }
             )
         }
+        is LoginState.Error -> {
+            AlertDialog(
+                onDismissRequest = {
+                    viewModel.resetLoginState()
+                },
+                title = { Text("Error de inicio de sesión") },
+                text = {
+                    Text((loginState as LoginState.Error).message)
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        viewModel.resetLoginState()
+                    }) {
+                        Text("Aceptar")
+                    }
+                }
+            )
+        }
         else -> {}
     }
 }

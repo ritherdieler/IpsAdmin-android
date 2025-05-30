@@ -101,7 +101,6 @@ fun InstallationOrderListScreen(
         viewModel.onEvent(InstallationOrderListEvent.LoadTechnicians)
     }
 
-    // Optimización: Uso de DisposableEffect con clave específica para mejorar recomposiciones
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -113,40 +112,41 @@ fun InstallationOrderListScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    InstallationOrderList(
-        uiState = uiState,
-        onFilterChange = { status -> viewModel.onEvent(InstallationOrderListEvent.FilterByStatus(status)) },
-        onCreateOrderClicked = onCreateOrderClicked,
-        onOrderSelected = { order -> viewModel.onEvent(InstallationOrderListEvent.OrderSelected(order)) },
-        onTransferOrderClicked = { order -> viewModel.onEvent(InstallationOrderListEvent.TransferOrderClicked(order)) }
-    )
-
-    // Diálogos condicionales
-
-    if (uiState.showAssignDialog) {
-        AssignTechnicianDialog(
-            order = uiState.selectedOrder!!,
-            technicians = uiState.technicians,
-            selectedTechnician = uiState.selectedTechnician,
-            scheduledDate = uiState.scheduledDate,
-            onTechnicianSelected = { technician -> viewModel.onEvent(InstallationOrderListEvent.TechnicianSelected(technician)) },
-            onScheduledDateSelected = { date -> viewModel.onEvent(InstallationOrderListEvent.ScheduledDateSelected(date)) },
-            onAssign = { viewModel.onEvent(InstallationOrderListEvent.AssignTechnician) },
-            onDismiss = { viewModel.onEvent(InstallationOrderListEvent.CloseAssignDialog) }
+    Box(modifier = Modifier.fillMaxSize()) {
+        InstallationOrderList(
+            uiState = uiState,
+            onFilterChange = { status -> viewModel.onEvent(InstallationOrderListEvent.FilterByStatus(status)) },
+            onCreateOrderClicked = onCreateOrderClicked,
+            onOrderSelected = { order -> viewModel.onEvent(InstallationOrderListEvent.OrderSelected(order)) },
+            onTransferOrderClicked = { order -> viewModel.onEvent(InstallationOrderListEvent.TransferOrderClicked(order)) }
         )
-    }
 
-    if (uiState.showTransferDialog) {
-        TransferOrderDialog(
-            order = uiState.selectedOrder!!,
-            technicians = uiState.technicians,
-            selectedTechnician = uiState.selectedTechnician,
-            scheduledDate = uiState.scheduledDate,
-            onTechnicianSelected = { technician -> viewModel.onEvent(InstallationOrderListEvent.TechnicianSelected(technician)) },
-            onScheduledDateSelected = { date -> viewModel.onEvent(InstallationOrderListEvent.ScheduledDateSelected(date)) },
-            onTransfer = { viewModel.onEvent(InstallationOrderListEvent.TransferOrder) },
-            onDismiss = { viewModel.onEvent(InstallationOrderListEvent.CloseTransferDialog) }
-        )
+        // Diálogos condicionales
+        if (uiState.showAssignDialog) {
+            AssignTechnicianDialog(
+                order = uiState.selectedOrder!!,
+                technicians = uiState.technicians,
+                selectedTechnician = uiState.selectedTechnician,
+                scheduledDate = uiState.scheduledDate,
+                onTechnicianSelected = { technician -> viewModel.onEvent(InstallationOrderListEvent.TechnicianSelected(technician)) },
+                onScheduledDateSelected = { date -> viewModel.onEvent(InstallationOrderListEvent.ScheduledDateSelected(date)) },
+                onAssign = { viewModel.onEvent(InstallationOrderListEvent.AssignTechnician) },
+                onDismiss = { viewModel.onEvent(InstallationOrderListEvent.CloseAssignDialog) }
+            )
+        }
+
+        if (uiState.showTransferDialog) {
+            TransferOrderDialog(
+                order = uiState.selectedOrder!!,
+                technicians = uiState.technicians,
+                selectedTechnician = uiState.selectedTechnician,
+                scheduledDate = uiState.scheduledDate,
+                onTechnicianSelected = { technician -> viewModel.onEvent(InstallationOrderListEvent.TechnicianSelected(technician)) },
+                onScheduledDateSelected = { date -> viewModel.onEvent(InstallationOrderListEvent.ScheduledDateSelected(date)) },
+                onTransfer = { viewModel.onEvent(InstallationOrderListEvent.TransferOrder) },
+                onDismiss = { viewModel.onEvent(InstallationOrderListEvent.CloseTransferDialog) }
+            )
+        }
     }
 
     // Navegación a registro de suscripción
@@ -174,7 +174,6 @@ fun InstallationOrderList(
     val pagingItems = uiState.installationOrders?.collectAsLazyPagingItems()
     val lazyListState = rememberLazyListState()
 
-    // Para mostrar el botón de scroll al inicio cuando no estamos en la parte superior
     val showScrollToTop by remember {
         derivedStateOf {
             lazyListState.firstVisibleItemIndex > 3
@@ -183,18 +182,14 @@ fun InstallationOrderList(
 
     val coroutineScope = rememberCoroutineScope()
 
-    // Preparar las opciones del filtro de manera optimizada
     val dropDownStatusFilterOptions = remember(uiState.currentUser) {
         buildList {
             add(StatusOption(null, "Todos"))
-
             if (uiState.currentUser?.type != User.UserType.TECHNICIAN) {
                 add(StatusOption(InstallationOrderStatus.SOLICITADO, "Solicitado"))
             }
-
             add(StatusOption(InstallationOrderStatus.EN_CURSO, "En curso"))
             add(StatusOption(InstallationOrderStatus.CERRADO, "Cerrado"))
-
             if (uiState.currentUser?.type != User.UserType.TECHNICIAN) {
                 add(StatusOption(InstallationOrderStatus.CANCELADO, "Cancelado"))
             }
@@ -204,7 +199,6 @@ fun InstallationOrderList(
     Scaffold(
         floatingActionButton = {
             Column {
-                // Botón de scroll al inicio
                 AnimatedVisibility(
                     visible = showScrollToTop,
                     enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
@@ -229,7 +223,6 @@ fun InstallationOrderList(
                     }
                 }
 
-                // Botón para crear nueva orden - solo visible para usuarios autorizados
                 AnimatedVisibility(visible = uiState.canCreateInstallationOrder()) {
                     ExtendedFloatingActionButton(
                         onClick = onCreateOrderClicked,
@@ -260,7 +253,6 @@ fun InstallationOrderList(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     item {
-                        // Filtro de estado con dropdown
                         StatusDropDown(
                             options = dropDownStatusFilterOptions,
                             selectedStatus = selectedStatus,
@@ -285,39 +277,32 @@ fun InstallationOrderList(
                         }
                     }
 
-                    // Manejo de estado de carga
                     pagingItems.apply {
                         when {
                             loadState.refresh is LoadState.Loading -> {
                                 item { LoadingItem() }
                             }
-
                             loadState.append is LoadState.Loading -> {
                                 item { LoadingItem() }
                             }
-
                             loadState.refresh is LoadState.Error -> {
                                 val error = loadState.refresh as LoadState.Error
                                 item {
                                     ErrorItem(
-                                        message = error.error.localizedMessage
-                                            ?: "Error desconocido",
+                                        message = error.error.localizedMessage ?: "Error desconocido",
                                         onRetry = { retry() }
                                     )
                                 }
                             }
-
                             loadState.append is LoadState.Error -> {
                                 val error = loadState.append as LoadState.Error
                                 item {
                                     ErrorItem(
-                                        message = error.error.localizedMessage
-                                            ?: "Error desconocido",
+                                        message = error.error.localizedMessage ?: "Error desconocido",
                                         onRetry = { retry() }
                                     )
                                 }
                             }
-
                             itemCount == 0 -> {
                                 item {
                                     EmptyStateMessage()
@@ -418,7 +403,6 @@ fun InstallationOrderItem(
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
-    // Determinar si se debe mostrar el menú basado en el tipo de usuario
     val showMenuOption = remember(uiState.currentUser, order) {
         uiState.currentUser?.type in listOf(
             User.UserType.ADMIN,
@@ -428,7 +412,6 @@ fun InstallationOrderItem(
         ) && order.status != InstallationOrderStatus.CERRADO
     }
 
-    // Determinar opciones de menú según el tipo de usuario y estado de la orden
     val canAssignTechnician = remember(uiState.currentUser, order) {
         uiState.currentUser?.type in listOf(
             User.UserType.ADMIN,
@@ -447,7 +430,6 @@ fun InstallationOrderItem(
         order.status == InstallationOrderStatus.EN_CURSO
     }
 
-    // Determinar si mostrar la información del técnico
     val showTechnicianInfo = remember(uiState.currentUser, order) {
         order.technician != null &&
         (order.status == InstallationOrderStatus.EN_CURSO || order.status != InstallationOrderStatus.CERRADO) &&
@@ -539,10 +521,8 @@ fun InstallationOrderItem(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Información del cliente con iconos
             ClientInfoSection(order)
 
-            // Mostrar técnico asignado si corresponde
             if (showTechnicianInfo) {
                 Spacer(modifier = Modifier.height(8.dp))
                 InfoRow(
