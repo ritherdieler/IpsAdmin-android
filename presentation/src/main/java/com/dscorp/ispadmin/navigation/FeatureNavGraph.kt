@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.navigation
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -35,6 +36,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.AsyncImageViewer
@@ -47,6 +49,10 @@ import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.SupportTicket
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashBoardComposeScreen
 import com.dscorp.ispadmin.presentation.ui.features.installationorders.CreateInstallationOrderScreen
 import com.dscorp.ispadmin.presentation.ui.features.installationorders.CreateInstallationOrderViewModel
+import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderEvent
+import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListEvent
+import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListScreen
+import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.LocationSelectorComposeDialog
 import com.dscorp.ispadmin.presentation.ui.features.main.MenuDrawerContent
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationComposeScreen
@@ -68,15 +74,10 @@ import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.SupportTicketListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.TicketImageDialog
 import com.dscorp.ispadmin.presentation.utils.PermissionUtils
-import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
-import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListScreen
-import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderEvent
-import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -175,6 +176,7 @@ fun FeatureNavGraph(
     }
 }
 
+@SuppressLint("MissingPermission")
 @Composable
 private fun NavGraphContent(navController: NavHostController, onLoggedOut: () -> Unit = {}) {
     NavHost(

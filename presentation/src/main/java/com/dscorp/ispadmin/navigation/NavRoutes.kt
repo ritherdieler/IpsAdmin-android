@@ -44,7 +44,7 @@ sealed class NavRoutes {
         sealed class Subscription : FeatureRoutes() {
 
             @Serializable
-            data class Register(val installationOrderId: Int) : Subscription()
+            data class Register(val installationOrderId: Int?=null) : Subscription()
 
             @Serializable
             object Find : Subscription()
@@ -119,7 +119,7 @@ sealed class NavRoutes {
 
         companion object {
             fun FromString(string: String?): FeatureRoutes {
-                return when (string) {
+                return when (string?.split("?")[0]) {
                     Home::class.qualifiedName -> Home
                     Dashboard::class.qualifiedName -> Dashboard
                     Profile::class.qualifiedName -> Profile

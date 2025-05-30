@@ -139,7 +139,7 @@ fun MenuDrawerContent(
             onClick = {
                 scope.launch {
                     selectedRoute = Subscription.Register
-                    navController.navigate(Subscription.Register)
+                    navController.navigate(Subscription.Register())
                     onItemClicked()
                 }
             }

@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.Engineering
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.LocationOn
@@ -118,7 +119,8 @@ fun InstallationOrderListScreen(
             onFilterChange = { status -> viewModel.onEvent(InstallationOrderListEvent.FilterByStatus(status)) },
             onCreateOrderClicked = onCreateOrderClicked,
             onOrderSelected = { order -> viewModel.onEvent(InstallationOrderListEvent.OrderSelected(order)) },
-            onTransferOrderClicked = { order -> viewModel.onEvent(InstallationOrderListEvent.TransferOrderClicked(order)) }
+            onTransferOrderClicked = { order -> viewModel.onEvent(InstallationOrderListEvent.TransferOrderClicked(order)) },
+            onRegisterSubscription = { order -> viewModel.onEvent(InstallationOrderListEvent.RegisterSubscriptionClicked(order)) }
         )
 
         // Diálogos condicionales
@@ -168,7 +170,8 @@ fun InstallationOrderList(
     onFilterChange: (InstallationOrderStatus?) -> Unit,
     onCreateOrderClicked: () -> Unit,
     onOrderSelected: (InstallationOrder) -> Unit,
-    onTransferOrderClicked: (InstallationOrder) -> Unit
+    onTransferOrderClicked: (InstallationOrder) -> Unit,
+    onRegisterSubscription: (InstallationOrder) -> Unit
 ) {
     var selectedStatus by remember { mutableStateOf<InstallationOrderStatus?>(null) }
     val pagingItems = uiState.installationOrders?.collectAsLazyPagingItems()
@@ -272,7 +275,8 @@ fun InstallationOrderList(
                                 order = order,
                                 uiState = uiState,
                                 onAsignTechinician = onOrderSelected,
-                                onTransferOrderClicked = onTransferOrderClicked
+                                onTransferOrderClicked = onTransferOrderClicked,
+                                onRegisterSubscription = onRegisterSubscription
                             )
                         }
                     }
@@ -399,7 +403,8 @@ fun InstallationOrderItem(
     order: InstallationOrder,
     uiState: InstallationOrderListUiState,
     onAsignTechinician: (InstallationOrder) -> Unit,
-    onTransferOrderClicked: (InstallationOrder) -> Unit
+    onTransferOrderClicked: (InstallationOrder) -> Unit,
+    onRegisterSubscription: (InstallationOrder) -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -428,6 +433,10 @@ fun InstallationOrderItem(
             User.UserType.TECHNICIAN
         )) &&
         order.status == InstallationOrderStatus.EN_CURSO
+    }
+
+    val canRegisterSubscription = remember(uiState.currentUser, order) {
+        uiState.canRegisterSubscription(order)
     }
 
     val showTechnicianInfo = remember(uiState.currentUser, order) {
@@ -510,6 +519,22 @@ fun InstallationOrderItem(
                                         onClick = {
                                             showMenu = false
                                             onTransferOrderClicked(order)
+                                        }
+                                    )
+                                }
+
+                                if (canRegisterSubscription) {
+                                    DropdownMenuItem(
+                                        text = { Text("Registrar suscripción") },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Outlined.AddCircle,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            showMenu = false
+                                            onRegisterSubscription(order)
                                         }
                                     )
                                 }
@@ -945,7 +970,8 @@ fun InstallationOrderListPreview() {
             onFilterChange = {},
             onCreateOrderClicked = {},
             onOrderSelected = {},
-            onTransferOrderClicked = {}
+            onTransferOrderClicked = {},
+            onRegisterSubscription = {}
         )
     }
 }

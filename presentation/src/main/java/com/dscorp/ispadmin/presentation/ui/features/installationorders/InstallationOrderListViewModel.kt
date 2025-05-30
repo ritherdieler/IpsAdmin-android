@@ -36,6 +36,7 @@ sealed class InstallationOrderListEvent {
     data class TransferOrderClicked(val order: InstallationOrder) : InstallationOrderListEvent()
     object TransferOrder : InstallationOrderListEvent()
     object CloseTransferDialog : InstallationOrderListEvent()
+    data class RegisterSubscriptionClicked(val order: InstallationOrder) : InstallationOrderListEvent()
 }
 
 /**
@@ -62,6 +63,10 @@ data class InstallationOrderListUiState(
         User.UserType.ADMIN,
         User.UserType.SALES
     )
+
+    fun canRegisterSubscription(order: InstallationOrder): Boolean =
+        currentUser?.type == User.UserType.TECHNICIAN &&
+        order.status == InstallationOrderStatus.EN_CURSO
 }
 
 /**
@@ -96,6 +101,7 @@ class InstallationOrderListViewModel(
             is InstallationOrderListEvent.TransferOrderClicked -> onTransferOrderClicked(event.order)
             is InstallationOrderListEvent.TransferOrder -> onTransferOrder()
             is InstallationOrderListEvent.CloseTransferDialog -> onCloseTransferDialog()
+            is InstallationOrderListEvent.RegisterSubscriptionClicked -> onRegisterSubscriptionClicked(event.order)
         }
     }
 
@@ -322,6 +328,16 @@ class InstallationOrderListViewModel(
                 selectedOrder = null,
                 selectedTechnician = null,
                 scheduledDate = null,
+                error = null
+            )
+        }
+    }
+
+    private fun onRegisterSubscriptionClicked(order: InstallationOrder) {
+        _uiState.update {
+            it.copy(
+                selectedOrder = order,
+                navigateToRegisterSubscription = true,
                 error = null
             )
         }
