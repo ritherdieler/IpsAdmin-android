@@ -13,13 +13,11 @@ import com.dscorp.ispadmin.domain.model.Mufa
 
 class MufaDialogFragment : DialogFragment(){
 
-    private val args: MufaDialogFragmentArgs by navArgs()
     lateinit var binding: FragmentMufaDialogBinding
     lateinit var mufa: Mufa
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mufa = args.mufas
 
     }
 

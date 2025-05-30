@@ -4,12 +4,11 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Bundle
 import androidx.core.content.ContextCompat
-import androidx.navigation.fragment.findNavController
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.FragmentMufasMapBinding
-import com.dscorp.ispadmin.presentation.ui.features.base.BaseFragment
 import com.dscorp.ispadmin.domain.model.Mufa
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
+import com.dscorp.ispadmin.presentation.ui.features.base.BaseFragment
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
@@ -92,10 +91,10 @@ class MufaMapFragment : BaseFragment<MufaUiState, FragmentMufasMapBinding>(), On
         googleMap.animateCamera(CameraUpdateFactory.zoomTo(11.5f))
         googleMap.setOnMarkerClickListener { marker ->
             if (marker.tag == "mufa") {
-                val selectedMufa = mufaMarkersMap[marker]
-                val action =
-                    MufaMapFragmentDirections.actionNavMufaToMufaDialogFragment(selectedMufa!!)
-                findNavController().navigate(action)
+//                val selectedMufa = mufaMarkersMap[marker]
+//                val action =
+//                    MufaMapFragmentDirections.actionNavMufaToMufaDialogFragment(selectedMufa!!)
+//                findNavController().navigate(action)
             } else {
                 NapBoxDetailDialogFragment(
                     napBox = napBoxMarkersMap[marker]!!,

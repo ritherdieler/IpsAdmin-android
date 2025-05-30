@@ -54,6 +54,8 @@ import com.dscorp.ispadmin.presentation.ui.features.installationorders.Installat
 import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListScreen
 import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.LocationSelectorComposeDialog
+import com.dscorp.ispadmin.presentation.ui.features.main.MainEvent
+import com.dscorp.ispadmin.presentation.ui.features.main.MainViewModel
 import com.dscorp.ispadmin.presentation.ui.features.main.MenuDrawerContent
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationComposeScreen
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailScreen
@@ -83,8 +85,15 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun FeatureNavGraph(
     navController: NavHostController = rememberNavController(),
-    onLoggedOut: () -> Unit = {}
+    onLoggedOut: () -> Unit = {},
 ) {
+    val viewModel: MainViewModel = koinViewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.onEvent(MainEvent.LoadCurrentUser)
+    }
+
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -123,6 +132,8 @@ fun FeatureNavGraph(
         drawerContent = {
             ModalDrawerSheet {
                 MenuDrawerContent(
+                    currentUser = uiState.currentUser,
+                    drawerItems = uiState.getDrawerItems(),
                     navController = navController,
                     onItemClicked = {
                         scope.launch {
@@ -169,7 +180,6 @@ fun FeatureNavGraph(
                     .padding(innerPadding),
                 color = MaterialTheme.colorScheme.background
             ) {
-                // Contenido del grafo de navegación
                 NavGraphContent(navController, onLoggedOut = onLoggedOut)
             }
         }

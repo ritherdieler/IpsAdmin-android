@@ -8,20 +8,18 @@ import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.FragmentEditNapBoxBinding
-import com.dscorp.ispadmin.presentation.extension.navigateSafe
+import com.dscorp.ispadmin.domain.model.GeoLocation
+import com.dscorp.ispadmin.domain.model.NapBox
 import com.dscorp.ispadmin.presentation.extension.showErrorDialog
 import com.dscorp.ispadmin.presentation.extension.showSuccessDialog
 import com.dscorp.ispadmin.presentation.ui.features.napbox.NapBoxViewModel
-import com.dscorp.ispadmin.domain.model.GeoLocation
-import com.dscorp.ispadmin.domain.model.NapBox
 import com.google.android.gms.maps.model.LatLng
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class EditNapBoxFragment : Fragment() {
-    private val args by navArgs<EditNapBoxFragmentArgs>()
+//    private val args by navArgs<EditNapBoxFragmentArgs>()
     private var selectedLocation: LatLng? = null
     lateinit var binding: FragmentEditNapBoxBinding
     val viewModel: NapBoxViewModel by viewModel()
@@ -33,7 +31,7 @@ class EditNapBoxFragment : Fragment() {
     ): View? {
         binding =
             DataBindingUtil.inflate(layoutInflater, R.layout.fragment_edit_nap_box, null, true)
-        viewModel.napBoxResponse = args.napBox
+//        viewModel.napBoxResponse = args.napBox
         fillFormWithSubscriptionData()
         observeNapBoxResponse()
         observeNapBoxFormError()
@@ -44,7 +42,7 @@ class EditNapBoxFragment : Fragment() {
         }
 
         binding.etLocationNapBox.setOnClickListener {
-            findNavController().navigateSafe(R.id.action_nav_to_register_nap_box_to_mapDialog)
+//            findNavController().navigateSafe(R.id.action_nav_to_register_nap_box_to_mapDialog)
         }
         observeMapDialogResult()
 

@@ -6,6 +6,7 @@ import com.dscorp.ispadmin.presentation.ui.features.installationorders.CreateIns
 import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginViewModel
 import com.dscorp.ispadmin.presentation.ui.features.main.MainActivityViewModel
+import com.dscorp.ispadmin.presentation.ui.features.main.MainViewModel
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationViewModel
 import com.dscorp.ispadmin.presentation.ui.features.mufas.MufaViewModel
 import com.dscorp.ispadmin.presentation.ui.features.napbox.NapBoxViewModel
@@ -75,4 +76,5 @@ val viewModelModule = module {
     viewModel { SupportTicketListViewModel(get(), get()) }
     viewModel { InstallationOrderListViewModel(get(), get()) }
     viewModel { PayerFinderViewmodel(get()) }
+    viewModel { MainViewModel(get()) }
 }

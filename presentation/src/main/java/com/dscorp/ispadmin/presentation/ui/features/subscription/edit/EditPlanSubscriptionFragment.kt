@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import com.dscorp.ispadmin.presentation.extension.analytics.AnalyticsConstants
 import com.dscorp.ispadmin.presentation.extension.analytics.sendTouchButtonEvent
 import com.dscorp.ispadmin.presentation.theme.MyTheme
@@ -20,7 +19,7 @@ import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class EditPlanSubscriptionFragment : Fragment() {
-    private val args by navArgs<EditPlanSubscriptionFragmentArgs>()
+//    private val args by navArgs<EditPlanSubscriptionFragmentArgs>()
     private val viewModel: EditSubscriptionViewModel by viewModel()
     private val firebaseAnalytics: FirebaseAnalytics by inject()
 
@@ -40,7 +39,7 @@ class EditPlanSubscriptionFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel.getFormData(args.subscriptionId)
+//        viewModel.getFormData(args.subscriptionId)
     }
 
     @Composable
@@ -53,7 +52,7 @@ class EditPlanSubscriptionFragment : Fragment() {
                 onPlanSelected = { plan -> viewModel.updateSelectedPlan(plan) },
                 onEditClick = {
                     firebaseAnalytics.sendTouchButtonEvent(AnalyticsConstants.REGISTER_SUBSCRIPTION)
-                    viewModel.editSubscription(args.subscriptionId)
+//                    viewModel.editSubscription(args.subscriptionId)
                 },
                 onSuccessDialogDismiss = {
                     viewModel.clearSuccess()

@@ -8,15 +8,13 @@ import android.view.ViewGroup
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.databinding.FragmentNapBoxBinding
-import com.dscorp.ispadmin.presentation.extension.navigateSafe
+import com.dscorp.ispadmin.domain.model.GeoLocation
+import com.dscorp.ispadmin.domain.model.Mufa
 import com.dscorp.ispadmin.presentation.extension.populate
 import com.dscorp.ispadmin.presentation.extension.showErrorDialog
 import com.dscorp.ispadmin.presentation.extension.showSuccessDialog
 import com.dscorp.ispadmin.presentation.ui.features.napbox.NapBoxViewModel
-import com.dscorp.ispadmin.domain.model.GeoLocation
-import com.dscorp.ispadmin.domain.model.Mufa
 import com.google.android.gms.maps.model.LatLng
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -42,7 +40,7 @@ class NapBoxFragment : Fragment() {
         }
 
         binding.etLocationNapBox.setOnClickListener {
-            findNavController().navigateSafe(R.id.action_nav_to_register_nap_box_to_mapDialog)
+//            findNavController().navigateSafe(R.id.action_nav_to_register_nap_box_to_mapDialog)
         }
         observeMapDialogResult()
 
