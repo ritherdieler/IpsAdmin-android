@@ -64,6 +64,7 @@ alwaysApply: true
 - No avanzar si alguna regla no se cumple.
 - Informar explícitamente cualquier excepción antes de seguir.
 
+
 ---
 
 > Cumple todas estas reglas al pie de la letra. No omitas, ignores ni modifiques ninguna bajo ninguna circunstancia.
