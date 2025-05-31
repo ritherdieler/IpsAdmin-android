@@ -4,7 +4,6 @@ import com.dscorp.ispadmin.BuildConfig
 import com.dscorp.ispadmin.data.datasource.remote.InstallationOrderApi
 import com.dscorp.ispadmin.data.datasource.remote.InstallationOrderApiService
 import com.dscorp.ispadmin.data.datasource.remote.SendMessagingCloudApi
-import com.dscorp.ispadmin.data.datasource.remote.WispApiService
 import com.example.data2.data.datasource.RestApiServices
 import org.koin.dsl.module
 import retrofit2.Retrofit
@@ -14,9 +13,6 @@ val apiModule = module {
     single { provideFirebaseCloudMessagingApi(provideRetrofit(BuildConfig.FIRE_BASE_URL, get())) }
     single { provideInstallationOrderApi(get()) }
     single { provideInstallationOrderApiDirect(get()) }
-    single<WispApiService> {
-        get<Retrofit>().create(WispApiService::class.java)
-    }
 }
 
 fun providesApi(retrofit: Retrofit): RestApiServices {

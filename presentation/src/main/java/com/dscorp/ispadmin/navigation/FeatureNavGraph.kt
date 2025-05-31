@@ -352,6 +352,7 @@ private fun NavGraphContent(
         // PAYMENT MODULE
         composable<Payment.Register> { backStackEntry ->
             val paymentId = backStackEntry.toRoute<Payment.Register>().paymentId
+
             RegisterPaymentScreen(
                 navController = navController,
                 paymentId = paymentId

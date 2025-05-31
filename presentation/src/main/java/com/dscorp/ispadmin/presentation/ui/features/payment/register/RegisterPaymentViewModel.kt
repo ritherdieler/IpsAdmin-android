@@ -32,6 +32,7 @@ sealed interface RegisterPaymentEvent {
     object RegisterPayment : RegisterPaymentEvent
     data class SetPayment(val payment: Payment) : RegisterPaymentEvent
     object ToggleDiscountFields : RegisterPaymentEvent
+    data class LoadPaymentData(val paymentId: Int) : RegisterPaymentEvent
 }
 
 class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(), KoinComponent {
@@ -54,13 +55,14 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
     fun onEvent(event: RegisterPaymentEvent) {
         when (event) {
             is RegisterPaymentEvent.PaymentMethodSelected -> {
-                _state.update { 
+                _state.update {
                     it.copy(
                         paymentMethod = event.method,
                         errorMessages = it.errorMessages - "paymentMethod"
-                    ) 
+                    )
                 }
             }
+
             is RegisterPaymentEvent.DiscountAmountChanged -> {
                 val amount = event.amount
                 val errors = if (amount.isNotEmpty()) {
@@ -79,22 +81,24 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
                 } else {
                     _state.value.errorMessages - "discountAmount"
                 }
-                
-                _state.update { 
+
+                _state.update {
                     it.copy(
                         discountAmount = amount,
                         errorMessages = errors
-                    ) 
+                    )
                 }
             }
+
             is RegisterPaymentEvent.DiscountReasonChanged -> {
-                _state.update { 
+                _state.update {
                     it.copy(
                         discountReason = event.reason,
                         errorMessages = it.errorMessages - "discountReason"
-                    ) 
+                    )
                 }
             }
+
             is RegisterPaymentEvent.ElectronicPayerNameChanged -> {
                 event.name?.let { name ->
                     _state.update {
@@ -105,14 +109,17 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
                 }
 
             }
+
             is RegisterPaymentEvent.RegisterPayment -> {
                 registerPayment()
             }
+
             is RegisterPaymentEvent.SetPayment -> {
                 val payment = event.payment
-                val showDiscountFields = payment.discountAmount != null && payment.discountAmount!! > 0
-                
-                _state.update { 
+                val showDiscountFields =
+                    payment.discountAmount != null && payment.discountAmount!! > 0
+
+                _state.update {
                     it.copy(
                         payment = payment,
                         showDiscountFields = showDiscountFields,
@@ -120,9 +127,10 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
                         discountReason = payment.discountReason ?: ""
                     )
                 }
-                
+
                 getElectronicPayers()
             }
+
             is RegisterPaymentEvent.ToggleDiscountFields -> {
                 _state.update {
                     it.copy(
@@ -135,12 +143,38 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
                     )
                 }
             }
+
+            is RegisterPaymentEvent.LoadPaymentData -> {
+                viewModelScope.launch {
+                    _state.update { it.copy(isLoading = true) }
+                    try {
+                        val payment = repository.getPaymentById(event.paymentId.toString())
+                        _state.update {
+                            it.copy(
+                                payment = payment,
+                                isLoading = false,
+                                showDiscountFields = payment.discountAmount != null && payment.discountAmount!! > 0,
+                                discountAmount = payment.discountAmount?.toString() ?: "",
+                                discountReason = payment.discountReason ?: ""
+                            )
+                        }
+                        getElectronicPayers()
+                    } catch (e: Exception) {
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessages = it.errorMessages + ("general" to (e.message ?: "Error al cargar el pago"))
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 
     private fun validateDiscountAmount(amount: String, maxAmount: Double): String? {
         if (amount.isEmpty()) return null
-        
+
         return try {
             val amountDouble = amount.toDouble()
             if (amountDouble > maxAmount) {
@@ -158,16 +192,16 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
     private fun validateForm(): Boolean {
         val errors = mutableMapOf<String, String>()
         val currentState = _state.value
-        
+
         if (currentState.paymentMethod.isEmpty()) {
             errors["paymentMethod"] = "Debe seleccionar un método de pago"
         }
-        
+
         // Validar nombre del pagador solo para Yape o Plin
         if ((currentState.paymentMethod == "Yape" || currentState.paymentMethod == "Plin") && currentState.electronicPayerName.isEmpty()) {
             errors["electronicPayerName"] = "Debe ingresar el nombre del pagador"
         }
-        
+
         // Validación de descuento cuando está habilitado
         if (currentState.showDiscountFields) {
             // Validar que se haya ingresado un monto de descuento
@@ -186,29 +220,30 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
                     errors["discountAmount"] = "Monto de descuento inválido"
                 }
             }
-            
+
             // Validar que se haya seleccionado una razón de descuento
             if (currentState.discountReason.isEmpty()) {
                 errors["discountReason"] = "Debe seleccionar una razón para el descuento"
             }
         }
-        
+
         _state.update { it.copy(errorMessages = errors) }
         return errors.isEmpty()
     }
 
     private fun registerPayment() {
         if (!validateForm()) return
-        
+
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
-            
+
             try {
                 val currentState = _state.value
                 currentState.payment?.let { originalPayment ->
                     val paymentToRegister = Payment(
                         id = originalPayment.id,
-                        discountAmount = currentState.discountAmount.takeIf { it.isNotEmpty() && currentState.showDiscountFields }?.toDoubleOrNull() ?: 0.0,
+                        discountAmount = currentState.discountAmount.takeIf { it.isNotEmpty() && currentState.showDiscountFields }
+                            ?.toDoubleOrNull() ?: 0.0,
                         discountReason = currentState.discountReason.takeIf { it.isNotEmpty() && currentState.showDiscountFields },
                         method = currentState.paymentMethod,
                         responsibleId = user!!.id!!,
@@ -220,11 +255,12 @@ class RegisterPaymentViewModel(private val repository: IRepository) : ViewModel(
                     _state.update { it.copy(isLoading = false, isSuccess = true) }
                 }
             } catch (e: Exception) {
-                _state.update { 
+                _state.update {
                     it.copy(
                         isLoading = false,
-                        errorMessages = it.errorMessages + ("general" to (e.message ?: "Error al registrar pago"))
-                    ) 
+                        errorMessages = it.errorMessages + ("general" to (e.message
+                            ?: "Error al registrar pago"))
+                    )
                 }
             }
         }

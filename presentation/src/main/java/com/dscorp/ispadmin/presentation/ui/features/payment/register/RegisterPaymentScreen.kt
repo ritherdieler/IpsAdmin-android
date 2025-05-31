@@ -66,13 +66,7 @@ fun RegisterPaymentScreen(
     
     // Cargar el pago usando el ID
     LaunchedEffect(key1 = paymentId) {
-        // En un escenario real, cargaríamos el pago desde el repositorio
-        // Por ahora creamos un objeto temporal con el ID proporcionado
-        val payment = Payment().apply {
-            id = paymentId
-            // Aquí deberían cargarse más propiedades desde el repositorio
-        }
-        viewModel.onEvent(RegisterPaymentEvent.SetPayment(payment))
+        viewModel.onEvent(RegisterPaymentEvent.LoadPaymentData(paymentId))
     }
     
     if (state.isSuccess) {

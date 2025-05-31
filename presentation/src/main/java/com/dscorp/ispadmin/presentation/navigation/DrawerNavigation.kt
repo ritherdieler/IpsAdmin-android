@@ -70,6 +70,11 @@ sealed class DrawerGroup(
         listOf(DrawerItem.SupportTicketsList, DrawerItem.CreateSupportTicket)
     )
 
+    object TechnicianSupport : DrawerGroup(
+        "Soporte",
+        listOf(DrawerItem.SupportTicketsList)
+    )
+
     object Subscription : DrawerGroup(
         "Suscripciones",
         listOf(DrawerItem.SubscriptionFinder, DrawerItem.RegisterSubscription)
@@ -82,7 +87,7 @@ object DrawerNavigation {
     fun getDrawerGroupsForUser(userType: User.UserType): List<DrawerGroup> {
         return when (userType) {
             User.UserType.TECHNICIAN -> listOf(
-                DrawerGroup.Support,
+                DrawerGroup.TechnicianSupport,
                 DrawerGroup.Installation,
                 DrawerGroup.Subscription,
                 DrawerGroup.Profile

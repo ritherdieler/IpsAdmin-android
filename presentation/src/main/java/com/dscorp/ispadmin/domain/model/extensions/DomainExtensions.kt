@@ -8,7 +8,7 @@ fun String.isAValidName(): Boolean {
     return this.isNotEmpty() && matches(Regex("^[a-zA-Z\\s]+$"))
 }
 fun String.isAValidAddress(): Boolean {
-    return !isNullOrEmpty() && matches(Regex("^[a-zA-Z0-9\\s.,-]+$"))
+    return !isNullOrEmpty()
 }
 
 fun String.isValidIpv4(): Boolean {

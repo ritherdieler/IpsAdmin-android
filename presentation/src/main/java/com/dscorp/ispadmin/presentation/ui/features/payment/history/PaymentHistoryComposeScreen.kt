@@ -65,9 +65,8 @@ fun PaymentHistoryComposeScreen(
                     // Necesitamos proporcionar el ID del pago para la ruta
                     payment.id?.let { paymentId ->
                         navController.navigate(
-                            Payment.Register(
-                                paymentId
-                            ))
+                            Payment.Register(paymentId )
+                        )
                     }
                 } else {
                     // Navegar a la pantalla de detalle de pago

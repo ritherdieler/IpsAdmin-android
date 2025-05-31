@@ -316,6 +316,8 @@ class RegisterSubscriptionComposeViewModel(
         }
 
         // Seleccionar automáticamente el plan si solo hay uno disponible
+        if (filteredPlans.isEmpty())
+            return
         val selectedPlan = if (filteredPlans.size == 1) filteredPlans.first() else null
 
         uiState.update {
@@ -362,7 +364,7 @@ class RegisterSubscriptionComposeViewModel(
         val subscription = createSubscriptionFromForm(form)
 
         viewModelScope.launch {
-            registerSubscriptionUseCase(subscription,uiState.value.orderId).fold(
+            registerSubscriptionUseCase(subscription, uiState.value.orderId).fold(
                 onSuccess = { registeredSubscription ->
                     uiState.update {
                         it.copy(
