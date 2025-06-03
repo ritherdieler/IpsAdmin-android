@@ -468,9 +468,9 @@ private fun handleMenuAction(
         }
 
         EDIT_PLAN_SUBSCRIPTION -> {
-//            navController.navigate(
-//                Subscription.Edit(subscription.id)
-//            )
+            navController.navigate(
+                Subscription.ChangePlan(subscription.id)
+            )
         }
 
         SEE_DETAILS -> {

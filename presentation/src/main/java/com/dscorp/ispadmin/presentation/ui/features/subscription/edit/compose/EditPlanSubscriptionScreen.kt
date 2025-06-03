@@ -7,11 +7,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,23 +25,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
+import com.dscorp.ispadmin.domain.model.GeoLocation
+import com.dscorp.ispadmin.domain.model.InstallationType
+import com.dscorp.ispadmin.domain.model.Place
+import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.ServiceStatus
+import com.dscorp.ispadmin.domain.model.SubscriptionResponse
+import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.Loader
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyCustomDialog
 import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.EditSubscriptionUIState
-import com.dscorp.ispadmin.domain.model.PlanResponse
-import com.dscorp.ispadmin.domain.model.SubscriptionResponse
-import com.dscorp.ispadmin.domain.model.ServiceStatus
-import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.PlanEditForm
-import com.dscorp.ispadmin.domain.model.Place
-import com.dscorp.ispadmin.domain.model.GeoLocation
-import com.dscorp.ispadmin.presentation.theme.MyTheme
 
 @Composable
 fun EditPlanSubscriptionScreen(
@@ -78,8 +84,8 @@ fun EditPlanSubscriptionScreen(
                         .padding(bottom = 16.dp)
                 )
                 
-                Divider(color = MaterialTheme.colorScheme.outlineVariant)
-                
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Display subscriber information (read-only)
@@ -207,28 +213,38 @@ fun EditPlanSubscriptionScreen(
                 MyCustomDialog(
                     onDismissRequest = onSuccessDialogDismiss,
                     content = {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.success),
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = stringResource(id = R.string.edit_plan_success),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            MyButton(
-                                onClick = onSuccessDialogDismiss,
-                                text = stringResource(id = R.string.ok),
-                                modifier = Modifier.fillMaxWidth()
-                            )
+
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.CheckCircle,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = stringResource(id = R.string.success),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = stringResource(id = R.string.edit_plan_success),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                MyButton(
+                                    onClick = onSuccessDialogDismiss,
+                                    text = stringResource(id = R.string.ok),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                         }
-                    }
                 )
             }
 
@@ -237,27 +253,37 @@ fun EditPlanSubscriptionScreen(
                 MyCustomDialog(
                     onDismissRequest = onErrorDismiss,
                     content = {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.error),
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = error,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            MyButton(
-                                onClick = onErrorDismiss,
-                                text = stringResource(id = R.string.ok),
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Error,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = stringResource(id = R.string.error),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = error,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                MyButton(
+                                    onClick = onErrorDismiss,
+                                    text = stringResource(id = R.string.ok),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                     }
                 )
             }
@@ -345,4 +371,4 @@ fun EditPlanSubscriptionScreenPreview() {
             onErrorDismiss = {}
         )
     }
-} 
+}
