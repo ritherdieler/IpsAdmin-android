@@ -1,5 +1,8 @@
 package com.dscorp.ispadmin.presentation.ui.components
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
@@ -15,6 +18,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.dscorp.ispadmin.domain.model.extensions.isValidDni
 
 @Composable
 fun MyOutlinedTextField(
@@ -25,8 +31,7 @@ fun MyOutlinedTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     onValueChange: (String) -> Unit,
-    hasError: Boolean = false,
-    singleLine: Boolean = false,
+    singleLine: Boolean = true,
     maxLines: Int? = null,
     maxLength: Int? = null,
     regex: Regex? = null,
@@ -35,7 +40,7 @@ fun MyOutlinedTextField(
     supportingText: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null,
 ) {
-    var isError by remember { mutableStateOf(hasError) }
+    var isError by remember { mutableStateOf(errorMessage != null) }
     var errorText by remember { mutableStateOf(errorMessage) }
 
     LaunchedEffect(errorMessage) {
@@ -52,30 +57,20 @@ fun MyOutlinedTextField(
         modifier = modifier,
         value = value,
         label = { Text(label) },
-        onValueChange = { newValue -> 
-            var validInput = true
+        onValueChange = { newValue ->
             var error: String? = null
-            
+
             // Validar longitud máxima
             if (maxLength != null && newValue.length > maxLength) {
-                validInput = false
                 error = "Máximo $maxLength caracteres"
             }
-            
+
             // Validar patrón de texto usando regex
-            if (validInput && regex != null && newValue.isNotEmpty() && !regex.matches(newValue)) {
-                validInput = false
+            if (regex != null && newValue.isNotEmpty() && !regex.matches(newValue)) {
                 error = "Formato inválido"
             }
-            
-            if (validInput) {
-                onValueChange(newValue)
-                isError = false
-                errorText = null
-            } else {
-                isError = true
-                errorText = error
-            }
+
+            onValueChange(newValue)
         },
         keyboardOptions = keyboardOptions,
         visualTransformation = visualTransformation,
@@ -85,16 +80,51 @@ fun MyOutlinedTextField(
         } else {
             supportingText
         },
-        trailingIcon = {
-            if (isError) {
-                Icon(Icons.Filled.Error, "Error", tint = MaterialTheme.colorScheme.error)
-            } else {
-                trailingIcon?.invoke()
+        trailingIcon = if (trailingIcon != null) {
+            {
+                when {
+                    isError -> Icon(
+                        Icons.Filled.Error,
+                        "Error",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+
+                    else -> trailingIcon()
+                }
             }
+        } else if (isError) {
+            { Icon(Icons.Filled.Error, "Error", tint = MaterialTheme.colorScheme.error) }
+        } else {
+            null
         },
         singleLine = singleLine,
         maxLines = maxLines ?: 1,
         enabled = enabled,
         readOnly = readOnly
     )
+}
+
+@Composable
+@Preview(showBackground = true)
+fun MyOutlinedTextFieldPreview() {
+    MaterialTheme {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            var valueIsValid by remember { mutableStateOf(false) }
+            var text by remember { mutableStateOf("") }
+            // Campo con error
+            MyOutlinedTextField(
+                value = text,
+                onValueChange = {
+                    text = it
+                    valueIsValid = text.isValidDni()
+                },
+                label = "Campo con error",
+                errorMessage = if (!valueIsValid) "Este campo contiene un error" else null,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+        }
+    }
 }

@@ -36,6 +36,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.dscorp.ispadmin.domain.model.InstallationType
+import com.dscorp.ispadmin.domain.model.NapBoxResponse
+import com.dscorp.ispadmin.domain.model.Onu
+import com.dscorp.ispadmin.domain.model.Place
+import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.MyAutoCompleteTextViewCompose
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
@@ -44,11 +49,6 @@ import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
-import com.dscorp.ispadmin.domain.model.InstallationType
-import com.dscorp.ispadmin.domain.model.NapBoxResponse
-import com.dscorp.ispadmin.domain.model.Onu
-import com.dscorp.ispadmin.domain.model.Place
-import com.dscorp.ispadmin.domain.model.PlanResponse
 
 @Composable
 fun RegisterSubscriptionForm(
@@ -85,23 +85,23 @@ fun RegisterSubscriptionForm(
                 label1 = "Nombres",
                 value1 = formState.registerSubscriptionForm.firstName,
                 onValueChange1 = onFirstNameChanged,
-                hasError1 = formState.registerSubscriptionForm.firstNameError != null,
+                error1 = formState.registerSubscriptionForm.firstNameError,
                 label2 = "Apellidos",
+                error2 = formState.registerSubscriptionForm.lastNameError,
                 value2 = formState.registerSubscriptionForm.lastName,
                 onValueChange2 = onLastNameChanged,
-                hasError2 = formState.registerSubscriptionForm.lastNameError != null
             )
 
             TwoFieldsRow(
                 label1 = "DNI",
                 value1 = formState.registerSubscriptionForm.dni,
                 onValueChange1 = onDniChanged,
-                hasError1 = formState.registerSubscriptionForm.dniError != null,
+                error1 = formState.registerSubscriptionForm.dniError,
                 keyboardType1 = KeyboardType.Number,
                 label2 = "Teléfono",
+                error2 = formState.registerSubscriptionForm.phoneError,
                 value2 = formState.registerSubscriptionForm.phone,
                 onValueChange2 = onPhoneChanged,
-                hasError2 = formState.registerSubscriptionForm.phoneError != null,
                 keyboardType2 = KeyboardType.Phone
             )
 
@@ -119,8 +119,8 @@ fun RegisterSubscriptionForm(
                 modifier = Modifier.fillMaxWidth(),
                 value = formState.registerSubscriptionForm.address,
                 label = "Dirección",
+                errorMessage = formState.registerSubscriptionForm.addressError,
                 onValueChange = onAddressChanged,
-                hasError = formState.registerSubscriptionForm.addressError != null,
                 singleLine = false,
                 maxLines = 4
             )
@@ -194,13 +194,13 @@ private fun SectionTitle(title: String) {
 private fun TwoFieldsRow(
     label1: String,
     value1: String,
+    error1: String? = null,
     onValueChange1: (String) -> Unit,
-    hasError1: Boolean = false,
     keyboardType1: KeyboardType = KeyboardType.Text,
     label2: String,
     value2: String,
+    error2: String? = null,
     onValueChange2: (String) -> Unit,
-    hasError2: Boolean = false,
     keyboardType2: KeyboardType = KeyboardType.Text
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -208,16 +208,16 @@ private fun TwoFieldsRow(
             modifier = Modifier.weight(1f),
             label = label1,
             value = value1,
+            errorMessage = error1,
             onValueChange = onValueChange1,
-            hasError = hasError1,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType1)
         )
         MyOutlinedTextField(
             modifier = Modifier.weight(1f),
             label = label2,
             value = value2,
+            errorMessage = error2,
             onValueChange = onValueChange2,
-            hasError = hasError2,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType2)
         )
     }
@@ -328,7 +328,7 @@ private fun RefreshIcon(
         label = "rotationAnimation"
     )
 
-     MyIconButton(
+    MyIconButton(
         modifier = Modifier.padding(start = 8.dp),
         onClick = onRefreshOnuList
     ) {

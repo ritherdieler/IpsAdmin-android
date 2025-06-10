@@ -115,7 +115,6 @@ fun EditPlanSubscriptionScreen(
                                 onValueChange = { },
                                 label = stringResource(id = R.string.firstName),
                                 modifier = Modifier.fillMaxWidth(),
-                                hasError = false,
                                 singleLine = true,
                                 readOnly = true
                             )
@@ -127,7 +126,6 @@ fun EditPlanSubscriptionScreen(
                                 onValueChange = { },
                                 label = stringResource(id = R.string.lastName),
                                 modifier = Modifier.fillMaxWidth(),
-                                hasError = false,
                                 singleLine = true,
                                 readOnly = true
                             )
@@ -139,7 +137,6 @@ fun EditPlanSubscriptionScreen(
                                 onValueChange = { },
                                 label = stringResource(id = R.string.dni),
                                 modifier = Modifier.fillMaxWidth(),
-                                hasError = false,
                                 singleLine = true,
                                 readOnly = true
                             )

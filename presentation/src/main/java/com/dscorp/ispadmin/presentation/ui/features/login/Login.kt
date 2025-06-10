@@ -88,7 +88,6 @@ fun Login(
                 value = username,
                 label = "Usuario",
                 onValueChange = { username = it },
-                hasError = userNameError,
                 errorMessage = if (userNameError) "Debe ingresar un usuario válido" else null
             )
 
@@ -99,7 +98,6 @@ fun Login(
                 value = password,
                 label = "Contraseña",
                 onValueChange = { password = it },
-                hasError = passwordError,
                 errorMessage = if (passwordError) "La contraseña no puede estar vacía" else null,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {

@@ -35,7 +35,6 @@ class KoinApplication : Application() {
                 dialogFactoryModule,
                 localDataModule,
                 applicationModule,
-                formFieldModule,
                 useCaseModule,
                 module {
                     single { firebaseAnalytics }

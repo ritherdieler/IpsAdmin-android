@@ -388,7 +388,6 @@ fun RegisterPaymentForm(
                             errorMessage = state.errorMessages["discountAmount"],
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             onValueChange = onDiscountAmountChanged,
-                            hasError = state.errorMessages.containsKey("discountAmount")
                         )
                         
                         Spacer(modifier = Modifier.height(16.dp))

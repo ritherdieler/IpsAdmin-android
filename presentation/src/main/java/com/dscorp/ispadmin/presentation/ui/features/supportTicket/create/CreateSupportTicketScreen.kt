@@ -33,14 +33,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
+import com.dscorp.ispadmin.domain.model.Place
+import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.MyAutoCompleteTextViewCompose
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyCustomDialog
 import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
-import com.dscorp.ispadmin.domain.model.Place
-import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
 
 @Composable
 fun CreateSupportTicketScreen(
@@ -93,7 +93,6 @@ fun CreateSupportTicketScreen(
                     onValueChange = { if (it.length <= 9) onPhoneChange(it) },
                     label = "Teléfono de contacto",
                     modifier = Modifier.fillMaxWidth(),
-                    hasError = uiState.phoneError != null,
                     errorMessage = uiState.phoneError,
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
@@ -169,7 +168,6 @@ fun CreateSupportTicketScreen(
                     },
                     label = "Descripción",
                     modifier = Modifier.fillMaxWidth(),
-                    hasError = uiState.descriptionError != null,
                     errorMessage = uiState.descriptionError,
                     singleLine = false,
                     maxLines = 5
@@ -359,7 +357,6 @@ fun CreateSupportTicketScreen(
                         onValueChange = onCustomerNameChange,
                         label = "Nombre completo",
                         modifier = Modifier.fillMaxWidth(),
-                        hasError = uiState.customerNameError != null,
                         errorMessage = uiState.customerNameError,
                         singleLine = true
                     )
