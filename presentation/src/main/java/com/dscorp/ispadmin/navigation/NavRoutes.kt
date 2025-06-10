@@ -117,6 +117,12 @@ sealed class NavRoutes {
             data class Close(val ticketId: Int) : SupportTicket()
         }
 
+        @Serializable
+        sealed class Plan : FeatureRoutes() {
+            @Serializable
+            object List : Plan()
+        }
+
         companion object {
             fun FromString(string: String?): FeatureRoutes {
                 return when (string?.split("?")[0]) {

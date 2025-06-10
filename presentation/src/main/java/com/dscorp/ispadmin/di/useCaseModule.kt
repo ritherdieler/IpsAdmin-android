@@ -18,6 +18,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compos
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetPlanListUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetUserSessionUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionUseCase
+import com.dscorp.ispadmin.presentation.ui.features.plan.UpdatePlanUseCase
 import org.koin.dsl.module
 
 val useCaseModule = module {
@@ -35,4 +36,5 @@ val useCaseModule = module {
     single<PlaceUseCase> { PlaceUseCaseImpl(get()) }
     single<UpdateDeviceTokenUseCase> { UpdateDeviceTokenUseCaseImpl(get()) }
     single { GetPaymentByIdUseCase(get()) }
+    single { UpdatePlanUseCase(get()) }
 }

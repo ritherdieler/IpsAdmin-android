@@ -68,6 +68,8 @@ import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetail
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryComposeScreen
 import com.dscorp.ispadmin.presentation.ui.features.payment.payerFinder.FindPayerComposeScreen
 import com.dscorp.ispadmin.presentation.ui.features.payment.register.RegisterPaymentScreen
+import com.dscorp.ispadmin.presentation.ui.features.plan.PlanListScreen
+import com.dscorp.ispadmin.presentation.ui.features.plan.PlanListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.profile.ProfileScreen
 import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.EditSubscriptionViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.compose.EditPlanSubscriptionScreen
@@ -160,6 +162,7 @@ fun FeatureNavGraph(
         is Installation.InProgress -> "Órdenes en Progreso"
         is Installation.Closed -> "Órdenes Cerradas"
         is Installation.List -> "Órdenes de Instalación"
+        is FeatureRoutes.Plan.List -> "Planes"
         null -> "ISP Admin"
         else -> "ISP Admin"
     }
@@ -238,6 +241,28 @@ private fun NavGraphContent(
         navController = navController,
         startDestination = startDestination ?: Profile,
     ) {
+        // Plan
+        composable<FeatureRoutes.Plan.List> {
+            val viewModel: PlanListViewModel = koinViewModel()
+            val state by viewModel.uiState.collectAsState()
+
+            PlanListScreen(
+                state = state,
+                onPlanSelected = { /* Manejar selección si es necesario */ },
+                onUpdateClick = { plan -> viewModel.updatePlan(plan) },
+                onSuccessDialogDismiss = { viewModel.clearSuccess() },
+                onErrorDismiss = { viewModel.clearError() },
+                onShowEditDialog = { plan -> viewModel.showEditDialog(plan) },
+                onHideEditDialog = { viewModel.hideEditDialog() },
+                onUpdateEditedName = { name -> viewModel.updateEditedName(name) },
+                onUpdateEditedPrice = { price -> viewModel.updateEditedPrice(price) },
+                onUpdateEditedDownloadSpeed = { speed -> viewModel.updateEditedDownloadSpeed(speed) },
+                onUpdateEditedUploadSpeed = { speed -> viewModel.updateEditedUploadSpeed(speed) },
+                onUpdateSelectedType = { type -> viewModel.updateSelectedType(type) },
+                onToggleFilterExpanded = { viewModel.toggleFilterExpanded() }
+            )
+        }
+
         // Dashboard
         composable<Dashboard> {
             DashBoardComposeScreen(navController = navController)

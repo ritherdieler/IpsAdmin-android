@@ -340,4 +340,9 @@
     <string name="invalidLastName">Apellidos no validos</string>
     <string name="invalidEmail">Correo no valido</string>
     <string name="invalidPhone">El teléfono no es valido</string>
+    <string name="price_format">Precio: S/ %.2f</string>
+    <string name="speed_format" formatted="false">Velocidad: %s / %s Mbps</string>
+    <string name="plan_updated_success">El plan fue actualizado correctamente</string>
+    <string name="download_speed">Velocidad de descarga (Mbps)</string>
+    <string name="upload_speed">Velocidad de subida (Mbps)</string>
 </resources>

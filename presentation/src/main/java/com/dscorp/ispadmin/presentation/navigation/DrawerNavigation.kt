@@ -56,6 +56,9 @@ sealed class DrawerItem(
     object PayerFinder :
         DrawerItem("Buscador de pagadores", FeatureRoutes.Payment.FindPayer, Icons.Filled.CreditCard
         )
+
+    // Grupo: Planes
+    object PlanList : DrawerItem("Planes", FeatureRoutes.Plan.List, Icons.Filled.Handyman)
 }
 
 sealed class DrawerGroup(
@@ -81,6 +84,7 @@ sealed class DrawerGroup(
     )
 
     object Payment : DrawerGroup("Pagos", listOf(DrawerItem.PayerFinder))
+    object Plans : DrawerGroup("Planes", listOf(DrawerItem.PlanList))
 }
 
 object DrawerNavigation {
@@ -98,13 +102,23 @@ object DrawerNavigation {
                 DrawerGroup.Profile
             )
 
-            User.UserType.ADMIN, User.UserType.SECRETARY, User.UserType.ACCOUNTANT -> listOf(
+            User.UserType.SECRETARY, User.UserType.ACCOUNTANT -> listOf(
                 DrawerGroup.Dashboard,
                 DrawerGroup.Subscription,
                 DrawerGroup.Support,
                 DrawerGroup.Installation,
                 DrawerGroup.Payment,
-                DrawerGroup.Profile
+                DrawerGroup.Profile,
+            )
+
+            User.UserType.ADMIN-> listOf(
+                DrawerGroup.Dashboard,
+                DrawerGroup.Subscription,
+                DrawerGroup.Support,
+                DrawerGroup.Installation,
+                DrawerGroup.Payment,
+                DrawerGroup.Profile,
+                DrawerGroup.Plans
             )
 
             else -> throw Exception("Tipo de usuario no soportado")

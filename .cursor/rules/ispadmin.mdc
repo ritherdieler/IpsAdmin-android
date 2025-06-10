@@ -52,8 +52,8 @@ alwaysApply: true
 - Usar nombres claros y descriptivos.
 
 ## 9. Compilación y pruebas
-- Antes de finalizar cualquier tarea, compilar el código con:
-  - `./gradlew compileDebugSources`
+- al realizar cualquier tarea debes ejecutar:
+  - compileDebugSources
 - Realizar siempre pruebas funcionales básicas de pantallas y flujos.
 - **Agregar pruebas obligatorias para los ViewModel y para la UI.**  
   - Los ViewModel deben tener pruebas unitarias.

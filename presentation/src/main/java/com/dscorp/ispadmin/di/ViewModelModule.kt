@@ -26,6 +26,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.CreateSupportTicketViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.SupportTicketViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.SupportTicketListViewModel
+import com.dscorp.ispadmin.presentation.ui.features.plan.PlanListViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -77,4 +78,5 @@ val viewModelModule = module {
     viewModel { InstallationOrderListViewModel(get(), get()) }
     viewModel { PayerFinderViewmodel(get()) }
     viewModel { MainViewModel(get()) }
+    viewModel { PlanListViewModel(get(), get()) }
 }
