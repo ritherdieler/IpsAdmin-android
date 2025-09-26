@@ -32,6 +32,7 @@ data class Subscription(
     var coupon: String? = null,
     var isMigration: Boolean? = false,
     var note: String? = null,
+    var borneNumber: String? = null,
 
     ) : java.io.Serializable {
     override fun toString(): String {

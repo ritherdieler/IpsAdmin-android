@@ -95,6 +95,10 @@ fun RegisterSubscriptionFormScreen(
                             "IP: ${uiState.registeredSubscription?.ip ?: "No asignada"}",
                             fontWeight = FontWeight.Bold
                         )
+                        Text(
+                            "Número de Borne: ${uiState.registeredSubscription?.borneNumber ?: "No asignado"}",
+                            fontWeight = FontWeight.Bold
+                        )
                         Text("Tipo de instalación: ${uiState.registeredSubscription?.installationType?.name ?: "No especificado"}")
                     }
                 },

@@ -17,8 +17,8 @@ android {
         applicationId "com.dscorp.ispadmin"
         minSdk rootProject.ext.minSdk
         targetSdk rootProject.ext.targetSdk
-        versionCode 38
-        versionName "2.0.2"
+        versionCode 39
+        versionName "2.1.0"
         testInstrumentationRunner "com.dscorp.ispadmin.test.InstrumentationTestRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -31,7 +31,7 @@ android {
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
 
 //            DEVELOP
-            buildConfigField 'String', "BASE_URL", '"http://192.168.0.160:8080/"'
+            buildConfigField 'String', "BASE_URL", '"http://192.168.1.5:8080/"'
 
 //            RELEASE
 //            buildConfigField 'String', "BASE_URL", '"http://191.101.234.130:8080/ispadmin/"'

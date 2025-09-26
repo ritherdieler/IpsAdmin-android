@@ -5,10 +5,13 @@ import java.util.Date
 data class Outlay(
     val amount: Double,
     val description: String,
-    val document_code:String,
+    val document_code: String,
     val date: Date? = null,
+    val category: String? = null,
+    val receipt_url: String? = null,
+    val cost_center: String? = null,
     var responsibleId: Int? = null,
-    val responsibleName: String?= null
+    val responsibleName: String? = null
 ){
-    fun isValid() = amount > 0 && description.isNotEmpty()
+    fun isValid() = amount > 0 && description.isNotEmpty() && !category.isNullOrEmpty()
 }

@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose
 
+import ZoomableImage
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.dscorp.ispadmin.presentation.ui.components.ZoomableImage
 
 @Composable
 fun TicketImageDialog(

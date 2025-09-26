@@ -35,9 +35,7 @@ private const val TAG = "FcmService"
 class CloudMessagingService : FirebaseMessagingService() {
     private val repository: IRepository by inject()
     private val notificationManager: NotificationManagerWrapper by lazy {
-        NotificationManagerWrapperImpl(
-            this
-        )
+        NotificationManagerWrapperImpl(this)
     }
     private val textToSpeechManager: TextToSpeechManager by lazy { TextToSpeechManagerImpl(this) }
     private val messageHandlerRegistry: MessageHandlerRegistry by lazy {

@@ -34,11 +34,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
@@ -47,10 +49,12 @@ import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.AsyncImageViewer
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Dashboard
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Installation
+import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Outlay
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Payment
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Profile
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.SupportTicket
+import com.dscorp.ispadmin.presentation.ui.components.HorizontalImageCarousel
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashBoardComposeScreen
 import com.dscorp.ispadmin.presentation.ui.features.installationorders.CreateInstallationOrderScreen
 import com.dscorp.ispadmin.presentation.ui.features.installationorders.CreateInstallationOrderViewModel
@@ -63,6 +67,7 @@ import com.dscorp.ispadmin.presentation.ui.features.main.MainEvent
 import com.dscorp.ispadmin.presentation.ui.features.main.MainViewModel
 import com.dscorp.ispadmin.presentation.ui.features.main.MenuDrawerContent
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationComposeScreen
+import com.dscorp.ispadmin.presentation.ui.features.outlay.RegisterOutlayScreen
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailScreen
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryComposeScreen
@@ -163,6 +168,7 @@ fun FeatureNavGraph(
         is Installation.Closed -> "Órdenes Cerradas"
         is Installation.List -> "Órdenes de Instalación"
         is FeatureRoutes.Plan.List -> "Planes"
+        is Outlay.Register -> "Registrar Egreso"
         null -> "ISP Admin"
         else -> "ISP Admin"
     }
@@ -406,6 +412,18 @@ private fun NavGraphContent(
         composable<Payment.FindPayer> {
             FindPayerComposeScreen(navController = navController)
         }
+        // OUTLAY MODULE
+        composable<Outlay.Register> {
+            val viewModel: com.dscorp.ispadmin.presentation.ui.features.outlay.OutLayViewModel = koinViewModel()
+            
+            RegisterOutlayScreen(
+                uiState = viewModel.uiState,
+                viewModel = viewModel,
+                onImageClick = { images, index ->
+                    navController.navigate(Outlay.ImageGalleryViewer(images,index))
+                }
+            )
+        }
         // SUPPORT TICKET MODULE
         composable<SupportTicket.List> {
             val viewModel: SupportTicketListViewModel = koinViewModel()
@@ -512,6 +530,17 @@ private fun NavGraphContent(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
+            )
+        }
+
+        dialog<Outlay.ImageGalleryViewer>(dialogProperties = DialogProperties(usePlatformDefaultWidth = false)) {
+            val data = it.toRoute<Outlay.ImageGalleryViewer>()
+            HorizontalImageCarousel(
+                imageUrls = data.imageUrls,
+                onClose = {
+                    navController.popBackStack()
+                },
+                selectedImageIndex = data.selectedIndex
             )
         }
 //

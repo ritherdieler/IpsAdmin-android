@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Handyman
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
@@ -59,6 +60,9 @@ sealed class DrawerItem(
 
     // Grupo: Planes
     object PlanList : DrawerItem("Planes", FeatureRoutes.Plan.List, Icons.Filled.Handyman)
+
+    // Grupo: Egresos
+    object RegisterOutlay : DrawerItem("Registrar Egreso", FeatureRoutes.Outlay.Register, Icons.AutoMirrored.Filled.TrendingDown)
 }
 
 sealed class DrawerGroup(
@@ -85,6 +89,7 @@ sealed class DrawerGroup(
 
     object Payment : DrawerGroup("Pagos", listOf(DrawerItem.PayerFinder))
     object Plans : DrawerGroup("Planes", listOf(DrawerItem.PlanList))
+    object Outlay : DrawerGroup("Egresos", listOf(DrawerItem.RegisterOutlay))
 }
 
 object DrawerNavigation {
@@ -108,6 +113,7 @@ object DrawerNavigation {
                 DrawerGroup.Support,
                 DrawerGroup.Installation,
                 DrawerGroup.Payment,
+                DrawerGroup.Outlay,
                 DrawerGroup.Profile,
             )
 
@@ -117,6 +123,7 @@ object DrawerNavigation {
                 DrawerGroup.Support,
                 DrawerGroup.Installation,
                 DrawerGroup.Payment,
+                DrawerGroup.Outlay,
                 DrawerGroup.Profile,
                 DrawerGroup.Plans
             )

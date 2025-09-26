@@ -16,6 +16,7 @@ import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetail
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.payerFinder.PayerFinderViewmodel
 import com.dscorp.ispadmin.presentation.ui.features.payment.register.RegisterPaymentViewModel
+import com.dscorp.ispadmin.presentation.ui.features.plan.PlanListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.profile.ProfileViewModel
 import com.dscorp.ispadmin.presentation.ui.features.registration.RegisterViewModel
 import com.dscorp.ispadmin.presentation.ui.features.report.ReportsViewModel
@@ -26,7 +27,6 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.CreateSupportTicketViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.SupportTicketViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.SupportTicketListViewModel
-import com.dscorp.ispadmin.presentation.ui.features.plan.PlanListViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -65,7 +65,7 @@ val viewModelModule = module {
     viewModel { DashBoardViewModel() }
     viewModel { MufaViewModel(get()) }
     viewModel { EditSubscriptionViewModel(get()) }
-    viewModel { SubscriptionDetailViewModel(get(), get()) }
+    viewModel { SubscriptionDetailViewModel(get()) }
     viewModel { SupportTicketViewModel(get(), get()) }
     viewModel { CreateSupportTicketViewModel(get()) }
     viewModel { MigrationViewModel(get()) }
@@ -79,4 +79,5 @@ val viewModelModule = module {
     viewModel { PayerFinderViewmodel(get()) }
     viewModel { MainViewModel(get()) }
     viewModel { PlanListViewModel(get(), get()) }
+
 }

@@ -12,10 +12,11 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 class SubscriptionDetailViewModel(
-    val editSubscriptionForm: EditSubscriptionDataForm,
     val repository: IRepository,
 ) :
     BaseViewModel<SubscriptionDetailUiState>() {
+
+    val editSubscriptionForm: EditSubscriptionDataForm = EditSubscriptionDataForm()
 
     var isEditingForm = false
     val editingIcon = MutableLiveData(R.drawable.baseline_edit_24)

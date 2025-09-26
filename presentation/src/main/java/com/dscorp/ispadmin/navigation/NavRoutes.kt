@@ -123,6 +123,19 @@ sealed class NavRoutes {
             object List : Plan()
         }
 
+        @Serializable
+        sealed class Outlay : FeatureRoutes() {
+            @Serializable
+            object Register : Outlay()
+
+            @Serializable
+            data class ImageGalleryViewer(
+                val imageUrls: List<String>,
+                val selectedIndex: Int
+            )
+
+        }
+
         companion object {
             fun FromString(string: String?): FeatureRoutes {
                 return when (string?.split("?")[0]) {
@@ -155,6 +168,8 @@ sealed class NavRoutes {
                     SupportTicket.Create::class.qualifiedName -> SupportTicket.Create
                     SupportTicket.Detail::class.qualifiedName -> SupportTicket.Detail(0)
                     SupportTicket.Close::class.qualifiedName -> SupportTicket.Close(0)
+
+                    Outlay.Register::class.qualifiedName -> Outlay.Register
                     else -> Home // Default case
                 }
             }

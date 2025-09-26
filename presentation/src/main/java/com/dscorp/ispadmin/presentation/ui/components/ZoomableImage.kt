@@ -1,7 +1,8 @@
-package com.dscorp.ispadmin.presentation.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,19 +30,25 @@ import coil.size.Size
 
 @Composable
 fun ZoomableImage(
+    modifier: Modifier = Modifier,
     imageUrl: String,
     maxScale: Float = 3f,
     minScale: Float = 1f,
     backgroundColor: Color = Color.Black,
-    contentDescription: String? = null
+    contentDescription: String? = null,
+    onSwipeLeft: () -> Unit = {},
+    onSwipeRight: () -> Unit = {}
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset(0f, 0f)) }
     var imageSize by remember { mutableStateOf(Offset.Zero) }
+    var dragStartX by remember { mutableFloatStateOf(0f) }
+    var isDragging by remember { mutableStateOf(false) }
+    val swipeThreshold = 50f
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(backgroundColor)
             .pointerInput(Unit) {
@@ -64,6 +71,40 @@ fun ZoomableImage(
                         Offset.Zero
                     }
                 }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        scale = if (scale == minScale) maxScale else minScale
+                        offset = Offset.Zero
+                    }
+                )
+            }
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragStart = { dragStartX = it.x },
+                    onDragEnd = {
+                        if (isDragging && scale <= 1f) {
+                            isDragging = false
+                        }
+                    },
+                    onDragCancel = { isDragging = false },
+                    onHorizontalDrag = { change, dragAmount ->
+                        change.consume()
+                        isDragging = true
+
+                        // Only handle swipes when not zoomed in
+                        if (scale <= 1f) {
+                            if (dragAmount > swipeThreshold) {
+                                onSwipeRight()
+                                isDragging = false
+                            } else if (dragAmount < -swipeThreshold) {
+                                onSwipeLeft()
+                                isDragging = false
+                            }
+                        }
+                    }
+                )
             }
     ) {
         val painter = rememberAsyncImagePainter(
@@ -96,7 +137,7 @@ fun ZoomableImage(
                 )
             }
             is AsyncImagePainter.State.Error -> {
-                Text(text = "Error al carga la imagen", Modifier.align(Alignment.Center))
+                Text(text = "Error al cargar la imagen", Modifier.align(Alignment.Center))
             }
             AsyncImagePainter.State.Empty ->  CircularProgressIndicator(Modifier.align(Alignment.Center), color = Color.White)
         }

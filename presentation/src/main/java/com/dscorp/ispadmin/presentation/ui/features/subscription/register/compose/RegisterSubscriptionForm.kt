@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.domain.model.InstallationType
@@ -348,7 +347,7 @@ const val FIBER_OPTIC = "Fibra óptica"
 const val WIRELESS = "Inalámbrico"
 const val ONLY_TV = "Solo TV"
 
-@Preview(showBackground = true, showSystemUi = true, device = Devices.PIXEL)
+@Preview(showBackground = true, heightDp = 1100)
 @Composable
 private fun RegisterSubscriptionPreview() {
     MyTheme {
