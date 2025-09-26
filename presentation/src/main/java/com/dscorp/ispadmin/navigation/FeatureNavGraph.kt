@@ -414,11 +414,8 @@ private fun NavGraphContent(
         }
         // OUTLAY MODULE
         composable<Outlay.Register> {
-            val viewModel: com.dscorp.ispadmin.presentation.ui.features.outlay.OutLayViewModel = koinViewModel()
-            
+
             RegisterOutlayScreen(
-                uiState = viewModel.uiState,
-                viewModel = viewModel,
                 onImageClick = { images, index ->
                     navController.navigate(Outlay.ImageGalleryViewer(images,index))
                 }

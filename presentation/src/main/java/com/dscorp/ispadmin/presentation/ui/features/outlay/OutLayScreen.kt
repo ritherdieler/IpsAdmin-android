@@ -48,17 +48,19 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun RegisterOutlayScreen(
-    uiState: StateFlow<OutlayUiState>,
     viewModel: OutLayViewModel = koinViewModel(),
     onImageClick: (List<String>, Int) -> Unit
 
-    ) {
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     when {
         uiState.isLoading -> Loader()
-        uiState.error != null -> ShowErrorDialog { viewModel.clearError() }
-        uiState.isSaved -> showSuccessDialog { viewModel.clearError() }
+        uiState.error != null -> {
+            ShowErrorDialog(uiState.error ?: "", onDismiss = { viewModel.clearError() })
+        }
+
+        uiState.isSaved -> ShowSuccessDialog { viewModel.clearError() }
     }
 
     RegisterOutLayForm(
@@ -73,27 +75,29 @@ fun RegisterOutlayScreen(
             )
 
             viewModel.registerOutLay(outLay)
-
         },
         onPhotoTaken = { viewModel.handleIntent(OutlayIntent.TakeImage(it)) },
         onSave = {},
         onPhotoRemove = { viewModel.handleIntent(OutlayIntent.RemoveImage(it)) },
         onImageClick = {
-            onImageClick(uiState.photoList.map { uri-> uri.toString() }, uiState.photoList.indexOf(it))
+            onImageClick(
+                uiState.photoList.map { uri -> uri.toString() },
+                uiState.photoList.indexOf(it)
+            )
         },
         photoUriList = uiState.photoList
     )
 }
 
 @Composable
-fun ShowErrorDialog(onDismiss: () -> Unit) {
+fun ShowErrorDialog(message: String, onDismiss: () -> Unit) {
     MyConfirmDialog(title = "Error", body = {
-        Text(text = "Error al registrar el egreso")
+        Text(text = message)
     }, onDismissRequest = onDismiss)
 }
 
 @Composable
-fun showSuccessDialog(onDismiss: () -> Unit) {
+fun ShowSuccessDialog(onDismiss: () -> Unit) {
     MyConfirmDialog(title = "Éxito", body = {
         Text(text = "Egreso registrado correctamente")
     }, onDismissRequest = {
@@ -126,7 +130,7 @@ fun RegisterOutLayForm(
     val categories =
         listOf("Suministros", "Mantenimiento", "Equipos", "Servicios", "Transporte", "Otros")
     val costCenters =
-        listOf("Administración", "Técnico", "Ventas", "Marketing", "Recursos Humanos", "Otros")
+        listOf("Administración", "Técnico", "Ventas", "Marketing", "Otros")
 
     val (requestCameraPermission, photoUri) = rememberPhotoTaker(
         onPhotoTaken = { uri -> onPhotoTaken(uri) }

@@ -29,10 +29,16 @@ class OutLayViewModel(
             }
 
             is OutlayIntent.TakeImage -> {
-                _uiState.update {
-                    it.copy(photoList = uiState.value.photoList.toMutableList().apply {
-                        add(intent.uri)
-                    })
+                if (uiState.value.photoList.isEmpty()) {
+                    _uiState.update {
+                        it.copy(photoList = uiState.value.photoList.toMutableList().apply {
+                            add(intent.uri)
+                        }, error = null)
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(error = "Solo puedes subir una imagen", isLoading = false, isSaved = false)
+                    }
                 }
             }
 
@@ -68,6 +74,7 @@ class OutLayViewModel(
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
+
     fun clearSaved() {
         _uiState.update { it.copy(isSaved = false) }
     }
