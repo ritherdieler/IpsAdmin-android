@@ -1,4 +1,4 @@
-package com.example.data2.data.datasource
+package com.dscorp.ispadmin.data.datasource.remote
 
 import com.dscorp.ispadmin.data.apirequestmodel.AssistanceTicketRequest
 import com.dscorp.ispadmin.data.apirequestmodel.FixedCostRequest
@@ -26,7 +26,6 @@ import com.dscorp.ispadmin.domain.model.NapBox
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.NetworkDevice
 import com.dscorp.ispadmin.domain.model.Onu
-import com.dscorp.ispadmin.domain.model.Outlay
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.Plan
@@ -283,7 +282,7 @@ interface RestApiServices {
     suspend fun deleteOnuFromOlt(@Query("onuExternalId") onuExternalId: String): BaseResponse<String>
 
     @Multipart
-    @POST("outlay")
+    @POST("outLay")
     suspend fun saveOutlay(
         @Part("amount") amount: RequestBody,
         @Part("description") description: RequestBody,

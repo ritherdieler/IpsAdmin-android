@@ -3,7 +3,7 @@ package com.dscorp.ispadmin.data.repository
 import com.dscorp.ispadmin.data.utils.mapToDomain
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.repository.PaymentRepository
-import com.example.data2.data.datasource.RestApiServices
+import com.dscorp.ispadmin.data.datasource.remote.RestApiServices
 import retrofit2.HttpException
 import java.io.IOException
 

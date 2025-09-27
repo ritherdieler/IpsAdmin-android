@@ -30,7 +30,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dscorp.ispadmin.domain.model.Outlay
 import com.dscorp.ispadmin.presentation.ui.components.MultiplePhotoAndGalleryPicker
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
-import com.dscorp.ispadmin.presentation.ui.components.MyDropDown
 import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
 import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
@@ -52,6 +51,7 @@ fun RegisterOutlayScreen(
         uiState.error != null -> {
             ShowErrorDialog(message = uiState.error ?: "", onDismiss = { viewModel.clearError() })
         }
+
         uiState.isSaved -> {
             ShowSuccessDialog { viewModel.clearError() }
         }
@@ -97,11 +97,6 @@ fun RegisterOutLayForm(
     onImageClick: (Uri) -> Unit
 ) {
 
-    // Opciones predefinidas para categorías y centros de costo
-    val categories =
-        listOf("Suministros", "Mantenimiento", "Equipos", "Servicios", "Transporte", "Otros")
-    val costCenters =
-        listOf("Administración", "Técnico", "Ventas", "Marketing", "Otros")
 
     val (requestCameraPermission, photoUri) = rememberPhotoTaker(
         onPhotoTaken = { uri -> onIntent(OutlayIntent.TakeImage(uri)) }
@@ -133,17 +128,21 @@ fun RegisterOutLayForm(
         // Campo Monto
         MyOutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
-            value = outlay.amount?.toString()?:"",
+            value = outlay.amount ?: "",
             label = "Monto",
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             maxLength = 10,
             regex = Regex("^[0-9]*\\.?[0-9]*$"),
             onValueChange = { newValue ->
-                if (!newValue.contains(",") && !newValue.contains(" ") && !newValue.contains("-") && !newValue.contains("\n")) {
+                if (!newValue.contains(",") && !newValue.contains(" ") && !newValue.contains("-") && !newValue.contains(
+                        "\n"
+                    )
+                ) {
                     onIntent(OutlayIntent.UpdateAmount(newValue))
                 }
             },
             trailingIcon = {
+                if (outlay.amount?.isNotEmpty() == true) {
                     MyIconButton(
                         onClick = { onIntent(OutlayIntent.UpdateAmount("")) }
                     ) {
@@ -152,6 +151,7 @@ fun RegisterOutLayForm(
                             contentDescription = "Limpiar"
                         )
                     }
+                }
             }
         )
 
@@ -201,21 +201,65 @@ fun RegisterOutLayForm(
             }
         )
 
-        // Dropdown para Categoría
-        MyDropDown<String>(
+        // Campo Categoría
+        MyOutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
-            items = categories,
-            onTypeSelected = { selectedCategory ->
-                onIntent(OutlayIntent.UpdateCategory(selectedCategory))
+            value = outlay.category ?: "",
+            label = "Categoría",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            maxLength = 50,
+            onValueChange = { onIntent(OutlayIntent.UpdateCategory(it)) },
+            supportingText = {
+                if (outlay.category.isNullOrEmpty()) {
+                    Text(
+                        text = "Ej: Suministros, Mantenimiento, Equipos",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            trailingIcon = {
+                if (!outlay.category.isNullOrEmpty()) {
+                    MyIconButton(
+                        onClick = { onIntent(OutlayIntent.UpdateCategory("")) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Clear,
+                            contentDescription = "Limpiar"
+                        )
+                    }
+                }
             }
         )
 
-        // Dropdown para Centro de Costo
-        MyDropDown<String>(
+        // Campo Centro de Costo
+        MyOutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
-            items = costCenters,
-            onTypeSelected = { selectedCostCenter ->
-                onIntent(OutlayIntent.UpdateCostCenter(selectedCostCenter))
+            value = outlay.cost_center ?: "",
+            label = "Centro de Costo",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            maxLength = 50,
+            onValueChange = { onIntent(OutlayIntent.UpdateCostCenter(it)) },
+            supportingText = {
+                if (outlay.cost_center.isNullOrEmpty()) {
+                    Text(
+                        text = "Ej: Administración, Técnico, Ventas",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            trailingIcon = {
+                if (!outlay.cost_center.isNullOrEmpty()) {
+                    MyIconButton(
+                        onClick = { onIntent(OutlayIntent.UpdateCostCenter("")) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Clear,
+                            contentDescription = "Limpiar"
+                        )
+                    }
+                }
             }
         )
 

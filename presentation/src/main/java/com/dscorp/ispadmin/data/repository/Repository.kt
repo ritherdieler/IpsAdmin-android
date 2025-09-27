@@ -55,7 +55,7 @@ import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.model.extensions.PayerFinderResult
-import com.example.data2.data.datasource.RestApiServices
+import com.dscorp.ispadmin.data.datasource.remote.RestApiServices
 import com.dscorp.ispadmin.data.utils.HttpCodes
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -659,7 +659,7 @@ class Repository : IRepository, KoinComponent {
     fun createImagePart(file: File): MultipartBody.Part {
         val requestFile: RequestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
         return MultipartBody.Part.Companion.createFormData(
-            "image",
+            "receipts",
             "${Date().time}.jpg",
             requestFile
         )

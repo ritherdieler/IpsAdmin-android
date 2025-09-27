@@ -4,7 +4,7 @@ import com.dscorp.ispadmin.BuildConfig
 import com.dscorp.ispadmin.data.datasource.remote.InstallationOrderApi
 import com.dscorp.ispadmin.data.datasource.remote.InstallationOrderApiService
 import com.dscorp.ispadmin.data.datasource.remote.SendMessagingCloudApi
-import com.example.data2.data.datasource.RestApiServices
+import com.dscorp.ispadmin.data.datasource.remote.RestApiServices
 import org.koin.dsl.module
 import retrofit2.Retrofit
 

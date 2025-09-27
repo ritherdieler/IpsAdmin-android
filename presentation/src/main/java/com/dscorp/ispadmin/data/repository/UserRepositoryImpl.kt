@@ -1,7 +1,7 @@
 package com.dscorp.ispadmin.data.repository
 
 import com.dscorp.ispadmin.domain.model.User
-import com.example.data2.data.datasource.RestApiServices
+import com.dscorp.ispadmin.data.datasource.remote.RestApiServices
 
 class UserRepositoryImpl(
     private val repository: IRepository,

@@ -75,6 +75,7 @@ class OutLayViewModel(
             }
 
             is OutlayIntent.TakeImage -> {
+
                 if (uiState.value.photoList.isEmpty()) {
                     _uiState.update {
                         it.copy(photoList = uiState.value.photoList.toMutableList().apply {
@@ -83,7 +84,11 @@ class OutLayViewModel(
                     }
                 } else {
                     _uiState.update {
-                        it.copy(error = "Solo puedes subir una imagen", isLoading = false, isSaved = false)
+                        it.copy(
+                            error = "Solo puedes subir una imagen",
+                            isLoading = false,
+                            isSaved = false
+                        )
                     }
                 }
             }
@@ -96,11 +101,7 @@ class OutLayViewModel(
                 }
             }
 
-            is OutlayIntent.RegisterOutLay -> {
-                _uiState.update {
-                    it.copy(error = "Solo puedes subir una imagen", isLoading = false, isSaved = false)
-                }
-            }
+            is OutlayIntent.RegisterOutLay -> registerOutLay()
         }
     }
 
@@ -111,24 +112,24 @@ class OutLayViewModel(
         }
 
         _uiState.update { it.copy(isLoading = true, error = null) }
-        
+
         registerOutlayUseCase(uiState.value.outlay, uiState.value.photoList)
             .onSuccess {
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
-                        isSaved = true, 
+                        isSaved = true,
                         isLoading = false,
                         outlay = Outlay(), // Limpiar formulario
                         photoList = emptyList()
-                    ) 
+                    )
                 }
             }
             .onFailure { exception ->
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
-                        error = exception.message ?: "Error desconocido", 
+                        error = exception.message ?: "Error desconocido",
                         isLoading = false
-                    ) 
+                    )
                 }
             }
     }
