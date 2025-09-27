@@ -150,7 +150,7 @@ interface IRepository {
     suspend fun doMigration(migrationRequest: MigrationRequest): SubscriptionResponse
     suspend fun getOnuBySn(s: String): AdministrativeOnuResponse
     suspend fun deleteOnuFromOlt(onuExternalId: String)
-    suspend fun saveOutLay(apply: Outlay)
+    suspend fun saveOutLay(outlay: Outlay, receiptFiles: List<File>)
     suspend fun getElectronicPayers(subscriptionId: Int): List<String>
     suspend fun updateCustomerData(customer: CustomerData)
     suspend fun subscriptionById(subscriptionId: Int): SubscriptionResponse

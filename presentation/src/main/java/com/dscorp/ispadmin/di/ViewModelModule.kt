@@ -12,6 +12,7 @@ import com.dscorp.ispadmin.presentation.ui.features.mufas.MufaViewModel
 import com.dscorp.ispadmin.presentation.ui.features.napbox.NapBoxViewModel
 import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdministrationViewModel
 import com.dscorp.ispadmin.presentation.ui.features.outlay.OutLayViewModel
+import com.dscorp.ispadmin.domain.usecase.RegisterOutlayUseCase
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.payerFinder.PayerFinderViewmodel
@@ -38,6 +39,8 @@ import org.koin.dsl.module
  *
  **/
 val viewModelModule = module {
+    // Use Cases
+    single { RegisterOutlayUseCase(get(), get()) }
     viewModel { LoginViewModel(get()) }
     viewModel { RegisterViewModel(get(), get()) }
     viewModel {

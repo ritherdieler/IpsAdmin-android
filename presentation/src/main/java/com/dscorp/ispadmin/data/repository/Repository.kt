@@ -59,6 +59,7 @@ import com.example.data2.data.datasource.RestApiServices
 import com.dscorp.ispadmin.data.utils.HttpCodes
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import org.koin.core.component.KoinComponent
@@ -705,8 +706,26 @@ class Repository : IRepository, KoinComponent {
         }
     }
 
-    override suspend fun saveOutLay(apply: Outlay) {
-        val response = restApiServices.saveOutlay(apply)
+    override suspend fun saveOutLay(outlay: Outlay, receiptFiles: List<File>) {
+        val amountBody = outlay.amount.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+        val descriptionBody = (outlay.description ?: "").toRequestBody("text/plain".toMediaTypeOrNull())
+        val documentCodeBody = (outlay.document_code ?: "").toRequestBody("text/plain".toMediaTypeOrNull())
+        val categoryBody = (outlay.category ?: "").toRequestBody("text/plain".toMediaTypeOrNull())
+        val costCenterBody = (outlay.cost_center ?: "").toRequestBody("text/plain".toMediaTypeOrNull())
+        val userIdBody = (outlay.responsibleId ?: 0).toString().toRequestBody("text/plain".toMediaTypeOrNull())
+        
+        val receiptParts = receiptFiles.map { createImagePart(it) }
+        
+        val response = restApiServices.saveOutlay(
+            amount = amountBody,
+            description = descriptionBody,
+            documentCode = documentCodeBody,
+            category = categoryBody,
+            costCenter = costCenterBody,
+            userId = userIdBody,
+            receipts = receiptParts
+        )
+        
         if (response.status != HttpCodes.OK) {
             throw Exception(response.error)
         }

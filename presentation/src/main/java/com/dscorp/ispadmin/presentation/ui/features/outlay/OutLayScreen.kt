@@ -15,22 +15,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -39,10 +29,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dscorp.ispadmin.domain.model.Outlay
 import com.dscorp.ispadmin.presentation.ui.components.MultiplePhotoAndGalleryPicker
+import com.dscorp.ispadmin.presentation.ui.components.MyButton
+import com.dscorp.ispadmin.presentation.ui.components.MyDropDown
+import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
+import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyConfirmDialog
 import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
-import kotlinx.coroutines.flow.StateFlow
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -57,35 +50,24 @@ fun RegisterOutlayScreen(
     when {
         uiState.isLoading -> Loader()
         uiState.error != null -> {
-            ShowErrorDialog(uiState.error ?: "", onDismiss = { viewModel.clearError() })
+            ShowErrorDialog(message = uiState.error ?: "", onDismiss = { viewModel.clearError() })
         }
-
-        uiState.isSaved -> ShowSuccessDialog { viewModel.clearError() }
+        uiState.isSaved -> {
+            ShowSuccessDialog { viewModel.clearError() }
+        }
     }
 
     RegisterOutLayForm(
-        onRegisterClick = { amount, description, code, category, receiptUrl, costCenter ->
-            val outLay = Outlay(
-                amount = amount.toDouble(),
-                description = description,
-                document_code = code,
-                category = category,
-                receipt_url = receiptUrl,
-                cost_center = costCenter
-            )
-
-            viewModel.registerOutLay(outLay)
-        },
-        onPhotoTaken = { viewModel.handleIntent(OutlayIntent.TakeImage(it)) },
-        onSave = {},
-        onPhotoRemove = { viewModel.handleIntent(OutlayIntent.RemoveImage(it)) },
+        outlay = uiState.outlay,
+        photoList = uiState.photoList,
+        isLoading = uiState.isLoading,
+        onIntent = { viewModel.handleIntent(it) },
         onImageClick = {
             onImageClick(
                 uiState.photoList.map { uri -> uri.toString() },
                 uiState.photoList.indexOf(it)
             )
-        },
-        photoUriList = uiState.photoList
+        }
     )
 }
 
@@ -105,26 +87,15 @@ fun ShowSuccessDialog(onDismiss: () -> Unit) {
     })
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterOutLayForm(
     modifier: Modifier = Modifier,
-    onRegisterClick: (amount: String, description: String, code: String, category: String, receiptUrl: String, costCenter: String) -> Unit,
-    onPhotoTaken: (Uri) -> Unit,
-    onSave: () -> Unit,
-    onPhotoRemove: (Int) -> Unit,
-    onImageClick: (Uri) -> Unit,
-    photoUriList: List<Uri>
-
+    outlay: Outlay,
+    photoList: List<Uri>,
+    isLoading: Boolean,
+    onIntent: (OutlayIntent) -> Unit,
+    onImageClick: (Uri) -> Unit
 ) {
-    var amount by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var code by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("") }
-    var receiptUrl by remember { mutableStateOf("") }
-    var costCenter by remember { mutableStateOf("") }
-    var categoryExpanded by remember { mutableStateOf(false) }
-    var costCenterExpanded by remember { mutableStateOf(false) }
 
     // Opciones predefinidas para categorías y centros de costo
     val categories =
@@ -133,14 +104,14 @@ fun RegisterOutLayForm(
         listOf("Administración", "Técnico", "Ventas", "Marketing", "Otros")
 
     val (requestCameraPermission, photoUri) = rememberPhotoTaker(
-        onPhotoTaken = { uri -> onPhotoTaken(uri) }
+        onPhotoTaken = { uri -> onIntent(OutlayIntent.TakeImage(uri)) }
     )
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         photoUri.value = uri
-        uri?.let { onPhotoTaken(it) }
+        uri?.let { onIntent(OutlayIntent.TakeImage(it)) }
     }
 
     Column(
@@ -160,142 +131,99 @@ fun RegisterOutLayForm(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Campo Monto
-        OutlinedTextField(
+        MyOutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
-            value = amount,
+            value = outlay.amount?.toString()?:"",
+            label = "Monto",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            maxLength = 10,
+            regex = Regex("^[0-9]*\\.?[0-9]*$"),
+            onValueChange = { newValue ->
+                if (!newValue.contains(",") && !newValue.contains(" ") && !newValue.contains("-") && !newValue.contains("\n")) {
+                    onIntent(OutlayIntent.UpdateAmount(newValue))
+                }
+            },
             trailingIcon = {
-                if (amount.isNotEmpty()) {
-                    IconButton(onClick = { amount = "" }) {
+                    MyIconButton(
+                        onClick = { onIntent(OutlayIntent.UpdateAmount("")) }
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.Clear,
                             contentDescription = "Limpiar"
                         )
                     }
-                }
-            },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            label = { Text("Monto") },
-            onValueChange = {
-                if (it.contains(",") || it.contains(" ") || it.contains("-") || it.contains("\n") || it.length > 10) return@OutlinedTextField
-                else amount = it
             }
         )
 
         // Campo Descripción
-        OutlinedTextField(
+        MyOutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
-            value = description,
+            value = outlay.description ?: "",
+            label = "Descripción",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            maxLength = 200,
+            singleLine = false,
+            maxLines = 3,
+            onValueChange = { onIntent(OutlayIntent.UpdateDescription(it)) },
             trailingIcon = {
-                if (description.isNotEmpty()) {
-                    IconButton(onClick = { description = "" }) {
+                if (!outlay.description.isNullOrEmpty()) {
+                    MyIconButton(
+                        onClick = { onIntent(OutlayIntent.UpdateDescription("")) }
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.Clear,
                             contentDescription = "Limpiar"
                         )
                     }
                 }
-            },
-            label = { Text("Descripción") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            onValueChange = {
-                if (it.length > 200) return@OutlinedTextField
-                description = it
             }
         )
 
         // Campo Código de Documento
-        OutlinedTextField(
+        MyOutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
-            value = code,
+            value = outlay.document_code ?: "",
+            label = "Código de Documento",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            maxLength = 50,
+            onValueChange = { onIntent(OutlayIntent.UpdateDocumentCode(it)) },
             trailingIcon = {
-                if (code.isNotEmpty()) {
-                    IconButton(onClick = { code = "" }) {
+                if (!outlay.document_code.isNullOrEmpty()) {
+                    MyIconButton(
+                        onClick = { onIntent(OutlayIntent.UpdateDocumentCode("")) }
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.Clear,
                             contentDescription = "Limpiar"
                         )
                     }
                 }
-            },
-            label = { Text("Código de Documento") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            onValueChange = {
-                if (it.length > 50) return@OutlinedTextField
-                code = it
             }
         )
 
         // Dropdown para Categoría
-        ExposedDropdownMenuBox(
-            expanded = categoryExpanded,
-            onExpandedChange = { categoryExpanded = !categoryExpanded }
-        ) {
-            OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
-                value = category,
-                label = { Text("Categoría") },
-                readOnly = true,
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
-                },
-                onValueChange = {}
-            )
-            ExposedDropdownMenu(
-                expanded = categoryExpanded,
-                onDismissRequest = { categoryExpanded = false }
-            ) {
-                categories.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option) },
-                        onClick = {
-                            category = option
-                            categoryExpanded = false
-                        }
-                    )
-                }
+        MyDropDown<String>(
+            modifier = Modifier.fillMaxWidth(),
+            items = categories,
+            onTypeSelected = { selectedCategory ->
+                onIntent(OutlayIntent.UpdateCategory(selectedCategory))
             }
-        }
+        )
 
         // Dropdown para Centro de Costo
-        ExposedDropdownMenuBox(
-            expanded = costCenterExpanded,
-            onExpandedChange = { costCenterExpanded = !costCenterExpanded }
-        ) {
-            OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
-                value = costCenter,
-                label = { Text("Centro de Costo") },
-                readOnly = true,
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = costCenterExpanded)
-                },
-                onValueChange = {}
-            )
-            ExposedDropdownMenu(
-                expanded = costCenterExpanded,
-                onDismissRequest = { costCenterExpanded = false }
-            ) {
-                costCenters.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option) },
-                        onClick = {
-                            costCenter = option
-                            costCenterExpanded = false
-                        }
-                    )
-                }
+        MyDropDown<String>(
+            modifier = Modifier.fillMaxWidth(),
+            items = costCenters,
+            onTypeSelected = { selectedCostCenter ->
+                onIntent(OutlayIntent.UpdateCostCenter(selectedCostCenter))
             }
-        }
+        )
 
         MultiplePhotoAndGalleryPicker(
-            photoUriList = photoUriList,
+            photoUriList = photoList,
             onTakePhoto = requestCameraPermission,
             onSelectGalleryImage = { galleryLauncher.launch("image/*") },
-            onImageRemoveClick = onPhotoRemove,
+            onImageRemoveClick = { index -> onIntent(OutlayIntent.RemoveImage(index)) },
             onImageClick = onImageClick
         )
 
@@ -309,26 +237,24 @@ fun RegisterOutLayForm(
             TextButton(
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    amount = ""
-                    description = ""
-                    code = ""
-                    category = ""
-                    receiptUrl = ""
-                    costCenter = ""
+                    onIntent(OutlayIntent.UpdateAmount(""))
+                    onIntent(OutlayIntent.UpdateDescription(""))
+                    onIntent(OutlayIntent.UpdateDocumentCode(""))
+                    onIntent(OutlayIntent.UpdateCategory(""))
+                    onIntent(OutlayIntent.UpdateCostCenter(""))
                 }
             ) {
                 Text("Limpiar")
             }
 
-            Button(
+            MyButton(
                 modifier = Modifier.weight(1f),
-                enabled = amount.isNotEmpty() && description.isNotEmpty() && category.isNotEmpty(),
+                text = "Registrar",
+                enabled = outlay.isValid() && photoList.isNotEmpty() && !isLoading,
                 onClick = {
-                    onRegisterClick(amount, description, code, category, receiptUrl, costCenter)
+                    onIntent(OutlayIntent.RegisterOutLay)
                 }
-            ) {
-                Text("Registrar")
-            }
+            )
         }
     }
 }
@@ -339,12 +265,11 @@ fun RegisterOutLayForm(
 fun RegisterOutLayScreenPreview() {
     RegisterOutLayForm(
         modifier = Modifier,
-        onRegisterClick = { amount, description, code, category, receiptUrl, costCenter -> },
-        onPhotoTaken = {},
-        onSave = {},
-        onPhotoRemove = {},
-        onImageClick = {},
-        photoUriList = mutableListOf()
+        outlay = Outlay(),
+        photoList = emptyList(),
+        isLoading = false,
+        onIntent = {},
+        onImageClick = {}
     )
 }
 

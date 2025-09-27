@@ -39,6 +39,7 @@ import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.model.extensions.PayerFinderResult
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -281,8 +282,17 @@ interface RestApiServices {
     @DELETE("onu")
     suspend fun deleteOnuFromOlt(@Query("onuExternalId") onuExternalId: String): BaseResponse<String>
 
+    @Multipart
     @POST("outlay")
-    suspend fun saveOutlay(@Body outlay: Outlay): BaseResponse<Unit>
+    suspend fun saveOutlay(
+        @Part("amount") amount: RequestBody,
+        @Part("description") description: RequestBody,
+        @Part("document_code") documentCode: RequestBody,
+        @Part("category") category: RequestBody,
+        @Part("cost_center") costCenter: RequestBody,
+        @Part("userId") userId: RequestBody,
+        @Part receipts: List<MultipartBody.Part>
+    ): BaseResponse<Unit>
 
     @GET("payment/getElectronicPayers")
     suspend fun getElectronicPayers(@Query("subscriptionId") subscriptionId: Int): BaseResponse<List<String>>
