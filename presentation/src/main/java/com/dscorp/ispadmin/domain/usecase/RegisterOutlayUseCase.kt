@@ -4,7 +4,6 @@ import android.app.Application
 import android.net.Uri
 import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.domain.model.Outlay
-import kotlin.runCatching
 import java.io.File
 import java.io.FileOutputStream
 
@@ -17,20 +16,13 @@ class RegisterOutlayUseCase(
         outlay: Outlay,
         photoUriList: List<Uri>
     ): Result<Unit> = runCatching {
-        // Validar datos del outlay
         if (!outlay.isValid()) {
             throw IllegalArgumentException("Datos incompletos")
         }
-        
-        // Convertir URIs a Files si hay imágenes
         val receiptFiles = photoUriList.map { uri -> uriToFile(uri) }
-        
-        // Asignar responsable
-        val outlayWithResponsible = outlay.apply { 
+        val outlayWithResponsible = outlay.apply {
             responsibleId = repository.getUserSession()?.id 
         }
-        
-        // Registrar outlay
         repository.saveOutLay(outlayWithResponsible, receiptFiles)
     }
     

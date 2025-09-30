@@ -22,6 +22,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,27 +34,96 @@ import com.dscorp.ispadmin.presentation.ui.components.Loader
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
 import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
+import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyConfirmDialog
 import org.koin.androidx.compose.koinViewModel
 
+object OutlayConstants {
+    val CATEGORIES = listOf(
+        "Suministros",
+        "Mantenimiento", 
+        "Equipos",
+        "Servicios",
+        "Transporte",
+        "Comunicaciones",
+        "Seguros",
+        "Capacitación",
+        "Otros"
+    )
+    
+    val COST_CENTERS = listOf(
+        "Administración",
+        "Técnico",
+        "Ventas", 
+        "Marketing",
+        "Recursos Humanos",
+        "Finanzas",
+        "Operaciones",
+        "Soporte Técnico",
+        "Desarrollo",
+        "Otros"
+    )
+}
+
+@Composable
+private fun ClearableTextField(
+    modifier: Modifier = Modifier,
+    value: String,
+    label: String,
+    keyboardOptions: KeyboardOptions,
+    maxLength: Int,
+    regex: Regex? = null,
+    singleLine: Boolean = true,
+    maxLines: Int = 1,
+    onValueChange: (String) -> Unit,
+    onClear: () -> Unit,
+    contentDescription: String = "Limpiar campo"
+) {
+    MyOutlinedTextField(
+        modifier = modifier,
+        value = value,
+        label = label,
+        keyboardOptions = keyboardOptions,
+        maxLength = maxLength,
+        regex = regex,
+        singleLine = singleLine,
+        maxLines = maxLines,
+        onValueChange = onValueChange,
+        trailingIcon = {
+            if (value.isNotEmpty()) {
+                MyIconButton(
+                    onClick = onClear
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Clear,
+                        contentDescription = contentDescription
+                    )
+                }
+            }
+        }
+    )
+}
 
 @Composable
 fun RegisterOutlayScreen(
     viewModel: OutLayViewModel = koinViewModel(),
     onImageClick: (List<String>, Int) -> Unit
-
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     when {
         uiState.isLoading -> Loader()
         uiState.error != null -> {
-            ShowErrorDialog(message = uiState.error ?: "", onDismiss = { viewModel.clearError() })
+            ShowErrorDialog(
+                message = uiState.error ?: "Error desconocido",
+                onDismiss = { viewModel.clearError() }
+            )
         }
-
         uiState.isSaved -> {
-            ShowSuccessDialog { viewModel.clearError() }
+            ShowSuccessDialog(
+                onDismiss = { viewModel.clearSaved() }
+            )
         }
     }
 
@@ -61,30 +131,40 @@ fun RegisterOutlayScreen(
         outlay = uiState.outlay,
         photoList = uiState.photoList,
         isLoading = uiState.isLoading,
-        onIntent = { viewModel.handleIntent(it) },
-        onImageClick = {
-            onImageClick(
-                uiState.photoList.map { uri -> uri.toString() },
-                uiState.photoList.indexOf(it)
-            )
+        onIntent = viewModel::handleIntent,
+        onImageClick = { uri ->
+            val photoStrings = uiState.photoList.map { it.toString() }
+            val index = uiState.photoList.indexOf(uri)
+            onImageClick(photoStrings, index)
         }
     )
 }
 
 @Composable
-fun ShowErrorDialog(message: String, onDismiss: () -> Unit) {
-    MyConfirmDialog(title = "Error", body = {
-        Text(text = message)
-    }, onDismissRequest = onDismiss)
+private fun ShowErrorDialog(
+    message: String, 
+    onDismiss: () -> Unit
+) {
+    MyConfirmDialog(
+        title = "Error",
+        body = {
+            Text(text = message)
+        },
+        onDismissRequest = onDismiss
+    )
 }
 
 @Composable
-fun ShowSuccessDialog(onDismiss: () -> Unit) {
-    MyConfirmDialog(title = "Éxito", body = {
-        Text(text = "Egreso registrado correctamente")
-    }, onDismissRequest = {
-
-    })
+private fun ShowSuccessDialog(
+    onDismiss: () -> Unit
+) {
+    MyConfirmDialog(
+        title = "Éxito",
+        body = {
+            Text(text = "Egreso registrado correctamente")
+        },
+        onDismissRequest = onDismiss
+    )
 }
 
 @Composable
@@ -96,7 +176,9 @@ fun RegisterOutLayForm(
     onIntent: (OutlayIntent) -> Unit,
     onImageClick: (Uri) -> Unit
 ) {
-
+    val configuration = LocalConfiguration.current
+    val isTablet = configuration.screenWidthDp >= 600
+    val paddingValue = if (isTablet) 32.dp else 24.dp
 
     val (requestCameraPermission, photoUri) = rememberPhotoTaker(
         onPhotoTaken = { uri -> onIntent(OutlayIntent.TakeImage(uri)) }
@@ -111,12 +193,10 @@ fun RegisterOutLayForm(
 
     Column(
         modifier = modifier
-            .padding(24.dp)
+            .padding(paddingValue)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
-        // Título del formulario
         Text(
             text = "Registro de Egreso",
             style = MaterialTheme.typography.headlineSmall,
@@ -125,38 +205,23 @@ fun RegisterOutLayForm(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Campo Monto
-        MyOutlinedTextField(
+        ClearableTextField(
             modifier = Modifier.fillMaxWidth(),
             value = outlay.amount ?: "",
             label = "Monto",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             maxLength = 10,
             regex = Regex("^[0-9]*\\.?[0-9]*$"),
             onValueChange = { newValue ->
-                if (!newValue.contains(",") && !newValue.contains(" ") && !newValue.contains("-") && !newValue.contains(
-                        "\n"
-                    )
-                ) {
+                if (isValidDecimalInput(newValue)) {
                     onIntent(OutlayIntent.UpdateAmount(newValue))
                 }
             },
-            trailingIcon = {
-                if (outlay.amount?.isNotEmpty() == true) {
-                    MyIconButton(
-                        onClick = { onIntent(OutlayIntent.UpdateAmount("")) }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Clear,
-                            contentDescription = "Limpiar"
-                        )
-                    }
-                }
-            }
+            onClear = { onIntent(OutlayIntent.UpdateAmount("")) },
+            contentDescription = "Limpiar monto"
         )
 
-        // Campo Descripción
-        MyOutlinedTextField(
+        ClearableTextField(
             modifier = Modifier.fillMaxWidth(),
             value = outlay.description ?: "",
             label = "Descripción",
@@ -165,101 +230,38 @@ fun RegisterOutLayForm(
             singleLine = false,
             maxLines = 3,
             onValueChange = { onIntent(OutlayIntent.UpdateDescription(it)) },
-            trailingIcon = {
-                if (!outlay.description.isNullOrEmpty()) {
-                    MyIconButton(
-                        onClick = { onIntent(OutlayIntent.UpdateDescription("")) }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Clear,
-                            contentDescription = "Limpiar"
-                        )
-                    }
-                }
-            }
+            onClear = { onIntent(OutlayIntent.UpdateDescription("")) },
+            contentDescription = "Limpiar descripción"
         )
 
-        // Campo Código de Documento
-        MyOutlinedTextField(
+        ClearableTextField(
             modifier = Modifier.fillMaxWidth(),
             value = outlay.document_code ?: "",
             label = "Código de Documento",
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             maxLength = 50,
             onValueChange = { onIntent(OutlayIntent.UpdateDocumentCode(it)) },
-            trailingIcon = {
-                if (!outlay.document_code.isNullOrEmpty()) {
-                    MyIconButton(
-                        onClick = { onIntent(OutlayIntent.UpdateDocumentCode("")) }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Clear,
-                            contentDescription = "Limpiar"
-                        )
-                    }
-                }
-            }
+            onClear = { onIntent(OutlayIntent.UpdateDocumentCode("")) },
+            contentDescription = "Limpiar código de documento"
         )
 
-        // Campo Categoría
-        MyOutlinedTextField(
+        MyOutLinedDropDown(
             modifier = Modifier.fillMaxWidth(),
-            value = outlay.category ?: "",
+            items = OutlayConstants.CATEGORIES,
+            selected = outlay.category,
             label = "Categoría",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            maxLength = 50,
-            onValueChange = { onIntent(OutlayIntent.UpdateCategory(it)) },
-            supportingText = {
-                if (outlay.category.isNullOrEmpty()) {
-                    Text(
-                        text = "Ej: Suministros, Mantenimiento, Equipos",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            },
-            trailingIcon = {
-                if (!outlay.category.isNullOrEmpty()) {
-                    MyIconButton(
-                        onClick = { onIntent(OutlayIntent.UpdateCategory("")) }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Clear,
-                            contentDescription = "Limpiar"
-                        )
-                    }
-                }
+            onItemSelected = { category ->
+                onIntent(OutlayIntent.UpdateCategory(category))
             }
         )
 
-        // Campo Centro de Costo
-        MyOutlinedTextField(
+        MyOutLinedDropDown(
             modifier = Modifier.fillMaxWidth(),
-            value = outlay.cost_center ?: "",
+            items = OutlayConstants.COST_CENTERS,
+            selected = outlay.cost_center,
             label = "Centro de Costo",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            maxLength = 50,
-            onValueChange = { onIntent(OutlayIntent.UpdateCostCenter(it)) },
-            supportingText = {
-                if (outlay.cost_center.isNullOrEmpty()) {
-                    Text(
-                        text = "Ej: Administración, Técnico, Ventas",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            },
-            trailingIcon = {
-                if (!outlay.cost_center.isNullOrEmpty()) {
-                    MyIconButton(
-                        onClick = { onIntent(OutlayIntent.UpdateCostCenter("")) }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Clear,
-                            contentDescription = "Limpiar"
-                        )
-                    }
-                }
+            onItemSelected = { costCenter ->
+                onIntent(OutlayIntent.UpdateCostCenter(costCenter))
             }
         )
 
@@ -273,7 +275,6 @@ fun RegisterOutLayForm(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botones de acción
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -295,14 +296,24 @@ fun RegisterOutLayForm(
                 modifier = Modifier.weight(1f),
                 text = "Registrar",
                 enabled = outlay.isValid() && photoList.isNotEmpty() && !isLoading,
-                onClick = {
-                    onIntent(OutlayIntent.RegisterOutLay)
-                }
+                onClick = { onIntent(OutlayIntent.RegisterOutLay) }
             )
         }
     }
 }
 
+private fun isValidDecimalInput(input: String): Boolean {
+    if (input.isEmpty()) return true
+    
+    val regex = Regex("^[0-9]*\\.?[0-9]{0,2}$")
+    if (!regex.matches(input)) return false
+    
+    val dotCount = input.count { it == '.' }
+    if (dotCount > 1) return false
+    
+    val invalidChars = listOf(",", " ", "-", "\n", "+", "e", "E")
+    return !input.any { char -> invalidChars.contains(char.toString()) }
+}
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
@@ -316,7 +327,3 @@ fun RegisterOutLayScreenPreview() {
         onImageClick = {}
     )
 }
-
-
-
-
