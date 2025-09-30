@@ -1,14 +1,20 @@
 package com.dscorp.ispadmin.presentation.ui.features.payment.history
 
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavHostController
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Payment
 import com.dscorp.ispadmin.presentation.theme.MyTheme
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -45,18 +51,41 @@ fun PaymentHistoryComposeScreen(
 
     // Obtener el estado de la UI
     val state by viewModel.state.collectAsState()
+    
+    // SnackbarHostState para mostrar errores
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     val canManagePayments = currentUser?.type in listOf(
         User.UserType.ADMIN,
         User.UserType.ACCOUNTANT,
         User.UserType.SECRETARY
     )
+    
+    // Mostrar Snackbar cuando hay error
+    LaunchedEffect(state.error) {
+        state.error?.let { errorMessage ->
+            scope.launch {
+                val result = snackbarHostState.showSnackbar(
+                    message = errorMessage,
+                    actionLabel = "Cerrar",
+                    duration = SnackbarDuration.Long
+                )
+                // Limpiar el error después de que el usuario cierra el snackbar o expira
+                when (result) {
+                    SnackbarResult.Dismissed -> viewModel.clearError()
+                    SnackbarResult.ActionPerformed -> viewModel.clearError()
+                }
+            }
+        }
+    }
 
     // Renderizar la pantalla
     MyTheme {
         PaymentScreenContent(
             state = state,
             subscriptionId = viewModel.subscriptionId,
+            snackbarHostState = snackbarHostState,
             onPaymentItemClicked = { payment ->
                 if (!canManagePayments) return@PaymentScreenContent
                 

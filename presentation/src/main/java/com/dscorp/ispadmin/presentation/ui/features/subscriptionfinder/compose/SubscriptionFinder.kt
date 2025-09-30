@@ -21,7 +21,8 @@ import com.dscorp.ispadmin.domain.model.SubscriptionResume
 val filters = listOf(
     SubscriptionFilter.BY_NAME(),
     SubscriptionFilter.BY_DOCUMENT(),
-    SubscriptionFilter.BY_DATE()
+    SubscriptionFilter.BY_DATE(),
+    SubscriptionFilter.BY_IP()
 )
 
 @Composable

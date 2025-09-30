@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.InstallationType
+import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 
 /**
@@ -122,11 +123,21 @@ private fun SubscriptionDropdownMenu(
 ) {
     val context = LocalContext.current
     
-    // Filter menu items based on installation type
+    // Filter menu items based on installation type and service status
     val menuItems = SubscriptionMenu.values().toMutableList().filter { menuItem ->
-        when (subscription.installationType) {
-            InstallationType.FIBER -> menuItem != SubscriptionMenu.MIGRATE_TO_FIBER
-            InstallationType.WIRELESS -> menuItem != SubscriptionMenu.CHANGE_NAP_BOX
+        when {
+            // Hide "Migrate to Fiber" for fiber installations
+            subscription.installationType == InstallationType.FIBER && 
+                menuItem == SubscriptionMenu.MIGRATE_TO_FIBER -> false
+            
+            // Hide "Change NAP Box" for wireless installations
+            subscription.installationType == InstallationType.WIRELESS && 
+                menuItem == SubscriptionMenu.CHANGE_NAP_BOX -> false
+            
+            // Hide "Cancel Subscription" if already cancelled
+            subscription.serviceStatus == ServiceStatus.CANCELLED && 
+                menuItem == SubscriptionMenu.CANCEL_SUBSCRIPTION -> false
+            
             else -> true
         }
     }

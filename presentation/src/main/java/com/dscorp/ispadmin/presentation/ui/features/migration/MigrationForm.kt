@@ -201,30 +201,6 @@ fun ErrorDialog(error: String, actionText: String = "Aceptar", onDismissRequest:
 
 }
 
-@Composable
-fun Loader(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        CircularProgressIndicator(
-            modifier = modifier
-                .width(48.dp)
-                .height(48.dp),
-            strokeWidth = 4.dp
-        )
-        Text(
-            text = stringResource(R.string.loading),
-            style = TextStyle(
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-            ),
-            modifier = modifier.padding(top = 8.dp)
-        )
-    }
-}
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

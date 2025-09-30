@@ -9,10 +9,12 @@ import com.dscorp.ispadmin.data.apirequestmodel.MoveOnuRequest
 import com.dscorp.ispadmin.data.apirequestmodel.SearchPaymentsRequest
 import com.dscorp.ispadmin.data.apirequestmodel.UpdateSubscriptionDataBody
 import com.dscorp.ispadmin.data.apirequestmodel.UpdateSubscriptionPlanBody
+import com.dscorp.ispadmin.data.datasource.remote.RestApiServices
 import com.dscorp.ispadmin.data.datasource.remote.SendMessagingCloudApi
 import com.dscorp.ispadmin.data.response.AdministrativeOnuResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
+import com.dscorp.ispadmin.data.utils.HttpCodes
 import com.dscorp.ispadmin.data.utils.REMEMBER_CHECKBOX_STATUS
 import com.dscorp.ispadmin.data.utils.SESSION_DNI
 import com.dscorp.ispadmin.data.utils.SESSION_EMAIL
@@ -55,13 +57,11 @@ import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.model.extensions.PayerFinderResult
-import com.dscorp.ispadmin.data.datasource.remote.RestApiServices
-import com.dscorp.ispadmin.data.utils.HttpCodes
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import retrofit2.Response
@@ -559,9 +559,27 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun reactivateService(subscriptionId: Int, responsibleId: Int, notes: String?) {
         val response = restApiServices.reactivateService(subscriptionId, responsibleId, notes)
-        when (response.status) {
-            HttpCodes.OK -> {}
-            else -> throw Exception(response.error)
+        when (response.code()) {
+            200 -> {
+                // Servicio reactivado exitosamente
+            }
+            else -> {
+                // Obtener mensaje de error del body si está disponible
+                val errorMessage = try {
+                    val errorBody = response.errorBody()?.string()
+                    if (errorBody != null && errorBody.isNotEmpty()) {
+                        // Intentar parsear el JSON {"error": "mensaje"}
+                        val gson = com.google.gson.Gson()
+                        val errorMap = gson.fromJson(errorBody, Map::class.java)
+                        errorMap["error"]?.toString() ?: "Error al reactivar el servicio"
+                    } else {
+                        "Error al reactivar el servicio"
+                    }
+                } catch (e: Exception) {
+                    "Error al reactivar el servicio"
+                }
+                throw Exception(errorMessage)
+            }
         }
     }
 
@@ -570,6 +588,14 @@ class Repository : IRepository, KoinComponent {
         lastName: String?
     ): List<SubscriptionResume> {
         val response = restApiServices.findSubscriptionByNameAndLastName(name, lastName)
+        return when (response.code()) {
+            200 -> response.body()?.map { it.toDomain() } ?: emptyList()
+            else -> throw Exception("Error")
+        }
+    }
+
+    override suspend fun findSubscriptionByIP(ip: String): List<SubscriptionResume> {
+        val response = restApiServices.findSubscriptionByIP(ip)
         return when (response.code()) {
             200 -> response.body()?.map { it.toDomain() } ?: emptyList()
             else -> throw Exception("Error")

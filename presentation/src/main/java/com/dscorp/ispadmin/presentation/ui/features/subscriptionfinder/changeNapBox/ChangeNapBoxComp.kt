@@ -27,10 +27,10 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
-import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
-import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.NapBoxesState
 import com.dscorp.ispadmin.domain.model.NapBox
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
+import com.dscorp.ispadmin.presentation.ui.components.Loader
+import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.NapBoxesState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

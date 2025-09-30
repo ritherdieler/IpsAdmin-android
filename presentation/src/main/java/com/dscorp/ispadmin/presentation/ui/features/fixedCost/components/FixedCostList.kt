@@ -16,12 +16,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.dscorp.ispadmin.presentation.theme.MyTheme
-import com.dscorp.ispadmin.presentation.theme.myTypography
-import com.dscorp.ispadmin.presentation.ui.features.fixedCost.GetAllFixedCostsState
-import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
 import com.dscorp.ispadmin.domain.model.FixedCost
 import com.dscorp.ispadmin.domain.model.FixedCostType
+import com.dscorp.ispadmin.presentation.theme.MyTheme
+import com.dscorp.ispadmin.presentation.theme.myTypography
+import com.dscorp.ispadmin.presentation.ui.components.Loader
+import com.dscorp.ispadmin.presentation.ui.features.fixedCost.GetAllFixedCostsState
 
 @Composable
 fun FixedCostList(modifier: Modifier = Modifier, fixedCosts: GetAllFixedCostsState) {

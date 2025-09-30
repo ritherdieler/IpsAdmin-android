@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Search
@@ -53,13 +54,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Payment
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription
-import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
+import com.dscorp.ispadmin.presentation.ui.components.Loader
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.CANCEL_SUBSCRIPTION
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.CHANGE_NAP_BOX
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.EDIT_PLAN_SUBSCRIPTION
@@ -265,6 +267,39 @@ fun SubscriptionFinderScreen(
                                         )
                                     }
                                 }
+                            )
+                        }
+
+                        is SubscriptionFilter.BY_IP -> {
+                            // Campo único para IP
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { newValue ->
+                                    // Filtrar para permitir solo números y puntos
+                                    val filteredValue = newValue.filter { it.isDigit() || it == '.' }
+                                    searchQuery = filteredValue
+                                    // Realizar búsqueda mientras se escribe
+                                    coroutinesScope.launch {
+                                        viewModel.documentNumberFlow.emit(
+                                            SubscriptionFilter.BY_IP(filteredValue)
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("IP") },
+                                placeholder = { Text("Ej: 192.168.1.1") },
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.Search,
+                                        contentDescription = "Buscar",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                },
+                                singleLine = true,
+                                shape = RoundedCornerShape(8.dp),
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number
+                                )
                             )
                         }
                     }

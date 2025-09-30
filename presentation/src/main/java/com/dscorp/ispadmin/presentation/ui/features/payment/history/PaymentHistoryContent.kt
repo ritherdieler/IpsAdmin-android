@@ -340,13 +340,13 @@ fun PaymentHistoryScreenLoadingPreview() {
 fun PaymentScreenContent(
     state: PaymentHistoryState,
     subscriptionId: Int?,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     onPaymentItemClicked: (Payment) -> Unit,
     onUpdateReactivationNotes: (String) -> Unit,
     onReactivateService: () -> Unit,
     onTogglePendingPaymentsFilter: (Boolean) -> Unit,
     showReactivationSection: Boolean = true
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var onlyPendingChecked by remember { mutableStateOf(false) }
 

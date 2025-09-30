@@ -151,6 +151,15 @@ class SubscriptionFinderViewModel(
                             )
                         }
                     }
+
+                    is SubscriptionFilter.BY_IP -> {
+                        if (filterType.ip.isEmpty()) {
+                            subscriptionsFlow.value = emptyList()
+                            return@collect
+                        } else {
+                            repository.findSubscriptionByIP(filterType.ip)
+                        }
+                    }
                 }
                 subscriptionsFlow.value = response
             }

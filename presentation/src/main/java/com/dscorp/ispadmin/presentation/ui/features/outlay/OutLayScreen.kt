@@ -29,12 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dscorp.ispadmin.domain.model.Outlay
 import com.dscorp.ispadmin.presentation.ui.components.MultiplePhotoAndGalleryPicker
+import com.dscorp.ispadmin.presentation.ui.components.Loader
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
 import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyConfirmDialog
-import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
 import org.koin.androidx.compose.koinViewModel
 
 

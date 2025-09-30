@@ -17,10 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.presentation.ui.components.Loader
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyConfirmDialog
 import com.dscorp.ispadmin.presentation.ui.features.login.CheckVersionState
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginViewModel
-import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
 import org.koin.androidx.compose.koinViewModel
 
 @Composable

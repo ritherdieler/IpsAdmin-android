@@ -34,10 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.dscorp.ispadmin.databinding.FragmentDeleteOnuBinding
-import com.dscorp.ispadmin.presentation.ui.features.migration.ErrorDialog
-import com.dscorp.ispadmin.presentation.ui.features.migration.Loader
 import com.dscorp.ispadmin.data.response.AdministrativeOnuResponse
+import com.dscorp.ispadmin.databinding.FragmentDeleteOnuBinding
+import com.dscorp.ispadmin.presentation.ui.components.Loader
+import com.dscorp.ispadmin.presentation.ui.features.migration.ErrorDialog
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 

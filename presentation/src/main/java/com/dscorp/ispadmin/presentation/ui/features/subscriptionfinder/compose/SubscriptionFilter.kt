@@ -95,6 +95,29 @@ fun DocumentFilterForm(modifier: Modifier = Modifier, onSearch: (SubscriptionFil
     }
 }
 
+@Composable
+fun IpFilterForm(modifier: Modifier = Modifier, onSearch: (SubscriptionFilter) -> Unit) {
+    var ipText by remember { mutableStateOf("") }
+
+    val keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search)
+    val keyboardActions =
+        KeyboardActions(onSearch = { onSearch(SubscriptionFilter.BY_IP(ipText)) })
+
+    Row(modifier = modifier) {
+        OutlinedTextField(
+            modifier = Modifier.weight(1f),
+            value = ipText,
+            onValueChange = {
+                ipText = it
+                onSearch(SubscriptionFilter.BY_IP(ipText))
+            },
+            label = { Text(text = "IP") },
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions
+        )
+    }
+}
+
 fun Long.localToUTC(): Long {
     val offsetFromUtc = TimeZone.getDefault().getOffset(this)
     return this - offsetFromUtc
@@ -243,6 +266,7 @@ sealed class SubscriptionFilter(val valueName: String) {
     data class BY_DOCUMENT(val documentNumber: String = "") : SubscriptionFilter("Documento")
     data class BY_DATE(val startDate: String = "", val endDate: String = "") :
         SubscriptionFilter("Fecha")
+    data class BY_IP(val ip: String = "") : SubscriptionFilter("IP")
 }
 
 

@@ -90,6 +90,10 @@ class PaymentHistoryViewModel(val repository: IRepository) :
     fun updateReactivationNotes(notes: String) {
         _state.update { it.copy(reactivationNotes = notes) }
     }
+    
+    fun clearError() {
+        _state.update { it.copy(error = null) }
+    }
 
     fun reactivateService() = viewModelScope.launch {
         try {

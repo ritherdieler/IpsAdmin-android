@@ -11,6 +11,7 @@ import com.dscorp.ispadmin.data.response.AdministrativeOnuResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.dscorp.ispadmin.data.response.BaseResponse
+import com.dscorp.ispadmin.data.response.ReactivateServiceResponse
 import com.dscorp.ispadmin.domain.model.AppVersion
 import com.dscorp.ispadmin.domain.model.Coupon
 import com.dscorp.ispadmin.domain.model.CustomerData
@@ -135,6 +136,9 @@ interface RestApiServices {
         @Query("endDate") endDate: String
     ): Response<List<SubscriptionResponse>>
 
+    @GET("subscription/find/ip")
+    suspend fun findSubscriptionByIP(@Query("ip") ip: String): Response<List<SubscriptionResponse>>
+
     @PUT("payment")
     suspend fun registerPayment(@Body payment: Payment): Response<Payment>
 
@@ -209,7 +213,7 @@ interface RestApiServices {
         @Query("subscriptionId") subscription: Int,
         @Query("responsibleId") responsibleId: Int,
         @Query("notes") notes: String?
-    ): BaseResponse<Unit>
+    ): Response<ReactivateServiceResponse>
 
     @GET("subscription/find/nameAndLastName")
     suspend fun findSubscriptionByNameAndLastName(
