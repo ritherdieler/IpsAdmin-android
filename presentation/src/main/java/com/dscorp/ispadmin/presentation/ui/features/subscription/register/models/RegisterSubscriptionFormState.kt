@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 
+import com.dscorp.ispadmin.domain.model.EquipmentCondition
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.NetworkDevice
@@ -44,6 +45,7 @@ data class RegisterSubscriptionFormState(
     val coupon: String = "",
     val note: String = "",
     val installationType: InstallationType = InstallationType.FIBER,
+    val equipmentCondition: EquipmentCondition = EquipmentCondition.LOAN,
 ) {
     fun isValid(): Boolean {
         val isFirstNameValid = firstName.isNotBlank() && firstName.isAValidName()

@@ -10,5 +10,6 @@ enum class FormFieldKey {
     PLACE,
     ONU,
     NAP_BOX,
-    NOTE
+    NOTE,
+    EQUIPMENT_CONDITION
 }

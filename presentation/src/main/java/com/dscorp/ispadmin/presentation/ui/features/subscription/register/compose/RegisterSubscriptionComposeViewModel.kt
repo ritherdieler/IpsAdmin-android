@@ -2,6 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compo
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dscorp.ispadmin.domain.model.EquipmentCondition
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
@@ -177,6 +178,10 @@ class RegisterSubscriptionComposeViewModel(
                 FormFieldKey.NOTE -> form.copy(
                     note = value as String
                 )
+
+                FormFieldKey.EQUIPMENT_CONDITION -> form.copy(
+                    equipmentCondition = value as EquipmentCondition
+                )
             }
             currentState.copy(registerSubscriptionForm = updatedForm)
         }
@@ -189,7 +194,7 @@ class RegisterSubscriptionComposeViewModel(
                 fieldKey = FormFieldKey.FIRST_NAME,
                 value = value,
                 isValid = { it.isAValidName() },
-                errorMessage = "Nombre inválido"
+                errorMessage = "El nombre debe tener al menos 2 caracteres"
             )
         }
     }
@@ -201,7 +206,7 @@ class RegisterSubscriptionComposeViewModel(
                 fieldKey = FormFieldKey.LAST_NAME,
                 value = value,
                 isValid = { it.isAValidName() },
-                errorMessage = "Apellido inválido"
+                errorMessage = "El apellido debe tener al menos 2 caracteres"
             )
         }
     }
@@ -213,7 +218,7 @@ class RegisterSubscriptionComposeViewModel(
                 fieldKey = FormFieldKey.DNI,
                 value = value,
                 isValid = { it.isValidDni() },
-                errorMessage = "DNI inválido"
+                errorMessage = "El DNI debe contener 8 dígitos"
             )
         }
     }
@@ -223,7 +228,7 @@ class RegisterSubscriptionComposeViewModel(
             fieldKey = FormFieldKey.ADDRESS,
             value = value,
             isValid = { it.isAValidAddress() },
-            errorMessage = "Dirección inválida"
+            errorMessage = "La dirección debe tener al menos 5 caracteres"
         )
     }
 
@@ -234,7 +239,7 @@ class RegisterSubscriptionComposeViewModel(
                 fieldKey = FormFieldKey.PHONE,
                 value = value,
                 isValid = { it.isValidPhone() },
-                errorMessage = "Número de teléfono inválido"
+                errorMessage = "El teléfono debe tener 9 dígitos"
             )
         }
     }
@@ -286,6 +291,14 @@ class RegisterSubscriptionComposeViewModel(
         }
     }
 
+    fun onEquipmentConditionChanged(value: EquipmentCondition) {
+        updateField(
+            fieldKey = FormFieldKey.EQUIPMENT_CONDITION,
+            value = value,
+            isValid = { true }
+        )
+    }
+
     fun onPlaceSelectionCleared() {
         uiState.update {
             it.copy(
@@ -315,10 +328,24 @@ class RegisterSubscriptionComposeViewModel(
             InstallationType.ONLY_TV_FIBER -> cachedPlanList.filter { it.type == InstallationType.ONLY_TV_FIBER }
         }
 
-        // Seleccionar automáticamente el plan si solo hay uno disponible
+        // Si no hay planes disponibles para este tipo, no hacer nada
         if (filteredPlans.isEmpty())
             return
-        val selectedPlan = if (filteredPlans.size == 1) filteredPlans.first() else null
+
+        // Verificar si el plan actual es compatible con el nuevo tipo de instalación
+        val currentSelectedPlan = uiState.value.registerSubscriptionForm.selectedPlan
+        val isCurrentPlanCompatible = currentSelectedPlan != null && 
+                                     filteredPlans.any { it.id == currentSelectedPlan.id }
+
+        // Determinar el plan seleccionado:
+        // 1. Si el plan actual es compatible, mantenerlo
+        // 2. Si hay solo un plan disponible, seleccionarlo automáticamente
+        // 3. En otro caso, limpiar la selección (null)
+        val selectedPlan = when {
+            isCurrentPlanCompatible -> currentSelectedPlan
+            filteredPlans.size == 1 -> filteredPlans.first()
+            else -> null
+        }
 
         uiState.update {
             it.copy(
@@ -409,7 +436,8 @@ class RegisterSubscriptionComposeViewModel(
             installationType = form.installationType,
             note = form.note,
             napBoxId = form.selectedNapBox?.id,
-            onu = form.selectedOnu
+            onu = form.selectedOnu,
+            equipmentCondition = form.equipmentCondition
         )
     }
 

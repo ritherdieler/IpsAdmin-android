@@ -11,12 +11,21 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -81,33 +91,92 @@ fun RegisterSubscriptionFormScreen(
         uiState.registeredSubscription != null -> {
             AlertDialog(
                 onDismissRequest = { viewModel.clearRegisteredSubscription() },
-                title = { Text("Registro Exitoso") },
+                title = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Éxito",
+                            tint = Color(0xFF4CAF50),
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "¡Registro Exitoso!",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
                 text = {
                     Column {
-                        Text("La suscripción se ha registrado correctamente:")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Cliente: ${uiState.registeredSubscription?.firstName} ${uiState.registeredSubscription?.lastName}")
-                        Text("DNI: ${uiState.registeredSubscription?.dni}")
-                        Text("Teléfono: ${uiState.registeredSubscription?.phone}")
-                        Text("Dirección: ${uiState.registeredSubscription?.address}")
-                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "IP: ${uiState.registeredSubscription?.ip ?: "No asignada"}",
-                            fontWeight = FontWeight.Bold
+                            "La suscripción se ha registrado correctamente",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(bottom = 16.dp)
                         )
-                        Text(
-                            "Número de Borne: ${uiState.registeredSubscription?.borneNumber ?: "No asignado"}",
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text("Tipo de instalación: ${uiState.registeredSubscription?.installationType?.name ?: "No especificado"}")
+                        
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    "${uiState.registeredSubscription?.firstName} ${uiState.registeredSubscription?.lastName}",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                InfoRow("DNI", uiState.registeredSubscription?.dni ?: "")
+                                InfoRow("Teléfono", uiState.registeredSubscription?.phone ?: "")
+                                InfoRow("Dirección", uiState.registeredSubscription?.address ?: "")
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            )
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    "Detalles Técnicos",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                InfoRow("IP", uiState.registeredSubscription?.ip ?: "No asignada")
+                                
+                                // Solo mostrar Borne si el tipo es Fibra o TV Cable
+                                val installationType = uiState.registeredSubscription?.installationType
+                                if (installationType == com.dscorp.ispadmin.domain.model.InstallationType.FIBER || 
+                                    installationType == com.dscorp.ispadmin.domain.model.InstallationType.ONLY_TV_FIBER) {
+                                    InfoRow("Borne", uiState.registeredSubscription?.borneNumber ?: "No asignado")
+                                }
+                                
+                                InfoRow("Tipo", uiState.registeredSubscription?.installationType?.toString() ?: "No especificado")
+                            }
+                        }
                     }
                 },
                 confirmButton = {
-                    Button(onClick = {
-                        viewModel.clearRegisteredSubscription()
-                        onSubscriptionRegisterSuccess()
-                    }) {
-                        Text("Aceptar")
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            viewModel.clearRegisteredSubscription()
+                            onSubscriptionRegisterSuccess()
+                        }
+                    ) {
+                        Text("Continuar")
                     }
                 }
             )
@@ -233,6 +302,7 @@ fun RegisterSubscriptionFormScreen(
                     viewModel.saveSubscription()
                 },
                 onNoteChanged = { viewModel.onNoteChanged(it) },
+                onEquipmentConditionChanged = { viewModel.onEquipmentConditionChanged(it) },
             )
         }
 
@@ -307,5 +377,25 @@ fun RegisterSubscriptionFormScreen(
 private fun isGpsEnabled(context: Context): Boolean {
     val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = "$label:",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
 }
 

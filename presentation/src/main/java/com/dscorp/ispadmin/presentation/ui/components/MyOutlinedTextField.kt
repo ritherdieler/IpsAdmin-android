@@ -76,7 +76,12 @@ fun MyOutlinedTextField(
         visualTransformation = visualTransformation,
         isError = isError,
         supportingText = if (isError && errorText != null) {
-            { Text(errorText!!) }
+            { 
+                Text(
+                    text = errorText!!,
+                    style = MaterialTheme.typography.bodySmall
+                ) 
+            }
         } else {
             supportingText
         },
@@ -93,7 +98,7 @@ fun MyOutlinedTextField(
                 }
             }
         } else if (isError) {
-            { Icon(Icons.Filled.Error, "Error", tint = MaterialTheme.colorScheme.error) }
+            null // Remover el ícono de error para que no haya tanto ruido visual
         } else {
             null
         },
