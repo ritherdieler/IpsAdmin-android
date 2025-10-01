@@ -30,9 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,7 +46,6 @@ import com.google.accompanist.permissions.shouldShowRationale
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.google.android.gms.maps.model.LatLng
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -65,18 +62,11 @@ fun RegisterSubscriptionFormScreen(
 
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    // Estado para controlar el diálogo de GPS
-    var showGpsDialog by remember { mutableStateOf(false) }
-
-    // Estado para verificar si el GPS está habilitado
-    var isGpsEnabled by remember { mutableStateOf(isGpsEnabled(context)) }
-
-    // Launcher para abrir la configuración de ubicación
     val locationSettingsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
-        // Verificar nuevamente si el GPS está habilitado después de regresar de la configuración
-        isGpsEnabled = isGpsEnabled(context)
+        val isEnabled = isGpsEnabled(context)
+        viewModel.onGpsStateChanged(isEnabled)
     }
 
     LaunchedEffect(Unit) {
@@ -84,157 +74,18 @@ fun RegisterSubscriptionFormScreen(
         installationOrderId?.let {
             viewModel.loadInstallationOrderData(it)
         }
+        
+        val isGpsCurrentlyEnabled = isGpsEnabled(context)
+        viewModel.onGpsStateChanged(isGpsCurrentlyEnabled)
+        viewModel.onLocationPermissionChanged(locationPermissionState.status.isGranted)
     }
-
-
-    when {
-        uiState.registeredSubscription != null -> {
-            AlertDialog(
-                onDismissRequest = { viewModel.clearRegisteredSubscription() },
-                title = {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Éxito",
-                            tint = Color(0xFF4CAF50),
-                            modifier = Modifier.size(64.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "¡Registro Exitoso!",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                },
-                text = {
-                    Column {
-                        Text(
-                            "La suscripción se ha registrado correctamente",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-                        
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            )
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    "${uiState.registeredSubscription?.firstName} ${uiState.registeredSubscription?.lastName}",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                InfoRow("DNI", uiState.registeredSubscription?.dni ?: "")
-                                InfoRow("Teléfono", uiState.registeredSubscription?.phone ?: "")
-                                InfoRow("Dirección", uiState.registeredSubscription?.address ?: "")
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(12.dp))
-                        
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer
-                            )
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    "Detalles Técnicos",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                InfoRow("IP", uiState.registeredSubscription?.ip ?: "No asignada")
-                                
-                                // Solo mostrar Borne si el tipo es Fibra o TV Cable
-                                val installationType = uiState.registeredSubscription?.installationType
-                                if (installationType == com.dscorp.ispadmin.domain.model.InstallationType.FIBER || 
-                                    installationType == com.dscorp.ispadmin.domain.model.InstallationType.ONLY_TV_FIBER) {
-                                    InfoRow("Borne", uiState.registeredSubscription?.borneNumber ?: "No asignado")
-                                }
-                                
-                                InfoRow("Tipo", uiState.registeredSubscription?.installationType?.toString() ?: "No especificado")
-                            }
-                        }
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            viewModel.clearRegisteredSubscription()
-                            onSubscriptionRegisterSuccess()
-                        }
-                    ) {
-                        Text("Continuar")
-                    }
-                }
-            )
-        }
-
-        uiState.error != null -> {
-            AlertDialog(
-                onDismissRequest = { viewModel.clearError() },
-                title = { Text("Error") },
-                text = {
-                    Text(
-                        uiState.error ?: "Ha ocurrido un error al registrar la suscripción"
-                    )
-                },
-                confirmButton = {
-                    Button(onClick = { viewModel.clearError() }) {
-                        Text("Aceptar")
-                    }
-                }
-            )
-        }
+    
+    LaunchedEffect(locationPermissionState.status.isGranted) {
+        viewModel.onLocationPermissionChanged(locationPermissionState.status.isGranted)
     }
-
-    // Verificar GPS al inicio
-    LaunchedEffect(Unit) {
-        isGpsEnabled = isGpsEnabled(context)
-        if (!isGpsEnabled) {
-            showGpsDialog = true
-        }
-    }
-
-    // Diálogo para solicitar activar el GPS
-    if (showGpsDialog) {
-        AlertDialog(
-            onDismissRequest = { showGpsDialog = false },
-            title = { Text("GPS desactivado") },
-            text = { Text("Para utilizar esta funcionalidad, es necesario activar el GPS de su dispositivo.") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showGpsDialog = false
-                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                        locationSettingsLauncher.launch(intent)
-                    }
-                ) {
-                    Text("Activar GPS")
-                }
-            },
-            dismissButton = {
-                Button(onClick = { showGpsDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
-
-    LaunchedEffect(isGpsEnabled, locationPermissionState.status.isGranted) {
-        if (isGpsEnabled && locationPermissionState.status.isGranted) {
+    
+    LaunchedEffect(uiState.isGpsEnabled, uiState.hasLocationPermission) {
+        if (uiState.isGpsEnabled && uiState.hasLocationPermission) {
             try {
                 val currentLocationRequest = CurrentLocationRequest.Builder()
                     .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
@@ -248,22 +99,7 @@ fun RegisterSubscriptionFormScreen(
                     fusedLocationClient.getCurrentLocation(currentLocationRequest, null)
                         .addOnSuccessListener { location ->
                             location?.let {
-                                viewModel.onLocationChanged(
-                                    LatLng(
-                                        it.latitude,
-                                        it.longitude
-                                    )
-                                )
-                                viewModel.getPlaceFromCurrentLocation(
-                                    it.latitude,
-                                    it.longitude
-                                )
-                                
-                                // Obtener cajas Nap cercanas a la ubicación actual
-                                viewModel.getNearbyNapBoxes(
-                                    it.latitude,
-                                    it.longitude
-                                )
+                                viewModel.processCurrentLocation(it.latitude, it.longitude)
                             }
                         }
                 }
@@ -272,13 +108,34 @@ fun RegisterSubscriptionFormScreen(
         }
     }
 
-    LaunchedEffect(uiState.registerSubscriptionForm.selectedPlace) {
-        println(uiState.registerSubscriptionForm.selectedPlace)
+    uiState.registeredSubscription?.let { subscription ->
+        SuccessDialog(
+            subscription = subscription,
+            onDismiss = { viewModel.clearRegisteredSubscription() },
+            onContinue = onSubscriptionRegisterSuccess
+        )
+    }
+
+    uiState.error?.let { error ->
+        ErrorDialog(
+            error = error,
+            onDismiss = { viewModel.clearError() }
+        )
+    }
+
+    if (uiState.shouldShowGpsDialog) {
+        GpsDialog(
+            onActivateGps = {
+                viewModel.dismissGpsDialog()
+                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                locationSettingsLauncher.launch(intent)
+            },
+            onDismiss = { viewModel.dismissGpsDialog() }
+        )
     }
 
     when {
-        // Solo mostrar el formulario si GPS está habilitado y los permisos concedidos
-        isGpsEnabled && locationPermissionState.status.isGranted -> {
+        uiState.isGpsEnabled && uiState.hasLocationPermission -> {
             RegisterSubscriptionForm(
                 formState = uiState,
                 onFirstNameChanged = { viewModel.onFirstNameChanged(it) },
@@ -306,8 +163,7 @@ fun RegisterSubscriptionFormScreen(
             )
         }
 
-        // Si el GPS está deshabilitado, mostrar mensaje para habilitarlo
-        !isGpsEnabled -> {
+        !uiState.isGpsEnabled -> {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -328,7 +184,6 @@ fun RegisterSubscriptionFormScreen(
             }
         }
 
-        // Si el GPS está habilitado pero falta el permiso
         else -> {
             if (locationPermissionState.status.shouldShowRationale) {
                 Column(
@@ -356,7 +211,6 @@ fun RegisterSubscriptionFormScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = {
-                            // Abrir la configuración de la aplicación para que el usuario active manualmente el permiso
                             val intent =
                                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                                     data = Uri.fromParts("package", context.packageName, null)
@@ -373,7 +227,6 @@ fun RegisterSubscriptionFormScreen(
     }
 }
 
-// Función para verificar si el GPS está habilitado
 private fun isGpsEnabled(context: Context): Boolean {
     val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
@@ -398,4 +251,143 @@ private fun InfoRow(label: String, value: String) {
         )
     }
 }
+
+@Composable
+private fun SuccessDialog(
+    subscription: com.dscorp.ispadmin.domain.model.Subscription,
+    onDismiss: () -> Unit,
+    onContinue: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Éxito",
+                    tint = Color(0xFF4CAF50),
+                    modifier = Modifier.size(64.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "¡Registro Exitoso!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        text = {
+            Column {
+                Text(
+                    "La suscripción se ha registrado correctamente",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "${subscription.firstName} ${subscription.lastName}",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        InfoRow("DNI", subscription.dni ?: "")
+                        InfoRow("Teléfono", subscription.phone ?: "")
+                        InfoRow("Dirección", subscription.address ?: "")
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "Detalles Técnicos",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        InfoRow("IP", subscription.ip ?: "No asignada")
+                        
+                        if (subscription.installationType == com.dscorp.ispadmin.domain.model.InstallationType.FIBER || 
+                            subscription.installationType == com.dscorp.ispadmin.domain.model.InstallationType.ONLY_TV_FIBER) {
+                            InfoRow("Borne", subscription.borneNumber ?: "No asignado")
+                        }
+                        
+                        InfoRow("Tipo", subscription.installationType?.toString() ?: "No especificado")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    onDismiss()
+                    onContinue()
+                }
+            ) {
+                Text("Continuar")
+            }
+        }
+    )
+}
+
+@Composable
+private fun ErrorDialog(
+    error: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Error") },
+        text = { Text(error) },
+        confirmButton = {
+            Button(onClick = onDismiss) {
+                Text("Aceptar")
+            }
+        }
+    )
+}
+
+@Composable
+private fun GpsDialog(
+    onActivateGps: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("GPS desactivado") },
+        text = { 
+            Text("Para utilizar esta funcionalidad, es necesario activar el GPS de su dispositivo.") 
+        },
+        confirmButton = {
+            Button(onClick = onActivateGps) {
+                Text("Activar GPS")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
 

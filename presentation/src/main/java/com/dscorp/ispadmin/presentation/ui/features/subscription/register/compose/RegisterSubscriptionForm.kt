@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -28,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -102,6 +104,7 @@ fun RegisterSubscriptionForm(
                 value = formState.registerSubscriptionForm.firstName,
                 errorMessage = formState.registerSubscriptionForm.firstNameError,
                 onValueChange = onFirstNameChanged,
+                enabled = !formState.isLoading,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next
@@ -116,6 +119,7 @@ fun RegisterSubscriptionForm(
                 value = formState.registerSubscriptionForm.lastName,
                 errorMessage = formState.registerSubscriptionForm.lastNameError,
                 onValueChange = onLastNameChanged,
+                enabled = !formState.isLoading,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next
@@ -130,6 +134,7 @@ fun RegisterSubscriptionForm(
                 value = formState.registerSubscriptionForm.dni,
                 errorMessage = formState.registerSubscriptionForm.dniError,
                 onValueChange = onDniChanged,
+                enabled = !formState.isLoading,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
@@ -144,6 +149,7 @@ fun RegisterSubscriptionForm(
                 value = formState.registerSubscriptionForm.phone,
                 errorMessage = formState.registerSubscriptionForm.phoneError,
                 onValueChange = onPhoneChanged,
+                enabled = !formState.isLoading,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Phone,
                     imeAction = ImeAction.Next
@@ -155,6 +161,25 @@ fun RegisterSubscriptionForm(
 
             SectionTitle("Dirección")
             Spacer(modifier = Modifier.height(8.dp))
+            
+            if (formState.isLoadingLocation) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                    Text(
+                        "Obteniendo ubicación...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            
             MyAutoCompleteTextViewCompose(
                 modifier = Modifier.fillMaxWidth(),
                 items = formState.registerSubscriptionForm.placeList,
@@ -163,6 +188,7 @@ fun RegisterSubscriptionForm(
                 onItemSelected = onPlaceSelected,
                 onSelectionCleared = onPLaceSelectionCleared,
                 hasError = formState.registerSubscriptionForm.placeError != null,
+                enabled = !formState.isLoading,
             )
             MyOutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -170,6 +196,7 @@ fun RegisterSubscriptionForm(
                 label = "Dirección completa",
                 errorMessage = formState.registerSubscriptionForm.addressError,
                 onValueChange = onAddressChanged,
+                enabled = !formState.isLoading,
                 singleLine = false,
                 maxLines = 4,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -189,7 +216,7 @@ fun RegisterSubscriptionForm(
                 items = listOf(InstallationType.FIBER, InstallationType.WIRELESS, InstallationType.ONLY_TV_FIBER),
                 selected = formState.registerSubscriptionForm.installationType,
                 onItemSelected = onInstallationTypeSelected,
-                enabled = true,
+                enabled = !formState.isLoading,
             )
 
             MyOutLinedDropDown(
@@ -198,7 +225,7 @@ fun RegisterSubscriptionForm(
                 selected = formState.registerSubscriptionForm.selectedPlan,
                 onItemSelected = onPlanSelected,
                 hasError = formState.registerSubscriptionForm.planError != null,
-                enabled = formState.registerSubscriptionForm.planList.isNotEmpty(),
+                enabled = !formState.isLoading && formState.registerSubscriptionForm.planList.isNotEmpty(),
             )
 
             AnimatedVisibility(
@@ -243,6 +270,7 @@ fun RegisterSubscriptionForm(
                 value = formState.registerSubscriptionForm.note,
                 onValueChange = onNoteChanged,
                 label = "Observaciones (opcional)",
+                enabled = !formState.isLoading,
                 singleLine = false,
                 maxLines = 4,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -446,6 +474,24 @@ fun FiberOpticForm(
 
     }
 
+    if (formState.isLoadingNearbyNapBoxes) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircularProgressIndicator(modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+            Text(
+                "Buscando cajas NAP cercanas...",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+
     MyAutoCompleteTextViewCompose(
         items = formState.registerSubscriptionForm.napBoxList,
         label = NAP_BOX_LABEL,
@@ -492,8 +538,6 @@ private fun RefreshIcon(
         )
     }
 }
-
-// Constantes para etiquetas
 
 private const val ONU_LABEL = "Onu"
 private const val NAP_BOX_LABEL = "Caja Nap"
