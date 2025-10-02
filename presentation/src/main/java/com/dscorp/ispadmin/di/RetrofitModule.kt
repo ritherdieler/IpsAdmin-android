@@ -14,11 +14,9 @@ import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 const val BASE_URL = "BASE_URL"
-const val STORAGE_BASE_URL = "STORAGE_BASE_URL"
 
 val retrofitModule = module {
     single { provideRetrofit(getProperty(BASE_URL), provideHttpClient(get())) }
-    single(named("storageRetrofit")) { provideRetrofit(getProperty(STORAGE_BASE_URL), provideHttpClient(get())) }
     single { provideHttpClient(get()) }
 }
 

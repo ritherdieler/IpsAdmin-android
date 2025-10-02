@@ -45,7 +45,6 @@ class KoinApplication : Application() {
 
         getKoin().run {
             setProperty(BASE_URL, BuildConfig.BASE_URL)
-            setProperty(STORAGE_BASE_URL, BuildConfig.FIREBASE_STORAGE_BUCKET)
         }
     }
 }

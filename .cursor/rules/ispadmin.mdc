@@ -65,6 +65,10 @@ alwaysApply: true
 - Informar explícitamente cualquier excepción antes de seguir.
 
 
+
+cuando te pida que hagas un adb reverse ejecutalo con esto 
+~/Library/Android/sdk/platform-tools/adb reverse tcp:8080 tcp:8080
+
 ---
 
 > Cumple todas estas reglas al pie de la letra. No omitas, ignores ni modifiques ninguna bajo ninguna circunstancia.

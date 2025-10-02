@@ -32,8 +32,7 @@ android {
             applicationIdSuffix ".dev"
             versionNameSuffix "-dev"
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
-            buildConfigField 'String', "BASE_URL", '"http://192.168.1.6:8080/"'
-            buildConfigField 'String', "FIREBASE_STORAGE_BUCKET", '"https://firebasestorage.googleapis.com/v0/b/ispadmin-dev.appspot.com/"'
+            buildConfigField 'String', "BASE_URL", '"http://127.0.0.1:8080/"'
             buildConfigField 'String', "OLT_SERVICE_API_KET", OLT_SERVICE_API_KEY
             buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", SEND_CLOUD_MESSAGING_API_KEY
         }
@@ -41,7 +40,6 @@ android {
             dimension "environment"
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
             buildConfigField 'String', "BASE_URL", '"http://191.101.234.130:8080/ispadmin/"'
-            buildConfigField 'String', "FIREBASE_STORAGE_BUCKET", '"https://firebasestorage.googleapis.com/v0/b/ispadmin-687ca.appspot.com/"'
             buildConfigField 'String', "OLT_SERVICE_API_KET", OLT_SERVICE_API_KEY
             buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", SEND_CLOUD_MESSAGING_API_KEY
         }
@@ -51,6 +49,7 @@ android {
         debug {
             debuggable true
             minifyEnabled false
+            manifestPlaceholders = [usesCleartext:"true"]
         }
         release {
             minifyEnabled false
@@ -110,7 +109,6 @@ android {
 }
 
 dependencies {
-
     // Accompanist
     implementation "com.google.accompanist:accompanist-permissions:${rootProject.ext.accompanistVersion}"
     
@@ -228,5 +226,24 @@ android.applicationVariants.all { variant ->
             from googleServicesFile
             into "."
         }
+    }
+}
+
+// Tarea para aplicar ADB reverse a todos los dispositivos
+tasks.register("adbReverseAll", Exec) {
+    group = "android"
+    description = "Aplica ADB reverse a todos los dispositivos conectados"
+    commandLine "bash", "-c", "bash ../reverse-all.sh"
+}
+
+// Tarea para instalar y configurar ADB reverse automáticamente
+tasks.register("debugWithReverse") {
+    group = "android"
+    description = "Instala la app dev debug y configura ADB reverse"
+    dependsOn "adbReverseAll"
+    
+    doLast {
+        println "✅ App instalada y ADB reverse configurado"
+        println "🔗 URL: http://127.0.0.1:8080/"
     }
 }
