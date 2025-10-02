@@ -4,6 +4,9 @@ import android.app.Application
 import android.net.Uri
 import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.domain.model.Outlay
+import com.dscorp.ispadmin.presentation.util.compressImage
+import com.dscorp.ispadmin.presentation.util.getFileFromUri
+import com.dscorp.ispadmin.presentation.util.rotateImageIfNeeded
 import java.io.File
 import java.io.FileOutputStream
 
@@ -19,11 +22,18 @@ class RegisterOutlayUseCase(
         if (!outlay.isValid()) {
             throw IllegalArgumentException("Datos incompletos")
         }
-        val receiptFiles = photoUriList.map { uri -> uriToFile(uri) }
         val outlayWithResponsible = outlay.apply {
             responsibleId = repository.getUserSession()?.id 
         }
-        repository.saveOutLay(outlayWithResponsible, receiptFiles)
+        val fileList = photoUriList.map { photoUri ->
+            val file = getFileFromUri(application, photoUri)
+                ?: throw IllegalStateException("File not found")
+            rotateImageIfNeeded(application, file, photoUri)
+                ?.compressImage(50)
+                ?: throw IllegalStateException("Error processing image")
+        }
+
+        repository.saveOutLay(outlayWithResponsible, fileList)
     }
     
     private fun uriToFile(uri: Uri): File {

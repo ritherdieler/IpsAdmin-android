@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "74615302027",
+    "project_id": "ispadmin-687ca",
+    "storage_bucket": "ispadmin-687ca.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:74615302027:android:87751a6bad0a78cbb0318e",
+        "android_client_info": {
+          "package_name": "com.dscorp.ispadmin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "74615302027-6620pkefffteqfp87phbbg390ov0f1g8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dscorp.ispadmin",
+            "certificate_hash": "c9469c769492204dc693d5cc50b83a77c45032a0"
+          }
+        },
+        {
+          "client_id": "74615302027-o3mja882j4ru9t4tsl6312junqsb4005.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvfyg695eQUpxcvlqTRrP5f_kL2jBwa5o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "74615302027-o3mja882j4ru9t4tsl6312junqsb4005.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

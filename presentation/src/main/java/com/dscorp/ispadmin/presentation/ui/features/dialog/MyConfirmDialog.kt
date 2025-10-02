@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,10 +63,10 @@ fun MyConfirmDialog(
                 modifier = Modifier
                     .shadow(
                         elevation = 35.dp,
-                        spotColor = Color(0x80163342),
-                        ambientColor = Color(0x80163342)
+                        spotColor = Color.Black.copy(alpha = 0.3f),
+                        ambientColor = Color.Black.copy(alpha = 0.3f)
                     )
-                    .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 8.dp))
+                    .background(color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(size = 8.dp))
                     .padding(start = 34.dp, top = 24.dp, end = 34.dp, bottom = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -82,7 +83,7 @@ fun MyConfirmDialog(
                         style = TextStyle(
                             fontSize = 16.sp,
                             fontWeight = FontWeight(600),
-                            color = Color(0xFF000034),
+                            color = MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center,
                         )
                     )
@@ -95,8 +96,9 @@ fun MyConfirmDialog(
                                 onDismissRequest()
                             },
                         painter = painterResource(id = closeIcon),
-                        contentDescription = "image description",
-                        contentScale = ContentScale.None
+                        contentDescription = "Cerrar diálogo",
+                        contentScale = ContentScale.None,
+                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
                     )
 
                 }
@@ -138,7 +140,7 @@ fun MyConfirmCustomDialogPreview() {
                     style = TextStyle(
                         fontSize = 12.sp,
                         fontWeight = FontWeight(400),
-                        color = Color(0xFF000034),
+                        color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center,
                     )
                 )

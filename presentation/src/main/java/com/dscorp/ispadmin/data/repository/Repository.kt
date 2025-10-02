@@ -82,7 +82,7 @@ class Repository : IRepository, KoinComponent {
     override suspend fun registerUser(user: User): User {
         val response = restApiServices.registerUser(user)
         return when (response.code()) {
-            HttpCodes.OK -> response.body()!!
+            in 200..299 -> response.body()!!
             HttpCodes.CONFLICT -> throw Exception("El usuario ya existe, por favor use otro")
             else -> throw Exception("Ocurrió un error inesperado, contacte con soporte técnico")
         }
@@ -92,7 +92,7 @@ class Repository : IRepository, KoinComponent {
         val response = restApiServices.doLoging(login)
 
         return when (response.code()) {
-            HttpCodes.OK -> {
+            in 200..299 -> {
                 val userSession = response.body()!!
                 userSession.apply { password = login.password }
                 saveUserSession(userSession, login.checkBox)
@@ -155,7 +155,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun registerPlan(plan: Plan): Plan {
         val response = restApiServices.registerPlan(plan)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("error en la respuesta")
@@ -164,7 +164,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun registerNetworkDevice(registerNetworkDevice: NetworkDevice): NetworkDevice {
         val response = restApiServices.registerNetworkDevice(registerNetworkDevice)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("error en la respuesta")
@@ -180,14 +180,14 @@ class Repository : IRepository, KoinComponent {
         val response = restApiServices.registerSubscription(subscription)
 
         return when (response.status) {
-            HttpCodes.OK -> response.data!!
+            in 200..299 -> response.data!!
             else -> throw Exception(response.error)
         }
     }
 
     override suspend fun getPlans(): List<PlanResponse> {
         val response = restApiServices.getPlans()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("error en la respuesta")
@@ -197,7 +197,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getGenericDevices(): List<NetworkDevice> {
         val response = restApiServices.getGenericDevices()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("ERROR")
@@ -206,7 +206,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getSubscriptions(): List<SubscriptionResponse> {
         val response = restApiServices.getSubscriptions()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("ERROR EN LA RESPUESTA")
@@ -215,7 +215,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun registerPlace(registerPlace: Place): Place {
         val response = restApiServices.registerPlace(registerPlace)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("ERROR")
@@ -224,7 +224,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getPlaces(): List<Place> {
         val response = restApiServices.getPlaces()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("error en la respuesta")
@@ -235,7 +235,7 @@ class Repository : IRepository, KoinComponent {
     override suspend fun registerNapBox(napBox: NapBox): NapBox {
 
         val response = restApiServices.registerNapBox(napBox)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("ERROR")
@@ -244,7 +244,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun registerServiceOrder(serviceOrder: ServiceOrder): ServiceOrder {
         val response = restApiServices.registerServiceOrder(serviceOrder)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("ERROR")
@@ -253,7 +253,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getServicesOrder(): List<ServiceOrderResponse> {
         val response = restApiServices.getServicesOrder()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("ERROR EN LA RESPUESTA")
@@ -262,7 +262,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getTechnicians(): List<User> {
         val response = restApiServices.getTechnicians()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -271,7 +271,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getNapBoxes(): List<NapBoxResponse> {
         val response = restApiServices.getNapBoxes()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -283,7 +283,7 @@ class Repository : IRepository, KoinComponent {
         longitude: Double
     ): List<NapBoxResponse> {
         val response = restApiServices.getNapBoxesOrderedByLocation(latitude, longitude)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -296,7 +296,7 @@ class Repository : IRepository, KoinComponent {
             request.startDate,
             request.endDate
         )
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -306,14 +306,14 @@ class Repository : IRepository, KoinComponent {
     override suspend fun findSubscriptionByDNI(id: String): List<SubscriptionResume> {
         val response = restApiServices.findSubscriptionByDNI(id)
         return when (response.code()) {
-            200 -> response.body()?.map { it.toDomain() } ?: emptyList()
+            in 200..299 -> response.body()?.map { it.toDomain() } ?: emptyList()
             else -> throw Exception("Error")
         }
     }
 
     override suspend fun registerPayment(payment: Payment): Payment {
         val response = restApiServices.registerPayment(payment)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -322,7 +322,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getNetworkDeviceTypes(): List<String> {
         val response = restApiServices.getNetworkDeviceTypes()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -331,7 +331,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getDebtors(): List<SubscriptionResponse> {
         val response = restApiServices.getDebtors()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -340,7 +340,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun registerIpPool(ipPool: IpPoolRequest): IpPool {
         val response = restApiServices.registerIpPool(ipPool)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -349,7 +349,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getIpPoolList(): List<IpPool> {
         val response = restApiServices.getIpPoolList()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -361,7 +361,7 @@ class Repository : IRepository, KoinComponent {
         itemsLimit: Int
     ): List<Payment> {
         val response = restApiServices.getRecentPaymentsHistory(idSubscription, itemsLimit)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -370,7 +370,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getCoreDevices(): List<NetworkDevice> {
         val response = restApiServices.getCoreDevices()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -379,7 +379,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun updateSubscriptionPlan(subscription: UpdateSubscriptionPlanBody): SubscriptionResponse {
         val response = restApiServices.updateSubscriptionPlan(subscription)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -389,7 +389,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun downloadDebtorWithActiveSubscriptionsReport(): DownloadDocumentResponse {
         val response = restApiServices.downloadDebtorsWithActiveSubscriptionReportDocument()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -398,7 +398,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun downloadPaymentCommitmentSubscriptionsReport(): DownloadDocumentResponse {
         val response = restApiServices.downloadWithPaymentCommitmentSubscriptionsReportDocument()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -407,7 +407,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun downloadSuspendedSubscriptionsReport(): DownloadDocumentResponse {
         val response = restApiServices.downloadSuspendedSubscriptionsReportDocument()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -416,7 +416,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun downloadCutOffSubscriptionsReport(): DownloadDocumentResponse {
         val response = restApiServices.downloadCutOffSubscriptionsReportDocument()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -425,7 +425,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun downloadPastMonthDebtorsReport(): DownloadDocumentResponse {
         val response = restApiServices.downloadPastMontDebtorsSubscriptionsReportDocument()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -434,7 +434,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getDashBoardData(): DashBoardDataResponse {
         val response = restApiServices.getDashBoardData()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -450,7 +450,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getHostDevices(): List<NetworkDevice> {
         val response = restApiServices.getCoreDevices()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -459,7 +459,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getIpList(poolId: Int): List<Ip> {
         val response = restApiServices.getIpList(poolId)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -468,7 +468,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getCpeDevices(): List<NetworkDevice> {
         val response = restApiServices.getCpeDevices()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("No se pudieron obtener los equipos cpe")
@@ -477,7 +477,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun editNapBox(napBox: NapBox): NapBoxResponse {
         val response = restApiServices.editNapBox(napBox)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -486,7 +486,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun editServiceOrder(serviceOrder: ServiceOrder): ServiceOrderResponse {
         val response = restApiServices.editServiceOrder(serviceOrder)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -495,7 +495,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getMufas(): List<Mufa> {
         val response = restApiServices.getMufas()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("No se pudieron recuperar las mufas")
@@ -504,7 +504,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getUnconfirmedOnus(): List<Onu> {
         val response = restApiServices.getUnconfirmedOnus()
-        return if (response.code() == 200) response.body()!!
+        return if (response.code() in 200..299) response.body()!!
         else throw Exception("Error generico")
     }
 
@@ -513,7 +513,7 @@ class Repository : IRepository, KoinComponent {
         val response = restApiServices.applyCoupon(code)
 
         return when (response.code()) {
-            200 -> response.body()
+            in 200..299 -> response.body()
             404 -> null
             else -> throw Exception("Ocurrio un error en la activacion del cupon")
         }
@@ -526,14 +526,14 @@ class Repository : IRepository, KoinComponent {
     ): List<SubscriptionResume> {
         val response = restApiServices.findSubscriptionBySubscriptionDate(startDate, endDate)
         return when (response.code()) {
-            200 -> response.body()?.map { it.toDomain() } ?: emptyList()
+            in 200..299 -> response.body()?.map { it.toDomain() } ?: emptyList()
             else -> throw Exception("Error")
         }
     }
 
     override suspend fun sendCloudMessaging(body: FirebaseBody?): FireBaseResponse {
         val response = sendMessagingCloudApi.sendCloudMessaging(body)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error en la notificacion")
@@ -542,7 +542,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun updatePlan(plan: Plan): PlanResponse {
         val response = restApiServices.updatePlan(plan)
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Ocurrio un error al registrar el plan")
@@ -552,7 +552,7 @@ class Repository : IRepository, KoinComponent {
     override suspend fun savePaymentCommitment(id: Int) {
         val response = restApiServices.setPaymentCommitment(id)
         when (response.code()) {
-            HttpCodes.OK -> {}
+            in 200..299 -> {}
             else -> throw Exception("Ocurrio un error al registrar el compromiso de pago, contacte con el administrador")
         }
     }
@@ -560,7 +560,7 @@ class Repository : IRepository, KoinComponent {
     override suspend fun reactivateService(subscriptionId: Int, responsibleId: Int, notes: String?) {
         val response = restApiServices.reactivateService(subscriptionId, responsibleId, notes)
         when (response.code()) {
-            200 -> {
+            in 200..299 -> {
                 // Servicio reactivado exitosamente
             }
             else -> {
@@ -589,7 +589,7 @@ class Repository : IRepository, KoinComponent {
     ): List<SubscriptionResume> {
         val response = restApiServices.findSubscriptionByNameAndLastName(name, lastName)
         return when (response.code()) {
-            200 -> response.body()?.map { it.toDomain() } ?: emptyList()
+            in 200..299 -> response.body()?.map { it.toDomain() } ?: emptyList()
             else -> throw Exception("Error")
         }
     }
@@ -597,14 +597,14 @@ class Repository : IRepository, KoinComponent {
     override suspend fun findSubscriptionByIP(ip: String): List<SubscriptionResume> {
         val response = restApiServices.findSubscriptionByIP(ip)
         return when (response.code()) {
-            200 -> response.body()?.map { it.toDomain() } ?: emptyList()
+            in 200..299 -> response.body()?.map { it.toDomain() } ?: emptyList()
             else -> throw Exception("Error")
         }
     }
 
     override suspend fun downloadDebtorsCutOffCandidatesSubscriptionsReport(): DownloadDocumentResponse {
         val response = restApiServices.downloadDebtorsCutOffCandidatesReportDocument()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -614,7 +614,7 @@ class Repository : IRepository, KoinComponent {
     override suspend fun cancelSubscription(subscriptionId: Int) {
         val response = restApiServices.cancelSubscription(subscriptionId)
         when (response.code()) {
-            HttpCodes.OK -> {}
+            in 200..299 -> {}
             else -> throw Exception("No se pudo cancelar el servicio, vuelva a intentarlos mas tarde")
         }
     }
@@ -622,14 +622,14 @@ class Repository : IRepository, KoinComponent {
     override suspend fun updateSubscriptionData(subscriptionData: UpdateSubscriptionDataBody) {
         val response = restApiServices.updateSubscriptionData(subscriptionData)
         when (response.code()) {
-            HttpCodes.OK -> {}
+            in 200..299 -> {}
             else -> throw Exception("No se pudo actualizar los datos de la suscripcion")
         }
     }
 
     override suspend fun downloadDebtorWithCancelledSubscriptionsReport(): DownloadDocumentResponse {
         val response = restApiServices.downloadDebtorsWithCancelledSubscriptionReportDocument()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -638,7 +638,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun downloadCancelledSubscriptionsFromCurrentMonthReport(): DownloadDocumentResponse {
         val response = restApiServices.downloadCancelledSubscriptionsFromCurrentMonth()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -647,7 +647,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun downloadCancelledSubscriptionsFromPastMonthReport(): DownloadDocumentResponse {
         val response = restApiServices.downloadCancelledSubscriptionsFromLastMonth()
-        if (response.code() == 200) {
+        if (response.code() in 200..299) {
             return response.body()!!
         } else {
             throw Exception("Error")
@@ -685,7 +685,7 @@ class Repository : IRepository, KoinComponent {
     fun createImagePart(file: File): MultipartBody.Part {
         val requestFile: RequestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
         return MultipartBody.Part.Companion.createFormData(
-            "receipts",
+            "image",
             "${Date().time}.jpg",
             requestFile
         )
@@ -711,7 +711,7 @@ class Repository : IRepository, KoinComponent {
         val response = restApiServices.doMigration(migrationRequest)
 
         return when (response.status) {
-            HttpCodes.OK -> response.data!!
+            in 200..299 -> response.data!!
             else -> throw Exception(response.error)
         }
     }
@@ -720,14 +720,14 @@ class Repository : IRepository, KoinComponent {
         val response = restApiServices.getOnuBySn(s)
 
         return when (response.status) {
-            HttpCodes.OK -> response.data!!
+            in 200..299 -> response.data!!
             else -> throw Exception(response.error)
         }
     }
 
     override suspend fun deleteOnuFromOlt(onuExternalId: String) {
         val response = restApiServices.deleteOnuFromOlt(onuExternalId)
-        if (response.status != HttpCodes.OK) {
+        if (response.status !in 200..299) {
             throw Exception(response.error)
         }
     }
@@ -749,17 +749,17 @@ class Repository : IRepository, KoinComponent {
             category = categoryBody,
             costCenter = costCenterBody,
             userId = userIdBody,
-            receipts = receiptParts
+            image = receiptParts
         )
         
-        if (response.status != HttpCodes.OK) {
-            throw Exception(response.error)
+        if (!response.isSuccessful) {
+            throw Exception("Error al registrar el egreso: ${response.message()}")
         }
     }
 
     override suspend fun getElectronicPayers(subscriptionId: Int): List<String> {
         val response = restApiServices.getElectronicPayers(subscriptionId)
-        if (response.status != HttpCodes.OK) {
+        if (response.status !in 200..299) {
             throw Exception(response.error)
         }
         return response.data!!
@@ -767,27 +767,27 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun updateCustomerData(customer: CustomerData) {
         val response = restApiServices.updateCustomerData(customer)
-        if (response.code() != HTTP_OK)
+        if (response.code() !in 200..299)
             throw Exception("No se pudo actualizar los datos del cliente")
     }
 
     override suspend fun subscriptionById(subscriptionId: Int): SubscriptionResponse {
         val response = restApiServices.subscriptionById(subscriptionId)
-        if (response.code() != HTTP_OK)
+        if (response.code() !in 200..299)
             throw Exception("No se pudo obtener la suscripcion")
         return response.body()!!
     }
 
     override suspend fun changeSubscriptionNapBox(request: MoveOnuRequest) {
         val response = restApiServices.changeSubscriptionNapBox(request)
-        if (response.code() != HTTP_OK)
+        if (response.code() !in 200..299)
             throw Exception("No se pudo cambiar la caja nap de la suscripcion")
 
     }
 
     override suspend fun getRemoteAppVersion(): AppVersion {
         val response = restApiServices.getRemoteAppVersion()
-        if (response.code() != HTTP_OK)
+        if (response.code() !in 200..299)
             throw Exception("No se pudo obtener la version de la aplicacion")
         return response.body()!!
 
@@ -800,7 +800,7 @@ class Repository : IRepository, KoinComponent {
     ): List<AssistanceTicketResponse> {
         val response =
             restApiServices.getTicketsByDateAndStatusRange(closed, firstDayOfMonth, lastDayOfMonth)
-        if (response.code() != HTTP_OK)
+        if (response.code() !in 200..299)
             throw Exception("No se pudieron obtener los tickets")
         return response.body()!!
 
@@ -808,13 +808,13 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun saveFixedCost(fixedCostRequest: FixedCostRequest) {
         val response = restApiServices.saveFixedCost(fixedCostRequest)
-        if (response.code() != HTTP_OK)
+        if (response.code() !in 200..299)
             throw Exception("No se pudo guardar el costo fijo")
     }
 
     override suspend fun getAllFixedCosts(): List<FixedCost> {
         val response = restApiServices.getAllFixedCosts()
-        if (response.code() != HTTP_OK)
+        if (response.code() !in 200..299)
             throw Exception("No se pudieron obtener los costos fijos")
         return response.body()!!
     }
@@ -828,7 +828,7 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun getPlaceFromLocation(latitude: Double, longitude: Double): Place {
         val response = restApiServices.findPlaceByLocation(latitude, longitude)
-        if (response.code() != HTTP_OK)
+        if (response.code() !in 200..299)
             throw Exception("No se pudo obtener la ubicacion")
         return response.body()!!
     }
@@ -840,7 +840,7 @@ class Repository : IRepository, KoinComponent {
     ) {
         val response =
             restApiServices.updateSubscriptionLocation(subscriptionId, latitude, longitude)
-        if (response.code() != HTTP_OK)
+        if (response.code() !in 200..299)
             throw Exception("No se pudo actualizar la ubicación geográfica")
     }
 

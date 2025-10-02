@@ -17,39 +17,43 @@ android {
         applicationId "com.dscorp.ispadmin"
         minSdk rootProject.ext.minSdk
         targetSdk rootProject.ext.targetSdk
-        versionCode 40
-        versionName "2.2.0"
+        versionCode 42
+        versionName "2.2.2"
         testInstrumentationRunner "com.dscorp.ispadmin.test.InstrumentationTestRunner"
         vectorDrawables {
             useSupportLibrary true
         }
     }
 
-    buildTypes {
-        debug {
-            //FirebaseUrl
+    flavorDimensions "environment"
+    productFlavors {
+        dev {
+            dimension "environment"
+            applicationIdSuffix ".dev"
+            versionNameSuffix "-dev"
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
-
-//            DEVELOP
             buildConfigField 'String', "BASE_URL", '"http://192.168.1.6:8080/"'
-
-//            RELEASE
-//            buildConfigField 'String', "BASE_URL", '"http://191.101.234.130:8080/ispadmin/"'
-
-            buildConfigField 'String', "FIREBASE_STORAGE_BUCKET", '"https://firebasestorage.googleapis.com/v0/b/ispadmin-687ca.appspot.com/"'
+            buildConfigField 'String', "FIREBASE_STORAGE_BUCKET", '"https://firebasestorage.googleapis.com/v0/b/ispadmin-dev.appspot.com/"'
             buildConfigField 'String', "OLT_SERVICE_API_KET", OLT_SERVICE_API_KEY
             buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", SEND_CLOUD_MESSAGING_API_KEY
-
         }
-        release {
-            minifyEnabled false
+        prod {
+            dimension "environment"
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
             buildConfigField 'String', "BASE_URL", '"http://191.101.234.130:8080/ispadmin/"'
             buildConfigField 'String', "FIREBASE_STORAGE_BUCKET", '"https://firebasestorage.googleapis.com/v0/b/ispadmin-687ca.appspot.com/"'
-
             buildConfigField 'String', "OLT_SERVICE_API_KET", OLT_SERVICE_API_KEY
             buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", SEND_CLOUD_MESSAGING_API_KEY
+        }
+    }
 
+    buildTypes {
+        debug {
+            debuggable true
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -64,6 +68,16 @@ android {
     }
 
     sourceSets {
+        dev {
+            java.srcDirs = ['src/dev/java']
+            res.srcDirs = ['src/dev/res']
+            assets.srcDirs = ['src/dev/assets']
+        }
+        prod {
+            java.srcDirs = ['src/prod/java']
+            res.srcDirs = ['src/prod/res']
+            assets.srcDirs = ['src/prod/assets']
+        }
         test {
             resources {
                 srcDirs 'src\\test\\assets'
@@ -202,4 +216,17 @@ dependencies {
     testImplementation "androidx.test:core-ktx:${rootProject.ext.testCoreVersion}"
     testImplementation "androidx.test:runner:${rootProject.ext.testRunnerVersion}"
     testImplementation "androidx.test.espresso:espresso-core:${rootProject.ext.espressoVersion}"
+}
+
+// Configuración para usar diferentes archivos google-services.json según el flavor
+android.applicationVariants.all { variant ->
+    def flavorName = variant.flavorName
+    def googleServicesFile = "src/${flavorName}/google-services.json"
+    
+    if (file(googleServicesFile).exists()) {
+        copy {
+            from googleServicesFile
+            into "."
+        }
+    }
 }

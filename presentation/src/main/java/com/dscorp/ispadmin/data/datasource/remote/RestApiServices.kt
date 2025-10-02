@@ -7,6 +7,7 @@ import com.dscorp.ispadmin.data.apirequestmodel.MigrationRequest
 import com.dscorp.ispadmin.data.apirequestmodel.MoveOnuRequest
 import com.dscorp.ispadmin.data.apirequestmodel.UpdateSubscriptionDataBody
 import com.dscorp.ispadmin.data.apirequestmodel.UpdateSubscriptionPlanBody
+import com.dscorp.ispadmin.data.model.OutlayDTO
 import com.dscorp.ispadmin.data.response.AdministrativeOnuResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
@@ -294,8 +295,8 @@ interface RestApiServices {
         @Part("category") category: RequestBody,
         @Part("cost_center") costCenter: RequestBody,
         @Part("userId") userId: RequestBody,
-        @Part receipts: List<MultipartBody.Part>
-    ): BaseResponse<Unit>
+        @Part image: List<MultipartBody.Part>
+    ): Response<OutlayDTO>
 
     @GET("payment/getElectronicPayers")
     suspend fun getElectronicPayers(@Query("subscriptionId") subscriptionId: Int): BaseResponse<List<String>>
