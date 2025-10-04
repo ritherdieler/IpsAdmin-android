@@ -32,14 +32,14 @@ android {
             applicationIdSuffix ".dev"
             versionNameSuffix "-dev"
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
-            buildConfigField 'String', "BASE_URL", '"http://127.0.0.1:8080/"'
+            buildConfigField 'String', "BASE_URL", '"http://127.0.0.1:8080/ispadmin/"'
             buildConfigField 'String', "OLT_SERVICE_API_KET", OLT_SERVICE_API_KEY
             buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", SEND_CLOUD_MESSAGING_API_KEY
         }
         prod {
             dimension "environment"
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
-            buildConfigField 'String', "BASE_URL", '"http://191.101.234.130:8080/ispadmin/"'
+            buildConfigField 'String', "BASE_URL", '"http://212.85.13.47:9090/ispadmin/"'
             buildConfigField 'String', "OLT_SERVICE_API_KET", OLT_SERVICE_API_KEY
             buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", SEND_CLOUD_MESSAGING_API_KEY
         }
