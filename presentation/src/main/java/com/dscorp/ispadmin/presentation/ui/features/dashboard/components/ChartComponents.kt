@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.dashboard.components
 
 import android.graphics.Color
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -18,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,18 +29,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
 import com.dscorp.ispadmin.domain.model.MonthlyCollectsResume
 import com.dscorp.ispadmin.domain.model.MonthlyGrossRevenueResume
 import com.dscorp.ispadmin.domain.model.MonthlySubscriptionResume
+import com.dscorp.ispadmin.domain.model.SubscriptionLogSummary
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
@@ -56,16 +55,14 @@ import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
-import com.github.mikephil.charting.formatter.PercentFormatter
 import com.github.mikephil.charting.formatter.ValueFormatter
-import kotlinx.coroutines.delay
-import java.text.DecimalFormat
+import com.github.mikephil.charting.highlight.Highlight
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import androidx.core.graphics.toColorInt
+import androidx.compose.ui.graphics.Color as ComposeColor
 
 @Composable
 fun PieChartContainer(data: DashBoardDataResponse) {
@@ -578,6 +575,432 @@ fun ChartCard(content: @Composable () -> Unit) {
         ) {
             content()
         }
+    }
+}
+
+@Composable
+fun CancellationChartContainer(data: Map<String, SubscriptionLogSummary>) {
+    val cancellationData = data["TOTAL_CANCEL_SUBSCRIPTION"]
+    val context = LocalContext.current
+    
+    if (cancellationData == null) {
+        return
+    }
+    
+    val backgroundColor = MaterialTheme.colorScheme.background.toArgb()
+    val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
+    val gridLineColor = MaterialTheme.colorScheme.outlineVariant.toArgb()
+    val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
+    val errorColor = MaterialTheme.colorScheme.error.toArgb()
+    
+    ChartCard {
+        AndroidView(
+            factory = { context ->
+                LineChart(context).apply {
+                    description.isEnabled = false
+                    setDrawGridBackground(false)
+                    
+                    setDrawBorders(false)
+                    setScaleEnabled(true)
+                    setPinchZoom(true)
+                    axisRight.isEnabled = false
+                    
+                    xAxis.position = XAxis.XAxisPosition.BOTTOM
+                    xAxis.granularity = 1f
+                    xAxis.setDrawGridLines(false)
+                    xAxis.textColor = textColor
+                    
+                    axisLeft.setDrawGridLines(true)
+                    axisLeft.gridColor = gridLineColor
+                    axisLeft.textColor = textColor
+                    axisLeft.setDrawZeroLine(true)
+                    
+                    legend.isEnabled = true
+                    legend.textSize = 12f
+                    legend.textColor = textColor
+                    legend.form = Legend.LegendForm.LINE
+                    
+                    val monthlyDetails = cancellationData.monthlyDetails.reversed()
+                    val entries = monthlyDetails.mapIndexed { index, item ->
+                        Entry(index.toFloat(), item.count.toFloat())
+                    }
+                    
+                    val dataSet = LineDataSet(entries, "Cancelaciones").apply {
+                        color = errorColor
+                        valueTextColor = textColor
+                        valueTextSize = 10f
+                        setDrawCircles(true)
+                        setCircleColor(errorColor)
+                        circleRadius = 4f
+                        setDrawCircleHole(true)
+                        circleHoleRadius = 2f
+                        setDrawValues(true)
+                        valueFormatter = object : ValueFormatter() {
+                            override fun getFormattedValue(value: Float): String {
+                                return value.toInt().toString()
+                            }
+                        }
+                        lineWidth = 2.5f
+                        setDrawFilled(true)
+                        fillColor = errorColor
+                        fillAlpha = 30
+                        mode = LineDataSet.Mode.CUBIC_BEZIER
+                    }
+                    
+                    val lineData = LineData(dataSet)
+                    this.data = lineData
+                    
+                    val labels = monthlyDetails.map { item ->
+                        val parts = item.period.split("-")
+                        val month = when (parts[1]) {
+                            "01" -> "Ene"
+                            "02" -> "Feb"
+                            "03" -> "Mar"
+                            "04" -> "Abr"
+                            "05" -> "May"
+                            "06" -> "Jun"
+                            "07" -> "Jul"
+                            "08" -> "Ago"
+                            "09" -> "Set"
+                            "10" -> "Oct"
+                            "11" -> "Nov"
+                            "12" -> "Dic"
+                            else -> parts[1]
+                        }
+                        "$month ${parts[0].substring(2)}"
+                    }
+                    
+                    xAxis.valueFormatter = IndexAxisValueFormatter(labels)
+                    
+                    setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
+                        override fun onValueSelected(e: Entry?, h: Highlight?) {
+                            e?.let { entry ->
+                                val index = entry.x.toInt()
+                                if (index >= 0 && index < monthlyDetails.size) {
+                                    val selectedMonth = monthlyDetails[index]
+                                    val parts = selectedMonth.period.split("-")
+                                    val year = parts[0]
+                                    val monthNumber = parts[1]
+                                    
+                                    val monthName = when (monthNumber) {
+                                        "01" -> "Enero"
+                                        "02" -> "Febrero"
+                                        "03" -> "Marzo"
+                                        "04" -> "Abril"
+                                        "05" -> "Mayo"
+                                        "06" -> "Junio"
+                                        "07" -> "Julio"
+                                        "08" -> "Agosto"
+                                        "09" -> "Septiembre"
+                                        "10" -> "Octubre"
+                                        "11" -> "Noviembre"
+                                        "12" -> "Diciembre"
+                                        else -> monthNumber
+                                    }
+                                    
+                                    val message = "$monthName $year: ${selectedMonth.count} cancelaciones"
+                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                        
+                        override fun onNothingSelected() {
+                            // No hacer nada cuando no hay selección
+                        }
+                    })
+                    
+                    animateX(1500)
+                    invalidate()
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+        )
+    }
+}
+
+@Composable
+fun ReconnectionChartContainer(data: Map<String, SubscriptionLogSummary>) {
+    val reconnectionData = data["RECONNECT_CANCELLED_SUBSCRIPTION"]
+    val context = LocalContext.current
+    
+    if (reconnectionData == null) {
+        return
+    }
+    
+    val backgroundColor = MaterialTheme.colorScheme.background.toArgb()
+    val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
+    val gridLineColor = MaterialTheme.colorScheme.outlineVariant.toArgb()
+    val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary.toArgb()
+    
+    ChartCard {
+        AndroidView(
+            factory = { context ->
+                LineChart(context).apply {
+                    description.isEnabled = false
+                    setDrawGridBackground(false)
+                    
+                    setDrawBorders(false)
+                    setScaleEnabled(true)
+                    setPinchZoom(true)
+                    axisRight.isEnabled = false
+                    
+                    xAxis.position = XAxis.XAxisPosition.BOTTOM
+                    xAxis.granularity = 1f
+                    xAxis.setDrawGridLines(false)
+                    xAxis.textColor = textColor
+                    
+                    axisLeft.setDrawGridLines(true)
+                    axisLeft.gridColor = gridLineColor
+                    axisLeft.textColor = textColor
+                    axisLeft.setDrawZeroLine(true)
+                    
+                    legend.isEnabled = true
+                    legend.textSize = 12f
+                    legend.textColor = textColor
+                    legend.form = Legend.LegendForm.LINE
+                    
+                    val monthlyDetails = reconnectionData.monthlyDetails.reversed()
+                    val entries = monthlyDetails.mapIndexed { index, item ->
+                        Entry(index.toFloat(), item.count.toFloat())
+                    }
+                    
+                    val dataSet = LineDataSet(entries, "Reconexiones").apply {
+                        color = tertiaryColor
+                        valueTextColor = textColor
+                        valueTextSize = 10f
+                        setDrawCircles(true)
+                        setCircleColor(tertiaryColor)
+                        circleRadius = 4f
+                        setDrawCircleHole(true)
+                        circleHoleRadius = 2f
+                        setDrawValues(true)
+                        valueFormatter = object : ValueFormatter() {
+                            override fun getFormattedValue(value: Float): String {
+                                return value.toInt().toString()
+                            }
+                        }
+                        lineWidth = 2.5f
+                        setDrawFilled(true)
+                        fillColor = tertiaryColor
+                        fillAlpha = 30
+                        mode = LineDataSet.Mode.CUBIC_BEZIER
+                    }
+                    
+                    val lineData = LineData(dataSet)
+                    this.data = lineData
+                    
+                    val labels = monthlyDetails.map { item ->
+                        val parts = item.period.split("-")
+                        val month = when (parts[1]) {
+                            "01" -> "Ene"
+                            "02" -> "Feb"
+                            "03" -> "Mar"
+                            "04" -> "Abr"
+                            "05" -> "May"
+                            "06" -> "Jun"
+                            "07" -> "Jul"
+                            "08" -> "Ago"
+                            "09" -> "Set"
+                            "10" -> "Oct"
+                            "11" -> "Nov"
+                            "12" -> "Dic"
+                            else -> parts[1]
+                        }
+                        "$month ${parts[0].substring(2)}"
+                    }
+                    
+                    xAxis.valueFormatter = IndexAxisValueFormatter(labels)
+                    
+                    setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
+                        override fun onValueSelected(e: Entry?, h: Highlight?) {
+                            e?.let { entry ->
+                                val index = entry.x.toInt()
+                                if (index >= 0 && index < monthlyDetails.size) {
+                                    val selectedMonth = monthlyDetails[index]
+                                    val parts = selectedMonth.period.split("-")
+                                    val year = parts[0]
+                                    val monthNumber = parts[1]
+                                    
+                                    val monthName = when (monthNumber) {
+                                        "01" -> "Enero"
+                                        "02" -> "Febrero"
+                                        "03" -> "Marzo"
+                                        "04" -> "Abril"
+                                        "05" -> "Mayo"
+                                        "06" -> "Junio"
+                                        "07" -> "Julio"
+                                        "08" -> "Agosto"
+                                        "09" -> "Septiembre"
+                                        "10" -> "Octubre"
+                                        "11" -> "Noviembre"
+                                        "12" -> "Diciembre"
+                                        else -> monthNumber
+                                    }
+                                    
+                                    val message = "$monthName $year: ${selectedMonth.count} reconexiones"
+                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                        
+                        override fun onNothingSelected() {
+                            // No hacer nada cuando no hay selección
+                        }
+                    })
+                    
+                    animateX(1500)
+                    invalidate()
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+        )
+    }
+}
+
+@Composable
+fun MigrationChartContainer(data: Map<String, SubscriptionLogSummary>) {
+    val migrationData = data["MIGRATE_SUBSCRIPTION"]
+    val context = LocalContext.current
+    
+    if (migrationData == null) {
+        return
+    }
+    
+    val backgroundColor = MaterialTheme.colorScheme.background.toArgb()
+    val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
+    val gridLineColor = MaterialTheme.colorScheme.outlineVariant.toArgb()
+    val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
+    val secondaryColor = MaterialTheme.colorScheme.secondary.toArgb()
+    
+    ChartCard {
+        AndroidView(
+            factory = { context ->
+                LineChart(context).apply {
+                    description.isEnabled = false
+                    setDrawGridBackground(false)
+                    
+                    setDrawBorders(false)
+                    setScaleEnabled(true)
+                    setPinchZoom(true)
+                    axisRight.isEnabled = false
+                    
+                    xAxis.position = XAxis.XAxisPosition.BOTTOM
+                    xAxis.granularity = 1f
+                    xAxis.setDrawGridLines(false)
+                    xAxis.textColor = textColor
+                    
+                    axisLeft.setDrawGridLines(true)
+                    axisLeft.gridColor = gridLineColor
+                    axisLeft.textColor = textColor
+                    axisLeft.setDrawZeroLine(true)
+                    
+                    legend.isEnabled = true
+                    legend.textSize = 12f
+                    legend.textColor = textColor
+                    legend.form = Legend.LegendForm.LINE
+                    
+                    val monthlyDetails = migrationData.monthlyDetails.reversed()
+                    val entries = monthlyDetails.mapIndexed { index, item ->
+                        Entry(index.toFloat(), item.count.toFloat())
+                    }
+                    
+                    val dataSet = LineDataSet(entries, "Migraciones").apply {
+                        color = secondaryColor
+                        valueTextColor = textColor
+                        valueTextSize = 10f
+                        setDrawCircles(true)
+                        setCircleColor(secondaryColor)
+                        circleRadius = 4f
+                        setDrawCircleHole(true)
+                        circleHoleRadius = 2f
+                        setDrawValues(true)
+                        valueFormatter = object : ValueFormatter() {
+                            override fun getFormattedValue(value: Float): String {
+                                return value.toInt().toString()
+                            }
+                        }
+                        lineWidth = 2.5f
+                        setDrawFilled(true)
+                        fillColor = secondaryColor
+                        fillAlpha = 30
+                        mode = LineDataSet.Mode.CUBIC_BEZIER
+                    }
+                    
+                    val lineData = LineData(dataSet)
+                    this.data = lineData
+                    
+                    val labels = monthlyDetails.map { item ->
+                        val parts = item.period.split("-")
+                        val month = when (parts[1]) {
+                            "01" -> "Ene"
+                            "02" -> "Feb"
+                            "03" -> "Mar"
+                            "04" -> "Abr"
+                            "05" -> "May"
+                            "06" -> "Jun"
+                            "07" -> "Jul"
+                            "08" -> "Ago"
+                            "09" -> "Set"
+                            "10" -> "Oct"
+                            "11" -> "Nov"
+                            "12" -> "Dic"
+                            else -> parts[1]
+                        }
+                        "$month ${parts[0].substring(2)}"
+                    }
+                    
+                    xAxis.valueFormatter = IndexAxisValueFormatter(labels)
+                    
+                    setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
+                        override fun onValueSelected(e: Entry?, h: Highlight?) {
+                            e?.let { entry ->
+                                val index = entry.x.toInt()
+                                if (index >= 0 && index < monthlyDetails.size) {
+                                    val selectedMonth = monthlyDetails[index]
+                                    val parts = selectedMonth.period.split("-")
+                                    val year = parts[0]
+                                    val monthNumber = parts[1]
+                                    
+                                    val monthName = when (monthNumber) {
+                                        "01" -> "Enero"
+                                        "02" -> "Febrero"
+                                        "03" -> "Marzo"
+                                        "04" -> "Abril"
+                                        "05" -> "Mayo"
+                                        "06" -> "Junio"
+                                        "07" -> "Julio"
+                                        "08" -> "Agosto"
+                                        "09" -> "Septiembre"
+                                        "10" -> "Octubre"
+                                        "11" -> "Noviembre"
+                                        "12" -> "Diciembre"
+                                        else -> monthNumber
+                                    }
+                                    
+                                    val message = "$monthName $year: ${selectedMonth.count} migraciones"
+                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                        
+                        override fun onNothingSelected() {
+                            // No hacer nada cuando no hay selección
+                        }
+                    })
+                    
+                    animateX(1500)
+                    invalidate()
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+        )
     }
 }
 

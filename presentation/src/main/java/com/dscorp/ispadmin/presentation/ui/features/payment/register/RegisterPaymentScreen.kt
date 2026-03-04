@@ -49,7 +49,7 @@ import com.dscorp.ispadmin.presentation.ui.components.MyAutoCompleteTextViewComp
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyCustomDialog
 import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
-import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
+import com.dscorp.components.components.formfields.MyOutlinedTextField
 import org.koin.androidx.compose.koinViewModel
 
 /**

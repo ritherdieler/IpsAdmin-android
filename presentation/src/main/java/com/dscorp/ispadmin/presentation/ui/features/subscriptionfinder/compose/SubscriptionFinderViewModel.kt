@@ -14,6 +14,7 @@ import com.dscorp.ispadmin.domain.model.extensions.isAValidName
 import com.dscorp.ispadmin.domain.model.extensions.isValidDni
 import com.dscorp.ispadmin.domain.model.extensions.isValidEmail
 import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
+import com.dscorp.ispadmin.domain.usecase.ReactivateServiceUseCase
 import com.dscorp.ispadmin.presentation.extension.removeAccents
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.FlowPreview
@@ -31,12 +32,15 @@ const val REQUEST_DELAY = 500L
 data class SubscriptionFinderUiState(
     val subscriptions: Map<ServiceStatus, List<SubscriptionResume>> = emptyMap(),
     val cancelSubscriptionState: CancelSubscriptionState = CancelSubscriptionState.Empty,
+    val reactivateServiceState: ReactivateServiceState = ReactivateServiceState.Empty,
     val saveSubscriptionState: SaveSubscriptionState = SaveSubscriptionState.Success,
     val napBoxesState: NapBoxesState = NapBoxesState.Loading,
     val placesState: PlacesState = PlacesState(),
     val selectedSubscription: SubscriptionResume? = null,
     val customerFormData: CustomerFormData? = null,
     val showLocationUpdateDialog: Boolean = false,
+    val showReactivateDialog: Boolean = false,
+    val reactivationNotes: String = "",
     val editableLatitude: String = "",
     val editableLongitude: String = "",
     val isFetchingCurrentLocation: Boolean = false,
@@ -81,7 +85,8 @@ data class CustomerFormData(
 }
 
 class SubscriptionFinderViewModel(
-    private val repository: IRepository
+    private val repository: IRepository,
+    private val reactivateServiceUseCase: ReactivateServiceUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SubscriptionFinderUiState())
@@ -192,6 +197,45 @@ class SubscriptionFinderViewModel(
     fun removeSubscriptionFromList(id: Int) {
         subscriptionsFlow.value = subscriptionsFlow.value.filter { it.id != id }
         _uiState.update { it.copy(cancelSubscriptionState = CancelSubscriptionState.Empty) }
+    }
+
+    fun showReactivateDialog(show: Boolean) {
+        _uiState.update { 
+            it.copy(
+                showReactivateDialog = show,
+                reactivationNotes = if (!show) "" else it.reactivationNotes
+            ) 
+        }
+    }
+
+    fun updateReactivationNotes(notes: String) {
+        _uiState.update { it.copy(reactivationNotes = notes) }
+    }
+
+    fun reactivateService(subscriptionId: Int) = viewModelScope.launch {
+        _uiState.update { it.copy(reactivateServiceState = ReactivateServiceState.Loading) }
+        
+        val notes = _uiState.value.reactivationNotes.takeIf { it.isNotBlank() }
+        reactivateServiceUseCase(subscriptionId, notes).fold(
+            onSuccess = {
+                _uiState.update { 
+                    it.copy(
+                        reactivateServiceState = ReactivateServiceState.Success,
+                        showReactivateDialog = false,
+                        reactivationNotes = ""
+                    ) 
+                }
+                reloadLastSearch()
+            },
+            onFailure = { error ->
+                error.printStackTrace()
+                _uiState.update { it.copy(reactivateServiceState = ReactivateServiceState.Error(error.message)) }
+            }
+        )
+    }
+
+    fun clearReactivateServiceState() {
+        _uiState.update { it.copy(reactivateServiceState = ReactivateServiceState.Empty) }
     }
 
     fun getNapBoxes() = viewModelScope.launch {
@@ -492,6 +536,13 @@ sealed class CancelSubscriptionState {
     object Loading : CancelSubscriptionState()
     object Success : CancelSubscriptionState()
     object Error : CancelSubscriptionState()
+}
+
+sealed class ReactivateServiceState {
+    object Empty : ReactivateServiceState()
+    object Loading : ReactivateServiceState()
+    object Success : ReactivateServiceState()
+    data class Error(val error:String?) : ReactivateServiceState()
 }
 
 sealed class NapBoxesState {

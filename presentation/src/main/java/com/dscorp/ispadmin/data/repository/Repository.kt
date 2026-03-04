@@ -564,21 +564,19 @@ class Repository : IRepository, KoinComponent {
                 // Servicio reactivado exitosamente
             }
             else -> {
-                // Obtener mensaje de error del body si está disponible
-                val errorMessage = try {
-                    val errorBody = response.errorBody()?.string()
-                    if (errorBody != null && errorBody.isNotEmpty()) {
-                        // Intentar parsear el JSON {"error": "mensaje"}
-                        val gson = com.google.gson.Gson()
-                        val errorMap = gson.fromJson(errorBody, Map::class.java)
-                        errorMap["error"]?.toString() ?: "Error al reactivar el servicio"
-                    } else {
-                        "Error al reactivar el servicio"
-                    }
-                } catch (e: Exception) {
-                    "Error al reactivar el servicio"
-                }
-                throw Exception(errorMessage)
+                throw Exception("Error al reactivar el servicio")
+            }
+        }
+    }
+
+    override suspend fun restoreInternetConnection(subscriptionId: Int, responsibleId: Int, notes: String?) {
+        val response = restApiServices.restoreInternetConnection(subscriptionId, responsibleId, notes)
+        when (response.code()) {
+            in 200..299 -> {
+                // Conexión restablecida exitosamente
+            }
+            else -> {
+                throw Exception("Error al restablecer la conexión a internet")
             }
         }
     }

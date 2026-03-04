@@ -5,12 +5,24 @@ import java.util.Locale
 
 class DashBoardDataResponse(
     val economicResume: EconomicResume,
+    val activeSubscriptions: Int,
     val subscriptionsResume: SubscriptionsResumeStatics,
     val cancellationsResume: CancellationResumeDto,
     val paymentResume: Map<String, Double>,
     val subscriptionsHistoryStatics: List<MonthlySubscriptionResume>,
+    val monthlyCollects: List<MonthlyCollectsResume>,
     val grossRevenueHistoryStatics: List<MonthlyGrossRevenueResume>,
-    val monthlyCollects: List<MonthlyCollectsResume>
+    val reconnections: Int,
+    val assistanceTicketResume: Any? = null,
+    val planAnalysisResume: Any? = null,
+    val clientQualityResume: Any? = null,
+    val fixedCostAnalysisResume: Any? = null,
+    val installationOrdersResume: Any? = null,
+    val geographicPerformanceResume: Any? = null,
+    val teamPerformanceResume: Any? = null,
+    val networkHealthResume: Any? = null,
+    val clientLifecycleResume: Any? = null,
+    val subscriptionLogSummary: Map<String, SubscriptionLogSummary>? = null
 ) {
     fun grossRevenueAsString() = economicResume.grossRevenue.toCurrencyString()
     fun totalRaisedAsString() = economicResume.totalRaised.toCurrencyString()
@@ -45,4 +57,15 @@ data class EconomicResume(
     val margin: Double,
     val freeCash: Double,
     val corporateGrossRevenue: Double,
+)
+
+data class SubscriptionLogSummary(
+    val actionType: String,
+    val totalCount: Int,
+    val monthlyDetails: List<MonthlyDetail>
+)
+
+data class MonthlyDetail(
+    val count: Int,
+    val period: String
 )

@@ -13,6 +13,7 @@ import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.dscorp.ispadmin.data.response.BaseResponse
 import com.dscorp.ispadmin.data.response.ReactivateServiceResponse
+import com.dscorp.ispadmin.data.response.RestoreInternetConnectionResponse
 import com.dscorp.ispadmin.domain.model.AppVersion
 import com.dscorp.ispadmin.domain.model.Coupon
 import com.dscorp.ispadmin.domain.model.CustomerData
@@ -215,6 +216,13 @@ interface RestApiServices {
         @Query("responsibleId") responsibleId: Int,
         @Query("notes") notes: String?
     ): Response<ReactivateServiceResponse>
+
+    @PUT("subscription/restore-internet-connection")
+    suspend fun restoreInternetConnection(
+        @Query("subscriptionId") subscriptionId: Int,
+        @Query("responsibleId") responsibleId: Int,
+        @Query("notes") notes: String?
+    ): Response<RestoreInternetConnectionResponse>
 
     @GET("subscription/find/nameAndLastName")
     suspend fun findSubscriptionByNameAndLastName(

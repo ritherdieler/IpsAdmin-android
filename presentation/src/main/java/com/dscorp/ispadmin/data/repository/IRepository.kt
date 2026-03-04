@@ -112,6 +112,7 @@ interface IRepository {
     suspend fun updatePlan(plan: Plan): PlanResponse
     suspend fun savePaymentCommitment(id: Int)
     suspend fun reactivateService(subscription: Int, responsibleId: Int, notes: String?)
+    suspend fun restoreInternetConnection(subscriptionId: Int, responsibleId: Int, notes: String?)
     suspend fun findSubscriptionByNameAndLastName(
         name: String?,
         lastName: String?

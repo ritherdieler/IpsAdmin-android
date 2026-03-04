@@ -1,58 +1,40 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail
 
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.data.repository.IRepository
-import com.dscorp.ispadmin.domain.model.PlanResponse
-import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
-import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
-import com.dscorp.ispadmin.presentation.ui.features.forms.subscription.EditSubscriptionDataForm
-import kotlinx.coroutines.async
+import com.dscorp.ispadmin.domain.model.SubscriptionResponse
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class SubscriptionDetailViewModel(
     val repository: IRepository,
-) :
-    BaseViewModel<SubscriptionDetailUiState>() {
+) : ViewModel() {
 
-    val editSubscriptionForm: EditSubscriptionDataForm = EditSubscriptionDataForm()
+    val uiState = MutableStateFlow(SubscriptionDetailUiState())
 
-    var isEditingForm = false
-    val editingIcon = MutableLiveData(R.drawable.baseline_edit_24)
-
-    val places = MutableLiveData<List<PlanResponse>>()
-    fun initForm(subscriptionId: Int) = viewModelScope.launch {
-        val jobSubscription = async { repository.subscriptionById(subscriptionId) }
-        val jobPlaces = async { repository.getPlans() }
-        val subscription = jobSubscription.await()
-        val response = jobPlaces.await()
-        places.value = response
-        editSubscriptionForm.initForm(subscription)
-    }
-
-    fun makeFieldsEditable() {
-        if (!isEditingForm) {
-            isEditingForm = true
-            editingIcon.value = R.drawable.baseline_check_24
-            editSubscriptionForm.changeEditableStatus(true)
-        } else {
-            updateSubscriptionData()
+    fun getSubscription(subscriptionId: Int) = viewModelScope.launch {
+        try {
+            uiState.value = uiState.value.copy(isLoading = true)
+            val subscriptionResponse = repository.subscriptionById(subscriptionId)
+            uiState.value = uiState.value.copy(
+                subscription = subscriptionResponse,
+                isLoading = false
+            )
+        } catch (e: Exception) {
+            uiState.value =
+                uiState.value.copy(error = e.message, isLoading = false, subscription = null)
         }
     }
 
-    private fun updateSubscriptionData() {
-        executeWithProgress {
-            editSubscriptionForm.getUpdateSubscriptionBody()?.let {
-                repository.updateSubscriptionData(it)
-                uiState.value = BaseUiState(SubscriptionDetailUiState.SubscriptionUpdated)
-            }
-
-        }
+    fun clearError() {
+        uiState.value = uiState.value.copy(error = null)
     }
-}
 
-sealed class SubscriptionDetailUiState {
-    object SubscriptionUpdated : SubscriptionDetailUiState()
+    data class SubscriptionDetailUiState(
+        val subscription: SubscriptionResponse? = null,
+        val isLoading: Boolean = false,
+        val error: String? = null
+    )
 
 }

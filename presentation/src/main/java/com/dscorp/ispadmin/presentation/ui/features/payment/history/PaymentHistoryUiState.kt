@@ -6,5 +6,6 @@ sealed interface PaymentHistoryUiState {
     class GetRecentPaymentsHistoryResponse() : PaymentHistoryUiState
     class GetRecentPaymentsHistoryError(val message: String? = "Unknown Error") : PaymentHistoryUiState
     object ServiceReactivated:PaymentHistoryUiState
+    object InternetRestored:PaymentHistoryUiState
 
 }

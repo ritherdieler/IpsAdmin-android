@@ -2,6 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.payment.history
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.rounded.CreditCard
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -294,7 +297,9 @@ fun PaymentHistoryScreenPreview() {
         error = null,
         isReactivationButtonLoading = false,
         isServiceReactivated = false,
-        reactivationNotes = ""
+        reactivationNotes = "",
+        isRestoreInternetLoading = false,
+        isInternetRestored = false
     )
 
     MyTheme {
@@ -304,6 +309,7 @@ fun PaymentHistoryScreenPreview() {
             onPaymentItemClicked = {},
             onUpdateReactivationNotes = {},
             onReactivateService = {},
+            onRestoreInternetConnection = {},
             onTogglePendingPaymentsFilter = {},
             showReactivationSection = true
         )
@@ -320,7 +326,9 @@ fun PaymentHistoryScreenLoadingPreview() {
         error = null,
         isReactivationButtonLoading = false,
         isServiceReactivated = false,
-        reactivationNotes = ""
+        reactivationNotes = "",
+        isRestoreInternetLoading = false,
+        isInternetRestored = false
     )
 
     MyTheme {
@@ -330,6 +338,7 @@ fun PaymentHistoryScreenLoadingPreview() {
             onPaymentItemClicked = {},
             onUpdateReactivationNotes = {},
             onReactivateService = {},
+            onRestoreInternetConnection = {},
             onTogglePendingPaymentsFilter = {},
             showReactivationSection = true
         )
@@ -344,6 +353,7 @@ fun PaymentScreenContent(
     onPaymentItemClicked: (Payment) -> Unit,
     onUpdateReactivationNotes: (String) -> Unit,
     onReactivateService: () -> Unit,
+    onRestoreInternetConnection: () -> Unit,
     onTogglePendingPaymentsFilter: (Boolean) -> Unit,
     showReactivationSection: Boolean = true
 ) {
@@ -399,6 +409,64 @@ fun PaymentScreenContent(
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // Restore Internet Connection Button
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Restablecer Conexión a Internet",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Text(
+                            text = "Restablece la conexión a internet del cliente si tiene menos de 2 facturas pendientes.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        Button(
+                            onClick = onRestoreInternetConnection,
+                            enabled = !state.isRestoreInternetLoading,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            if (state.isRestoreInternetLoading) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Restableciendo...")
+                                }
+                            } else {
+                                Text("Restablecer Conexión")
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Payments list
                 if (state.isLoading) {

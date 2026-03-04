@@ -37,7 +37,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
-import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
+import com.dscorp.components.components.formfields.MyOutlinedTextField
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

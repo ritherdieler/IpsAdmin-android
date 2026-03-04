@@ -34,6 +34,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -57,6 +59,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.dscorp.components.components.formfields.MyOutlinedTextField
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Payment
@@ -66,6 +69,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.CHANGE_NAP_BOX
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.EDIT_PLAN_SUBSCRIPTION
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.MIGRATE_TO_FIBER
+import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.REACTIVATE_SERVICE
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SEE_DETAILS
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SHOW_PAYMENT_HISTORY
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.UPDATE_LOCATION
@@ -91,12 +95,39 @@ fun SubscriptionFinderScreen(
     val uiState by viewModel.uiState.collectAsState()
     val coroutinesScope = rememberCoroutineScope()
     var showCancelSubscriptionConfirmDialog by remember { mutableStateOf(false) }
+    var showReactivateServiceDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var showChangeNapBoxDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Track which subscription card is expanded
     var expandedSubscriptionId by remember { mutableStateOf<Int?>(null) }
+
+    // Handle reactivation errors and success
+    LaunchedEffect(uiState.reactivateServiceState) {
+        when (val state = uiState.reactivateServiceState) {
+            is ReactivateServiceState.Error -> {
+                showReactivateServiceDialog = false
+                snackbarHostState.showSnackbar(
+                    message = state.error?:"Error al reactivar el servicio. Intente nuevamente.",
+                    actionLabel = "Cerrar",
+                    duration = androidx.compose.material3.SnackbarDuration.Indefinite
+                )
+                viewModel.clearReactivateServiceState()
+            }
+            is ReactivateServiceState.Success -> {
+                showReactivateServiceDialog = false
+                snackbarHostState.showSnackbar(
+                    message = "Servicio reactivado exitosamente",
+                    actionLabel = "Cerrar",
+                    duration = androidx.compose.material3.SnackbarDuration.Long
+                )
+                viewModel.clearReactivateServiceState()
+            }
+            else -> {}
+        }
+    }
 
     // For scrolling behavior with topAppBar
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -114,6 +145,7 @@ fun SubscriptionFinderScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -368,7 +400,8 @@ fun SubscriptionFinderScreen(
                             context = context,
                             viewModel = viewModel,
                             onShowCancelDialog = { showCancelSubscriptionConfirmDialog = true },
-                            onShowChangeNapBoxDialog = { showChangeNapBoxDialog = true }
+                            onShowChangeNapBoxDialog = { showChangeNapBoxDialog = true },
+                            onShowReactivateDialog = { showReactivateServiceDialog = true }
                         )
                     },
                     onSubscriptionExpanded = { subscription, expanded ->
@@ -416,6 +449,25 @@ fun SubscriptionFinderScreen(
             }
         )
     }
+
+    // Reactivate service confirmation dialog
+        if (showReactivateServiceDialog) {
+            ReactivateServiceDialog(
+                onDismiss = {
+                    if (uiState.reactivateServiceState != ReactivateServiceState.Loading) {
+                        showReactivateServiceDialog = false
+                    }
+                },
+                onConfirm = {
+                    uiState.selectedSubscription?.id?.let {
+                        viewModel.reactivateService(it)
+                    }
+                },
+                isLoading = uiState.reactivateServiceState == ReactivateServiceState.Loading,
+                notes = uiState.reactivationNotes,
+                onNotesChange = { viewModel.updateReactivationNotes(it) }
+            )
+        }
 
     // Change NAP box dialog
     if (showChangeNapBoxDialog) {
@@ -490,7 +542,8 @@ private fun handleMenuAction(
     context: Context,
     viewModel: SubscriptionFinderViewModel,
     onShowCancelDialog: () -> Unit,
-    onShowChangeNapBoxDialog: () -> Unit
+    onShowChangeNapBoxDialog: () -> Unit,
+    onShowReactivateDialog: () -> Unit
 ) {
     when (menuItem) {
         SHOW_PAYMENT_HISTORY -> {
@@ -523,6 +576,11 @@ private fun handleMenuAction(
         CANCEL_SUBSCRIPTION -> {
             viewModel.setSelectedSubscription(subscription)
             onShowCancelDialog()
+        }
+
+        REACTIVATE_SERVICE -> {
+            viewModel.setSelectedSubscription(subscription)
+            onShowReactivateDialog()
         }
 
         CHANGE_NAP_BOX -> {
@@ -621,6 +679,114 @@ private fun CancelSubscriptionDialog(
                         text = "Cancelar Suscripción",
                         style = MaterialTheme.typography.labelLarge
                     )
+                }
+            }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+/**
+ * Dialog to confirm service reactivation
+ */
+@Composable
+private fun ReactivateServiceDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    isLoading: Boolean = false,
+    notes: String = "",
+    onNotesChange: (String) -> Unit = {}
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Reactivar Servicio",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        },
+        text = {
+            Column(modifier = Modifier.padding(top = 0.dp)) {
+                Text(
+                    text = "¿Está seguro que desea reactivar este servicio?",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "El servicio se reactivará y el cliente podrá acceder nuevamente a internet.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Nota: Para realizar la reactivación, el cliente debe tener menos de 2 facturas pendientes de pago.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                MyOutlinedTextField(
+                    value = notes,
+                    onValueChange = onNotesChange,
+                    label = "Notas de reactivación (opcional)",
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    maxLines = 3
+                )
+            }
+        },
+        confirmButton = {
+            Row(
+                modifier = Modifier.padding(end = 4.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = onDismiss,
+                    enabled = !isLoading
+                ) {
+                    Text(
+                        text = "Volver",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (isLoading) 
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        else 
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(
+                    onClick = onConfirm,
+                    enabled = !isLoading,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    if (isLoading) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Reactivando...",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "Reactivar Servicio",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
                 }
             }
         },

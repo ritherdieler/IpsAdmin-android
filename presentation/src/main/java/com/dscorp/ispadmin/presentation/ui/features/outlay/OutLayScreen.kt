@@ -33,7 +33,7 @@ import com.dscorp.ispadmin.presentation.ui.components.MultiplePhotoAndGalleryPic
 import com.dscorp.ispadmin.presentation.ui.components.Loader
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
-import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
+import com.dscorp.components.components.formfields.MyOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
 import com.dscorp.ispadmin.presentation.ui.features.dialog.MyConfirmDialog

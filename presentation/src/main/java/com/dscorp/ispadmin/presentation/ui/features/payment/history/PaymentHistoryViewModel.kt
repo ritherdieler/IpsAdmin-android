@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.model.ServiceStatus
+import com.dscorp.ispadmin.domain.usecase.ReactivateServiceUseCase
+import com.dscorp.ispadmin.domain.usecase.RestoreInternetConnectionUseCase
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,11 +21,16 @@ data class PaymentHistoryState(
     val error: String? = null,
     val isReactivationButtonLoading: Boolean = false,
     val isServiceReactivated: Boolean = false,
-    val reactivationNotes: String = ""
+    val reactivationNotes: String = "",
+    val isRestoreInternetLoading: Boolean = false,
+    val isInternetRestored: Boolean = false
 )
 
-class PaymentHistoryViewModel(val repository: IRepository) :
-    BaseViewModel<PaymentHistoryUiState>() {
+class PaymentHistoryViewModel(
+    val repository: IRepository,
+    private val reactivateServiceUseCase: ReactivateServiceUseCase,
+    private val restoreInternetConnectionUseCase: RestoreInternetConnectionUseCase
+) : BaseViewModel<PaymentHistoryUiState>() {
     companion object {
         const val LAST_PAYMENTS_ROW_LIMIT = 10
     }
@@ -95,31 +102,69 @@ class PaymentHistoryViewModel(val repository: IRepository) :
         _state.update { it.copy(error = null) }
     }
 
-    fun reactivateService() = viewModelScope.launch {
-        try {
-            _state.update { it.copy(isReactivationButtonLoading = true) }
-            reactivationButtonIsLoading.value = true
+    fun clearReactivationState() {
+        _state.update { it.copy(isServiceReactivated = false) }
+    }
 
-            subscriptionId?.let {
-                repository.reactivateService(
-                    subscriptionId!!,
-                    repository.getUserSession()!!.id!!,
-                    _state.value.reactivationNotes
-                )
-                _state.update {
-                    it.copy(
-                        isReactivationButtonLoading = false,
-                        isServiceReactivated = true,
-                        reactivationNotes = "" // Clear notes after successful reactivation
-                    )
+    fun reactivateService() = viewModelScope.launch {
+        _state.update { it.copy(isReactivationButtonLoading = true) }
+        reactivationButtonIsLoading.value = true
+
+        subscriptionId?.let { id ->
+            reactivateServiceUseCase(id, _state.value.reactivationNotes).fold(
+                onSuccess = {
+                    _state.update {
+                        it.copy(
+                            isReactivationButtonLoading = false,
+                            isServiceReactivated = true,
+                            reactivationNotes = "" // Clear notes after successful reactivation
+                        )
+                    }
+                    uiState.value = BaseUiState(PaymentHistoryUiState.ServiceReactivated)
+                    reactivationButtonIsLoading.value = false
+                },
+                onFailure = { error ->
+                    _state.update { 
+                        it.copy(
+                            isReactivationButtonLoading = false, 
+                            error = error.message
+                        ) 
+                    }
+                    uiState.value = BaseUiState(PaymentHistoryUiState.OnError(error.message))
+                    reactivationButtonIsLoading.value = false
                 }
-                uiState.value = BaseUiState(PaymentHistoryUiState.ServiceReactivated)
-            }
-        } catch (e: Exception) {
-            _state.update { it.copy(isReactivationButtonLoading = false, error = e.message) }
-            uiState.value = BaseUiState(PaymentHistoryUiState.OnError(e.message))
-        } finally {
-            reactivationButtonIsLoading.value = false
+            )
         }
+    }
+
+    fun restoreInternetConnection() = viewModelScope.launch {
+        _state.update { it.copy(isRestoreInternetLoading = true) }
+
+        subscriptionId?.let { id ->
+            restoreInternetConnectionUseCase(id).fold(
+                onSuccess = {
+                    _state.update {
+                        it.copy(
+                            isRestoreInternetLoading = false,
+                            isInternetRestored = true
+                        )
+                    }
+                    uiState.value = BaseUiState(PaymentHistoryUiState.InternetRestored)
+                },
+                onFailure = { error ->
+                    _state.update {
+                        it.copy(
+                            isRestoreInternetLoading = false,
+                            error = error.message
+                        )
+                    }
+                    uiState.value = BaseUiState(PaymentHistoryUiState.OnError(error.message))
+                }
+            )
+        }
+    }
+
+    fun clearInternetRestoredState() {
+        _state.update { it.copy(isInternetRestored = false) }
     }
 } 

@@ -2,7 +2,7 @@ ext {
     // SDK y compilación
     minSdk = 26
     targetSdk = 34
-    compileSdk = 35
+    compileSdk = 36
     
     // Versiones de Kotlin y Java
     kotlinVersion = '2.1.21'

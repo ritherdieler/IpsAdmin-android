@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
-import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
+import com.dscorp.components.components.formfields.MyOutlinedTextField
 
 data class LoginForm(
     var username: String = "",

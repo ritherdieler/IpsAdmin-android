@@ -7,6 +7,8 @@ import com.dscorp.ispadmin.data.usecase.UserUseCaseImpl
 import com.dscorp.ispadmin.domain.usecase.GetPaymentByIdUseCase
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.PlaceUseCase
+import com.dscorp.ispadmin.domain.usecase.ReactivateServiceUseCase
+import com.dscorp.ispadmin.domain.usecase.RestoreInternetConnectionUseCase
 import com.dscorp.ispadmin.domain.usecase.UpdateDeviceTokenUseCase
 import com.dscorp.ispadmin.domain.usecase.UserUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetAvailableOnuListUseCase
@@ -37,4 +39,6 @@ val useCaseModule = module {
     single<UpdateDeviceTokenUseCase> { UpdateDeviceTokenUseCaseImpl(get()) }
     single { GetPaymentByIdUseCase(get()) }
     single { UpdatePlanUseCase(get()) }
+    single { ReactivateServiceUseCase(get()) }
+    single { RestoreInternetConnectionUseCase(get()) }
 }

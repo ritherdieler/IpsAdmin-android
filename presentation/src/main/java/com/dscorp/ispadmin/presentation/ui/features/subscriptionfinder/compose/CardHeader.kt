@@ -44,6 +44,7 @@ enum class SubscriptionMenu(val menuId: Int) {
     SEE_DETAILS(R.string.see_details),
     MIGRATE_TO_FIBER(R.string.migrate_to_fiber),
     CANCEL_SUBSCRIPTION(R.string.cancel_subscription),
+    REACTIVATE_SERVICE(R.string.reactivate_service),
     CHANGE_NAP_BOX(R.string.change_nap_box),
     UPDATE_LOCATION(R.string.update_location);
 
@@ -137,6 +138,10 @@ private fun SubscriptionDropdownMenu(
             // Hide "Cancel Subscription" if already cancelled
             subscription.serviceStatus == ServiceStatus.CANCELLED && 
                 menuItem == SubscriptionMenu.CANCEL_SUBSCRIPTION -> false
+            
+            // Show "Reactivate Service" only for cancelled subscriptions
+            subscription.serviceStatus != ServiceStatus.CANCELLED && 
+                menuItem == SubscriptionMenu.REACTIVATE_SERVICE -> false
             
             else -> true
         }

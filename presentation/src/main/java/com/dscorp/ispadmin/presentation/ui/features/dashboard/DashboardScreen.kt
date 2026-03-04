@@ -48,8 +48,11 @@ import com.dscorp.ispadmin.domain.model.SubscriptionsResumeStatics
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.Loader
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.components.BarChartContainer
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.components.CancellationChartContainer
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.components.LineChartContainer
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.components.MigrationChartContainer
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.components.PieChartContainer
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.components.ReconnectionChartContainer
 import kotlinx.coroutines.delay
 
 @Composable
@@ -79,7 +82,7 @@ fun DashboardContent(data: DashBoardDataResponse, onRefresh: () -> Unit) {
     
     // Animación secuencial para los elementos
     var visibleSections by remember { mutableStateOf(0) }
-    val maxSections = 8
+    val maxSections = 11
     
     LaunchedEffect(key1 = true) {
         repeat(maxSections) {
@@ -241,6 +244,66 @@ fun DashboardContent(data: DashBoardDataResponse, onRefresh: () -> Unit) {
                     data = data.monthlyCollects,
                     stacked = true
                 )
+                Spacer(modifier = Modifier.height(36.dp))
+            }
+        }
+        
+        // Evolución de cancelaciones
+        AnimatedVisibility(
+            visible = visibleSections >= 9,
+            enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 }
+        ) {
+            Column {
+                SectionTitle(
+                    title = "Evolución de Cancelaciones",
+                    icon = R.drawable.ic_cancel_user
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Gráfico de líneas de cancelaciones
+                data.subscriptionLogSummary?.let { logSummary ->
+                    CancellationChartContainer(data = logSummary)
+                }
+                Spacer(modifier = Modifier.height(36.dp))
+            }
+        }
+        
+        // Evolución de reconexiones
+        AnimatedVisibility(
+            visible = visibleSections >= 10,
+            enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 }
+        ) {
+            Column {
+                SectionTitle(
+                    title = "Evolución de Reconexiones",
+                    icon = R.drawable.ic_rotate_right
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Gráfico de líneas de reconexiones
+                data.subscriptionLogSummary?.let { logSummary ->
+                    ReconnectionChartContainer(data = logSummary)
+                }
+                Spacer(modifier = Modifier.height(36.dp))
+            }
+        }
+        
+        // Evolución de migraciones
+        AnimatedVisibility(
+            visible = visibleSections >= 11,
+            enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 }
+        ) {
+            Column {
+                SectionTitle(
+                    title = "Evolución de Migraciones",
+                    icon = R.drawable.ic_fiber
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Gráfico de líneas de migraciones
+                data.subscriptionLogSummary?.let { logSummary ->
+                    MigrationChartContainer(data = logSummary)
+                }
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
@@ -393,6 +456,13 @@ fun CustomersResumeTable(data: DashBoardDataResponse) {
                 valueColor = MaterialTheme.colorScheme.error,
                 isLight = true
             )
+
+            TableRow(
+                title = stringResource(R.string.reconnections),
+                value = data.reconnections.toString(),
+                icon = R.drawable.ic_rotate_right,
+                isLight = true
+            )
         }
     }
 }
@@ -496,12 +566,25 @@ fun DashboardScreenPreview() {
                 isLoading = false,
                 dashboardData = DashBoardDataResponse(
                     economicResume = mockEconomicResume,
+                    activeSubscriptions = 694,
                     subscriptionsResume = mockSubscriptionsResume,
                     cancellationsResume = mockCancellationsResume,
                     paymentResume = mapOf("Efectivo" to 5000.0, "Yape" to 2500.0),
                     subscriptionsHistoryStatics = emptyList(),
+                    monthlyCollects = emptyList(),
                     grossRevenueHistoryStatics = emptyList(),
-                    monthlyCollects = emptyList()
+                    reconnections = 4272,
+                    assistanceTicketResume = null,
+                    planAnalysisResume = null,
+                    clientQualityResume = null,
+                    fixedCostAnalysisResume = null,
+                    installationOrdersResume = null,
+                    geographicPerformanceResume = null,
+                    teamPerformanceResume = null,
+                    networkHealthResume = null,
+                    clientLifecycleResume = null,
+                    subscriptionLogSummary = mapOf(),
+                    
                 )
             ),
             onRefresh = {}

@@ -591,16 +591,12 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
             // Indicador de estado del servicio con mejor armonía
             val statusColor = when (subscriptionResume.serviceStatus) {
                 ServiceStatus.ACTIVE -> MaterialTheme.colorScheme.primaryContainer
-                ServiceStatus.CUT_OFF -> MaterialTheme.colorScheme.errorContainer
-                ServiceStatus.SUSPENDED -> MaterialTheme.colorScheme.tertiaryContainer
                 ServiceStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer
                 else -> MaterialTheme.colorScheme.surfaceVariant
             }
             
             val statusContentColor = when (subscriptionResume.serviceStatus) {
                 ServiceStatus.ACTIVE -> MaterialTheme.colorScheme.onPrimaryContainer
-                ServiceStatus.CUT_OFF -> MaterialTheme.colorScheme.onErrorContainer
-                ServiceStatus.SUSPENDED -> MaterialTheme.colorScheme.onTertiaryContainer
                 ServiceStatus.CANCELLED -> MaterialTheme.colorScheme.onErrorContainer
                 else -> MaterialTheme.colorScheme.onSurfaceVariant
             }
@@ -613,8 +609,6 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                 Text(
                     text = when (subscriptionResume.serviceStatus) {
                         ServiceStatus.ACTIVE -> "Activo"
-                        ServiceStatus.CUT_OFF -> "Cortado"
-                        ServiceStatus.SUSPENDED -> "Suspendido"
                         ServiceStatus.CANCELLED -> "Cancelado"
                         else -> "Desconocido"
                     },
@@ -920,7 +914,7 @@ fun SubscriptionCardExpandedPreview() {
         id = 1,
         planName = "Plan Premium",
         installationType = InstallationType.WIRELESS,
-        serviceStatus = ServiceStatus.CUT_OFF,
+        serviceStatus = ServiceStatus.CANCELLED,
         antiquity = "23",
         placeName = "Arequipa",
         ipAddress = "192.168.1.2",

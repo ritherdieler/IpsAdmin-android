@@ -20,6 +20,14 @@ buildscript {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/ritherdieler/components")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+            }
+        }
     }
 }
 

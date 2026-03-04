@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.domain.model
 
 import com.dscorp.ispadmin.domain.model.extensions.toFormattedDateString
+import java.util.Date
 
 data class SubscriptionResponse(
     var id: Int,
@@ -25,7 +26,7 @@ data class SubscriptionResponse(
     var price: Double? = null,
     var paymentCommitmentDate: Long? = null,
     var isPaymentCommitment: Boolean = false,
-    var lastCutOffDate: Long? = null,
+    var lastCutOffDate: Date? = null,
     var isReactivation: Boolean = false,
     var reactivationDate: Long? = null,
     var cpeDeviceId: Int? = null,

@@ -59,7 +59,7 @@ val viewModelModule = module {
     }
 
     viewModel { NapBoxViewModel(get()) }
-    viewModel { PaymentHistoryViewModel(get()) }
+    viewModel { PaymentHistoryViewModel(get(), get(), get()) }
     viewModel { PaymentDetailViewModel(get()) }
     viewModel { RegisterPaymentViewModel(get()) }
     viewModel { ProfileViewModel() }
@@ -74,7 +74,7 @@ val viewModelModule = module {
     viewModel { MigrationViewModel(get()) }
     viewModel { OltAdministrationViewModel(get()) }
     viewModel { OutLayViewModel(get()) }
-    viewModel { SubscriptionFinderViewModel(get()) }
+    viewModel { SubscriptionFinderViewModel(get(), get()) }
     viewModel { FixedCostViewModel(get()) }
     viewModel { CreateInstallationOrderViewModel(get(), get(), get()) }
     viewModel { SupportTicketListViewModel(get(), get()) }

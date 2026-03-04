@@ -6,12 +6,30 @@ pluginManagement {
     }
 }
 
+def localProps = new Properties()
+def localPropsFile = new File(rootDir, "local.properties")
+if (localPropsFile.exists()) {
+    localProps.load(new FileInputStream(localPropsFile))
+}
+
+def gprUser = localProps.getProperty("gpr.user") ?: System.getenv("USERNAME")
+def gprKey = localProps.getProperty("gpr.key") ?: System.getenv("TOKEN")
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         maven { url 'https://jitpack.io' }
         google()
         mavenCentral()
+
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/ritherdieler/components")
+            credentials {
+                username = gprUser
+                password = gprKey
+            }
+        }
     }
     
     // Define repositorios adicionales si es necesario

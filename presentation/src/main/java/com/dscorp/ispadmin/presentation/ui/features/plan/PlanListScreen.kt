@@ -38,7 +38,7 @@ import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.presentation.ui.components.Loader
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyCustomDialog
-import com.dscorp.ispadmin.presentation.ui.components.MyOutlinedTextField
+import com.dscorp.components.components.formfields.MyOutlinedTextField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -10,6 +10,15 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.0'
 }
 
+def localProps = new Properties()
+def localPropsFile = rootProject.file("local.properties")
+if (localPropsFile.exists()) {
+    localProps.load(new FileInputStream(localPropsFile))
+}
+
+def oltServiceApiKey = (localProps.getProperty("OLT_SERVICE_API_KEY") ?: "").replace('"', '')
+def sendCloudMessagingApiKey = (localProps.getProperty("SEND_CLOUD_MESSAGING_API_KEY") ?: "").replace('"', '')
+
 android {
     compileSdk rootProject.ext.compileSdk
 
@@ -17,8 +26,8 @@ android {
         applicationId "com.dscorp.ispadmin"
         minSdk rootProject.ext.minSdk
         targetSdk rootProject.ext.targetSdk
-        versionCode 42
-        versionName "2.2.2"
+        versionCode 45
+        versionName "2.2.5"
         testInstrumentationRunner "com.dscorp.ispadmin.test.InstrumentationTestRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -32,16 +41,16 @@ android {
             applicationIdSuffix ".dev"
             versionNameSuffix "-dev"
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
-            buildConfigField 'String', "BASE_URL", '"http://127.0.0.1:8080/ispadmin/"'
-            buildConfigField 'String', "OLT_SERVICE_API_KET", OLT_SERVICE_API_KEY
-            buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", SEND_CLOUD_MESSAGING_API_KEY
+            buildConfigField 'String', "BASE_URL", '"http://192.168.44.2:8080/ispadmin/"'
+            buildConfigField 'String', "OLT_SERVICE_API_KET", "\"${oltServiceApiKey}\""
+            buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", "\"${sendCloudMessagingApiKey}\""
         }
         prod {
             dimension "environment"
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
-            buildConfigField 'String', "BASE_URL", '"http://212.85.13.47:9090/ispadmin/"'
-            buildConfigField 'String', "OLT_SERVICE_API_KET", OLT_SERVICE_API_KEY
-            buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", SEND_CLOUD_MESSAGING_API_KEY
+            buildConfigField 'String', "BASE_URL", '"http://212.85.13.47:8080/ispadmin/"'
+            buildConfigField 'String', "OLT_SERVICE_API_KET", "\"${oltServiceApiKey}\""
+            buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", "\"${sendCloudMessagingApiKey}\""
         }
     }
 
@@ -132,7 +141,9 @@ dependencies {
     implementation "androidx.navigation:navigation-ui-ktx:${rootProject.ext.navigationVersion}"
     implementation "androidx.navigation:navigation-compose:${rootProject.ext.navigationVersion}"
     implementation "androidx.navigation:navigation-runtime-ktx:${rootProject.ext.navigationVersion}"
-    
+
+    implementation("com.dscorp:components:1.0.1")
+
     // Koin para Compose
     implementation "io.insert-koin:koin-androidx-compose:${rootProject.ext.koinComposeVersion}"
     

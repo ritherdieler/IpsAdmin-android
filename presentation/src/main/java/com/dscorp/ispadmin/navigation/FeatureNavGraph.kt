@@ -79,7 +79,7 @@ import com.dscorp.ispadmin.presentation.ui.features.profile.ProfileScreen
 import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.EditSubscriptionViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.compose.EditPlanSubscriptionScreen
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionFormScreen
-import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.SubscriptionDetailForm
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.SubscriptionDetailScreen
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderScreen
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.CreateSupportTicketScreen
@@ -347,8 +347,9 @@ private fun NavGraphContent(
         }
         composable<Subscription.Details> { backStackEntry ->
             val subscriptionId = backStackEntry.toRoute<Subscription.Details>().subscriptionId
-            SubscriptionDetailForm(
-                subscriptionId = subscriptionId
+            SubscriptionDetailScreen(
+                subscriptionId = subscriptionId,
+                navController = navController
             )
         }
         composable<Subscription.ChangePlan> { backStackEntry ->
