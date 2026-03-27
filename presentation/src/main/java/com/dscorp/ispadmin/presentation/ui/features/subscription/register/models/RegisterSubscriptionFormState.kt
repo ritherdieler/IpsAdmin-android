@@ -53,18 +53,13 @@ data class RegisterSubscriptionFormState(
         val isDniValid = dni.isNotBlank() && dni.isValidDni(strictValidation = true)
         val isAddressValid = address.isNotBlank() && address.isAValidAddress()
         val isPhoneValid = phone.isNotBlank() && phone.isValidPhone()
-
         val isPlanSelected = selectedPlan != null
         val isPlaceSelected = selectedPlace != null
-
-
-        // Si es fibra, ONU y NapBox son obligatorios
-        val isFiberPlan = selectedPlan?.type == InstallationType.FIBER
-        val fiberRequirementsValid = if (isFiberPlan) {
-            selectedOnu != null && selectedNapBox != null
-        } else {
-            true
-        }
+        val requiresNapBox = installationType == InstallationType.FIBER ||
+                installationType == InstallationType.ONLY_TV_FIBER
+        val requiresOnu = installationType == InstallationType.FIBER
+        val installationRequirementsValid = (!requiresOnu || selectedOnu != null) &&
+                (!requiresNapBox || selectedNapBox != null)
 
         val noErrors = firstNameError == null &&
                 lastNameError == null &&
@@ -72,11 +67,13 @@ data class RegisterSubscriptionFormState(
                 addressError == null &&
                 phoneError == null &&
                 planError == null &&
-                placeError == null
+                placeError == null &&
+                onuError == null &&
+                napBoxError == null
 
         return isFirstNameValid && isLastNameValid && isDniValid &&
                 isAddressValid && isPhoneValid && isPlanSelected &&
-                isPlaceSelected && fiberRequirementsValid && noErrors
+                isPlaceSelected && installationRequirementsValid && noErrors
     }
 
 }

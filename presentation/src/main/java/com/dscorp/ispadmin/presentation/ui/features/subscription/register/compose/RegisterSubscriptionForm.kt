@@ -227,7 +227,8 @@ fun RegisterSubscriptionForm(
             )
 
             AnimatedVisibility(
-                visible = formState.registerSubscriptionForm.installationType == InstallationType.FIBER,
+                visible = formState.registerSubscriptionForm.installationType == InstallationType.FIBER ||
+                        formState.registerSubscriptionForm.installationType == InstallationType.ONLY_TV_FIBER,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
@@ -243,7 +244,7 @@ fun RegisterSubscriptionForm(
             }
             
             AnimatedVisibility(
-                visible = formState.registerSubscriptionForm.installationType != InstallationType.FIBER,
+                visible = formState.registerSubscriptionForm.installationType == InstallationType.WIRELESS,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
@@ -450,58 +451,64 @@ fun FiberOpticForm(
     equipmentCondition: EquipmentCondition,
     onEquipmentConditionChanged: (EquipmentCondition) -> Unit
 ) {
+    val installationType = formState.registerSubscriptionForm.installationType
+    val showOnuSelector = installationType == InstallationType.FIBER
+
     Column {
         Spacer(modifier = Modifier.height(16.dp))
-        SectionTitle("Equipamiento de Fibra")
+        SectionTitle(
+            if (showOnuSelector) "Equipamiento de Fibra" else "Equipamiento"
+        )
         Spacer(modifier = Modifier.height(8.dp))
-    
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        MyOutLinedDropDown(
-            modifier = Modifier.weight(1f),
-            items = formState.registerSubscriptionForm.onuList,
-            selected = formState.registerSubscriptionForm.selectedOnu,
-            label = ONU_LABEL,
-            onItemSelected = onOnuSelected,
-            hasError = formState.registerSubscriptionForm.onuError != null
+
+        if (showOnuSelector) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                MyOutLinedDropDown(
+                    modifier = Modifier.weight(1f),
+                    items = formState.registerSubscriptionForm.onuList,
+                    selected = formState.registerSubscriptionForm.selectedOnu,
+                    label = ONU_LABEL,
+                    onItemSelected = onOnuSelected,
+                    hasError = formState.registerSubscriptionForm.onuError != null
+                )
+
+                RefreshIcon(onRefreshOnuList, formState)
+            }
+        }
+
+        if (formState.isLoadingNearbyNapBoxes) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                Text(
+                    "Buscando cajas NAP cercanas...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        MyAutoCompleteTextViewCompose(
+            items = formState.registerSubscriptionForm.napBoxList,
+            label = NAP_BOX_LABEL,
+            selectedItem = formState.registerSubscriptionForm.selectedNapBox,
+            onItemSelected = onNapBoxSelected,
+            onSelectionCleared = onNapBoxSelectionCleared,
+            enabled = formState.registerSubscriptionForm.selectedPlace != null,
+            hasError = formState.registerSubscriptionForm.napBoxError != null
         )
 
-        RefreshIcon(onRefreshOnuList, formState)
+        Spacer(modifier = Modifier.height(8.dp))
 
-    }
-
-    if (formState.isLoadingNearbyNapBoxes) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CircularProgressIndicator(modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-            Text(
-                "Buscando cajas NAP cercanas...",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-
-    MyAutoCompleteTextViewCompose(
-        items = formState.registerSubscriptionForm.napBoxList,
-        label = NAP_BOX_LABEL,
-        selectedItem = formState.registerSubscriptionForm.selectedNapBox,
-        onItemSelected = onNapBoxSelected,
-        onSelectionCleared = onNapBoxSelectionCleared,
-        enabled = formState.registerSubscriptionForm.selectedPlace != null,
-        hasError = formState.registerSubscriptionForm.placeError != null
-    )
-    
-    Spacer(modifier = Modifier.height(8.dp))
-    
         EquipmentConditionSelector(
             equipmentCondition = equipmentCondition,
             onConditionSelected = onEquipmentConditionChanged
