@@ -10,7 +10,7 @@ ext {
     jvmTarget = '17'
     
     // Versiones de herramientas
-    gradleVersion = '8.10.0'
+    gradleVersion = '8.13.2'
     
     // Versiones principales de las bibliotecas
     coreKtxVersion = '1.16.0'
