@@ -61,6 +61,10 @@ class MigrationActivity : AppCompatActivity() {
                 onus = it.unconfirmedOnus,
                 plans = it.plans,
                 subscription=it.subscription,
+                isRefreshingOnuList = it.isRefreshingOnuList,
+                onRefreshOnus = {
+                    viewModel.refreshOnusDebounced(it.subscription.id)
+                },
                 onMigrationRequest = { request ->
                     request.apply { subscriptionId = it.subscription.id }
                     viewModel.doMigration(request)

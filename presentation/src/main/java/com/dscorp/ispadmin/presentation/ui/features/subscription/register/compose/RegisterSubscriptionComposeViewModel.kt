@@ -10,11 +10,6 @@ import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.Subscription
-import com.dscorp.ispadmin.domain.model.User
-import com.dscorp.ispadmin.domain.model.extensions.isAValidAddress
-import com.dscorp.ispadmin.domain.model.extensions.isAValidName
-import com.dscorp.ispadmin.domain.model.extensions.isValidDni
-import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.presentation.extension.removeSpecialCharacters
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.FormFieldKey
@@ -105,10 +100,26 @@ class RegisterSubscriptionComposeViewModel(
             val onuList = getAvailableOnuListUseCase()
 
             _uiState.update { current ->
+                val currentForm = current.registerSubscriptionForm
+                val refreshedOnuList = onuList.getOrNull() ?: emptyList()
+                val selectedOnu = currentForm.selectedOnu?.takeIf { selected ->
+                    refreshedOnuList.any { it.sn == selected.sn }
+                }
+
                 current.copy(
                     isRefreshingOnuList = false,
-                    registerSubscriptionForm = current.registerSubscriptionForm.copy(
-                        onuList = onuList.getOrNull() ?: emptyList()
+                    registerSubscriptionForm = currentForm.copy(
+                        onuList = refreshedOnuList,
+                        selectedOnu = selectedOnu,
+                        onuError = when {
+                            currentForm.selectedOnu != null && selectedOnu == null ->
+                                "La ONU seleccionada ya no está disponible"
+                            currentForm.onuError != null -> currentForm.copy(
+                                onuList = refreshedOnuList,
+                                selectedOnu = selectedOnu
+                            ).validate(FormFieldKey.ONU)
+                            else -> null
+                        }
                     )
                 )
             }
@@ -124,121 +135,71 @@ class RegisterSubscriptionComposeViewModel(
 
     fun onFirstNameChanged(value: String) {
         if (value.length > 50) return
-        
-        val error = if (value.isAValidName()) null else "El nombre debe tener al menos 2 caracteres"
-        
-        _uiState.update { current ->
-            current.copy(
-                registerSubscriptionForm = current.registerSubscriptionForm.copy(
-                    firstName = value,
-                    firstNameError = error
-                )
-            )
+
+        updateValidatedForm(FormFieldKey.FIRST_NAME) { form ->
+            form.copy(firstName = value)
         }
     }
 
     fun onLastNameChanged(value: String) {
         if (value.length > 50) return
-        
-        val error = if (value.isAValidName()) null else "El apellido debe tener al menos 2 caracteres"
-        
-        _uiState.update { current ->
-            current.copy(
-                registerSubscriptionForm = current.registerSubscriptionForm.copy(
-                    lastName = value,
-                    lastNameError = error
-                )
-            )
+
+        updateValidatedForm(FormFieldKey.LAST_NAME) { form ->
+            form.copy(lastName = value)
         }
     }
 
     fun onDniChanged(value: String) {
         if (value.length > 8) return
-        
-        val error = if (value.isValidDni()) null else "El DNI debe contener 8 dígitos"
-        
-        _uiState.update { current ->
-            current.copy(
-                registerSubscriptionForm = current.registerSubscriptionForm.copy(
-                    dni = value,
-                    dniError = error
-                )
-            )
+
+        updateValidatedForm(FormFieldKey.DNI) { form ->
+            form.copy(dni = value)
         }
     }
 
     fun onAddressChanged(value: String) {
-        val error = if (value.isAValidAddress()) null else "La dirección debe tener al menos 5 caracteres"
-        
-        _uiState.update { current ->
-            current.copy(
-                registerSubscriptionForm = current.registerSubscriptionForm.copy(
-                    address = value,
-                    addressError = error
-                )
-            )
+        updateValidatedForm(FormFieldKey.ADDRESS) { form ->
+            form.copy(address = value)
         }
     }
 
     fun onPhoneChanged(value: String) {
         if (value.length > 9) return
-        
-        val error = if (value.isValidPhone()) null else "El teléfono debe tener 9 dígitos"
-        
-        _uiState.update { current ->
-            current.copy(
-                registerSubscriptionForm = current.registerSubscriptionForm.copy(
-                    phone = value,
-                    phoneError = error
-                )
-            )
+
+        updateValidatedForm(FormFieldKey.PHONE) { form ->
+            form.copy(phone = value)
         }
     }
 
     fun onPlanSelected(value: PlanResponse) {
-        _uiState.update { current ->
-            current.copy(
-                registerSubscriptionForm = current.registerSubscriptionForm.copy(
-                    selectedPlan = value,
-                    planError = null
-                )
-            )
+        updateValidatedForm(FormFieldKey.PLAN) { form ->
+            form.copy(selectedPlan = value)
         }
     }
 
     fun onPlaceSelected(value: Place) {
         val filteredNapBoxes = getFilteredNapBoxesForPlace(value.id)
-        
-        _uiState.update { current ->
-            current.copy(
-                registerSubscriptionForm = current.registerSubscriptionForm.copy(
-                    selectedPlace = value,
-                    placeError = null,
-                    napBoxList = filteredNapBoxes
-                )
+
+        updateValidatedForm(FormFieldKey.PLACE, FormFieldKey.NAP_BOX) { form ->
+            form.copy(
+                selectedPlace = value,
+                napBoxList = filteredNapBoxes,
+                selectedNapBox = form.selectedNapBox?.takeIf { selected ->
+                    filteredNapBoxes.any { it.id == selected.id }
+                }
             )
         }
     }
 
     fun onOnuSelected(value: Onu) {
-        _uiState.update { current ->
-            current.copy(
-                registerSubscriptionForm = current.registerSubscriptionForm.copy(
-                    selectedOnu = value,
-                    onuError = null
-                )
-            )
+        updateValidatedForm(FormFieldKey.ONU) { form ->
+            form.copy(selectedOnu = value)
         }
     }
 
     fun onNapBoxSelected(value: NapBoxResponse) {
-        _uiState.update { current ->
-            current.copy(
-                registerSubscriptionForm = current.registerSubscriptionForm.copy(
-                    selectedNapBox = value,
-                    napBoxError = null
-                )
-            )
+        updateValidatedForm(FormFieldKey.NAP_BOX) { form ->
+            form.copy(selectedNapBox = value)
         }
     }
 
@@ -265,24 +226,18 @@ class RegisterSubscriptionComposeViewModel(
     }
 
     fun onPlaceSelectionCleared() {
-        _uiState.update {
-            it.copy(
-                registerSubscriptionForm = it.registerSubscriptionForm.copy(
-                    selectedPlace = null,
-                    placeError = null
-                )
+        updateValidatedForm(FormFieldKey.PLACE, FormFieldKey.NAP_BOX) { form ->
+            form.copy(
+                selectedPlace = null,
+                selectedNapBox = null,
+                napBoxList = getFilteredNapBoxesForPlace(null)
             )
         }
     }
 
     fun onNapBoxSelectionCleared() {
-        _uiState.update {
-            it.copy(
-                registerSubscriptionForm = it.registerSubscriptionForm.copy(
-                    selectedNapBox = null,
-                    napBoxError = null
-                )
-            )
+        updateValidatedForm(FormFieldKey.NAP_BOX) { form ->
+            form.copy(selectedNapBox = null)
         }
     }
 
@@ -303,7 +258,7 @@ class RegisterSubscriptionComposeViewModel(
                     selectedPlan = selectedPlan,
                     selectedOnu = null,
                     selectedNapBox = null,
-                )
+                ).validated(FormFieldKey.PLAN, FormFieldKey.ONU, FormFieldKey.NAP_BOX)
             )
         }
     }
@@ -311,13 +266,7 @@ class RegisterSubscriptionComposeViewModel(
     fun getPlaceFromCurrentLocation(latitude: Double, longitude: Double) = viewModelScope.launch {
         getPlaceFromLocationUseCase(latitude, longitude).fold(
             onSuccess = { place ->
-                _uiState.update {
-                    it.copy(
-                        registerSubscriptionForm = it.registerSubscriptionForm.copy(
-                            selectedPlace = place
-                        )
-                    )
-                }
+                onPlaceSelected(place)
             },
             onFailure = { error ->
 
@@ -327,8 +276,12 @@ class RegisterSubscriptionComposeViewModel(
 
     fun saveSubscription() {
         val form = uiState.value.registerSubscriptionForm
+        val validatedForm = form.validated()
 
-        if (!form.isValid()) {
+        if (!validatedForm.isValid()) {
+            _uiState.update {
+                it.copy(registerSubscriptionForm = validatedForm)
+            }
             return
         }
 
@@ -336,7 +289,7 @@ class RegisterSubscriptionComposeViewModel(
             it.copy(isLoading = true)
         }
 
-        val subscription = createSubscriptionFromForm(form)
+        val subscription = createSubscriptionFromForm(validatedForm)
 
         viewModelScope.launch {
             registerSubscriptionUseCase(subscription, uiState.value.orderId).fold(
@@ -459,17 +412,31 @@ class RegisterSubscriptionComposeViewModel(
 
             getNearNapBoxesUseCase(latitude, longitude).fold(
                 onSuccess = { napBoxes ->
-                    val selectedPlace = currentUiState().registerSubscriptionForm.selectedPlace
+                    val currentForm = currentUiState().registerSubscriptionForm
+                    val selectedPlace = currentForm.selectedPlace
                     val filteredNapBoxes = selectedPlace?.let { place ->
                         napBoxes.filter { it.placeId == place.id?.toInt() }
                     } ?: napBoxes
+                    val selectedNapBox = currentForm.selectedNapBox?.takeIf { selected ->
+                        filteredNapBoxes.any { it.id == selected.id }
+                    }
 
                     _uiState.update {
                         it.copy(
                             isLoadingNearbyNapBoxes = false,
                             cachedNapBoxList = napBoxes,
                             registerSubscriptionForm = it.registerSubscriptionForm.copy(
-                                napBoxList = filteredNapBoxes
+                                napBoxList = filteredNapBoxes,
+                                selectedNapBox = selectedNapBox,
+                                napBoxError = when {
+                                    currentForm.selectedNapBox != null && selectedNapBox == null ->
+                                        "La caja NAP seleccionada ya no está disponible"
+                                    currentForm.napBoxError != null -> it.registerSubscriptionForm.copy(
+                                        napBoxList = filteredNapBoxes,
+                                        selectedNapBox = selectedNapBox
+                                    ).validate(FormFieldKey.NAP_BOX)
+                                    else -> null
+                                }
                             )
                         )
                     }
@@ -499,6 +466,7 @@ class RegisterSubscriptionComposeViewModel(
             val currentInstallationType = currentUiState().registerSubscriptionForm.installationType
             val filteredPlans = getFilteredPlansForInstallationType(currentInstallationType)
             val selectedPlan = getAutoSelectedPlan(filteredPlans, null)
+            val filteredNapBoxes = getFilteredNapBoxesForPlace(selectedPlace?.id)
 
             _uiState.update { current ->
                 current.copy(
@@ -510,7 +478,9 @@ class RegisterSubscriptionComposeViewModel(
                         phone = order.customerPhone,
                         dni = order.customerDni,
                         selectedPlace = selectedPlace,
-                        selectedPlan = selectedPlan
+                        selectedPlan = selectedPlan,
+                        selectedNapBox = null,
+                        napBoxList = filteredNapBoxes
                     )
                 )
             }
@@ -540,6 +510,17 @@ class RegisterSubscriptionComposeViewModel(
     }
 
     private fun currentUiState() = _uiState.value
+
+    private fun updateValidatedForm(
+        vararg fields: FormFieldKey,
+        transform: (RegisterSubscriptionFormState) -> RegisterSubscriptionFormState
+    ) {
+        _uiState.update { current ->
+            current.copy(
+                registerSubscriptionForm = transform(current.registerSubscriptionForm).validated(*fields)
+            )
+        }
+    }
     
     /**
      * Filtra planes según el tipo de instalación

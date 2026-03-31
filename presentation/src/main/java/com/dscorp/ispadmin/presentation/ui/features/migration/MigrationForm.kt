@@ -3,6 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.migration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +12,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -18,6 +27,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -28,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +53,7 @@ import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.data.apirequestmodel.MigrationRequest
+import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +61,8 @@ fun MigrationForm(
     onus: List<Onu>,
     plans: List<PlanResponse>,
     onMigrationRequest: (MigrationRequest) -> Unit,
+    onRefreshOnus: () -> Unit,
+    isRefreshingOnuList: Boolean = false,
     subscription: SubscriptionResponse
 ) {
     var planDropDownExpanded by remember { mutableStateOf(false) }
@@ -61,6 +75,16 @@ fun MigrationForm(
     var price by remember { mutableStateOf("") }
 
     var note by remember { mutableStateOf("") }
+    val infiniteTransition = rememberInfiniteTransition(label = "refreshAnimation")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotationAnimation"
+    )
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text(text = "Migración a fibra óptica ")
@@ -104,33 +128,48 @@ fun MigrationForm(
         }
 
         Spacer(modifier = Modifier.size(16.dp))
-        ExposedDropdownMenuBox(
-            expanded = onuDropDownExpanded,
-            onExpandedChange = { onuDropDownExpanded = !onuDropDownExpanded },
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            OutlinedTextField(
-                // The `menuAnchor` modifier must be passed to the text field for correctness.
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
-                readOnly = true,
-                value = selectedOnu?.sn ?: "",
-                onValueChange = {},
-                label = { Text("Seleccione Onu") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = onuDropDownExpanded) },
-            )
-            ExposedDropdownMenu(
+            ExposedDropdownMenuBox(
                 expanded = onuDropDownExpanded,
-                onDismissRequest = { onuDropDownExpanded = false }) {
-                onus.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(text = option.sn) },
-                        onClick = {
-                            selectedOnu = option
-                            onuDropDownExpanded = false
-                        }
-                    )
+                onExpandedChange = { onuDropDownExpanded = !onuDropDownExpanded },
+                modifier = Modifier.weight(1f)
+            ) {
+                OutlinedTextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    readOnly = true,
+                    value = selectedOnu?.sn ?: "",
+                    onValueChange = {},
+                    label = { Text("Seleccione Onu") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = onuDropDownExpanded) },
+                )
+                ExposedDropdownMenu(
+                    expanded = onuDropDownExpanded,
+                    onDismissRequest = { onuDropDownExpanded = false }) {
+                    onus.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(text = option.sn) },
+                            onClick = {
+                                selectedOnu = option
+                                onuDropDownExpanded = false
+                            }
+                        )
+                    }
                 }
+            }
+            MyIconButton(
+                modifier = Modifier.padding(start = 8.dp),
+                onClick = onRefreshOnus
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Refrescar ONUs",
+                    modifier = Modifier.rotate(if (isRefreshingOnuList) rotation else 0f)
+                )
             }
         }
 
@@ -211,6 +250,7 @@ fun MigrationFormPreview() {
             onus = listOf(),
             plans = listOf(),
             onMigrationRequest = {},
+            onRefreshOnus = {},
             subscription = SubscriptionResponse(
                 id = 3796,
                 address = null,

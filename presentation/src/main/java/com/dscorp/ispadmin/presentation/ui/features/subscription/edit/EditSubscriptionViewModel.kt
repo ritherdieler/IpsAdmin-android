@@ -59,10 +59,14 @@ class EditSubscriptionViewModel(
                 val subscriptionResponse = subscriptionDeferred.await()
                 val plans = plansDeferred.await()
 
-                // Filtramos los planes por el mismo tipo de instalación de la suscripción
-                val filteredPlans = plans.filter { plan -> 
-                    plan.type == subscriptionResponse.installationType  || plan.type == InstallationType.ONLY_TV_FIBER
+                val allowedPlanTypes = when (subscriptionResponse.installationType) {
+                    InstallationType.FIBER, InstallationType.ONLY_TV_FIBER ->
+                        setOf(InstallationType.FIBER, InstallationType.ONLY_TV_FIBER)
+                    InstallationType.WIRELESS ->
+                        setOf(InstallationType.WIRELESS)
                 }
+
+                val filteredPlans = plans.filter { plan -> plan.type in allowedPlanTypes }
 
                 // Encontramos el plan actual del suscriptor
                 val selectedPlan = filteredPlans.find { it.id == subscriptionResponse.plan?.id }

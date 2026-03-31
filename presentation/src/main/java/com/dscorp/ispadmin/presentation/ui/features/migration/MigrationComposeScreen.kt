@@ -41,6 +41,10 @@ fun MigrationComposeScreen(
                     onus = currentState.unconfirmedOnus,
                     plans = currentState.plans,
                     subscription = currentState.subscription,
+                    isRefreshingOnuList = currentState.isRefreshingOnuList,
+                    onRefreshOnus = {
+                        viewModel.refreshOnusDebounced(subscriptionId)
+                    },
                     onMigrationRequest = { request ->
                         request.apply { this.subscriptionId = subscriptionId }
                         viewModel.doMigration(request)

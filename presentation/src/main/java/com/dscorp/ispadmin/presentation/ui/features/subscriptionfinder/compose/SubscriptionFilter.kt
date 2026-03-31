@@ -267,6 +267,7 @@ sealed class SubscriptionFilter(val valueName: String) {
     data class BY_DATE(val startDate: String = "", val endDate: String = "") :
         SubscriptionFilter("Fecha")
     data class BY_IP(val ip: String = "") : SubscriptionFilter("IP")
+    data class BY_CODE(val code: String = "") : SubscriptionFilter("Código")
 }
 
 

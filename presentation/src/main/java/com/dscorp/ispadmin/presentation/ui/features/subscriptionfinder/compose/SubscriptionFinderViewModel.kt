@@ -165,6 +165,22 @@ class SubscriptionFinderViewModel(
                             repository.findSubscriptionByIP(filterType.ip)
                         }
                     }
+                    is SubscriptionFilter.BY_CODE -> {
+                        val code = filterType.code.trim()
+                        if (code.isEmpty()) {
+                            subscriptionsFlow.value = emptyList()
+                            return@collect
+                        }
+                        val subscriptionId = code.toIntOrNull()
+                        if (subscriptionId == null) {
+                            subscriptionsFlow.value = emptyList()
+                            return@collect
+                        }
+                        runCatching { repository.subscriptionById(subscriptionId).toDomain() }
+                            .getOrNull()
+                            ?.let { listOf(it) }
+                            ?: emptyList()
+                    }
                 }
                 subscriptionsFlow.value = response
             }

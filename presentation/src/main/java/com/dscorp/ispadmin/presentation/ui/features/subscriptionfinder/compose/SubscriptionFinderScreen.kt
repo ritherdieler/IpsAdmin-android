@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -78,13 +79,14 @@ import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 
 const val SUBSCRIPTION_ID = "subscriptionId"
 
 /**
  * Main screen for finding and managing subscriptions.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SubscriptionFinderScreen(
     navController: NavController,
@@ -182,9 +184,10 @@ fun SubscriptionFinderScreen(
                     var lastNameQuery by remember { mutableStateOf("") }
 
                     // Show filter tabs
-                    Row(
+                    FlowRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         filters.forEach { filter ->
                             val isSelected = selectedFilter == filter
@@ -320,6 +323,35 @@ fun SubscriptionFinderScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 label = { Text("IP") },
                                 placeholder = { Text("Ej: 192.168.1.1") },
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.Search,
+                                        contentDescription = "Buscar",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                },
+                                singleLine = true,
+                                shape = RoundedCornerShape(8.dp),
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number
+                                )
+                            )
+                        }
+                        is SubscriptionFilter.BY_CODE -> {
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { newValue ->
+                                    val filteredValue = newValue.filter { it.isDigit() }
+                                    searchQuery = filteredValue
+                                    coroutinesScope.launch {
+                                        viewModel.documentNumberFlow.emit(
+                                            SubscriptionFilter.BY_CODE(filteredValue)
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Código") },
+                                placeholder = { Text("Ingrese ID de suscripción") },
                                 trailingIcon = {
                                     Icon(
                                         imageVector = Icons.Filled.Search,
