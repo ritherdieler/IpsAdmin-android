@@ -38,7 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
+import coil3.compose.rememberAsyncImagePainter
 
 /**
  * Composable auxiliar para la sección de foto,
@@ -80,7 +80,7 @@ fun MultiplePhotoAndGalleryPicker(
                 ) {
                     Box {
                         Image(
-                            painter = rememberAsyncImagePainter(photoUriList[index].toString()),
+                            painter = rememberAsyncImagePainter(model = photoUriList[index].toString()),
                             contentDescription = "Foto ${index + 1}",
                             modifier = Modifier.fillMaxSize().clickable {
                                 onImageClick(photoUriList[index])

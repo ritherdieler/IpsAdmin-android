@@ -435,7 +435,7 @@ private fun NavGraphContent(
                 onRefresh = viewModel::refreshData,
                 onDismissError = viewModel::dismissError,
                 onTicketCardClick = { ticket ->
-                    if (ticket.status == AssistanceTicketStatus.CLOSED && ticket.sheetImageUrl.isNotEmpty()) {
+                    if (ticket.status == AssistanceTicketStatus.CLOSED && ticket.sheetImageUrl?.isNotEmpty() == true) {
                         navController.navigate(AsyncImageViewer(ticket.sheetImageUrl))
                     }
                 }

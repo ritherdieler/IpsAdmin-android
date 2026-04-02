@@ -52,7 +52,7 @@ ext {
     playServicesLocationVersion = '21.3.0'
     
     // Coil para imágenes
-    coilVersion = '2.7.0'
+    coilVersion = '3.4.0'
     
     // UI Components
     constraintLayoutVersion = '2.2.1'

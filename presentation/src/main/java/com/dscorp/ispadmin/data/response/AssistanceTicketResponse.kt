@@ -19,7 +19,7 @@ data class AssistanceTicketResponse(
     val assignedTo: String? = null,
     val place: String? = null,
     val address: String? = null,
-    val sheetImageUrl:String,
+    val sheetImageUrl:String?,
 ):Serializable {
     fun getCreatedAtDateAsString(): String {
         val dateFormatter =

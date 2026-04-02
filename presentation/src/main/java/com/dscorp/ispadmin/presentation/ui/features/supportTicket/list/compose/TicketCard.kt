@@ -39,10 +39,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.dscorp.ispadmin.domain.model.User
-import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
+import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.presentation.ui.components.MyButton
 
 @Composable
 fun TicketCard(
@@ -119,7 +119,7 @@ fun TicketCard(
             )
             
             // Mostrar indicador de imagen si el ticket está cerrado
-            if (ticket.status == AssistanceTicketStatus.CLOSED && ticket.sheetImageUrl.isNotEmpty()) {
+            if (ticket.status == AssistanceTicketStatus.CLOSED && ticket.sheetImageUrl?.isNotEmpty() == true) {
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(

@@ -26,8 +26,8 @@ android {
         applicationId "com.dscorp.ispadmin"
         minSdk rootProject.ext.minSdk
         targetSdk rootProject.ext.targetSdk
-        versionCode 45
-        versionName "2.2.5"
+        versionCode 46
+        versionName "2.3.0"
         testInstrumentationRunner "com.dscorp.ispadmin.test.InstrumentationTestRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -41,7 +41,7 @@ android {
             applicationIdSuffix ".dev"
             versionNameSuffix "-dev"
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
-            buildConfigField 'String', "BASE_URL", '"http://192.168.44.2:8080/ispadmin/"'
+            buildConfigField 'String', "BASE_URL", '"http://localhost:8080/ispadmin/"'
             buildConfigField 'String', "OLT_SERVICE_API_KET", "\"${oltServiceApiKey}\""
             buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", "\"${sendCloudMessagingApiKey}\""
         }
@@ -188,7 +188,8 @@ dependencies {
     implementation "com.google.firebase:firebase-messaging-ktx:${rootProject.ext.firebaseMessagingVersion}"
     
     // Carga de imágenes con Coil
-    implementation "io.coil-kt:coil-compose:${rootProject.ext.coilVersion}"
+    implementation "io.coil-kt.coil3:coil-compose:${rootProject.ext.coilVersion}"
+    implementation "io.coil-kt.coil3:coil-network-okhttp:${rootProject.ext.coilVersion}"
     
     // Componentes de UI
     implementation "com.facebook.shimmer:shimmer:${rootProject.ext.shimmerVersion}"

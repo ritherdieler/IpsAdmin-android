@@ -23,8 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
+import coil3.compose.rememberAsyncImagePainter
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,7 +80,7 @@ fun PhotoViewerScreen(
             ) {
                 Image(
                     painter = rememberAsyncImagePainter(
-                        ImageRequest.Builder(LocalContext.current)
+                        model = ImageRequest.Builder(LocalContext.current)
                             .data(ticket.sheetImageUrl)
                             .crossfade(true)
                             .build()

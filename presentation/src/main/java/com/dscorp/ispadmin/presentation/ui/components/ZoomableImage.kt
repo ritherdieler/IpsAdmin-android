@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -23,10 +24,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import coil.compose.AsyncImagePainter
-import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
-import coil.size.Size
+import coil3.compose.AsyncImagePainter
+import coil3.compose.rememberAsyncImagePainter
+import coil3.request.ImageRequest
+import coil3.size.Size
 
 @Composable
 fun ZoomableImage(
@@ -110,11 +111,12 @@ fun ZoomableImage(
         val painter = rememberAsyncImagePainter(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(imageUrl)
-                .size(Size.ORIGINAL) // Set the target size to load the image at.
+                .size(Size.ORIGINAL)
                 .build()
         )
+        val state by painter.state.collectAsState()
 
-        when (painter.state) {
+        when (state) {
             is AsyncImagePainter.State.Loading -> {
                 CircularProgressIndicator(Modifier.align(Alignment.Center), color = Color.White)
             }
@@ -139,7 +141,7 @@ fun ZoomableImage(
             is AsyncImagePainter.State.Error -> {
                 Text(text = "Error al cargar la imagen", Modifier.align(Alignment.Center))
             }
-            AsyncImagePainter.State.Empty ->  CircularProgressIndicator(Modifier.align(Alignment.Center), color = Color.White)
+            is AsyncImagePainter.State.Empty -> CircularProgressIndicator(Modifier.align(Alignment.Center), color = Color.White)
         }
     }
 }
