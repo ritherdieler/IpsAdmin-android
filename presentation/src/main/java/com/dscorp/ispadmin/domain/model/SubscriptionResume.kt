@@ -17,7 +17,8 @@ data class SubscriptionResume(
     val installationType: InstallationType,
     val napBox: NapBox?,
     val placeId: String,
-    val location: GeoLocation
+    val location: GeoLocation,
+    val hasFiberOnu: Boolean = false,
 )
 fun SubscriptionResume.createReminderMessage(): String {
         val message = """

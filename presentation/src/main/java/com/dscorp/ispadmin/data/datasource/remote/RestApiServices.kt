@@ -320,6 +320,11 @@ interface RestApiServices {
         @Body request: MoveOnuRequest
     ): Response<Unit>
 
+    @PUT("subscription/reboot-fiber-onu")
+    suspend fun rebootFiberOnu(
+        @Query("subscriptionId") subscriptionId: Int
+    ): Response<Unit>
+
     @GET("app/check_version")
     suspend fun getRemoteAppVersion(): Response<AppVersion>
 

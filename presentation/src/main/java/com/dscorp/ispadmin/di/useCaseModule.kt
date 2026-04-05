@@ -8,6 +8,7 @@ import com.dscorp.ispadmin.domain.usecase.GetPaymentByIdUseCase
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.PlaceUseCase
 import com.dscorp.ispadmin.domain.usecase.ReactivateServiceUseCase
+import com.dscorp.ispadmin.domain.usecase.RebootFiberOnuUseCase
 import com.dscorp.ispadmin.domain.usecase.RestoreInternetConnectionUseCase
 import com.dscorp.ispadmin.domain.usecase.UpdateDeviceTokenUseCase
 import com.dscorp.ispadmin.domain.usecase.UserUseCase
@@ -40,5 +41,6 @@ val useCaseModule = module {
     single { GetPaymentByIdUseCase(get()) }
     single { UpdatePlanUseCase(get()) }
     single { ReactivateServiceUseCase(get()) }
+    single { RebootFiberOnuUseCase(get()) }
     single { RestoreInternetConnectionUseCase(get()) }
 }

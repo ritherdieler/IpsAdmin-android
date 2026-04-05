@@ -15,6 +15,7 @@ import com.dscorp.ispadmin.domain.model.extensions.isValidDni
 import com.dscorp.ispadmin.domain.model.extensions.isValidEmail
 import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
 import com.dscorp.ispadmin.domain.usecase.ReactivateServiceUseCase
+import com.dscorp.ispadmin.domain.usecase.RebootFiberOnuUseCase
 import com.dscorp.ispadmin.presentation.extension.removeAccents
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.FlowPreview
@@ -44,7 +45,8 @@ data class SubscriptionFinderUiState(
     val editableLatitude: String = "",
     val editableLongitude: String = "",
     val isFetchingCurrentLocation: Boolean = false,
-    val lastUsedFilter: SubscriptionFilter? = null
+    val lastUsedFilter: SubscriptionFilter? = null,
+    val rebootOnuState: RebootOnuState = RebootOnuState.Empty,
 )
 
 data class CustomerFormData(
@@ -86,7 +88,8 @@ data class CustomerFormData(
 
 class SubscriptionFinderViewModel(
     private val repository: IRepository,
-    private val reactivateServiceUseCase: ReactivateServiceUseCase
+    private val reactivateServiceUseCase: ReactivateServiceUseCase,
+    private val rebootFiberOnuUseCase: RebootFiberOnuUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SubscriptionFinderUiState())
@@ -252,6 +255,25 @@ class SubscriptionFinderViewModel(
 
     fun clearReactivateServiceState() {
         _uiState.update { it.copy(reactivateServiceState = ReactivateServiceState.Empty) }
+    }
+
+    fun rebootFiberOnu(subscriptionId: Int) = viewModelScope.launch {
+        _uiState.update { it.copy(rebootOnuState = RebootOnuState.Loading) }
+        rebootFiberOnuUseCase(subscriptionId).fold(
+            onSuccess = {
+                _uiState.update { it.copy(rebootOnuState = RebootOnuState.Success) }
+            },
+            onFailure = { error ->
+                error.printStackTrace()
+                _uiState.update {
+                    it.copy(rebootOnuState = RebootOnuState.Error(error.message))
+                }
+            }
+        )
+    }
+
+    fun clearRebootOnuState() {
+        _uiState.update { it.copy(rebootOnuState = RebootOnuState.Empty) }
     }
 
     fun getNapBoxes() = viewModelScope.launch {
@@ -559,6 +581,13 @@ sealed class ReactivateServiceState {
     object Loading : ReactivateServiceState()
     object Success : ReactivateServiceState()
     data class Error(val error:String?) : ReactivateServiceState()
+}
+
+sealed class RebootOnuState {
+    object Empty : RebootOnuState()
+    object Loading : RebootOnuState()
+    object Success : RebootOnuState()
+    data class Error(val message: String?) : RebootOnuState()
 }
 
 sealed class NapBoxesState {

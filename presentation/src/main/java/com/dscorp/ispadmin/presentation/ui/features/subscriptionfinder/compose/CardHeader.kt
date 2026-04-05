@@ -46,7 +46,8 @@ enum class SubscriptionMenu(val menuId: Int) {
     CANCEL_SUBSCRIPTION(R.string.cancel_subscription),
     REACTIVATE_SERVICE(R.string.reactivate_service),
     CHANGE_NAP_BOX(R.string.change_nap_box),
-    UPDATE_LOCATION(R.string.update_location);
+    UPDATE_LOCATION(R.string.update_location),
+    REBOOT_FIBER_ONU(R.string.reboot_fiber_onu);
 
     fun getTitle(context: Context): String {
         return context.getString(menuId)
@@ -142,6 +143,11 @@ private fun SubscriptionDropdownMenu(
             // Show "Reactivate Service" only for cancelled subscriptions
             subscription.serviceStatus != ServiceStatus.CANCELLED && 
                 menuItem == SubscriptionMenu.REACTIVATE_SERVICE -> false
+
+            menuItem == SubscriptionMenu.REBOOT_FIBER_ONU ->
+                (subscription.installationType == InstallationType.FIBER ||
+                    subscription.installationType == InstallationType.ONLY_TV_FIBER) &&
+                    subscription.hasFiberOnu
             
             else -> true
         }

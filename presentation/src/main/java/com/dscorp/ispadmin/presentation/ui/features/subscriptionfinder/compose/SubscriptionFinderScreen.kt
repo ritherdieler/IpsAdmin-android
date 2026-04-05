@@ -74,6 +74,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SEE_DETAILS
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SHOW_PAYMENT_HISTORY
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.UPDATE_LOCATION
+import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.REBOOT_FIBER_ONU
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
@@ -101,6 +102,7 @@ fun SubscriptionFinderScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var showChangeNapBoxDialog by remember { mutableStateOf(false) }
+    var showRebootOnuDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Track which subscription card is expanded
@@ -126,6 +128,30 @@ fun SubscriptionFinderScreen(
                     duration = androidx.compose.material3.SnackbarDuration.Long
                 )
                 viewModel.clearReactivateServiceState()
+            }
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(uiState.rebootOnuState) {
+        when (val state = uiState.rebootOnuState) {
+            is RebootOnuState.Error -> {
+                showRebootOnuDialog = false
+                snackbarHostState.showSnackbar(
+                    message = state.message ?: "No se pudo reiniciar la ONU",
+                    actionLabel = "Cerrar",
+                    duration = androidx.compose.material3.SnackbarDuration.Indefinite
+                )
+                viewModel.clearRebootOnuState()
+            }
+            is RebootOnuState.Success -> {
+                showRebootOnuDialog = false
+                snackbarHostState.showSnackbar(
+                    message = "Reinicio de ONU enviado correctamente",
+                    actionLabel = "Cerrar",
+                    duration = androidx.compose.material3.SnackbarDuration.Long
+                )
+                viewModel.clearRebootOnuState()
             }
             else -> {}
         }
@@ -433,7 +459,8 @@ fun SubscriptionFinderScreen(
                             viewModel = viewModel,
                             onShowCancelDialog = { showCancelSubscriptionConfirmDialog = true },
                             onShowChangeNapBoxDialog = { showChangeNapBoxDialog = true },
-                            onShowReactivateDialog = { showReactivateServiceDialog = true }
+                            onShowReactivateDialog = { showReactivateServiceDialog = true },
+                            onShowRebootOnuDialog = { showRebootOnuDialog = true }
                         )
                     },
                     onSubscriptionExpanded = { subscription, expanded ->
@@ -500,6 +527,20 @@ fun SubscriptionFinderScreen(
                 onNotesChange = { viewModel.updateReactivationNotes(it) }
             )
         }
+
+    if (showRebootOnuDialog) {
+        RebootOnuConfirmDialog(
+            onDismiss = {
+                if (uiState.rebootOnuState != RebootOnuState.Loading) {
+                    showRebootOnuDialog = false
+                }
+            },
+            onConfirm = {
+                uiState.selectedSubscription?.id?.let { viewModel.rebootFiberOnu(it) }
+            },
+            isLoading = uiState.rebootOnuState == RebootOnuState.Loading
+        )
+    }
 
     // Change NAP box dialog
     if (showChangeNapBoxDialog) {
@@ -575,7 +616,8 @@ private fun handleMenuAction(
     viewModel: SubscriptionFinderViewModel,
     onShowCancelDialog: () -> Unit,
     onShowChangeNapBoxDialog: () -> Unit,
-    onShowReactivateDialog: () -> Unit
+    onShowReactivateDialog: () -> Unit,
+    onShowRebootOnuDialog: () -> Unit,
 ) {
     when (menuItem) {
         SHOW_PAYMENT_HISTORY -> {
@@ -623,6 +665,11 @@ private fun handleMenuAction(
         UPDATE_LOCATION -> {
             viewModel.setSelectedSubscription(subscription)
             viewModel.toggleLocationUpdateDialog(true)
+        }
+
+        REBOOT_FIBER_ONU -> {
+            viewModel.setSelectedSubscription(subscription)
+            onShowRebootOnuDialog()
         }
     }
 }
@@ -711,6 +758,94 @@ private fun CancelSubscriptionDialog(
                         text = "Cancelar Suscripción",
                         style = MaterialTheme.typography.labelLarge
                     )
+                }
+            }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun RebootOnuConfirmDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    isLoading: Boolean = false,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Reiniciar ONU",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        },
+        text = {
+            Column(modifier = Modifier.padding(top = 0.dp)) {
+                Text(
+                    text = "¿Enviar reinicio remoto a la ONU del cliente?",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "El equipo puede tardar unos minutos en volver a estar en línea.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+                )
+            }
+        },
+        confirmButton = {
+            Row(
+                modifier = Modifier.padding(end = 4.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = onDismiss,
+                    enabled = !isLoading
+                ) {
+                    Text(
+                        text = "Volver",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (isLoading)
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(
+                    onClick = onConfirm,
+                    enabled = !isLoading,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    if (isLoading) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Enviando...",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "Reiniciar ONU",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
                 }
             }
         },

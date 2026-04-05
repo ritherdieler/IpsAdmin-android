@@ -74,7 +74,7 @@ val viewModelModule = module {
     viewModel { MigrationViewModel(get()) }
     viewModel { OltAdministrationViewModel(get()) }
     viewModel { OutLayViewModel(get()) }
-    viewModel { SubscriptionFinderViewModel(get(), get()) }
+    viewModel { SubscriptionFinderViewModel(get(), get(), get()) }
     viewModel { FixedCostViewModel(get()) }
     viewModel { CreateInstallationOrderViewModel(get(), get(), get()) }
     viewModel { SupportTicketListViewModel(get(), get()) }

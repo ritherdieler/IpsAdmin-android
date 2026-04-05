@@ -308,6 +308,7 @@
     <string name="gross_revenue_per_month">Ingresos brutos por mes</string>
     <string name="cableTv">Tv Cable</string>
     <string name="change_nap_box">Cambiar caja nap</string>
+    <string name="reboot_fiber_onu">Reiniciar ONU</string>
     <string name="fixed_costs">Gastos fijos</string>
     <string name="variable_costs">Gastos variables</string>
     <string name="utilities">Margen</string>

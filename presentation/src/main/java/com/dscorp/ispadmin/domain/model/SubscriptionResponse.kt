@@ -38,7 +38,8 @@ data class SubscriptionResponse(
     val qualification: Any,
     val ics: Int,
     val totalDebt: Double,
-    val lastPaymentDate: String?
+    val lastPaymentDate: String?,
+    val hasFiberOnu: Boolean = false,
 ) : java.io.Serializable {
     fun getFullName() = "$firstName $lastName"
 
@@ -69,7 +70,8 @@ data class SubscriptionResponse(
         ),
         installationType = installationType,
         napBox = napBox?.toDomain(),
-        location = location!!
+        location = location!!,
+        hasFiberOnu = hasFiberOnu,
     )
 }
 

@@ -158,6 +158,7 @@ interface IRepository {
     suspend fun updateCustomerData(customer: CustomerData)
     suspend fun subscriptionById(subscriptionId: Int): SubscriptionResponse
     suspend fun changeSubscriptionNapBox(request: MoveOnuRequest)
+    suspend fun rebootFiberOnu(subscriptionId: Int)
     suspend fun getRemoteAppVersion(): AppVersion
     suspend fun getTicketsByDateRange(
         closed: AssistanceTicketStatus,

@@ -62,6 +62,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import retrofit2.Response
@@ -781,6 +782,16 @@ class Repository : IRepository, KoinComponent {
         if (response.code() !in 200..299)
             throw Exception("No se pudo cambiar la caja nap de la suscripcion")
 
+    }
+
+    override suspend fun rebootFiberOnu(subscriptionId: Int) {
+        val response = restApiServices.rebootFiberOnu(subscriptionId)
+        if (response.code() !in 200..299) {
+            val msg = response.errorBody()?.string()?.let { body ->
+                runCatching { JSONObject(body).getString("error") }.getOrNull()
+            }
+            throw Exception(msg ?: "No se pudo reiniciar la ONU")
+        }
     }
 
     override suspend fun getRemoteAppVersion(): AppVersion {
