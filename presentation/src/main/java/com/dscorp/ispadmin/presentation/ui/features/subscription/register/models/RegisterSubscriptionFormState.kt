@@ -12,6 +12,7 @@ import com.dscorp.ispadmin.domain.model.extensions.isAValidName
 import com.dscorp.ispadmin.domain.model.extensions.isValidDni
 import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
 import com.google.android.gms.maps.model.LatLng
+import android.net.Uri
 
 data class RegisterSubscriptionFormState(
     val firstName: String = "",
@@ -44,6 +45,8 @@ data class RegisterSubscriptionFormState(
     val onuError: String? = null,
     val coupon: String = "",
     val note: String = "",
+    val facadePhotoUri: Uri? = null,// foto temporal de fachada seleccionada o capturada antes de subirla a Firebase
+    val facadePhotoError: String? = null,
     val installationType: InstallationType = InstallationType.FIBER,
     val equipmentCondition: EquipmentCondition = EquipmentCondition.LOAN,
 ) {
@@ -110,6 +113,10 @@ data class RegisterSubscriptionFormState(
                 else -> null
             }
 
+            FormFieldKey.FACADE_PHOTO -> when {
+                facadePhotoUri == null -> "Adjunte una foto de la fachada"
+                else -> null
+            }
             FormFieldKey.NOTE,
             FormFieldKey.EQUIPMENT_CONDITION -> null
         }
@@ -130,6 +137,7 @@ data class RegisterSubscriptionFormState(
                 FormFieldKey.PLACE -> validatedForm.copy(placeError = validatedForm.validate(field))
                 FormFieldKey.ONU -> validatedForm.copy(onuError = validatedForm.validate(field))
                 FormFieldKey.NAP_BOX -> validatedForm.copy(napBoxError = validatedForm.validate(field))
+                FormFieldKey.FACADE_PHOTO -> validatedForm.copy(facadePhotoError = validatedForm.validate(field))
                 FormFieldKey.NOTE,
                 FormFieldKey.EQUIPMENT_CONDITION -> validatedForm
             }
@@ -148,6 +156,7 @@ data class RegisterSubscriptionFormState(
                 validatedForm.planError == null &&
                 validatedForm.placeError == null &&
                 validatedForm.onuError == null &&
-                validatedForm.napBoxError == null
+                validatedForm.napBoxError == null &&
+                validatedForm.facadePhotoError == null
     }
 }

@@ -9,6 +9,7 @@ import com.dscorp.ispadmin.domain.model.Loging
 import com.dscorp.ispadmin.domain.model.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 
 sealed class LoginState {
     object Empty : LoginState()
@@ -79,5 +80,75 @@ class LoginViewModel(private val repository: IRepository) : ViewModel() {
 
     fun resetLoginState() {
         loginRequestFlow.value = LoginState.Empty
+    }
+
+    // Expone errores del prompt biometrico usando el mismo dialogo de errores del login.
+    fun showBiometricError(message: String) {
+        loginRequestFlow.value = LoginState.Error(message)
+    }
+
+    // Inicia sesion con el usuario guardado localmente despues de validar la huella con Android.
+    fun loginWithSavedSession() = viewModelScope.launch {
+        val savedUser = repository.getBiometricUserSession()
+
+        if (savedUser == null) {
+            loginRequestFlow.value = LoginState.Error(
+                "Primero inicia sesion con usuario y contrasena o reconocimiento facial."
+            )
+            return@launch
+        }
+
+        if (!savedUser.verified) {
+            loginRequestFlow.value = LoginState.UnverifiedAccount(savedUser)
+            return@launch
+        }
+
+        // Restaura la sesion activa despues de validar la huella.
+        // Asi las pantallas internas pueden leer repository.getUserSession().
+        repository.saveUserSession(savedUser, true)
+        loginRequestFlow.value = LoginState.LoginSuccess(savedUser)
+    }
+
+    // Inicia sesion facial enviando la foto capturada al backend.
+    fun doFaceLogin(photo: File) = viewModelScope.launch {
+        try {
+            loginRequestFlow.value = LoginState.Loading
+
+            val user = repository.loginWithFace(photo)
+
+            if (!user.verified){
+                loginRequestFlow.value = LoginState.UnverifiedAccount(user)
+            } else{
+                loginRequestFlow.value = LoginState.LoginSuccess(user)
+            }
+        } catch (e: Exception){
+            e.printStackTrace()
+            loginRequestFlow.value = LoginState.Error(
+                e.toFaceLoginMessage()
+            )
+        } finally {
+            photo.delete()
+        }
+    }
+}
+
+private fun Exception.toFaceLoginMessage(): String {
+    val rawMessage = message.orEmpty()
+
+    return when {
+        rawMessage.contains("Failed to connect", ignoreCase = true) ||
+            rawMessage.contains("timeout", ignoreCase = true) ||
+            rawMessage.contains("Unable to resolve host", ignoreCase = true) ->
+            "No se pudo conectar con el servidor. Verifica tu conexion e intenta nuevamente."
+
+        rawMessage.contains("401", ignoreCase = true) ->
+            "Rostro no reconocido. Intenta nuevamente."
+
+        rawMessage.contains("404", ignoreCase = true) ->
+            "No se encontro un usuario asociado a este rostro."
+
+        rawMessage.isNotBlank() -> rawMessage
+
+        else -> "Error al iniciar sesion con reconocimiento facial."
     }
 }

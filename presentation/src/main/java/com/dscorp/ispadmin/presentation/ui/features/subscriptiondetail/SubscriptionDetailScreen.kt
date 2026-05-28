@@ -4,11 +4,13 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -62,7 +64,28 @@ import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.CleanDetailField
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.ErrorView
 import org.koin.androidx.compose.koinViewModel
-
+import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
+import java.io.File
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import coil3.compose.rememberAsyncImagePainter
+import androidx.compose.foundation.layout.heightIn
 @Composable
 fun SubscriptionDetailScreen(
     subscriptionId: Int,
@@ -74,6 +97,64 @@ fun SubscriptionDetailScreen(
         viewModel.getSubscription(subscriptionId)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var showFacadePhotoOptionsDialog by remember { mutableStateOf(false) }
+
+    val facadePhotoGalleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val facadePhotoFile = uriToFile(context, it)
+            viewModel.updateFacadePhoto(
+                subscriptionId = subscriptionId,
+                facadePhotoFile = facadePhotoFile
+            )
+        }
+    }
+
+    val (takeFacadePhoto, _) = rememberPhotoTaker(
+        context = context,
+        onPhotoTaken = { uri ->
+            val facadePhotoFile = uriToFile(context, uri)
+            viewModel.updateFacadePhoto(
+                subscriptionId = subscriptionId,
+                facadePhotoFile = facadePhotoFile
+            )
+        }
+    )
+    if (showFacadePhotoOptionsDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showFacadePhotoOptionsDialog = false
+            },
+            title = {
+                Text("Foto de fachada")
+            },
+            text = {
+                Text("Elige como quieres agregar la foto de fachada.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showFacadePhotoOptionsDialog = false
+                        takeFacadePhoto()
+                    }
+                ) {
+                    Text("Tomar foto")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        showFacadePhotoOptionsDialog = false
+                        facadePhotoGalleryLauncher.launch("image/*")
+                    }
+                ) {
+                    Text("Galería")
+                }
+            }
+        )
+    }
 
     MyTheme {
         when {
@@ -90,20 +171,23 @@ fun SubscriptionDetailScreen(
                 )
             }
 
-            uiState.subscription != null -> SubscriptionDetailForm(uiState.subscription!!)
+            uiState.subscription != null -> SubscriptionDetailForm(subscription = uiState.subscription!!, onFacadePhotoClick = {
+                showFacadePhotoOptionsDialog = true
+            }
+            )
         }
     }
 }
 
 @Composable
-fun SubscriptionDetailForm(subscription: SubscriptionResponse) {
+fun SubscriptionDetailForm(subscription: SubscriptionResponse, onFacadePhotoClick: ()-> Unit ={}) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
+            .verticalScroll(scrollState)    
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -189,6 +273,12 @@ fun SubscriptionDetailForm(subscription: SubscriptionResponse) {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
+            FacadePhotoBox(
+                facadePhotoUrl = subscription.facadePhotoUrl,
+                onClick = onFacadePhotoClick
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             subscription.phone?.let { phoneNumber ->
                 Row(
@@ -547,6 +637,150 @@ fun SubscriptionDetailForm(subscription: SubscriptionResponse) {
     }
 }
 
+@Composable
+private fun FacadePhotoBox(
+    facadePhotoUrl: String?,
+    onClick: () -> Unit
+) {
+    val hasPhoto = !facadePhotoUrl.isNullOrBlank()
+    val shape = RoundedCornerShape(8.dp)
+    var showFullPhoto by remember { mutableStateOf(false) }
+
+    if (showFullPhoto && hasPhoto) {
+        Dialog(
+            onDismissRequest = {
+                showFullPhoto = false
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth(0.96f)
+                    .fillMaxHeight(0.86f),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Muestra la fachada en tamaño grande para que el tecnico pueda verificarla.
+                    Image(
+                        painter = rememberAsyncImagePainter(facadePhotoUrl),
+                        contentDescription = "Foto de fachada completa",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Fit
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = {
+                            showFullPhoto = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Cerrar")
+                    }
+                }
+            }
+        }
+    }
+
+    if (hasPhoto) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Foto fachada",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(facadePhotoUrl),
+                    contentDescription = "Foto de fachada",
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .aspectRatio(16f / 9f)
+                        .clip(shape)
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline,
+                            shape = shape
+                        )
+                        .clickable {
+                            showFullPhoto = true
+                        },
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+
+        return
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(0.8f)
+            .aspectRatio(16f / 9f)
+            .clip(shape)
+            .border(
+                width = 1.dp,
+                color = if (hasPhoto) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.outline
+                },
+                shape = shape
+            )
+            .background(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = shape
+            )
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        if (hasPhoto) {
+            Image(
+                painter = rememberAsyncImagePainter(facadePhotoUrl),
+                contentDescription = "Foto de fachada",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Foto no disponible",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Toque aqui para agregar una foto",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun SubscriptionDetailFormPreview() {
@@ -688,4 +922,21 @@ fun SubscriptionDetailFormSuspendedPreview() {
     MyTheme {
         SubscriptionDetailForm(subscription = mockSubscription)
     }
+}
+// Convierte el Uri elegido desde cámara o galería en un archivo temporal.
+// Ese archivo se envía al backend como multipart para actualizar la fachada.
+private fun uriToFile(context: Context, uri: Uri): File {
+    val file = File.createTempFile(
+        "facade_photo_",
+        ".jpg",
+        context.cacheDir
+    )
+
+    context.contentResolver.openInputStream(uri)?.use { inputStream ->
+        file.outputStream().use { outputStream ->
+            inputStream.copyTo(outputStream)
+        }
+    } ?: throw IllegalArgumentException("No se pudo leer la foto de fachada")
+
+    return file
 }

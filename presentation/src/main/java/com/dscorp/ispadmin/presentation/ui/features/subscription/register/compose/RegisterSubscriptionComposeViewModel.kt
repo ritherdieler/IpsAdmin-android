@@ -22,6 +22,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import android.net.Uri
+import android.content.Context
+import java.io.File
 
 class RegisterSubscriptionComposeViewModel(
     private val getAvailableOnuListUseCase: GetAvailableOnuListUseCase,
@@ -39,6 +42,15 @@ class RegisterSubscriptionComposeViewModel(
     private val _uiState = MutableStateFlow(RegisterSubscriptionState())
     val uiState: StateFlow<RegisterSubscriptionState> = _uiState.asStateFlow()
 
+    // Guarda temporalmente la foto de fachada seleccionada antes de subirla a Firebase.
+    fun onFacadePhotoSelected(uri: Uri){
+        updateValidatedForm(FormFieldKey.FACADE_PHOTO){ form ->
+            form.copy(
+                facadePhotoUri = uri,
+                facadePhotoError = null
+            )
+        }
+    }
     fun loadInitialFormData() = viewModelScope.launch {
         _uiState.update { it.copy(isLoading = true) }
 
@@ -274,7 +286,7 @@ class RegisterSubscriptionComposeViewModel(
         )
     }
 
-    fun saveSubscription() {
+    fun saveSubscription(facadePhotoFile: File? = null) {
         val form = uiState.value.registerSubscriptionForm
         val validatedForm = form.validated()
 
@@ -292,7 +304,7 @@ class RegisterSubscriptionComposeViewModel(
         val subscription = createSubscriptionFromForm(validatedForm)
 
         viewModelScope.launch {
-            registerSubscriptionUseCase(subscription, uiState.value.orderId).fold(
+            registerSubscriptionUseCase(subscription, uiState.value.orderId, facadePhotoFile = facadePhotoFile).fold(
                 onSuccess = { registeredSubscription ->
                     _uiState.update {
                         it.copy(
@@ -341,7 +353,8 @@ class RegisterSubscriptionComposeViewModel(
             note = form.note,
             napBoxId = form.selectedNapBox?.id,
             onu = form.selectedOnu,
-            equipmentCondition = form.equipmentCondition
+            equipmentCondition = form.equipmentCondition,
+            facadePhotoUrl = null,
         )
     }
 

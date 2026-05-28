@@ -63,6 +63,14 @@ import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
 import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.rememberAsyncImagePainter
+import androidx.compose.ui.draw.clip
 
 @Composable
 fun RegisterSubscriptionForm(
@@ -82,6 +90,7 @@ fun RegisterSubscriptionForm(
     onInstallationTypeSelected: (InstallationType) -> Unit = {},
     onRefreshOnuList: () -> Unit = {},
     onNoteChanged: (String) -> Unit = {},
+    onFacadePhotoClick: () -> Unit = {},
     onEquipmentConditionChanged: (EquipmentCondition) -> Unit = {},
     onRegisterClick: () -> Unit = {}
 ) {
@@ -258,7 +267,69 @@ fun RegisterSubscriptionForm(
                     )
                 }
             }
-            
+
+            //foto fachada
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            SectionTitle("Foto de Fachada")
+
+            val facadePhotoUri = formState.registerSubscriptionForm.facadePhotoUri
+            val hasFacadePhoto = facadePhotoUri != null
+            val photoShape = RoundedCornerShape(8.dp)
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+                    .clip(photoShape)
+                    .border(
+                        width = 1.dp,
+                        color = if (hasFacadePhoto) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outline
+                        },
+                        shape = photoShape
+                    )
+                    .background(
+                        color = if (hasFacadePhoto) {
+                            MaterialTheme.colorScheme.surface
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
+                        shape = photoShape
+                    )
+                    .clickable(enabled = !formState.isLoading) {
+                        onFacadePhotoClick()
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                if (hasFacadePhoto) {
+                    Image(
+                        painter = rememberAsyncImagePainter(facadePhotoUri.toString()),
+                        contentDescription = "Foto de fachada",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = "Subir foto fachada",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            formState.registerSubscriptionForm.facadePhotoError?.let { error ->
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -289,7 +360,8 @@ fun RegisterSubscriptionForm(
                 modifier = Modifier.fillMaxWidth(),
                 text = "Registrar",
                 onClick = onRegisterClick,
-                enabled = formState.registerSubscriptionForm.isValid(),
+                enabled = formState.registerSubscriptionForm.isValid() &&
+                        formState.registerSubscriptionForm.facadePhotoUri != null,
                 isLoading = formState.isLoading
             )
         }

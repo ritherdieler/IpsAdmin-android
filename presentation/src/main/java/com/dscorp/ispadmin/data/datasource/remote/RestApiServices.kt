@@ -77,6 +77,23 @@ interface RestApiServices {
     @POST("subscription")
     suspend fun registerSubscription(@Body subscription: Subscription): BaseResponse<Subscription>
 
+    // Registra una subcripcion enviando los datos en JSON y la foto de fachada como multipart
+
+    @Multipart
+    @POST("subscription/with-facade-photo")
+    suspend fun  registerSubscriptionWithFacadePhoto(
+        @Part("subscription") subscription: RequestBody,
+        @Part facadePhoto: MultipartBody.Part
+    ): BaseResponse<Subscription>
+
+    // Actualiza solo la foto de fachada de una suscripcion existente.
+    @Multipart
+    @PUT("subscription/{subscriptionId}/facade-photo")
+    suspend fun updateSubscriptionFacadePhoto(
+        @Path("subscriptionId") subscriptionId: Int,
+        @Part facadePhoto: MultipartBody.Part
+    ): BaseResponse<Subscription>
+
     @GET("plan")
     suspend fun getPlans(): Response<List<PlanResponse>>
 
@@ -358,6 +375,12 @@ interface RestApiServices {
 
     @GET("payment/{id}")
     suspend fun getPaymentById(@Path("id") paymentId: String): Response<Payment>
+
+    @Multipart
+    @POST("users/login/face/photo") // Login facial nuevo: Android envia foto, backend genera descriptor.
+    suspend fun loginWithFacePhoto(
+        @Part photo: MultipartBody.Part
+    ): Response<User>
 
 
 }

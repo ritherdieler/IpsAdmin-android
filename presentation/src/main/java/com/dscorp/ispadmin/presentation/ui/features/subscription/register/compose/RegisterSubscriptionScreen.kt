@@ -46,6 +46,10 @@ import com.google.accompanist.permissions.shouldShowRationale
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import java.io.File
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -62,11 +66,27 @@ fun RegisterSubscriptionFormScreen(
 
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
+    var showFacadePhotoOptionsDialog by remember { mutableStateOf(false) }
+
+    val (takeFacadePhoto, _)= rememberPhotoTaker(
+        context = context,
+        onPhotoTaken = { uri ->
+            viewModel.onFacadePhotoSelected(uri)
+        }
+    )
     val locationSettingsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
         val isEnabled = isGpsEnabled(context)
         viewModel.onGpsStateChanged(isEnabled)
+    }
+    // Permite seleccionar la foto de facahada desde la galeria del telefono
+    val facadePhotoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            viewModel.onFacadePhotoSelected(it)
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -133,6 +153,39 @@ fun RegisterSubscriptionFormScreen(
             onDismiss = { viewModel.dismissGpsDialog() }
         )
     }
+    if (showFacadePhotoOptionsDialog){
+        AlertDialog(
+            onDismissRequest = {
+                showFacadePhotoOptionsDialog = false
+            },
+            title = {
+                Text("Foto de fachada")
+            },
+            text = {
+                Text("Elige como quieres adjuntar la foto de la fachada.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showFacadePhotoOptionsDialog = false
+                        takeFacadePhoto()
+                    }
+                ) {
+                    Text("Tomar foto")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        showFacadePhotoOptionsDialog = false
+                        facadePhotoPickerLauncher.launch("image/*")
+                    }
+                ) {
+                    Text("Galería")
+                }
+            }
+        )
+    }
 
     when {
         uiState.isGpsEnabled && uiState.hasLocationPermission -> {
@@ -155,8 +208,19 @@ fun RegisterSubscriptionFormScreen(
                     viewModel.onInstallationTypeSelected(it)
                 },
                 onRefreshOnuList = { viewModel.refreshOnuList() },
+                onFacadePhotoClick = {
+                    showFacadePhotoOptionsDialog = true
+                },
                 onRegisterClick = {
-                    viewModel.saveSubscription()
+                    val facadePhotoFile = uiState.registerSubscriptionForm.facadePhotoUri?.let { uri ->
+                        uriToFile(
+                            context = context,
+                            uri = uri
+                        )
+                    }
+                    viewModel.saveSubscription(
+                        facadePhotoFile = facadePhotoFile
+                    )
                 },
                 onNoteChanged = { viewModel.onNoteChanged(it) },
                 onEquipmentConditionChanged = { viewModel.onEquipmentConditionChanged(it) },
@@ -388,6 +452,24 @@ private fun GpsDialog(
             }
         }
     )
+}
+
+// Convierte el Uri de la foto seleccionada en un archivo temporal.
+// Esto permite enviar la imagen al backend como multipart.
+private fun uriToFile(context: Context, uri: Uri): File {
+    val file = File.createTempFile(
+        "facade_photo_",
+        ".jpg",
+        context.cacheDir
+    )
+
+    context.contentResolver.openInputStream(uri)?.use { inputStream ->
+        file.outputStream().use { outputStream ->
+            inputStream.copyTo(outputStream)
+        }
+    } ?: throw IllegalArgumentException("No se pudo leer la foto de fachada")
+
+    return file
 }
 
 

@@ -46,6 +46,7 @@ ext {
     firebaseCrashlyticsVersion = '19.4.3'
     firebaseAnalyticsVersion = '22.4.0'
     firebaseMessagingVersion = '24.1.1'
+
     
     // Google Play Services
     playServicesMapsVersion = '19.2.0'
