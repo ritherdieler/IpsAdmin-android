@@ -13,9 +13,19 @@ class InstallationOrderUseCaseImpl(
 
 
     override suspend fun getInstallationOrderById(id: Int): InstallationOrder {
-        return repository.getInstallationOrderById(id)
-            ?: throw IllegalArgumentException("Installation order with id $id not found")
+        return getInstallationOrderByIdResult(id).getOrThrow()
     }
+
+    override suspend fun getInstallationOrderByIdResult(id: Int): Result<InstallationOrder> =
+        runCatching {
+            repository.getInstallationOrderById(id)
+                ?: throw IllegalArgumentException("Installation order with id $id not found")
+        }
+
+    override suspend fun closeInstallationOrderResult(orderId: Int): Result<InstallationOrder> =
+        runCatching {
+            repository.closeInstallationOrder(orderId)
+        }
 
     override suspend fun createInstallationOrder(installationOrder: InstallationOrder): InstallationOrder {
         return repository.createInstallationOrder(installationOrder)
@@ -31,7 +41,7 @@ class InstallationOrderUseCaseImpl(
     }
 
     override suspend fun closeInstallationOrder(orderId: Int): InstallationOrder {
-        return repository.closeInstallationOrder(orderId)
+        return closeInstallationOrderResult(orderId).getOrThrow()
     }
 
     override suspend fun cancelInstallationOrder(

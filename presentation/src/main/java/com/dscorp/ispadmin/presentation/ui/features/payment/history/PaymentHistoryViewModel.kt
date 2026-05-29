@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.model.ServiceStatus
-import com.dscorp.ispadmin.domain.usecase.ReactivateServiceUseCase
-import com.dscorp.ispadmin.domain.usecase.RestoreInternetConnectionUseCase
+import com.dscorp.ispadmin.domain.usecase.service.ReactivateServiceUseCase
+import com.dscorp.ispadmin.domain.usecase.service.RestoreInternetConnectionUseCase
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseUiState
 import com.dscorp.ispadmin.presentation.ui.features.base.BaseViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

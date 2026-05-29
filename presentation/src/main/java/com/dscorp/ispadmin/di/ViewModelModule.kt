@@ -12,7 +12,6 @@ import com.dscorp.ispadmin.presentation.ui.features.mufas.MufaViewModel
 import com.dscorp.ispadmin.presentation.ui.features.napbox.NapBoxViewModel
 import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdministrationViewModel
 import com.dscorp.ispadmin.presentation.ui.features.outlay.OutLayViewModel
-import com.dscorp.ispadmin.domain.usecase.RegisterOutlayUseCase
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.payerFinder.PayerFinderViewmodel
@@ -28,7 +27,9 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.CreateSupportTicketViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.SupportTicketViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.SupportTicketListViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 /**
@@ -39,8 +40,6 @@ import org.koin.dsl.module
  *
  **/
 val viewModelModule = module {
-    // Use Cases
-    single { RegisterOutlayUseCase(get(), get()) }
     viewModel { LoginViewModel(get()) }
     viewModel { RegisterViewModel(get(), get()) }
     viewModel {
@@ -54,7 +53,8 @@ val viewModelModule = module {
             get(),
             get(),
             get(),
-            get()
+            get(),
+            get(named("mainImmediate"))
         )
     }
 

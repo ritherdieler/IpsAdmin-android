@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.domain.model.Outlay
-import com.dscorp.ispadmin.domain.usecase.RegisterOutlayUseCase
+import com.dscorp.ispadmin.domain.usecase.outlay.RegisterOutlayUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -113,7 +113,10 @@ class OutLayViewModel(
 
         _uiState.update { it.copy(isLoading = true, error = null) }
 
-        registerOutlayUseCase(uiState.value.outlay, uiState.value.photoList)
+        registerOutlayUseCase(
+            uiState.value.outlay,
+            uiState.value.photoList.map { it.toString() }
+        )
             .onSuccess {
                 _uiState.update {
                     it.copy(

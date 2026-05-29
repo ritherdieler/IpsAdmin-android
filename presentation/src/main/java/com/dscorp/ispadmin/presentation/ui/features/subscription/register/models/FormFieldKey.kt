@@ -11,5 +11,10 @@ enum class FormFieldKey {
     ONU,
     NAP_BOX,
     NOTE,
-    EQUIPMENT_CONDITION
+    EQUIPMENT_CONDITION;
+
+    companion object {
+        val blockingForSubmit: List<FormFieldKey> =
+            entries.filter { it != EQUIPMENT_CONDITION }
+    }
 }

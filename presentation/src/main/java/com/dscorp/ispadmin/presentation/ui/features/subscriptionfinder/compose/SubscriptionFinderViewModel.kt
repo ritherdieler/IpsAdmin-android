@@ -14,8 +14,8 @@ import com.dscorp.ispadmin.domain.model.extensions.isAValidName
 import com.dscorp.ispadmin.domain.model.extensions.isValidDni
 import com.dscorp.ispadmin.domain.model.extensions.isValidEmail
 import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
-import com.dscorp.ispadmin.domain.usecase.ReactivateServiceUseCase
-import com.dscorp.ispadmin.domain.usecase.RebootFiberOnuUseCase
+import com.dscorp.ispadmin.domain.usecase.service.ReactivateServiceUseCase
+import com.dscorp.ispadmin.domain.usecase.service.RebootFiberOnuUseCase
 import com.dscorp.ispadmin.presentation.extension.removeAccents
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.FlowPreview

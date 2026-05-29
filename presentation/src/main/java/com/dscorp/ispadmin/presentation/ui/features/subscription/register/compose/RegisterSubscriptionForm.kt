@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
+import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -11,7 +12,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -39,10 +40,13 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -56,35 +60,27 @@ import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.subscription.RegisterSubscriptionFormConstraints
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.MyAutoCompleteTextViewCompose
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
 import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 
 @Composable
 fun RegisterSubscriptionForm(
     modifier: Modifier = Modifier,
     formState: RegisterSubscriptionState,
-    onFirstNameChanged: (String) -> Unit = {},
-    onLastNameChanged: (String) -> Unit = {},
-    onDniChanged: (String) -> Unit = {},
-    onAddressChanged: (String) -> Unit = {},
-    onPhoneChanged: (String) -> Unit = {},
-    onPlanSelected: (PlanResponse) -> Unit = {},
-    onOnuSelected: (Onu) -> Unit = {},
-    onPlaceSelected: (Place) -> Unit = {},
-    onNapBoxSelected: (NapBoxResponse) -> Unit = {},
-    onPLaceSelectionCleared: () -> Unit = {},
-    onNapBoxSelectionCleared: () -> Unit = {},
-    onInstallationTypeSelected: (InstallationType) -> Unit = {},
-    onRefreshOnuList: () -> Unit = {},
-    onNoteChanged: (String) -> Unit = {},
-    onEquipmentConditionChanged: (EquipmentCondition) -> Unit = {},
-    onRegisterClick: () -> Unit = {}
+    onIntent: (RegisterSubscriptionIntent) -> Unit = {},
 ) {
+    val form = formState.registerSubscriptionForm
+    val isFormValid by remember {
+        derivedStateOf { formState.registerSubscriptionForm.isValid() }
+    }
+
     Surface(modifier = modifier.fillMaxSize()) {
         val scrollState = rememberScrollState()
 
@@ -93,194 +89,42 @@ fun RegisterSubscriptionForm(
                 .padding(horizontal = 16.dp, vertical = 24.dp)
                 .verticalScroll(scrollState)
         ) {
-            SectionTitle("Datos del Cliente")
-            Spacer(modifier = Modifier.height(8.dp))
+            ClientDataFields(
+                form = form,
+                isLoading = formState.isLoading,
+                onFirstNameChanged = { onIntent(RegisterSubscriptionIntent.FirstNameChanged(it)) },
+                onLastNameChanged = { onIntent(RegisterSubscriptionIntent.LastNameChanged(it)) },
+                onDniChanged = { onIntent(RegisterSubscriptionIntent.DniChanged(it)) },
+                onPhoneChanged = { onIntent(RegisterSubscriptionIntent.PhoneChanged(it)) }
+            )
 
-            MyOutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = "Nombres (ej: Juan)",
-                value = formState.registerSubscriptionForm.firstName,
-                errorMessage = formState.registerSubscriptionForm.firstNameError,
-                onValueChange = onFirstNameChanged,
-                enabled = !formState.isLoading,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
-                )
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            MyOutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = "Apellidos (ej: Pérez)",
-                value = formState.registerSubscriptionForm.lastName,
-                errorMessage = formState.registerSubscriptionForm.lastNameError,
-                onValueChange = onLastNameChanged,
-                enabled = !formState.isLoading,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
-                )
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            MyOutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = "DNI (8 dígitos)",
-                value = formState.registerSubscriptionForm.dni,
-                errorMessage = formState.registerSubscriptionForm.dniError,
-                onValueChange = onDniChanged,
-                enabled = !formState.isLoading,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Next
-                )
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            MyOutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = "Teléfono (9 dígitos)",
-                value = formState.registerSubscriptionForm.phone,
-                errorMessage = formState.registerSubscriptionForm.phoneError,
-                onValueChange = onPhoneChanged,
-                enabled = !formState.isLoading,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
-                    imeAction = ImeAction.Next
-                )
-            )
-            
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            SectionTitle("Dirección")
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            if (formState.isLoadingLocation) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-                    Text(
-                        "Obteniendo ubicación...",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-            
-            MyAutoCompleteTextViewCompose(
-                modifier = Modifier.fillMaxWidth(),
-                items = formState.registerSubscriptionForm.placeList,
-                label = "Lugar",
-                selectedItem = formState.registerSubscriptionForm.selectedPlace,
-                onItemSelected = onPlaceSelected,
-                onSelectionCleared = onPLaceSelectionCleared,
-                hasError = formState.registerSubscriptionForm.placeError != null,
-                enabled = !formState.isLoading,
+            AddressFields(
+                formState = formState,
+                form = form,
+                onPlaceSelected = { onIntent(RegisterSubscriptionIntent.PlaceSelected(it)) },
+                onPlaceSelectionCleared = { onIntent(RegisterSubscriptionIntent.PlaceSelectionCleared) },
+                onAddressChanged = { onIntent(RegisterSubscriptionIntent.AddressChanged(it)) }
             )
-            MyOutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = formState.registerSubscriptionForm.address,
-                label = "Dirección completa",
-                errorMessage = formState.registerSubscriptionForm.addressError,
-                onValueChange = onAddressChanged,
-                enabled = !formState.isLoading,
-                singleLine = false,
-                maxLines = 4,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                supportingText = if (formState.registerSubscriptionForm.address.isEmpty()) {
-                    { Text("Ej: Jr. Los Olivos 123, Mz A Lt 5", style = MaterialTheme.typography.bodySmall) }
-                } else null
-            )
-            
+
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            SectionTitle("Instalación")
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            MyOutLinedDropDown(
-                label = "Tipo de Instalación",
-                items = listOf(InstallationType.FIBER, InstallationType.WIRELESS, InstallationType.ONLY_TV_FIBER),
-                selected = formState.registerSubscriptionForm.installationType,
-                onItemSelected = onInstallationTypeSelected,
-                enabled = !formState.isLoading,
+            InstallationBlock(
+                formState = formState,
+                form = form,
+                onIntent = onIntent
             )
 
-            MyOutLinedDropDown(
-                label = "Plan",
-                items = formState.registerSubscriptionForm.planList,
-                selected = formState.registerSubscriptionForm.selectedPlan,
-                onItemSelected = onPlanSelected,
-                hasError = formState.registerSubscriptionForm.planError != null,
-                enabled = !formState.isLoading && formState.registerSubscriptionForm.planList.isNotEmpty(),
-            )
-
-            AnimatedVisibility(
-                visible = formState.registerSubscriptionForm.installationType == InstallationType.FIBER ||
-                        formState.registerSubscriptionForm.installationType == InstallationType.ONLY_TV_FIBER,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                FiberOpticForm(
-                    formState = formState,
-                    onOnuSelected = onOnuSelected,
-                    onNapBoxSelected = onNapBoxSelected,
-                    onNapBoxSelectionCleared = onNapBoxSelectionCleared,
-                    onRefreshOnuList = onRefreshOnuList,
-                    equipmentCondition = formState.registerSubscriptionForm.equipmentCondition,
-                    onEquipmentConditionChanged = onEquipmentConditionChanged
-                )
-            }
-            
-            AnimatedVisibility(
-                visible = formState.registerSubscriptionForm.installationType == InstallationType.WIRELESS,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                Column {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    SectionTitle("Equipamiento")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    EquipmentConditionSelector(
-                        equipmentCondition = formState.registerSubscriptionForm.equipmentCondition,
-                        onConditionSelected = onEquipmentConditionChanged
-                    )
-                }
-            }
-            
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            SectionTitle("Observaciones")
-            Spacer(modifier = Modifier.height(8.dp))
-            MyOutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = formState.registerSubscriptionForm.note,
-                onValueChange = onNoteChanged,
-                label = "Observaciones (opcional)",
-                enabled = !formState.isLoading,
-                singleLine = false,
-                maxLines = 4,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                supportingText = {
-                    Text(
-                        text = "${formState.registerSubscriptionForm.note.length}/180",
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
+            ObservationsField(
+                form = form,
+                isLoading = formState.isLoading,
+                onNoteChanged = { onIntent(RegisterSubscriptionIntent.NoteChanged(it)) }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -288,12 +132,210 @@ fun RegisterSubscriptionForm(
             MyButton(
                 modifier = Modifier.fillMaxWidth(),
                 text = "Registrar",
-                onClick = onRegisterClick,
-                enabled = formState.registerSubscriptionForm.isValid(),
+                onClick = { onIntent(RegisterSubscriptionIntent.RegisterClick) },
+                enabled = isFormValid,
                 isLoading = formState.isLoading
             )
         }
     }
+}
+
+@Composable
+private fun ClientDataFields(
+    form: RegisterSubscriptionFormState,
+    isLoading: Boolean,
+    onFirstNameChanged: (String) -> Unit,
+    onLastNameChanged: (String) -> Unit,
+    onDniChanged: (String) -> Unit,
+    onPhoneChanged: (String) -> Unit,
+) {
+    SectionTitle("Datos del Cliente")
+    Spacer(modifier = Modifier.height(8.dp))
+
+    TwoFieldsRow(
+        label1 = "Nombres (ej: Juan)",
+        value1 = form.firstName,
+        error1 = form.firstNameError,
+        onValueChange1 = onFirstNameChanged,
+        keyboardType1 = KeyboardType.Text,
+        label2 = "Apellidos (ej: Pérez)",
+        value2 = form.lastName,
+        error2 = form.lastNameError,
+        onValueChange2 = onLastNameChanged,
+        keyboardType2 = KeyboardType.Text,
+        enabled = !isLoading
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    MyOutlinedTextField(
+        modifier = Modifier.fillMaxWidth(),
+        label = "DNI (8 dígitos)",
+        value = form.dni,
+        errorMessage = form.dniError,
+        onValueChange = onDniChanged,
+        enabled = !isLoading,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Next
+        )
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    MyOutlinedTextField(
+        modifier = Modifier.fillMaxWidth(),
+        label = "Teléfono (9 dígitos)",
+        value = form.phone,
+        errorMessage = form.phoneError,
+        onValueChange = onPhoneChanged,
+        enabled = !isLoading,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Phone,
+            imeAction = ImeAction.Next
+        )
+    )
+}
+
+@Composable
+private fun AddressFields(
+    formState: RegisterSubscriptionState,
+    form: RegisterSubscriptionFormState,
+    onPlaceSelected: (Place) -> Unit,
+    onPlaceSelectionCleared: () -> Unit,
+    onAddressChanged: (String) -> Unit,
+) {
+    SectionTitle("Dirección")
+    Spacer(modifier = Modifier.height(8.dp))
+
+    if (formState.isLoadingLocation) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircularProgressIndicator(modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+            Text(
+                text = "Obteniendo ubicación...",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+
+    MyAutoCompleteTextViewCompose(
+        modifier = Modifier.fillMaxWidth(),
+        items = form.placeList,
+        label = "Lugar",
+        selectedItem = form.selectedPlace,
+        onItemSelected = onPlaceSelected,
+        onSelectionCleared = onPlaceSelectionCleared,
+        hasError = form.placeError != null,
+        enabled = !formState.isLoading,
+    )
+    MyOutlinedTextField(
+        modifier = Modifier.fillMaxWidth(),
+        value = form.address,
+        label = "Dirección completa",
+        errorMessage = form.addressError,
+        onValueChange = onAddressChanged,
+        enabled = !formState.isLoading,
+        singleLine = false,
+        maxLines = 4,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+        supportingText = if (form.address.isEmpty()) {
+            { Text("Ej: Jr. Los Olivos 123, Mz A Lt 5", style = MaterialTheme.typography.bodySmall) }
+        } else null
+    )
+}
+
+@Composable
+private fun InstallationBlock(
+    formState: RegisterSubscriptionState,
+    form: RegisterSubscriptionFormState,
+    onIntent: (RegisterSubscriptionIntent) -> Unit,
+) {
+    SectionTitle("Instalación")
+    Spacer(modifier = Modifier.height(8.dp))
+
+    MyOutLinedDropDown(
+        label = "Tipo de Instalación",
+        items = listOf(InstallationType.FIBER, InstallationType.WIRELESS, InstallationType.ONLY_TV_FIBER),
+        selected = form.installationType,
+        onItemSelected = { onIntent(RegisterSubscriptionIntent.InstallationTypeSelected(it)) },
+        enabled = !formState.isLoading,
+    )
+
+    MyOutLinedDropDown(
+        label = "Plan",
+        items = form.planList,
+        selected = form.selectedPlan,
+        onItemSelected = { onIntent(RegisterSubscriptionIntent.PlanSelected(it)) },
+        hasError = form.planError != null,
+        enabled = !formState.isLoading && form.planList.isNotEmpty(),
+    )
+
+    AnimatedVisibility(
+        visible = form.installationType == InstallationType.FIBER ||
+            form.installationType == InstallationType.ONLY_TV_FIBER,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically()
+    ) {
+        FiberOpticForm(
+            formState = formState,
+            onIntent = onIntent
+        )
+    }
+
+    AnimatedVisibility(
+        visible = form.installationType == InstallationType.WIRELESS,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically()
+    ) {
+        Column {
+            Spacer(modifier = Modifier.height(16.dp))
+            SectionTitle("Equipamiento")
+            Spacer(modifier = Modifier.height(8.dp))
+            EquipmentConditionSelector(
+                equipmentCondition = form.equipmentCondition,
+                onConditionSelected = {
+                    onIntent(RegisterSubscriptionIntent.EquipmentConditionChanged(it))
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ObservationsField(
+    form: RegisterSubscriptionFormState,
+    isLoading: Boolean,
+    onNoteChanged: (String) -> Unit,
+) {
+    SectionTitle("Observaciones")
+    Spacer(modifier = Modifier.height(8.dp))
+    MyOutlinedTextField(
+        modifier = Modifier.fillMaxWidth(),
+        value = form.note,
+        onValueChange = onNoteChanged,
+        label = "Observaciones (opcional)",
+        errorMessage = form.noteError,
+        enabled = !isLoading,
+        singleLine = false,
+        maxLines = 4,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        supportingText = {
+            Text(
+        text = "${form.note.length}/${RegisterSubscriptionFormConstraints.MAX_NOTE_LENGTH}",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    )
 }
 
 @Composable
@@ -318,7 +360,8 @@ private fun TwoFieldsRow(
     value2: String,
     error2: String? = null,
     onValueChange2: (String) -> Unit,
-    keyboardType2: KeyboardType = KeyboardType.Text
+    keyboardType2: KeyboardType = KeyboardType.Text,
+    enabled: Boolean = true,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         MyOutlinedTextField(
@@ -327,6 +370,7 @@ private fun TwoFieldsRow(
             value = value1,
             errorMessage = error1,
             onValueChange = onValueChange1,
+            enabled = enabled,
             keyboardOptions = KeyboardOptions(
                 keyboardType = keyboardType1,
                 imeAction = ImeAction.Next
@@ -338,6 +382,7 @@ private fun TwoFieldsRow(
             value = value2,
             errorMessage = error2,
             onValueChange = onValueChange2,
+            enabled = enabled,
             keyboardOptions = KeyboardOptions(
                 keyboardType = keyboardType2,
                 imeAction = ImeAction.Next
@@ -345,7 +390,6 @@ private fun TwoFieldsRow(
         )
     }
 }
-
 
 @Composable
 fun InstallationTypeSelector(
@@ -410,9 +454,9 @@ fun EquipmentConditionSelector(
             }
         }
         Text(
-            text = if (equipmentCondition == EquipmentCondition.LOAN) 
-                "El cliente devolverá el equipo al cancelar" 
-            else 
+            text = if (equipmentCondition == EquipmentCondition.LOAN)
+                "El cliente devolverá el equipo al cancelar"
+            else
                 "El cliente es propietario del equipo",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -430,8 +474,11 @@ fun RadioButtonWithLabel(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .clickable(onClick = onClick)
+        modifier = modifier.selectable(
+            selected = selected,
+            role = Role.RadioButton,
+            onClick = onClick
+        )
     ) {
         RadioButton(
             selected = selected,
@@ -444,14 +491,10 @@ fun RadioButtonWithLabel(
 @Composable
 fun FiberOpticForm(
     formState: RegisterSubscriptionState,
-    onOnuSelected: (Onu) -> Unit,
-    onNapBoxSelected: (NapBoxResponse) -> Unit,
-    onNapBoxSelectionCleared: () -> Unit,
-    onRefreshOnuList: () -> Unit,
-    equipmentCondition: EquipmentCondition,
-    onEquipmentConditionChanged: (EquipmentCondition) -> Unit
+    onIntent: (RegisterSubscriptionIntent) -> Unit,
 ) {
-    val installationType = formState.registerSubscriptionForm.installationType
+    val form = formState.registerSubscriptionForm
+    val installationType = form.installationType
     val showOnuSelector = installationType == InstallationType.FIBER
 
     Column {
@@ -468,14 +511,17 @@ fun FiberOpticForm(
             ) {
                 MyOutLinedDropDown(
                     modifier = Modifier.weight(1f),
-                    items = formState.registerSubscriptionForm.onuList,
-                    selected = formState.registerSubscriptionForm.selectedOnu,
+                    items = form.onuList,
+                    selected = form.selectedOnu,
                     label = ONU_LABEL,
-                    onItemSelected = onOnuSelected,
-                    hasError = formState.registerSubscriptionForm.onuError != null
+                    onItemSelected = { onIntent(RegisterSubscriptionIntent.OnuSelected(it)) },
+                    hasError = form.onuError != null
                 )
 
-                RefreshIcon(onRefreshOnuList, formState)
+                RefreshIcon(
+                    onRefreshOnuList = { onIntent(RegisterSubscriptionIntent.RefreshOnuList) },
+                    formState = formState
+                )
             }
         }
 
@@ -490,7 +536,7 @@ fun FiberOpticForm(
                 CircularProgressIndicator(modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.padding(horizontal = 4.dp))
                 Text(
-                    "Buscando cajas NAP cercanas...",
+                    text = "Buscando cajas NAP cercanas...",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -498,20 +544,22 @@ fun FiberOpticForm(
         }
 
         MyAutoCompleteTextViewCompose(
-            items = formState.registerSubscriptionForm.napBoxList,
+            items = form.napBoxList,
             label = NAP_BOX_LABEL,
-            selectedItem = formState.registerSubscriptionForm.selectedNapBox,
-            onItemSelected = onNapBoxSelected,
-            onSelectionCleared = onNapBoxSelectionCleared,
-            enabled = formState.registerSubscriptionForm.selectedPlace != null,
-            hasError = formState.registerSubscriptionForm.napBoxError != null
+            selectedItem = form.selectedNapBox,
+            onItemSelected = { onIntent(RegisterSubscriptionIntent.NapBoxSelected(it)) },
+            onSelectionCleared = { onIntent(RegisterSubscriptionIntent.NapBoxSelectionCleared) },
+            enabled = form.selectedPlace != null,
+            hasError = form.napBoxError != null
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         EquipmentConditionSelector(
-            equipmentCondition = equipmentCondition,
-            onConditionSelected = onEquipmentConditionChanged
+            equipmentCondition = form.equipmentCondition,
+            onConditionSelected = {
+                onIntent(RegisterSubscriptionIntent.EquipmentConditionChanged(it))
+            }
         )
     }
 }
@@ -538,7 +586,7 @@ private fun RefreshIcon(
     ) {
         Icon(
             imageVector = Icons.Default.Refresh,
-            contentDescription = "",
+            contentDescription = "Actualizar lista de ONUs",
             modifier = Modifier.rotate(if (formState.isRefreshingOnuList) rotation else 0f)
         )
     }
@@ -560,8 +608,6 @@ private fun RegisterSubscriptionPreview() {
             modifier = Modifier.statusBarsPadding(),
             formState = RegisterSubscriptionState(
                 isLoading = false,
-                error = "leo",
-                registeredSubscription = null,
                 registerSubscriptionForm = RegisterSubscriptionFormState(
                     firstName = "",
                     lastName = "",
@@ -579,6 +625,58 @@ private fun RegisterSubscriptionPreview() {
                     note = "persequeris"
                 )
             )
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun InstallationTypeSelectorPreview() {
+    MyTheme {
+        InstallationTypeSelector(
+            installationType = InstallationType.FIBER,
+            onTypeSelected = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "EquipmentCondition dark", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun EquipmentConditionSelectorPreviewDark() {
+    MyTheme {
+        EquipmentConditionSelector(
+            equipmentCondition = EquipmentCondition.LOAN,
+            onConditionSelected = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FiberOpticFormPreview() {
+    MyTheme {
+        FiberOpticForm(
+            formState = RegisterSubscriptionState(
+                registerSubscriptionForm = RegisterSubscriptionFormState(
+                    installationType = InstallationType.FIBER,
+                    onuList = emptyList(),
+                    napBoxList = emptyList()
+                )
+            ),
+            onIntent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RadioButtonWithLabelPreview() {
+    MyTheme {
+        RadioButtonWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            label = FIBER_OPTIC,
+            selected = true,
+            onClick = {}
         )
     }
 }

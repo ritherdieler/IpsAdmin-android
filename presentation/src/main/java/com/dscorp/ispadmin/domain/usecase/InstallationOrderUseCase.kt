@@ -15,7 +15,9 @@ interface InstallationOrderUseCase {
     ): InstallationOrder
 
     suspend fun getInstallationOrderById(id: Int): InstallationOrder
+    suspend fun getInstallationOrderByIdResult(id: Int): Result<InstallationOrder>
     suspend fun closeInstallationOrder(orderId: Int): InstallationOrder
+    suspend fun closeInstallationOrderResult(orderId: Int): Result<InstallationOrder>
     suspend fun cancelInstallationOrder(
         orderId: Int,
         cancellationReason: String?

@@ -3,7 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.payment.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.domain.model.Payment
-import com.dscorp.ispadmin.domain.usecase.GetPaymentByIdUseCase
+import com.dscorp.ispadmin.domain.usecase.payment.GetPaymentByIdUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -5,7 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.Plan
 import com.dscorp.ispadmin.domain.model.PlanResponse
-import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.GetPlanListUseCase
+import com.dscorp.ispadmin.domain.usecase.plan.GetPlanListUseCase
+import com.dscorp.ispadmin.domain.usecase.plan.UpdatePlanUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -1,17 +1,16 @@
-package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
+package com.dscorp.ispadmin.domain.usecase.subscription
 
-
-import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.data.repository.InstallationOrderRepository
 import com.dscorp.ispadmin.domain.model.Subscription
+import com.dscorp.ispadmin.domain.repository.SubscriptionWriteRepository
 
 class RegisterSubscriptionUseCase(
-    private val repository: IRepository,
+    private val subscriptionWriteRepository: SubscriptionWriteRepository,
     private val installationOrderRepository: InstallationOrderRepository
 ) {
     suspend operator fun invoke(subscription: Subscription, orderId: Int?): Result<Subscription> =
         runCatching {
             orderId?.let { installationOrderRepository.closeInstallationOrder(it) }
-            repository.registerSubscription(subscription)
+            subscriptionWriteRepository.registerSubscription(subscription)
         }
 }

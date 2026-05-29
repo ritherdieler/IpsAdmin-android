@@ -7,10 +7,16 @@ import com.dscorp.ispadmin.domain.model.NetworkDevice
 import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
-import com.dscorp.ispadmin.domain.model.extensions.isAValidAddress
-import com.dscorp.ispadmin.domain.model.extensions.isAValidName
-import com.dscorp.ispadmin.domain.model.extensions.isValidDni
-import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionAddressError
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionDniError
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionFirstNameError
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionLastNameError
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionNapBoxError
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionNoteError
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionOnuError
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionPhoneError
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionPlaceError
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionPlanError
 import com.google.android.gms.maps.model.LatLng
 
 data class RegisterSubscriptionFormState(
@@ -44,6 +50,7 @@ data class RegisterSubscriptionFormState(
     val onuError: String? = null,
     val coupon: String = "",
     val note: String = "",
+    val noteError: String? = null,
     val installationType: InstallationType = InstallationType.FIBER,
     val equipmentCondition: EquipmentCondition = EquipmentCondition.LOAN,
 ) {
@@ -58,96 +65,53 @@ data class RegisterSubscriptionFormState(
 
     fun validate(field: FormFieldKey): String? {
         return when (field) {
-            FormFieldKey.FIRST_NAME -> when {
-                firstName.isBlank() -> "Ingrese el nombre"
-                !firstName.isAValidName() -> "El nombre debe tener al menos 2 caracteres"
-                else -> null
-            }
-
-            FormFieldKey.LAST_NAME -> when {
-                lastName.isBlank() -> "Ingrese el apellido"
-                !lastName.isAValidName() -> "El apellido debe tener al menos 2 caracteres"
-                else -> null
-            }
-
-            FormFieldKey.DNI -> when {
-                dni.isBlank() -> "Ingrese el DNI"
-                !dni.isValidDni(strictValidation = true) -> "El DNI debe contener 8 dígitos"
-                else -> null
-            }
-
-            FormFieldKey.ADDRESS -> when {
-                address.isBlank() -> "Ingrese la dirección"
-                !address.isAValidAddress() -> "La dirección debe tener al menos 5 caracteres"
-                else -> null
-            }
-
-            FormFieldKey.PHONE -> when {
-                phone.isBlank() -> "Ingrese el teléfono"
-                !phone.isValidPhone() -> "El teléfono debe tener 9 dígitos"
-                else -> null
-            }
-
-            FormFieldKey.PLAN -> when {
-                selectedPlan == null -> "Seleccione un plan"
-                planList.none { it.id == selectedPlan.id } -> "Seleccione un plan válido"
-                else -> null
-            }
-
-            FormFieldKey.PLACE -> if (selectedPlace == null) "Seleccione un lugar" else null
-
-            FormFieldKey.ONU -> when {
-                !requiresOnu() -> null
-                selectedOnu == null -> "Seleccione una ONU"
-                onuList.none { it.sn == selectedOnu.sn } -> "Seleccione una ONU válida"
-                else -> null
-            }
-
-            FormFieldKey.NAP_BOX -> when {
-                !requiresNapBox() -> null
-                selectedNapBox == null -> "Seleccione una caja NAP"
-                napBoxList.none { it.id == selectedNapBox.id } -> "Seleccione una caja NAP válida"
-                else -> null
-            }
-
-            FormFieldKey.NOTE,
+            FormFieldKey.FIRST_NAME -> subscriptionFirstNameError(firstName)
+            FormFieldKey.LAST_NAME -> subscriptionLastNameError(lastName)
+            FormFieldKey.DNI -> subscriptionDniError(dni)
+            FormFieldKey.ADDRESS -> subscriptionAddressError(address)
+            FormFieldKey.PHONE -> subscriptionPhoneError(phone)
+            FormFieldKey.PLAN -> subscriptionPlanError(selectedPlan, planList)
+            FormFieldKey.PLACE -> subscriptionPlaceError(selectedPlace)
+            FormFieldKey.ONU -> subscriptionOnuError(requiresOnu(), selectedOnu, onuList)
+            FormFieldKey.NAP_BOX -> subscriptionNapBoxError(
+                requiresNapBox(),
+                selectedNapBox,
+                napBoxList
+            )
+            FormFieldKey.NOTE -> subscriptionNoteError(note)
             FormFieldKey.EQUIPMENT_CONDITION -> null
         }
     }
 
     fun validated(vararg fields: FormFieldKey): RegisterSubscriptionFormState {
-        val fieldsToValidate = if (fields.isEmpty()) FormFieldKey.values() else fields
-        var validatedForm = this
-
-        fieldsToValidate.forEach { field ->
-            validatedForm = when (field) {
-                FormFieldKey.FIRST_NAME -> validatedForm.copy(firstNameError = validatedForm.validate(field))
-                FormFieldKey.LAST_NAME -> validatedForm.copy(lastNameError = validatedForm.validate(field))
-                FormFieldKey.DNI -> validatedForm.copy(dniError = validatedForm.validate(field))
-                FormFieldKey.ADDRESS -> validatedForm.copy(addressError = validatedForm.validate(field))
-                FormFieldKey.PHONE -> validatedForm.copy(phoneError = validatedForm.validate(field))
-                FormFieldKey.PLAN -> validatedForm.copy(planError = validatedForm.validate(field))
-                FormFieldKey.PLACE -> validatedForm.copy(placeError = validatedForm.validate(field))
-                FormFieldKey.ONU -> validatedForm.copy(onuError = validatedForm.validate(field))
-                FormFieldKey.NAP_BOX -> validatedForm.copy(napBoxError = validatedForm.validate(field))
-                FormFieldKey.NOTE,
-                FormFieldKey.EQUIPMENT_CONDITION -> validatedForm
-            }
+        val fieldsToValidate =
+            if (fields.isEmpty()) FormFieldKey.entries else fields.asList()
+        return fieldsToValidate.fold(this) { form, field ->
+            form.withFieldError(field, form.validate(field))
         }
-
-        return validatedForm
     }
 
     fun isValid(): Boolean {
-        val validatedForm = validated()
-        return validatedForm.firstNameError == null &&
-                validatedForm.lastNameError == null &&
-                validatedForm.dniError == null &&
-                validatedForm.addressError == null &&
-                validatedForm.phoneError == null &&
-                validatedForm.planError == null &&
-                validatedForm.placeError == null &&
-                validatedForm.onuError == null &&
-                validatedForm.napBoxError == null
+        val form = validated()
+        return FormFieldKey.blockingForSubmit.all { form.validate(it) == null }
+    }
+}
+
+private fun RegisterSubscriptionFormState.withFieldError(
+    field: FormFieldKey,
+    message: String?
+): RegisterSubscriptionFormState {
+    return when (field) {
+        FormFieldKey.FIRST_NAME -> copy(firstNameError = message)
+        FormFieldKey.LAST_NAME -> copy(lastNameError = message)
+        FormFieldKey.DNI -> copy(dniError = message)
+        FormFieldKey.ADDRESS -> copy(addressError = message)
+        FormFieldKey.PHONE -> copy(phoneError = message)
+        FormFieldKey.PLAN -> copy(planError = message)
+        FormFieldKey.PLACE -> copy(placeError = message)
+        FormFieldKey.ONU -> copy(onuError = message)
+        FormFieldKey.NAP_BOX -> copy(napBoxError = message)
+        FormFieldKey.NOTE -> copy(noteError = message)
+        FormFieldKey.EQUIPMENT_CONDITION -> this
     }
 }

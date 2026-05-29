@@ -2,7 +2,6 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register.model
 
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.PlanResponse
-import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.domain.model.User
 
 data class RegisterSubscriptionState(
@@ -10,8 +9,6 @@ data class RegisterSubscriptionState(
     val isRefreshingOnuList: Boolean = false,
     val isLoadingLocation: Boolean = false,
     val isLoadingNearbyNapBoxes: Boolean = false,
-    val error: String? = null,
-    val registeredSubscription: Subscription? = null,
     
     // Estado de GPS y permisos (migrado desde Screen)
     val isGpsEnabled: Boolean = false,

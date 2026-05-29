@@ -1,4 +1,4 @@
-package com.dscorp.ispadmin.domain.usecase
+package com.dscorp.ispadmin.domain.usecase.payment
 
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.repository.PaymentRepository
@@ -13,4 +13,4 @@ class GetPaymentByIdUseCase(
             paymentRepository.getPaymentById(paymentId)
         }
     }
-} 
+}
