@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.domain.model
 
 import com.dscorp.ispadmin.domain.model.extensions.toFormattedDateString
+import retrofit2.http.Url
 import java.util.Date
 
 data class SubscriptionResponse(
@@ -32,6 +33,7 @@ data class SubscriptionResponse(
     var cpeDeviceId: Int? = null,
     var note: String? = null,
     var installationType: InstallationType,
+    var facadePhotoUrl: String? = null,
     val email: String?,
     val pendingInvoiceQuantity: Int,
     val antiquityInMonths: Int,

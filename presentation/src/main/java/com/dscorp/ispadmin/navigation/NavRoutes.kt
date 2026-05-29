@@ -16,12 +16,17 @@ sealed class NavRoutes {
 
     @Serializable
     sealed class AuthRoutes : NavRoutes() {
+
+        @Serializable //agrego edwin
+        object FaceLogin : AuthRoutes()
+
         @Serializable
         object Login : AuthRoutes()
 
         @Serializable
         object Register : AuthRoutes()
     }
+
 
     @Serializable
     sealed class FeatureRoutes : NavRoutes() {

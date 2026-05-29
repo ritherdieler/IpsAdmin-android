@@ -16,6 +16,16 @@ import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.dscorp.ispadmin.data.utils.HttpCodes
 import com.dscorp.ispadmin.data.utils.REMEMBER_CHECKBOX_STATUS
+import com.dscorp.ispadmin.data.utils.BIOMETRIC_SESSION_DNI
+import com.dscorp.ispadmin.data.utils.BIOMETRIC_SESSION_EMAIL
+import com.dscorp.ispadmin.data.utils.BIOMETRIC_SESSION_ID
+import com.dscorp.ispadmin.data.utils.BIOMETRIC_SESSION_LAST_NAME
+import com.dscorp.ispadmin.data.utils.BIOMETRIC_SESSION_NAME
+import com.dscorp.ispadmin.data.utils.BIOMETRIC_SESSION_PASSWORD
+import com.dscorp.ispadmin.data.utils.BIOMETRIC_SESSION_PHONE
+import com.dscorp.ispadmin.data.utils.BIOMETRIC_SESSION_TYPE
+import com.dscorp.ispadmin.data.utils.BIOMETRIC_SESSION_USER_NAME
+import com.dscorp.ispadmin.data.utils.BIOMETRIC_SESSION_VERIFIED
 import com.dscorp.ispadmin.data.utils.SESSION_DNI
 import com.dscorp.ispadmin.data.utils.SESSION_EMAIL
 import com.dscorp.ispadmin.data.utils.SESSION_ID
@@ -57,6 +67,7 @@ import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.model.extensions.PayerFinderResult
+import com.google.gson.Gson
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -68,7 +79,6 @@ import org.koin.core.component.inject
 import retrofit2.Response
 import java.io.File
 import java.util.Date
-
 
 const val HTTP_OK = 200
 
@@ -125,6 +135,25 @@ class Repository : IRepository, KoinComponent {
         user.id?.let { editor.putInt(SESSION_ID, it) }
         editor.putBoolean(SESSION_VERIFIED, user.verified)
         editor.apply()
+        // Cada login valido actualiza tambien el usuario recordado para huella.
+        saveBiometricUserSession(user)
+    }
+
+    // Guarda una copia separada para huella; no contiene la huella real del usuario.
+    // Android valida la huella y esta copia solo permite reconstruir la sesion local.
+    private fun saveBiometricUserSession(user: User) {
+        val editor = prefs.edit()
+        editor.putString(BIOMETRIC_SESSION_NAME, user.name)
+        editor.putString(BIOMETRIC_SESSION_LAST_NAME, user.lastName)
+        editor.putString(BIOMETRIC_SESSION_USER_NAME, user.username)
+        editor.putString(BIOMETRIC_SESSION_PASSWORD, user.password)
+        editor.putString(BIOMETRIC_SESSION_DNI, user.dni)
+        editor.putString(BIOMETRIC_SESSION_EMAIL, user.email)
+        editor.putString(BIOMETRIC_SESSION_PHONE, user.phone)
+        editor.putString(BIOMETRIC_SESSION_TYPE, user.type.toString())
+        user.id?.let { editor.putInt(BIOMETRIC_SESSION_ID, it) }
+        editor.putBoolean(BIOMETRIC_SESSION_VERIFIED, user.verified)
+        editor.apply()
     }
 
     override fun getUserSession(): User? {
@@ -144,13 +173,43 @@ class Repository : IRepository, KoinComponent {
         )
     }
 
+    override fun getBiometricUserSession(): User? {
+        // Si nunca hubo un login normal/facial exitoso, no existe usuario biometrico recordado.
+        if (!prefs.contains(BIOMETRIC_SESSION_ID)) return null
+        val userType = prefs.getString(BIOMETRIC_SESSION_TYPE, "")
+        return User(
+            id = prefs.getInt(BIOMETRIC_SESSION_ID, 0),
+            name = prefs.getString(BIOMETRIC_SESSION_NAME, "")!!,
+            lastName = prefs.getString(BIOMETRIC_SESSION_LAST_NAME, "")!!,
+            type = User.UserType.valueOf(userType!!),
+            username = prefs.getString(BIOMETRIC_SESSION_USER_NAME, "")!!,
+            password = prefs.getString(BIOMETRIC_SESSION_PASSWORD, "")!!,
+            verified = prefs.getBoolean(BIOMETRIC_SESSION_VERIFIED, false),
+            dni = prefs.getString(BIOMETRIC_SESSION_DNI, "")!!,
+            email = prefs.getString(BIOMETRIC_SESSION_EMAIL, "")!!,
+            phone = prefs.getString(BIOMETRIC_SESSION_PHONE, "")!!,
+        )
+    }
+
     override fun getRememberSessionCheckBoxStatus(): Boolean {
         return prefs.getBoolean(REMEMBER_CHECKBOX_STATUS, false)
     }
 
     override fun clearUserSession() {
         val editor = prefs.edit()
-        editor.clear()
+        // Cierra la sesion activa sin borrar la copia biometrica.
+        // Esa copia permite iniciar con huella despues de cerrar sesion.
+        editor.remove(SESSION_ID)
+        editor.remove(SESSION_NAME)
+        editor.remove(SESSION_LAST_NAME)
+        editor.remove(SESSION_USER_NAME)
+        editor.remove(SESSION_PASSWORD)
+        editor.remove(SESSION_DNI)
+        editor.remove(SESSION_EMAIL)
+        editor.remove(SESSION_PHONE)
+        editor.remove(SESSION_TYPE)
+        editor.remove(SESSION_VERIFIED)
+        editor.remove(REMEMBER_CHECKBOX_STATUS)
         editor.apply()
     }
 
@@ -183,6 +242,67 @@ class Repository : IRepository, KoinComponent {
         return when (response.status) {
             in 200..299 -> response.data!!
             else -> throw Exception(response.error)
+        }
+    }
+
+    //Registra una suscripcion con foto de fachada
+    //convierte la suscripcion a JSON multipart y envia la imagen al backend
+    // el backend se encarga de subir la foto a firebase y guardar la URL
+
+    override  suspend fun registerSubscriptionWithFacadePhoto(
+        subscription: Subscription,
+        facadePhotoFile: File
+    ): Subscription{
+        val subscriptionJson = Gson().toJson(subscription)
+
+        val subscriptionBody = subscriptionJson.toRequestBody(
+            "application/json".toMediaTypeOrNull()
+        )
+
+        val photoBody = facadePhotoFile.asRequestBody(
+            "image/jpeg".toMediaTypeOrNull()
+        )
+        val photoPart = MultipartBody.Part.createFormData(
+            name = "facadePhoto",
+            filename = facadePhotoFile.name,
+            body = photoBody
+        )
+        val response = restApiServices.registerSubscriptionWithFacadePhoto(
+            subscription = subscriptionBody,
+            facadePhoto = photoPart
+        )
+
+        return when (response.status){
+            200 -> response.data!!
+            409 -> throw Exception(response.error?: "Este usuario ya se encuentra registrado")
+            else -> throw Exception(response.error?: "No se puede registrar la suscripcion")
+        }
+    }
+
+    // Actualiza solo la foto de fachada de una suscripcion existente.
+    // Envia la imagen al backend como multipart; el backend sube la foto a Firebase y guarda la URL.
+    override suspend fun updateSubscriptionFacadePhoto(
+        subscriptionId: Int,
+        facadePhotoFile: File
+    ): Subscription {
+        val photoBody = facadePhotoFile.asRequestBody(
+            "image/jpeg".toMediaTypeOrNull()
+        )
+
+        val photoPart = MultipartBody.Part.createFormData(
+            name = "facadePhoto",
+            filename = facadePhotoFile.name,
+            body = photoBody
+        )
+
+        val response = restApiServices.updateSubscriptionFacadePhoto(
+            subscriptionId = subscriptionId,
+            facadePhoto = photoPart
+        )
+
+        return when (response.status) {
+            200 -> response.data!!
+            else -> throw Exception(response.error ?: "No se pudo actualizar la foto de fachada")
         }
     }
 
@@ -869,6 +989,27 @@ class Repository : IRepository, KoinComponent {
             return response.body()!!
         } else {
             throw Exception("Error al obtener el pago con ID $paymentId")
+        }
+    }
+
+    // Login facial por foto: Android captura la imagen y el backend genera/compara el embedding.
+    override suspend fun loginWithFace(photo: File): User {
+        val requestBody = photo.asRequestBody("image/jpeg".toMediaTypeOrNull())
+        val photoPart = MultipartBody.Part.createFormData(
+            name = "photo",
+            filename = photo.name,
+            body = requestBody
+        )
+        val response = restApiServices.loginWithFacePhoto(photoPart)
+
+        return when (response.code()) {
+            in 200..299 -> {
+                val user = response.body()!!
+                saveUserSession(user, true)
+                user
+            }
+            401 -> throw Exception("No se reconocio el rostro")
+            else -> throw Exception("No se pudo iniciar sesion con reconocimiento facial")
         }
     }
 

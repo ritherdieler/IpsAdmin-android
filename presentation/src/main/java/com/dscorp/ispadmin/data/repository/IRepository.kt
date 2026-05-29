@@ -30,6 +30,7 @@ import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.model.extensions.PayerFinderResult
+import java.io.File
 import com.dscorp.ispadmin.data.apirequestmodel.AssistanceTicketRequest
 import com.dscorp.ispadmin.data.apirequestmodel.FixedCostRequest
 import com.dscorp.ispadmin.data.apirequestmodel.IpPoolRequest
@@ -41,7 +42,7 @@ import com.dscorp.ispadmin.data.apirequestmodel.UpdateSubscriptionPlanBody
 import com.dscorp.ispadmin.data.response.AdministrativeOnuResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
-import java.io.File
+import com.facebook.stetho.inspector.elements.Descriptor
 
 /**
  * Created by Sergio Carrillo Diestra on 25/12/2022.
@@ -55,12 +56,26 @@ interface IRepository {
     suspend fun doLogin(login: Loging): User
     suspend fun saveUserSession(user: User, rememberSessionCheckBoxStatus: Boolean?)
     fun getUserSession(): User?
+    // Devuelve el usuario recordado para huella despues de un login normal o facial exitoso.
+    fun getBiometricUserSession(): User?
     fun getRememberSessionCheckBoxStatus(): Boolean
     fun clearUserSession()
     suspend fun registerPlan(plan: Plan): Plan
     suspend fun registerNetworkDevice(registerNetworkDevice: NetworkDevice): NetworkDevice
     suspend fun getGenericDevices(): List<NetworkDevice>
     suspend fun registerSubscription(subscription: Subscription): Subscription
+
+    // registra una suscripcion enviando tambien la foto de fachada
+    suspend fun  registerSubscriptionWithFacadePhoto(
+        subscription: Subscription,
+        facadePhotoFile: File
+    ): Subscription
+
+    // Actualiza solo la foto de fachada de una suscripcion existente.
+    suspend fun updateSubscriptionFacadePhoto(
+        subscriptionId: Int,
+        facadePhotoFile: File
+    ): Subscription
     suspend fun getPlans(): List<PlanResponse>
     suspend fun getDevices(): List<NetworkDeviceResponse>
     suspend fun getSubscriptions(): List<SubscriptionResponse>
@@ -172,4 +187,6 @@ interface IRepository {
     suspend fun updateSubscriptionLocation(subscriptionId: Int, latitude: Double, longitude: Double)
     suspend fun updateDeviceToken(userId: Int, deviceToken: String): User
     suspend fun getPaymentById(paymentId: String): Payment
+
+    suspend fun loginWithFace(photo: File): User // edwin agregue
 }

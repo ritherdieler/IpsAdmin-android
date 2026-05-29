@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 
+import android.net.Uri
 import com.dscorp.ispadmin.domain.model.EquipmentCondition
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
@@ -9,6 +10,7 @@ import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionAddressError
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionDniError
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionFacadePhotoError
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionFirstNameError
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionLastNameError
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionNapBoxError
@@ -51,12 +53,14 @@ data class RegisterSubscriptionFormState(
     val coupon: String = "",
     val note: String = "",
     val noteError: String? = null,
+    val facadePhotoUri: Uri? = null,
+    val facadePhotoError: String? = null,
     val installationType: InstallationType = InstallationType.FIBER,
     val equipmentCondition: EquipmentCondition = EquipmentCondition.LOAN,
 ) {
     fun requiresNapBox(): Boolean {
         return installationType == InstallationType.FIBER ||
-                installationType == InstallationType.ONLY_TV_FIBER
+            installationType == InstallationType.ONLY_TV_FIBER
     }
 
     fun requiresOnu(): Boolean {
@@ -78,6 +82,7 @@ data class RegisterSubscriptionFormState(
                 selectedNapBox,
                 napBoxList
             )
+            FormFieldKey.FACADE_PHOTO -> subscriptionFacadePhotoError(facadePhotoUri != null)
             FormFieldKey.NOTE -> subscriptionNoteError(note)
             FormFieldKey.EQUIPMENT_CONDITION -> null
         }
@@ -111,6 +116,7 @@ private fun RegisterSubscriptionFormState.withFieldError(
         FormFieldKey.PLACE -> copy(placeError = message)
         FormFieldKey.ONU -> copy(onuError = message)
         FormFieldKey.NAP_BOX -> copy(napBoxError = message)
+        FormFieldKey.FACADE_PHOTO -> copy(facadePhotoError = message)
         FormFieldKey.NOTE -> copy(noteError = message)
         FormFieldKey.EQUIPMENT_CONDITION -> this
     }

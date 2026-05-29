@@ -41,7 +41,7 @@ android {
             applicationIdSuffix ".dev"
             versionNameSuffix "-dev"
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
-            buildConfigField 'String', "BASE_URL", '"http://localhost:8080/ispadmin/"'
+            buildConfigField 'String', "BASE_URL", '"http://192.168.1.94:8080/ispadmin/"'
             buildConfigField 'String', "OLT_SERVICE_API_KET", "\"${oltServiceApiKey}\""
             buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", "\"${sendCloudMessagingApiKey}\""
         }
@@ -127,6 +127,14 @@ dependencies {
     implementation "androidx.constraintlayout:constraintlayout:${rootProject.ext.constraintLayoutVersion}"
     implementation "androidx.legacy:legacy-support-v4:${rootProject.ext.legacySupportVersion}"
     implementation "androidx.recyclerview:recyclerview:${rootProject.ext.recyclerViewVersion}"
+
+    // AndroidX Biometric: muestra el prompt nativo para iniciar sesion con huella digital.
+    implementation "androidx.biometric:biometric:1.1.0"
+    // CameraX para preview nativo del reconocimiento facial
+    implementation "androidx.camera:camera-core:1.4.2"
+    implementation "androidx.camera:camera-camera2:1.4.2"
+    implementation "androidx.camera:camera-lifecycle:1.4.2"
+    implementation "androidx.camera:camera-view:1.4.2"
     
     // Lifecycle y ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:${rootProject.ext.lifecycleVersion}"
@@ -175,7 +183,7 @@ dependencies {
     
     // Procesamiento de imágenes
     implementation "androidx.exifinterface:exifinterface:${rootProject.ext.exifInterfaceVersion}"
-    
+
     // Activity
     implementation "androidx.activity:activity-ktx:${rootProject.ext.composeActivityVersion}"
     
@@ -186,7 +194,9 @@ dependencies {
     implementation "com.google.firebase:firebase-crashlytics-ktx:${rootProject.ext.firebaseCrashlyticsVersion}"
     implementation "com.google.firebase:firebase-analytics-ktx:${rootProject.ext.firebaseAnalyticsVersion}"
     implementation "com.google.firebase:firebase-messaging-ktx:${rootProject.ext.firebaseMessagingVersion}"
-    
+    //implementation "com.google.firebase:firebase-storage-ktx:${rootProject.ext.firebaseStorageVersion}"
+
+
     // Carga de imágenes con Coil
     implementation "io.coil-kt.coil3:coil-compose:${rootProject.ext.coilVersion}"
     implementation "io.coil-kt.coil3:coil-network-okhttp:${rootProject.ext.coilVersion}"
