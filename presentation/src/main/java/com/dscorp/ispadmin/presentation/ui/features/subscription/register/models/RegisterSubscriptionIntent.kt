@@ -6,6 +6,7 @@ import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
+import java.io.File
 
 sealed interface RegisterSubscriptionIntent {
     data class FirstNameChanged(val value: String) : RegisterSubscriptionIntent
@@ -23,5 +24,5 @@ sealed interface RegisterSubscriptionIntent {
     data object RefreshOnuList : RegisterSubscriptionIntent
     data class NoteChanged(val value: String) : RegisterSubscriptionIntent
     data class EquipmentConditionChanged(val value: EquipmentCondition) : RegisterSubscriptionIntent
-    data object RegisterClick : RegisterSubscriptionIntent
+    data class RegisterClick(val facadePhotoFile: File? = null) : RegisterSubscriptionIntent
 }

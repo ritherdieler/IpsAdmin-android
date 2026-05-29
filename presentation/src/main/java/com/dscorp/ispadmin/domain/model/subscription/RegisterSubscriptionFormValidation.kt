@@ -109,6 +109,9 @@ fun subscriptionOnuErrorAfterListRefresh(
     return null
 }
 
+fun subscriptionFacadePhotoError(hasFacadePhoto: Boolean): String? =
+    if (!hasFacadePhoto) "Adjunte una foto de la fachada" else null
+
 fun subscriptionNapBoxErrorAfterNearbyRefresh(
     requiresNapBox: Boolean,
     previousSelected: NapBoxResponse?,

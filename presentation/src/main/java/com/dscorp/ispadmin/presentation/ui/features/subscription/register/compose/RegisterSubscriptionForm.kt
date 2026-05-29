@@ -69,12 +69,22 @@ import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.rememberAsyncImagePainter
 
 @Composable
 fun RegisterSubscriptionForm(
     modifier: Modifier = Modifier,
     formState: RegisterSubscriptionState,
     onIntent: (RegisterSubscriptionIntent) -> Unit = {},
+    onFacadePhotoClick: () -> Unit = {},
 ) {
     val form = formState.registerSubscriptionForm
     val isFormValid by remember {
@@ -118,6 +128,11 @@ fun RegisterSubscriptionForm(
                 onIntent = onIntent
             )
 
+            FacadePhotoSection(
+                formState = formState,
+                onFacadePhotoClick = onFacadePhotoClick
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -132,7 +147,7 @@ fun RegisterSubscriptionForm(
             MyButton(
                 modifier = Modifier.fillMaxWidth(),
                 text = "Registrar",
-                onClick = { onIntent(RegisterSubscriptionIntent.RegisterClick) },
+                onClick = { onIntent(RegisterSubscriptionIntent.RegisterClick()) },
                 enabled = isFormValid,
                 isLoading = formState.isLoading
             )
@@ -306,6 +321,74 @@ private fun InstallationBlock(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun FacadePhotoSection(
+    formState: RegisterSubscriptionState,
+    onFacadePhotoClick: () -> Unit,
+) {
+    Spacer(modifier = Modifier.height(24.dp))
+    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+    SectionTitle("Foto de Fachada")
+
+    val facadePhotoUri = formState.registerSubscriptionForm.facadePhotoUri
+    val hasFacadePhoto = facadePhotoUri != null
+    val photoShape = RoundedCornerShape(8.dp)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(220.dp)
+            .clip(photoShape)
+            .border(
+                width = 1.dp,
+                color = if (hasFacadePhoto) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.outline
+                },
+                shape = photoShape
+            )
+            .background(
+                color = if (hasFacadePhoto) {
+                    MaterialTheme.colorScheme.surface
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+                shape = photoShape
+            )
+            .clickable(enabled = !formState.isLoading) {
+                onFacadePhotoClick()
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        if (hasFacadePhoto) {
+            Image(
+                painter = rememberAsyncImagePainter(facadePhotoUri.toString()),
+                contentDescription = "Foto de fachada",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Text(
+                text = "Subir foto fachada",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+
+    formState.registerSubscriptionForm.facadePhotoError?.let { error ->
+        Text(
+            text = error,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
     }
 }
 

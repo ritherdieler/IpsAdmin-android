@@ -33,5 +33,5 @@ fun InstallationOrderDto.toDomain(): InstallationOrder {
 }
 
 fun main() {
-    println("gigafiber2020".encryptWithSHA384())
+    println("gigafiber2026".encryptWithSHA384())
 }

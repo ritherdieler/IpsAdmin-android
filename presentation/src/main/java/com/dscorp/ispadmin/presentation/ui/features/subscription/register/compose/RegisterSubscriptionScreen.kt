@@ -1,10 +1,10 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
-import android.content.res.Configuration
 import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.location.LocationManager
 import android.net.Uri
 import android.provider.Settings
@@ -50,6 +50,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.presentation.theme.MyTheme
+import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -58,6 +60,7 @@ import com.google.accompanist.permissions.shouldShowRationale
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import java.io.File
 
 private const val LOCATION_LOG_TAG = "RegisterSubscription"
 
@@ -77,6 +80,7 @@ fun RegisterSubscriptionFormScreen(
 
     var dialogError by remember { mutableStateOf<String?>(null) }
     var successSubscription by remember { mutableStateOf<Subscription?>(null) }
+    var showFacadePhotoOptionsDialog by remember { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
@@ -92,11 +96,24 @@ fun RegisterSubscriptionFormScreen(
 
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
+    val (takeFacadePhoto, _) = rememberPhotoTaker(
+        context = context,
+        onPhotoTaken = { uri ->
+            viewModel.onFacadePhotoSelected(uri)
+        }
+    )
+
     val locationSettingsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
         val isEnabled = isGpsEnabled(context)
         viewModel.onGpsStateChanged(isEnabled)
+    }
+
+    val facadePhotoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { viewModel.onFacadePhotoSelected(it) }
     }
 
     LaunchedEffect(Unit) {
@@ -141,7 +158,22 @@ fun RegisterSubscriptionFormScreen(
             uiState.isGpsEnabled && uiState.hasLocationPermission -> {
                 RegisterSubscriptionForm(
                     formState = uiState,
-                    onIntent = viewModel::onIntent,
+                    onIntent = { intent ->
+                        if (intent is RegisterSubscriptionIntent.RegisterClick) {
+                            val facadePhotoFile =
+                                uiState.registerSubscriptionForm.facadePhotoUri?.let { uri ->
+                                    uriToFile(context = context, uri = uri)
+                                }
+                            viewModel.onIntent(
+                                RegisterSubscriptionIntent.RegisterClick(
+                                    facadePhotoFile = facadePhotoFile
+                                )
+                            )
+                        } else {
+                            viewModel.onIntent(intent)
+                        }
+                    },
+                    onFacadePhotoClick = { showFacadePhotoOptionsDialog = true },
                 )
             }
 
@@ -201,6 +233,34 @@ fun RegisterSubscriptionFormScreen(
                     locationSettingsLauncher.launch(intent)
                 },
                 onDismiss = { viewModel.dismissGpsDialog() }
+            )
+        }
+
+        if (showFacadePhotoOptionsDialog) {
+            AlertDialog(
+                onDismissRequest = { showFacadePhotoOptionsDialog = false },
+                title = { Text("Foto de fachada") },
+                text = { Text("Elige como quieres adjuntar la foto de la fachada.") },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showFacadePhotoOptionsDialog = false
+                            takeFacadePhoto()
+                        }
+                    ) {
+                        Text("Tomar foto")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {
+                            showFacadePhotoOptionsDialog = false
+                            facadePhotoPickerLauncher.launch("image/*")
+                        }
+                    ) {
+                        Text("Galería")
+                    }
+                }
             )
         }
     }
@@ -279,6 +339,22 @@ private fun LocationPermissionSettingsContent(
 private fun isGpsEnabled(context: Context): Boolean {
     val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+}
+
+private fun uriToFile(context: Context, uri: Uri): File {
+    val file = File.createTempFile(
+        "facade_photo_",
+        ".jpg",
+        context.cacheDir
+    )
+
+    context.contentResolver.openInputStream(uri)?.use { inputStream ->
+        file.outputStream().use { outputStream ->
+            inputStream.copyTo(outputStream)
+        }
+    } ?: throw IllegalArgumentException("No se pudo leer la foto de fachada")
+
+    return file
 }
 
 @Composable

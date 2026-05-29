@@ -32,6 +32,7 @@ data class Subscription(
     var coupon: String? = null,
     var isMigration: Boolean? = false,
     var note: String? = null,
+    var facadePhotoUrl: String? = null, //URL de la foto de fachada subida a Firebase Storage
     var borneNumber: String? = null,
     var equipmentCondition: EquipmentCondition? = null,
 
