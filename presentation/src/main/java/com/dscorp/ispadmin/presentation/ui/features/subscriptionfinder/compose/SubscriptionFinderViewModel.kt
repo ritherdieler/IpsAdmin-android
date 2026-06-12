@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
+import kotlinx.coroutines.flow.asSharedFlow
 const val REQUEST_DELAY = 500L
 
 data class SubscriptionFinderUiState(
@@ -94,7 +94,9 @@ class SubscriptionFinderViewModel(
 
     private val _uiState = MutableStateFlow(SubscriptionFinderUiState())
     val uiState: StateFlow<SubscriptionFinderUiState> = _uiState.asStateFlow()
-
+    // Emite mensajes de confirmacion o error despues de intentar guardar datos del cliente.
+    private val _customerSaveMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val customerSaveMessages = _customerSaveMessages.asSharedFlow()
     private val subscriptionsFlow = MutableStateFlow<List<SubscriptionResume>>(emptyList())
 
     val documentNumberFlow = MutableSharedFlow<SubscriptionFilter>(extraBufferCapacity = 1)
@@ -479,9 +481,15 @@ class SubscriptionFinderViewModel(
 
                 it.copy(saveSubscriptionState = SaveSubscriptionState.Success)
             }
+
+            // Informa a la pantalla solamente cuando los cambios fueron guardados correctamente.
+            _customerSaveMessages.emit("Datos del cliente actualizados correctamente")
         } catch (e: Exception) {
             e.printStackTrace()
             _uiState.update { it.copy(saveSubscriptionState = SaveSubscriptionState.Error) }
+
+            // Informa a la pantalla cuando el backend no pudo guardar los cambios.
+            _customerSaveMessages.emit("No se pudieron actualizar los datos del cliente")
         }
     }
 

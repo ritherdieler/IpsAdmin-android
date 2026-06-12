@@ -677,13 +677,29 @@ private fun FacadePhotoBox(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Button(
-                        onClick = {
-                            showFullPhoto = false
-                        },
-                        modifier = Modifier.fillMaxWidth()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Cerrar")
+                        // Reutiliza el flujo existente: camara o galeria y subida al backend.
+                        Button(
+                            onClick = {
+                                showFullPhoto = false
+                                onClick()
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Actualizar foto")
+                        }
+
+                        Button(
+                            onClick = {
+                                showFullPhoto = false
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Cerrar")
+                        }
                     }
                 }
             }

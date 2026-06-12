@@ -104,7 +104,15 @@ fun SubscriptionFinderScreen(
     var showChangeNapBoxDialog by remember { mutableStateOf(false) }
     var showRebootOnuDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
-
+    // Escucha el resultado del guardado y muestra un mensaje visible al usuario.
+    LaunchedEffect(Unit) {
+        viewModel.customerSaveMessages.collect { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = androidx.compose.material3.SnackbarDuration.Short
+            )
+        }
+    }
     // Track which subscription card is expanded
     var expandedSubscriptionId by remember { mutableStateOf<Int?>(null) }
 

@@ -21,6 +21,12 @@ sealed class NavRoutes {
         object FaceLogin : AuthRoutes()
 
         @Serializable
+        object FaceEnrollment : AuthRoutes()
+
+        @Serializable
+        object FaceEnrollmentCredentials : AuthRoutes()
+
+        @Serializable
         object Login : AuthRoutes()
 
         @Serializable

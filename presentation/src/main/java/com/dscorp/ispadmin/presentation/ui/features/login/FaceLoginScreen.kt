@@ -55,9 +55,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.delay
 import java.io.File
 import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import androidx.camera.core.ImageAnalysis
 
 private const val FACE_LOGIN_TIMEOUT_MS = 20_000L
-private const val FACE_CAPTURE_DELAY_MS = 100L
 private const val FACE_PHOTO_MAX_SIZE = 480
 private const val FACE_PHOTO_JPEG_QUALITY = 72
 
@@ -81,6 +82,8 @@ fun FaceLoginScreen(
     }
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
+    var faceFrameAnalyzer by remember { mutableStateOf<FaceFrameAnalyzer?>(null) }
+    val faceAnalysisExecutor = remember { Executors.newSingleThreadExecutor() }
     var isCapturing by remember { mutableStateOf(false) }
     var loginStarted by remember { mutableStateOf(false) }
     var localRetryTrigger by remember { mutableStateOf(0) }
@@ -107,6 +110,7 @@ fun FaceLoginScreen(
     LaunchedEffect(retryTrigger, localRetryTrigger) {
         loginStarted = false
         isCapturing = false
+        faceFrameAnalyzer?.reset()
         if (hasCameraPermission) {
             statusText = "Coloca tu rostro frente a la camara"
         }
@@ -117,6 +121,9 @@ fun FaceLoginScreen(
         onDispose {
             cameraProvider?.unbindAll()
             imageCapture = null
+            faceFrameAnalyzer?.close()
+            faceFrameAnalyzer = null
+            faceAnalysisExecutor.shutdown()
         }
     }
 
@@ -164,15 +171,6 @@ fun FaceLoginScreen(
         )
     }
 
-    // Espera un instante para que la camara enfoque y captura automaticamente.
-    LaunchedEffect(hasCameraPermission, imageCapture, retryTrigger, localRetryTrigger) {
-        val capture = imageCapture ?: return@LaunchedEffect
-        if (!hasCameraPermission) return@LaunchedEffect
-
-        delay(FACE_CAPTURE_DELAY_MS)
-        capturePhotoForBackend(capture, mainExecutor)
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -196,6 +194,21 @@ fun FaceLoginScreen(
                                 val capture = ImageCapture.Builder()
                                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                                     .build()
+                                val analyzer = FaceFrameAnalyzer(
+                                    onStableFaceDetected = {
+                                        mainExecutor.execute {
+                                            capturePhotoForBackend(capture, mainExecutor)
+                                        }
+                                    }
+                                )
+
+                                val analysis = ImageAnalysis.Builder()
+                                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                                    .build()
+                                    .also { imageAnalysis ->
+                                        imageAnalysis.setAnalyzer(faceAnalysisExecutor, analyzer)
+                                    }
+                                faceFrameAnalyzer = analyzer
 
                                 runCatching {
                                     provider.unbindAll()
@@ -203,7 +216,8 @@ fun FaceLoginScreen(
                                         lifecycleOwner,
                                         CameraSelector.DEFAULT_FRONT_CAMERA,
                                         preview,
-                                        capture
+                                        capture,
+                                        analysis
                                     )
                                     cameraProvider = provider
                                     imageCapture = capture
@@ -289,7 +303,7 @@ private fun FaceRecognitionOverlay() {
         val frameWidth = size.width * 0.56f
         val frameHeight = frameWidth * 1.2f
         val left = (size.width - frameWidth) / 2f
-        val top = size.height * 0.17f
+        val top = (size.height - frameHeight) / 2f
         val scanY = top + frameHeight * scanProgress
         val sideTick = 18.dp.toPx()
 
