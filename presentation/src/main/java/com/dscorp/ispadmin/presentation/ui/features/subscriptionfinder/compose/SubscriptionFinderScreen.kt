@@ -254,12 +254,12 @@ fun SubscriptionFinderScreen(
                                 OutlinedTextField(
                                     value = searchQuery,
                                     onValueChange = { newValue ->
-                                        searchQuery = newValue
-                                        // Realizar búsqueda mientras se escribe en el campo de nombre
+                                        val upperValue = newValue.uppercase()
+                                        searchQuery = upperValue
                                         coroutinesScope.launch {
                                             viewModel.documentNumberFlow.emit(
                                                 SubscriptionFilter.BY_NAME(
-                                                    name = newValue,
+                                                    name = upperValue,
                                                     lastName = lastNameQuery
                                                 )
                                             )
@@ -276,13 +276,13 @@ fun SubscriptionFinderScreen(
                                 OutlinedTextField(
                                     value = lastNameQuery,
                                     onValueChange = { newValue ->
-                                        lastNameQuery = newValue
-                                        // Realizar búsqueda mientras se escribe en el campo de apellido
+                                        val upperValue = newValue.uppercase()
+                                        lastNameQuery = upperValue
                                         coroutinesScope.launch {
                                             viewModel.documentNumberFlow.emit(
                                                 SubscriptionFilter.BY_NAME(
                                                     name = searchQuery,
-                                                    lastName = newValue
+                                                    lastName = upperValue
                                                 )
                                             )
                                         }

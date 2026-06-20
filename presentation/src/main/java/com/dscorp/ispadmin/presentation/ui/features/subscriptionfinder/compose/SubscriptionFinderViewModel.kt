@@ -396,16 +396,21 @@ class SubscriptionFinderViewModel(
 
     fun updateCustomerFormField(field: String, value: String) {
         _uiState.value.customerFormData?.let { formData ->
-            val errorMessage = validateCustomerFormField(field, value)
+            val normalizedValue = when (field) {
+                "name", "lastName" -> value.uppercase()
+                else -> value
+            }
+
+            val errorMessage = validateCustomerFormField(field, normalizedValue)
 
             val updatedFormData = when (field) {
-                "name" -> formData.copy(name = value, nameError = errorMessage)
-                "lastName" -> formData.copy(lastName = value, lastNameError = errorMessage)
-                "phone" -> formData.copy(phone = value, phoneError = errorMessage)
-                "dni" -> formData.copy(dni = value, dniError = errorMessage)
-                "address" -> formData.copy(address = value, addressError = errorMessage)
-                "email" -> formData.copy(email = value, emailError = errorMessage)
-                "place" -> formData.copy(place = value)
+                "name" -> formData.copy(name = normalizedValue, nameError = errorMessage)
+                "lastName" -> formData.copy(lastName = normalizedValue, lastNameError = errorMessage)
+                "phone" -> formData.copy(phone = normalizedValue, phoneError = errorMessage)
+                "dni" -> formData.copy(dni = normalizedValue, dniError = errorMessage)
+                "address" -> formData.copy(address = normalizedValue, addressError = errorMessage)
+                "email" -> formData.copy(email = normalizedValue, emailError = errorMessage)
+                "place" -> formData.copy(place = normalizedValue)
                 else -> formData
             }
             _uiState.update { it.copy(customerFormData = updatedFormData) }
