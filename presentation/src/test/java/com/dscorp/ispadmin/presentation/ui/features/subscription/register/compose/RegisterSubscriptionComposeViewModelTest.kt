@@ -38,6 +38,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.File
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RegisterSubscriptionComposeViewModelTest {
@@ -67,9 +68,12 @@ class RegisterSubscriptionComposeViewModelTest {
         type = InstallationType.FIBER
     )
 
+    private lateinit var facadePhotoFile: File
+
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        facadePhotoFile = File.createTempFile("facade_test", ".jpg")
         getAvailableOnuListUseCase = mockk()
         getPlanListUseCase = mockk()
         getPlaceListUseCase = mockk()
@@ -208,7 +212,12 @@ class RegisterSubscriptionComposeViewModelTest {
         advanceUntilIdle()
 
         val registered = Subscription(subscriptionId = 1, firstName = "A", lastName = "B")
-        coEvery { registerSubscriptionUseCase(any(), any()) } returns Result.success(registered)
+        coEvery {
+            registerSubscriptionUseCase(any(), any(), facadePhotoFile = any())
+        } answers {
+            assertEquals(true, firstArg<Subscription>().autoCut)
+            Result.success(registered)
+        }
 
         viewModel.onIntent(RegisterSubscriptionIntent.FirstNameChanged("Juan"))
         viewModel.onIntent(RegisterSubscriptionIntent.LastNameChanged("Perez"))
@@ -225,7 +234,7 @@ class RegisterSubscriptionComposeViewModelTest {
             viewModel.uiEvent.collect { events.add(it) }
         }
 
-        viewModel.saveSubscription()
+        viewModel.saveSubscription(facadePhotoFile)
         advanceUntilIdle()
 
         assertEquals(1, events.size)
@@ -246,7 +255,7 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel.loadScreenData(null)
         advanceUntilIdle()
 
-        coEvery { registerSubscriptionUseCase(any(), any()) } returns Result.failure(Exception("backend"))
+        coEvery { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) } returns Result.failure(Exception("backend"))
 
         viewModel.onIntent(RegisterSubscriptionIntent.FirstNameChanged("Juan"))
         viewModel.onIntent(RegisterSubscriptionIntent.LastNameChanged("Perez"))
@@ -263,7 +272,7 @@ class RegisterSubscriptionComposeViewModelTest {
             viewModel.uiEvent.collect { events.add(it) }
         }
 
-        viewModel.saveSubscription()
+        viewModel.saveSubscription(facadePhotoFile)
         advanceUntilIdle()
 
         assertEquals(1, events.size)
@@ -307,7 +316,7 @@ class RegisterSubscriptionComposeViewModelTest {
         advanceUntilIdle()
 
         val registered = Subscription(subscriptionId = 1, firstName = "A", lastName = "B")
-        coEvery { registerSubscriptionUseCase(any(), any()) } coAnswers {
+        coEvery { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) } coAnswers {
             delay(100)
             Result.success(registered)
         }
@@ -322,10 +331,10 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel.onIntent(RegisterSubscriptionIntent.NapBoxSelected(nap))
         viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
 
-        viewModel.saveSubscription()
-        viewModel.saveSubscription()
+        viewModel.saveSubscription(facadePhotoFile)
+        viewModel.saveSubscription(facadePhotoFile)
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { registerSubscriptionUseCase(any(), any()) }
+        coVerify(exactly = 1) { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) }
     }
 }

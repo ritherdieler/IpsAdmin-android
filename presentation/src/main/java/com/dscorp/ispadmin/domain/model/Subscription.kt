@@ -35,6 +35,7 @@ data class Subscription(
     var facadePhotoUrl: String? = null, //URL de la foto de fachada subida a Firebase Storage
     var borneNumber: String? = null,
     var equipmentCondition: EquipmentCondition? = null,
+    var autoCut: Boolean = true,
 
     ) : java.io.Serializable {
     override fun toString(): String {

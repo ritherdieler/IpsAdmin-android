@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -68,10 +69,46 @@ fun DashboardScreen(
             if (uiState.isLoading && uiState.dashboardData == null) {
                 Loader()
             } else {
-                uiState.dashboardData?.let { data ->
-                    DashboardContent(data, onRefresh)
+                when {
+                    uiState.dashboardData != null -> {
+                        DashboardContent(uiState.dashboardData, onRefresh)
+                    }
+
+                    uiState.event is DashboardEvent.ShowError -> {
+                        DashboardErrorContent(onRefresh = onRefresh)
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DashboardErrorContent(onRefresh: () -> Unit) {
+    // Muestra un estado visible cuando el backend no puede entregar los datos del panel.
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "No se pudo cargar el panel",
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "Verifica la conexion con el servidor e intenta nuevamente.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(onClick = onRefresh) {
+            Text(text = "Reintentar")
         }
     }
 }

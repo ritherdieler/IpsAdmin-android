@@ -3,6 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.domain.model.subscription.RegisterSubscriptionFormConstraints
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionFacadePhotoError
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionNapBoxErrorAfterNearbyRefresh
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionOnuErrorAfterListRefresh
 import com.dscorp.ispadmin.domain.model.EquipmentCondition
@@ -29,7 +30,9 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
+import android.net.Uri
 import com.google.android.gms.maps.model.LatLng
+import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -45,8 +48,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import android.net.Uri
-import java.io.File
 
 class RegisterSubscriptionComposeViewModel(
     private val getAvailableOnuListUseCase: GetAvailableOnuListUseCase,
@@ -264,18 +265,20 @@ class RegisterSubscriptionComposeViewModel(
     }
 
     private fun onFirstNameChanged(value: String) {
-        if (value.length > RegisterSubscriptionFormConstraints.MAX_PERSON_NAME_LENGTH) return
+        val upperValue = value.uppercase()
+        if (upperValue.length > RegisterSubscriptionFormConstraints.MAX_PERSON_NAME_LENGTH) return
 
         updateValidatedForm(FormFieldKey.FIRST_NAME) { form ->
-            form.copy(firstName = value)
+            form.copy(firstName = upperValue)
         }
     }
 
     private fun onLastNameChanged(value: String) {
-        if (value.length > RegisterSubscriptionFormConstraints.MAX_PERSON_NAME_LENGTH) return
+        val upperValue = value.uppercase()
+        if (upperValue.length > RegisterSubscriptionFormConstraints.MAX_PERSON_NAME_LENGTH) return
 
         updateValidatedForm(FormFieldKey.LAST_NAME) { form ->
-            form.copy(lastName = value)
+            form.copy(lastName = upperValue)
         }
     }
 
@@ -482,10 +485,25 @@ class RegisterSubscriptionComposeViewModel(
     fun saveSubscription(facadePhotoFile: File? = null) {
         val form = uiState.value.registerSubscriptionForm
         val validatedForm = form.validated()
+        val hasFacadePhoto = form.facadePhotoUri != null || facadePhotoFile != null
+        val isFormValid = FormFieldKey.blockingForSubmit.all { field ->
+            when (field) {
+                FormFieldKey.FACADE_PHOTO -> hasFacadePhoto
+                else -> validatedForm.validate(field) == null
+            }
+        }
 
-        if (!validatedForm.isValid()) {
+        if (!isFormValid) {
             _uiState.update {
-                it.copy(registerSubscriptionForm = validatedForm)
+                it.copy(
+                    registerSubscriptionForm = validatedForm.copy(
+                        facadePhotoError = if (!hasFacadePhoto) {
+                            subscriptionFacadePhotoError(false)
+                        } else {
+                            null
+                        }
+                    )
+                )
             }
             return
         }
@@ -569,7 +587,8 @@ class RegisterSubscriptionComposeViewModel(
             napBoxId = form.selectedNapBox?.id,
             onu = form.selectedOnu,
             equipmentCondition = form.equipmentCondition,
-            facadePhotoUrl = null,
+            autoCut = true,
+            facadePhotoUrl = null
         )
     }
 

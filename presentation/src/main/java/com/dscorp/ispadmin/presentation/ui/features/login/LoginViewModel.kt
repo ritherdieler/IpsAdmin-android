@@ -17,6 +17,7 @@ sealed class LoginState {
     data class Error(val message: String) : LoginState()
     data class LoginSuccess(val data: User) : LoginState()
     data class UnverifiedAccount(val user: User) : LoginState()
+    object FaceEnrollmentOffer : LoginState()
 }
 
 sealed class CheckVersionState {
@@ -51,10 +52,11 @@ class LoginViewModel(private val repository: IRepository) : ViewModel() {
                 loginData.checkedState
             )
             val response = repository.doLogin(login)
-            
+
             if (!response.verified) {
                 loginRequestFlow.value = LoginState.UnverifiedAccount(response)
             } else {
+                // El login tradicional no obliga al usuario a registrar un rostro.
                 loginRequestFlow.value = LoginState.LoginSuccess(response)
             }
 
@@ -123,10 +125,41 @@ class LoginViewModel(private val repository: IRepository) : ViewModel() {
             }
         } catch (e: Exception){
             e.printStackTrace()
+            loginRequestFlow.value = if (e.message == "No se reconocio el rostro") {
+                LoginState.FaceEnrollmentOffer
+            } else {
+                LoginState.Error(e.toFaceLoginMessage())
+            }
+        } finally {
+            photo.delete()
+        }
+    }
+
+    // Registra el rostro del usuario que inicio sesion normalmente.
+    // La sesion ya fue guardada por Repository.doLogin, por eso no necesitamos
+    // volver a enviar usuario ni contrasena durante el registro facial.
+    fun registerFaceForLoggedUser(photo: File) = viewModelScope.launch {
+        try {
+            loginRequestFlow.value = LoginState.Loading
+
+            val user = repository.getUserSession()
+                ?: throw Exception("No se encontro una sesion activa para registrar el rostro.")
+
+            repository.enrollFaceFromPhoto(
+                username = user.username,
+                password = user.password,
+                photo = photo
+            )
+
+            // Al finalizar el registro facial, continua hacia el sistema con la sesion existente.
+            loginRequestFlow.value = LoginState.LoginSuccess(user)
+        } catch (e: Exception) {
+            e.printStackTrace()
             loginRequestFlow.value = LoginState.Error(
-                e.toFaceLoginMessage()
+                e.message ?: "No se pudo registrar el rostro."
             )
         } finally {
+            // Elimina la foto temporal despues de enviarla al backend.
             photo.delete()
         }
     }

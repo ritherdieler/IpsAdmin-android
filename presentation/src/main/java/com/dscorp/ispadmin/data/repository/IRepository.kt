@@ -189,4 +189,10 @@ interface IRepository {
     suspend fun getPaymentById(paymentId: String): Payment
 
     suspend fun loginWithFace(photo: File): User // edwin agregue
+
+    // Verifica si el usuario ya tiene rostro registrado para login facial.
+    suspend fun hasFaceRegistered(userId: Int): Boolean
+
+    // Registra el rostro despues de validar nuevamente las credenciales del usuario.
+    suspend fun enrollFaceFromPhoto(username: String, password: String, photo: File)
 }

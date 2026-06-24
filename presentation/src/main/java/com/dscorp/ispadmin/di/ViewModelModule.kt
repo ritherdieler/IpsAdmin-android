@@ -54,7 +54,7 @@ val viewModelModule = module {
             get(),
             get(),
             get(),
-            get(named("mainImmediate"))
+            get<CoroutineDispatcher>(named("mainImmediate"))
         )
     }
 

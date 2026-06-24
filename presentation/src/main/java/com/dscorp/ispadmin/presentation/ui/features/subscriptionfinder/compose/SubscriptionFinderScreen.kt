@@ -104,7 +104,15 @@ fun SubscriptionFinderScreen(
     var showChangeNapBoxDialog by remember { mutableStateOf(false) }
     var showRebootOnuDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
-
+    // Escucha el resultado del guardado y muestra un mensaje visible al usuario.
+    LaunchedEffect(Unit) {
+        viewModel.customerSaveMessages.collect { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = androidx.compose.material3.SnackbarDuration.Short
+            )
+        }
+    }
     // Track which subscription card is expanded
     var expandedSubscriptionId by remember { mutableStateOf<Int?>(null) }
 
@@ -246,12 +254,12 @@ fun SubscriptionFinderScreen(
                                 OutlinedTextField(
                                     value = searchQuery,
                                     onValueChange = { newValue ->
-                                        searchQuery = newValue
-                                        // Realizar búsqueda mientras se escribe en el campo de nombre
+                                        val upperValue = newValue.uppercase()
+                                        searchQuery = upperValue
                                         coroutinesScope.launch {
                                             viewModel.documentNumberFlow.emit(
                                                 SubscriptionFilter.BY_NAME(
-                                                    name = newValue,
+                                                    name = upperValue,
                                                     lastName = lastNameQuery
                                                 )
                                             )
@@ -268,13 +276,13 @@ fun SubscriptionFinderScreen(
                                 OutlinedTextField(
                                     value = lastNameQuery,
                                     onValueChange = { newValue ->
-                                        lastNameQuery = newValue
-                                        // Realizar búsqueda mientras se escribe en el campo de apellido
+                                        val upperValue = newValue.uppercase()
+                                        lastNameQuery = upperValue
                                         coroutinesScope.launch {
                                             viewModel.documentNumberFlow.emit(
                                                 SubscriptionFilter.BY_NAME(
                                                     name = searchQuery,
-                                                    lastName = newValue
+                                                    lastName = upperValue
                                                 )
                                             )
                                         }

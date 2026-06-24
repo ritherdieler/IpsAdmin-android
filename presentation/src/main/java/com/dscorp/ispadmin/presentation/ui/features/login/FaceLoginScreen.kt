@@ -2,6 +2,9 @@ package com.dscorp.ispadmin.presentation.ui.features.login
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -47,15 +50,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.dscorp.ispadmin.data.media.FaceCaptureConfig
-import com.dscorp.ispadmin.data.media.FacePhotoCompressor
 import kotlinx.coroutines.delay
 import java.io.File
 import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import androidx.camera.core.ImageAnalysis
 
 private const val FACE_LOGIN_TIMEOUT_MS = 20_000L
-private const val FACE_CAPTURE_DELAY_MS = 100L
+private const val FACE_PHOTO_MAX_SIZE = 720
+private const val FACE_PHOTO_JPEG_QUALITY = 88
 
 @Composable
 fun FaceLoginScreen(
@@ -77,10 +82,14 @@ fun FaceLoginScreen(
     }
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
+    var faceFrameAnalyzer by remember { mutableStateOf<FaceFrameAnalyzer?>(null) }
+    val faceAnalysisExecutor = remember { Executors.newSingleThreadExecutor() }
     var isCapturing by remember { mutableStateOf(false) }
     var loginStarted by remember { mutableStateOf(false) }
     var localRetryTrigger by remember { mutableStateOf(0) }
     var statusText by remember { mutableStateOf("Preparando camara...") }
+    var faceWidthPercent by remember { mutableStateOf<Int?>(null) }
+    var faceReady by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
@@ -103,6 +112,9 @@ fun FaceLoginScreen(
     LaunchedEffect(retryTrigger, localRetryTrigger) {
         loginStarted = false
         isCapturing = false
+        faceReady = false
+        faceWidthPercent = null
+        faceFrameAnalyzer?.reset()
         if (hasCameraPermission) {
             statusText = "Coloca tu rostro frente a la camara"
         }
@@ -113,6 +125,9 @@ fun FaceLoginScreen(
         onDispose {
             cameraProvider?.unbindAll()
             imageCapture = null
+            faceFrameAnalyzer?.close()
+            faceFrameAnalyzer = null
+            faceAnalysisExecutor.shutdown()
         }
     }
 
@@ -144,7 +159,7 @@ fun FaceLoginScreen(
             executor,
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    FacePhotoCompressor.compressPhotoForBackend(file)
+                    compressPhotoForBackend(file)
                     loginStarted = true
                     isCapturing = false
                     statusText = "Rostro capturado. Iniciando sesion..."
@@ -158,15 +173,6 @@ fun FaceLoginScreen(
                 }
             }
         )
-    }
-
-    // Espera un instante para que la camara enfoque y captura automaticamente.
-    LaunchedEffect(hasCameraPermission, imageCapture, retryTrigger, localRetryTrigger) {
-        val capture = imageCapture ?: return@LaunchedEffect
-        if (!hasCameraPermission) return@LaunchedEffect
-
-        delay(FACE_CAPTURE_DELAY_MS)
-        capturePhotoForBackend(capture, mainExecutor)
     }
 
     Box(
@@ -189,16 +195,31 @@ fun FaceLoginScreen(
                                 val preview = Preview.Builder().build().also { previewUseCase ->
                                     previewUseCase.setSurfaceProvider(surfaceProvider)
                                 }
-                                @Suppress("DEPRECATION")
                                 val capture = ImageCapture.Builder()
                                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                                    .setTargetResolution(
-                                        android.util.Size(
-                                            FaceCaptureConfig.CAMERA_TARGET_WIDTH,
-                                            FaceCaptureConfig.CAMERA_TARGET_HEIGHT,
-                                        ),
-                                    )
                                     .build()
+                                val analyzer = FaceFrameAnalyzer(
+                                    onStatusUpdate = { status ->
+                                        mainExecutor.execute {
+                                            statusText = status.message
+                                            faceWidthPercent = status.faceWidthPercent
+                                            faceReady = status.ready
+                                        }
+                                    },
+                                    onStableFaceDetected = {
+                                        mainExecutor.execute {
+                                            capturePhotoForBackend(capture, mainExecutor)
+                                        }
+                                    }
+                                )
+
+                                val analysis = ImageAnalysis.Builder()
+                                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                                    .build()
+                                    .also { imageAnalysis ->
+                                        imageAnalysis.setAnalyzer(faceAnalysisExecutor, analyzer)
+                                    }
+                                faceFrameAnalyzer = analyzer
 
                                 runCatching {
                                     provider.unbindAll()
@@ -206,7 +227,8 @@ fun FaceLoginScreen(
                                         lifecycleOwner,
                                         CameraSelector.DEFAULT_FRONT_CAMERA,
                                         preview,
-                                        capture
+                                        capture,
+                                        analysis
                                     )
                                     cameraProvider = provider
                                     imageCapture = capture
@@ -223,7 +245,32 @@ fun FaceLoginScreen(
         }
 
         // Overlay visual fijo: solo guia al usuario; el backend hace todo el reconocimiento.
-        FaceRecognitionOverlay()
+        FaceRecognitionOverlay(
+            faceReady = faceReady,
+            faceWidthPercent = faceWidthPercent
+        )
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .background(Color.Black.copy(alpha = 0.45f))
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Text(
+                text = statusText,
+                color = Color.White,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            faceWidthPercent?.let { percent ->
+                Text(
+                    text = "Cobertura del rostro: $percent%",
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -275,8 +322,15 @@ fun FaceLoginScreen(
 
 // Dibuja un overlay fijo y liviano; la validacion facial real ocurre solo en el backend.
 @Composable
-private fun FaceRecognitionOverlay() {
-    val primaryColor = Color(0xFF8ED4FF)
+private fun FaceRecognitionOverlay(
+    faceReady: Boolean,
+    faceWidthPercent: Int?
+) {
+    val primaryColor = when {
+        faceReady -> Color(0xFF6EE7B7)
+        faceWidthPercent != null -> Color(0xFFFCD34D)
+        else -> Color(0xFF8ED4FF)
+    }
     val transition = rememberInfiniteTransition(label = "face-overlay")
     val scanProgress by transition.animateFloat(
         initialValue = 0f,
@@ -292,9 +346,16 @@ private fun FaceRecognitionOverlay() {
         val frameWidth = size.width * 0.56f
         val frameHeight = frameWidth * 1.2f
         val left = (size.width - frameWidth) / 2f
-        val top = size.height * 0.17f
+        val top = (size.height - frameHeight) / 2f
         val scanY = top + frameHeight * scanProgress
         val sideTick = 18.dp.toPx()
+
+        drawOval(
+            color = primaryColor.copy(alpha = 0.28f),
+            topLeft = Offset(left, top),
+            size = Size(frameWidth, frameHeight),
+            style = Stroke(width = 2.dp.toPx())
+        )
 
         // Linea principal de escaneo minimalista.
         drawRoundRect(
@@ -375,3 +436,66 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawCornerLines(
     drawLine(color, Offset(right, bottom), Offset(right, bottom - length), stroke, StrokeCap.Round)
 }
 
+// Corrige orientacion EXIF, reduce la foto y conserva calidad suficiente para el backend facial.
+private fun compressPhotoForBackend(file: File) {
+    val original = BitmapFactory.decodeFile(file.absolutePath) ?: return
+    val oriented = rotateBitmapFromExif(file, original)
+    val resized = resizeKeepingAspectRatio(oriented, FACE_PHOTO_MAX_SIZE)
+
+    file.outputStream().use { output ->
+        resized.compress(Bitmap.CompressFormat.JPEG, FACE_PHOTO_JPEG_QUALITY, output)
+    }
+
+    if (oriented !== original) {
+        original.recycle()
+    }
+
+    if (resized !== oriented) {
+        oriented.recycle()
+    }
+
+    resized.recycle()
+}
+
+// CameraX puede guardar la foto con rotacion EXIF; el backend necesita pixeles ya orientados.
+private fun rotateBitmapFromExif(file: File, bitmap: Bitmap): Bitmap {
+    val orientation = ExifInterface(file.absolutePath).getAttributeInt(
+        ExifInterface.TAG_ORIENTATION,
+        ExifInterface.ORIENTATION_NORMAL
+    )
+
+    val matrix = Matrix()
+    when (orientation) {
+        ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+        ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+        ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+        ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+        ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+        ExifInterface.ORIENTATION_TRANSPOSE -> {
+            matrix.postRotate(90f)
+            matrix.postScale(-1f, 1f)
+        }
+        ExifInterface.ORIENTATION_TRANSVERSE -> {
+            matrix.postRotate(270f)
+            matrix.postScale(-1f, 1f)
+        }
+        else -> return bitmap
+    }
+
+    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+}
+
+// Mantiene la proporcion de la imagen y limita su lado mayor para conservar calidad suficiente.
+private fun resizeKeepingAspectRatio(bitmap: Bitmap, maxSize: Int): Bitmap {
+    val width = bitmap.width
+    val height = bitmap.height
+    val largestSide = maxOf(width, height)
+
+    if (largestSide <= maxSize) return bitmap
+
+    val scale = maxSize.toFloat() / largestSide.toFloat()
+    val targetWidth = (width * scale).toInt().coerceAtLeast(1)
+    val targetHeight = (height * scale).toInt().coerceAtLeast(1)
+
+    return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+}

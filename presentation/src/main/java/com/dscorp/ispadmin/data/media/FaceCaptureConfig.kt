@@ -31,10 +31,10 @@ object FaceCaptureConfig {
             targetSizeBytes = 500 * 1024,
         )
         FaceCaptureProfile.VERIFICATION -> FaceCaptureSettings(
-            maxWidth = 960,
+            maxWidth = 1280,
             maxHeight = 720,
-            jpegQuality = 85,
-            targetSizeBytes = 350 * 1024,
+            jpegQuality = 90,
+            targetSizeBytes = 500 * 1024,
         )
         FaceCaptureProfile.EVIDENCE -> FaceCaptureSettings(
             maxWidth = 640,
