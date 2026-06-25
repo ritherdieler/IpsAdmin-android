@@ -79,6 +79,7 @@ import org.koin.core.component.inject
 import retrofit2.Response
 import java.io.File
 import java.util.Date
+import com.dscorp.ispadmin.data.apirequestmodel.RescheduleTicketRequest
 
 const val HTTP_OK = 200
 
@@ -820,6 +821,13 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun createTicket(value: AssistanceTicketRequest): AssistanceTicketResponse {
         return restApiServices.createTicket(value).successOrThrow()
+    }
+
+    override suspend fun rescheduleTicket(
+        ticketId: Int,
+        request: RescheduleTicketRequest
+    ): AssistanceTicketResponse {
+        return restApiServices.rescheduleTicket(ticketId, request).successOrThrow()
     }
 
     override suspend fun findSubscriptionByNames(names: String): List<SubscriptionFastSearchResponse> {

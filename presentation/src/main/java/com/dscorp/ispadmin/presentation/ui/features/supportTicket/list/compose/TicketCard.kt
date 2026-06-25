@@ -50,8 +50,10 @@ fun TicketCard(
     currentUser: User,
     isLoading: Boolean = false,
     onCardClick: () -> Unit = {},
+    onPhoneClick: (String) -> Unit = {},
     onTakeTicket: () -> Unit = {},
-    onCloseTicket: () -> Unit = {}
+    onCloseTicket: () -> Unit = {},
+    onRescheduleTicket: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -83,11 +85,20 @@ fun TicketCard(
                 label = "Cliente",
                 value = ticket.name
             )
-            
+
             InfoItem(
                 icon = Icons.Filled.Phone,
                 label = "Teléfono",
-                value = ticket.phone
+                value = ticket.phone,
+                valueStyle = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                ),
+                onClick = {
+                    if (ticket.phone.isNotBlank()) {
+                        onPhoneClick(ticket.phone)
+                    }
+                }
             )
             
             ticket.place?.let { place ->
@@ -142,7 +153,7 @@ fun TicketCard(
                 if (getTakeTicketVisibility(ticket, currentUser)) {
                     MyButton(
                         onClick = onTakeTicket,
-                        text = "Tomar Ticket",
+                        text = "Tomar",
                         modifier = Modifier
                             .weight(1f)
                             .padding(end = 8.dp),
@@ -157,6 +168,17 @@ fun TicketCard(
                         modifier = Modifier
                             .weight(1f)
                             .padding(start = if (getTakeTicketVisibility(ticket, currentUser)) 8.dp else 0.dp),
+                        isLoading = isLoading
+                    )
+                }
+
+                if (getRescheduleTicketVisibility(ticket, currentUser)) {
+                    MyButton(
+                        onClick = onRescheduleTicket,
+                        text = "Reagendar",
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp),
                         isLoading = isLoading
                     )
                 }
@@ -219,7 +241,7 @@ private fun TicketHeader(ticket: AssistanceTicketResponse) {
                 Spacer(modifier = Modifier.width(4.dp))
                 
                 Text(
-                    text = ticket.getCreatedAtDateAsString(),
+                    text = ticket.getScheduledAtDateAsString(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -261,11 +283,19 @@ private fun InfoItem(
     label: String,
     value: String,
     valueStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyMedium,
-    maxLines: Int = 1
+    maxLines: Int = 1,
+    onClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                }
+            )
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.Top
     ) {
@@ -359,4 +389,21 @@ private fun getCloseTicketVisibility(
             (user.type == User.UserType.TECHNICIAN || user.type == User.UserType.ADMIN) -> true
         else -> false
     }
-} 
+}
+
+private fun getRescheduleTicketVisibility(
+    ticket: AssistanceTicketResponse,
+    user: User
+): Boolean {
+    if (user.type != User.UserType.SECRETARY && user.type != User.UserType.ADMIN) return false
+
+    return when (ticket.status) {
+        AssistanceTicketStatus.PENDING,
+        AssistanceTicketStatus.ASSIGNED,
+        AssistanceTicketStatus.IN_PROGRESS -> true
+
+        AssistanceTicketStatus.RESOLVED,
+        AssistanceTicketStatus.CLOSED,
+        AssistanceTicketStatus.CANCELLED -> false
+    }
+}

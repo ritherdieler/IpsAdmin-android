@@ -49,20 +49,71 @@ import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyCustomDialog
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import java.io.File
-
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import androidx.compose.runtime.LaunchedEffect
+import java.util.Calendar
+import android.widget.Toast
 @Composable
 fun SupportTicketListScreen(
     uiState: SupportTicketListUiState,
     onTabChange: (Int) -> Unit,
+    onDateFilterChange: (TicketDateFilter) -> Unit,
+    onSortOptionChange: (TicketSortOption) -> Unit,
     onTakeTicket: (Int) -> Unit,
     onCloseUnattendedTicket: (AssistanceTicketResponse) -> Unit,
     onCloseTicket: (AssistanceTicketResponse, Uri) -> Unit,
     onTicketCardClick: (AssistanceTicketResponse) -> Unit,
     onRefresh: () -> Unit,
-    onDismissError: () -> Unit
+    onDismissError: () -> Unit,
+    onRescheduleTicket: (AssistanceTicketResponse, Long) -> Unit,
+    onDismissSuccessMessage: () -> Unit,
 ) {
     var selectedTicket by remember { mutableStateOf<AssistanceTicketResponse?>(null) }
+    var ticketToReschedule by remember { mutableStateOf<AssistanceTicketResponse?>(null) }
+    var selectedPhoneNumber by remember {
+        mutableStateOf<String?>(null)
+    }
+    val context = LocalContext.current
+    val filteredPendingTickets = remember(
+        uiState.pendingTickets,
+        uiState.selectedDateFilter,
+        uiState.selectedSortOption
+    ) {
+        uiState.pendingTickets.filterAndSortTickets(
+            dateFilter = uiState.selectedDateFilter,
+            sortOption = uiState.selectedSortOption
+        )
+    }
 
+    val filteredInProgressTickets = remember(
+        uiState.inProgressTickets,
+        uiState.selectedDateFilter,
+        uiState.selectedSortOption
+    ) {
+        uiState.inProgressTickets.filterAndSortTickets(
+            dateFilter = uiState.selectedDateFilter,
+            sortOption = uiState.selectedSortOption
+        )
+    }
+
+    val filteredClosedTickets = remember(
+        uiState.closedTickets,
+        uiState.selectedDateFilter,
+        uiState.selectedSortOption
+    ) {
+        uiState.closedTickets.filterAndSortTickets(
+            dateFilter = uiState.selectedDateFilter,
+            sortOption = uiState.selectedSortOption
+        )
+    }
+
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            onDismissSuccessMessage()
+        }
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
@@ -111,33 +162,51 @@ fun SupportTicketListScreen(
                 }
 
                 // Contenido según la pestaña seleccionada
+                TicketFilterBar(
+                    selectedDateFilter = uiState.selectedDateFilter,
+                    selectedSortOption = uiState.selectedSortOption,
+                    onDateFilterChange = onDateFilterChange,
+                    onSortOptionChange = onSortOptionChange
+                )
+
                 when (uiState.activeTab) {
                     0 -> PendingTicketsTab(
-                        tickets = uiState.pendingTickets,
+                        tickets = filteredPendingTickets,
                         loadingTickets = uiState.pendingTicketsLoading,
                         currentUser = uiState.user!!,
                         onTakeTicket = onTakeTicket,
                         onCloseTicket = onCloseUnattendedTicket,
-                        onTicketCardClick = onTicketCardClick,
-                        gettingTicketsFromServer = uiState.isLoading
-                    )
-
-                    1 -> InProgressTicketsTab(
-                        tickets = uiState.inProgressTickets,
-                        loadingTickets = uiState.inProgressTicketsLoading,
-                        currentUser = uiState.user!!,
-                        onCloseTicket = { ticket ->
-                            selectedTicket = ticket
+                        onRescheduleTicket = { ticket -> ticketToReschedule = ticket },
+                        onPhoneClick = { phoneNumber ->
+                            selectedPhoneNumber = phoneNumber
                         },
                         onTicketCardClick = onTicketCardClick,
                         gettingTicketsFromServer = uiState.isLoading
                     )
 
-                    2 -> ClosedTicketsTab(
-                        tickets = uiState.closedTickets,
+                    1 -> InProgressTicketsTab(
+                        tickets = filteredInProgressTickets,
+                        loadingTickets = uiState.inProgressTicketsLoading,
                         currentUser = uiState.user!!,
+                        onCloseTicket = { ticket ->
+                            selectedTicket = ticket
+                        },
+                        onPhoneClick = { phoneNumber ->
+                            selectedPhoneNumber = phoneNumber
+                        },
+                        onRescheduleTicket = { ticket -> ticketToReschedule = ticket },
                         onTicketCardClick = onTicketCardClick,
                         gettingTicketsFromServer = uiState.isLoading
+                    )
+
+                    2 -> ClosedTicketsTab(
+                        tickets = filteredClosedTickets,
+                        currentUser = uiState.user!!,
+                        onTicketCardClick = onTicketCardClick,
+                        gettingTicketsFromServer = uiState.isLoading,
+                        onPhoneClick = { phoneNumber ->
+                            selectedPhoneNumber = phoneNumber
+                        },
                     )
                 }
             }
@@ -161,9 +230,63 @@ fun SupportTicketListScreen(
                     }
                 )
             }
+
+            ticketToReschedule?.let { ticket ->
+                RescheduleTicketDateTimePicker(
+                    ticket = ticket,
+                    onDismiss = { ticketToReschedule = null },
+                    onConfirm = { scheduledAt ->
+                        onRescheduleTicket(ticket, scheduledAt)
+                        ticketToReschedule = null
+                    }
+                )
+            }
+
+            selectedPhoneNumber?.let { phoneNumber ->
+                ContactActionSheet(
+                    phoneNumber = phoneNumber,
+                    onCall = {
+                        selectedPhoneNumber = null
+
+                        val wasOpened = ContactIntentHelper.openDialer(
+                            context = context,
+                            phoneNumber = phoneNumber
+                        )
+
+                        if (!wasOpened) {
+                            Toast.makeText(
+                                context,
+                                "No se pudo abrir el marcador telefónico",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                    onWhatsApp = {
+                        selectedPhoneNumber = null
+
+                        val wasOpened = ContactIntentHelper.openWhatsApp(
+                            context = context,
+                            phoneNumber = phoneNumber
+                        )
+
+                        if (!wasOpened) {
+                            Toast.makeText(
+                                context,
+                                "No se pudo abrir WhatsApp",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                    onDismiss = {
+                        selectedPhoneNumber = null
+                    }
+                )
+            }
         }
     }
 }
+
+
 
 @Composable
 fun ErrorDialog(
@@ -310,8 +433,10 @@ fun PendingTicketsTab(
     currentUser: com.dscorp.ispadmin.domain.model.User,
     onTakeTicket: (Int) -> Unit,
     onCloseTicket: (AssistanceTicketResponse) -> Unit,
+    onPhoneClick: (String) -> Unit,
     onTicketCardClick: (AssistanceTicketResponse) -> Unit,
-    gettingTicketsFromServer: Boolean = false
+    gettingTicketsFromServer: Boolean = false,
+    onRescheduleTicket: (AssistanceTicketResponse) -> Unit,
 ) {
     AnimatedTicketList(
         tickets = tickets,
@@ -324,7 +449,9 @@ fun PendingTicketsTab(
                 isLoading = loadingTickets[ticket.id] ?: false,
                 onCardClick = { onTicketCardClick(ticket) },
                 onTakeTicket = { onTakeTicket(ticket.id) },
-                onCloseTicket = { onCloseTicket(ticket) }
+                onCloseTicket = { onCloseTicket(ticket) },
+                onPhoneClick = onPhoneClick,
+                onRescheduleTicket = { onRescheduleTicket(ticket) }
             )
         }
     )
@@ -336,8 +463,10 @@ fun InProgressTicketsTab(
     loadingTickets: Map<Int, Boolean>,
     currentUser: com.dscorp.ispadmin.domain.model.User,
     onCloseTicket: (AssistanceTicketResponse) -> Unit,
+    onPhoneClick: (String) -> Unit,
     onTicketCardClick: (AssistanceTicketResponse) -> Unit,
-    gettingTicketsFromServer: Boolean = false
+    gettingTicketsFromServer: Boolean = false,
+    onRescheduleTicket: (AssistanceTicketResponse) -> Unit,
 ) {
     AnimatedTicketList(
         tickets = tickets,
@@ -348,7 +477,9 @@ fun InProgressTicketsTab(
                 currentUser = currentUser,
                 isLoading = loadingTickets[ticket.id] ?: false,
                 onCardClick = { onTicketCardClick(ticket) },
-                onCloseTicket = { onCloseTicket(ticket) }
+                onPhoneClick = onPhoneClick,
+                onCloseTicket = { onCloseTicket(ticket) },
+                onRescheduleTicket = { onRescheduleTicket(ticket) }
             )
         },
         gettingTicketsFromServer = gettingTicketsFromServer
@@ -359,6 +490,7 @@ fun InProgressTicketsTab(
 fun ClosedTicketsTab(
     tickets: List<AssistanceTicketResponse>,
     currentUser: com.dscorp.ispadmin.domain.model.User,
+    onPhoneClick: (String) -> Unit,
     onTicketCardClick: (AssistanceTicketResponse) -> Unit,
     gettingTicketsFromServer: Boolean = false
 ) {
@@ -369,7 +501,8 @@ fun ClosedTicketsTab(
             TicketCard(
                 ticket = ticket,
                 currentUser = currentUser,
-                onCardClick = { onTicketCardClick(ticket) }
+                onCardClick = { onTicketCardClick(ticket) },
+                onPhoneClick = onPhoneClick
             )
         },
         gettingTicketsFromServer = gettingTicketsFromServer
@@ -429,4 +562,52 @@ fun AnimatedTicketList(
             }
         }
     }
-} 
+}
+
+@Composable
+fun RescheduleTicketDateTimePicker(
+    ticket: AssistanceTicketResponse,
+    onDismiss: () -> Unit,
+    onConfirm: (Long) -> Unit
+) {
+    val context = LocalContext.current
+    val calendar = remember(ticket.id) {
+        Calendar.getInstance().apply {
+            time = ticket.scheduledAt ?: ticket.createdAt
+        }
+    }
+
+    LaunchedEffect(ticket.id) {
+        DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                calendar.set(Calendar.YEAR, year)
+                calendar.set(Calendar.MONTH, month)
+                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+
+                TimePickerDialog(
+                    context,
+                    { _, hourOfDay, minute ->
+                        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                        calendar.set(Calendar.MINUTE, minute)
+                        calendar.set(Calendar.SECOND, 0)
+                        calendar.set(Calendar.MILLISECOND, 0)
+
+                        onConfirm(calendar.timeInMillis)
+                    },
+                    calendar.get(Calendar.HOUR_OF_DAY),
+                    calendar.get(Calendar.MINUTE),
+                    true
+                ).apply {
+                    setOnCancelListener { onDismiss() }
+                    setOnDismissListener { }
+                }.show()
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).apply {
+            setOnCancelListener { onDismiss() }
+        }.show()
+    }
+}

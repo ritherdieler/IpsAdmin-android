@@ -15,6 +15,7 @@ data class AssistanceTicketResponse(
     val comments: String? = null,
     var priority: String,
     var createdAt: Date = Date(),
+    var scheduledAt: Date? = null,
     val resolvedAt: Date? = null,
     val assignedTo: String? = null,
     val place: String? = null,
@@ -25,6 +26,12 @@ data class AssistanceTicketResponse(
         val dateFormatter =
             SimpleDateFormat("dd MMMM yyyy - hh:mm", Locale.getDefault())
         return dateFormatter.format(createdAt)
+    }
+
+    fun getScheduledAtDateAsString(): String {
+        val dateFormatter =
+            SimpleDateFormat("dd MMMM yyyy - hh:mm", Locale.getDefault())
+        return dateFormatter.format(scheduledAt ?: createdAt)
     }
 
     fun getStatusAsString(): String {

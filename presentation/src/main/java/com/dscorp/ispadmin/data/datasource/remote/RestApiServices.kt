@@ -53,7 +53,7 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 import com.dscorp.ispadmin.data.response.FaceRegisteredResponse
-
+import com.dscorp.ispadmin.data.apirequestmodel.RescheduleTicketRequest
 /**
  * Created by Sergio Carrillo Diestra on 19/11/2022.
  * scarrillo.peruapps@gmail.com
@@ -299,6 +299,12 @@ interface RestApiServices {
 
     @POST("assistanceTicket")
     suspend fun createTicket(@Body value: AssistanceTicketRequest): Response<AssistanceTicketResponse>
+
+    @PUT("assistanceTicket/{id}/reschedule")
+    suspend fun rescheduleTicket(
+        @Path("id") ticketId: Int,
+        @Body request: RescheduleTicketRequest
+    ): Response<AssistanceTicketResponse>
 
     @GET("subscription/fastSearch")
     suspend fun findSubscriptionByNames(@Query("keyword") keyword: String): Response<List<SubscriptionFastSearchResponse>>
