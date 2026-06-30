@@ -1,11 +1,8 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dscorp.ispadmin.domain.model.subscription.RegisterSubscriptionFormConstraints
-import com.dscorp.ispadmin.domain.model.subscription.subscriptionFacadePhotoError
-import com.dscorp.ispadmin.domain.model.subscription.subscriptionNapBoxErrorAfterNearbyRefresh
-import com.dscorp.ispadmin.domain.model.subscription.subscriptionOnuErrorAfterListRefresh
 import com.dscorp.ispadmin.domain.model.EquipmentCondition
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.InstallationType
@@ -14,6 +11,10 @@ import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.Subscription
+import com.dscorp.ispadmin.domain.model.subscription.RegisterSubscriptionFormConstraints
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionFacadePhotoError
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionNapBoxErrorAfterNearbyRefresh
+import com.dscorp.ispadmin.domain.model.subscription.subscriptionOnuErrorAfterListRefresh
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.plan.GetPlanListUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetAvailableOnuListUseCase
@@ -30,10 +31,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
-import android.net.Uri
 import com.google.android.gms.maps.model.LatLng
-import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +46,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
 class RegisterSubscriptionComposeViewModel(
     private val getAvailableOnuListUseCase: GetAvailableOnuListUseCase,
