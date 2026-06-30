@@ -264,18 +264,21 @@ class RegisterSubscriptionComposeViewModel(
     }
 
     private fun onFirstNameChanged(value: String) {
-        if (value.length > RegisterSubscriptionFormConstraints.MAX_PERSON_NAME_LENGTH) return
+        val upperValue = value.uppercase()
+        if (upperValue.length > RegisterSubscriptionFormConstraints.MAX_PERSON_NAME_LENGTH) return
 
         updateValidatedForm(FormFieldKey.FIRST_NAME) { form ->
-            form.copy(firstName = value)
+            form.copy(firstName = upperValue)
         }
     }
 
     private fun onLastNameChanged(value: String) {
-        if (value.length > RegisterSubscriptionFormConstraints.MAX_PERSON_NAME_LENGTH) return
+        val upperValue = value.uppercase()
+
+        if (upperValue.length > RegisterSubscriptionFormConstraints.MAX_PERSON_NAME_LENGTH) return
 
         updateValidatedForm(FormFieldKey.LAST_NAME) { form ->
-            form.copy(lastName = value)
+            form.copy(lastName = upperValue)
         }
     }
 
