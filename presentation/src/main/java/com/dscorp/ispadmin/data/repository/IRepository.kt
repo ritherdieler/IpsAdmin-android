@@ -43,7 +43,7 @@ import com.dscorp.ispadmin.data.response.AdministrativeOnuResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.facebook.stetho.inspector.elements.Descriptor
-
+import com.dscorp.ispadmin.data.apirequestmodel.RescheduleTicketRequest
 /**
  * Created by Sergio Carrillo Diestra on 25/12/2022.
  * scarrillo.peruapps@gmail.com
@@ -164,6 +164,12 @@ interface IRepository {
     ): AssistanceTicketResponse
 
     suspend fun createTicket(value: AssistanceTicketRequest): AssistanceTicketResponse
+
+    suspend fun rescheduleTicket(
+        ticketId: Int,
+        request: RescheduleTicketRequest
+    ): AssistanceTicketResponse
+
     suspend fun findSubscriptionByNames(names: String): List<SubscriptionFastSearchResponse>
     suspend fun doMigration(migrationRequest: MigrationRequest): SubscriptionResponse
     suspend fun getOnuBySn(s: String): AdministrativeOnuResponse
@@ -189,4 +195,10 @@ interface IRepository {
     suspend fun getPaymentById(paymentId: String): Payment
 
     suspend fun loginWithFace(photo: File): User // edwin agregue
+
+    // Verifica si el usuario ya tiene rostro registrado para login facial.
+    suspend fun hasFaceRegistered(userId: Int): Boolean
+
+    // Registra el rostro despues de validar nuevamente las credenciales del usuario.
+    suspend fun enrollFaceFromPhoto(username: String, password: String, photo: File)
 }

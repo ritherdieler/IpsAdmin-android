@@ -79,6 +79,7 @@ import org.koin.core.component.inject
 import retrofit2.Response
 import java.io.File
 import java.util.Date
+import com.dscorp.ispadmin.data.apirequestmodel.RescheduleTicketRequest
 
 const val HTTP_OK = 200
 
@@ -822,6 +823,13 @@ class Repository : IRepository, KoinComponent {
         return restApiServices.createTicket(value).successOrThrow()
     }
 
+    override suspend fun rescheduleTicket(
+        ticketId: Int,
+        request: RescheduleTicketRequest
+    ): AssistanceTicketResponse {
+        return restApiServices.rescheduleTicket(ticketId, request).successOrThrow()
+    }
+
     override suspend fun findSubscriptionByNames(names: String): List<SubscriptionFastSearchResponse> {
         return restApiServices.findSubscriptionByNames(names).successOrThrow()
     }
@@ -1010,6 +1018,41 @@ class Repository : IRepository, KoinComponent {
             }
             401 -> throw Exception("No se reconocio el rostro")
             else -> throw Exception("No se pudo iniciar sesion con reconocimiento facial")
+        }
+    }
+    // Consulta al backend si el usuario ya tiene un rostro registrado.
+    override suspend fun hasFaceRegistered(userId: Int): Boolean {
+        val response = restApiServices.hasFaceRegistered(userId)
+
+        if (response.isSuccessful) {
+            return response.body()?.hasFace == true
+        }
+
+        throw Exception("No se pudo verificar el registro facial")
+    }
+
+    // Envia credenciales y foto al backend para registrar o actualizar el rostro.
+    // El backend valida la identidad antes de asociar el descriptor a una cuenta.
+    override suspend fun enrollFaceFromPhoto(username: String, password: String, photo: File) {
+        val requestBody = photo.asRequestBody("image/jpeg".toMediaTypeOrNull())
+        val photoPart = MultipartBody.Part.createFormData(
+            name = "photo",
+            filename = photo.name,
+            body = requestBody
+        )
+
+        val response = restApiServices.enrollFaceFromPhoto(
+            username = username.toRequestBody("text/plain".toMediaTypeOrNull()),
+            password = password.toRequestBody("text/plain".toMediaTypeOrNull()),
+            photo = photoPart
+        )
+
+        when (response.code()) {
+            in 200..299 -> Unit
+            400 -> throw Exception("No se detecto un rostro claro. Intenta nuevamente.")
+            401 -> throw Exception("Usuario o contrasena incorrectos.")
+            403 -> throw Exception("La cuenta aun no ha sido verificada por un administrador.")
+            else -> throw Exception("No se pudo registrar el rostro.")
         }
     }
 

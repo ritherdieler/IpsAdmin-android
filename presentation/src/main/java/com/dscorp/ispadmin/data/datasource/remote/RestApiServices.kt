@@ -52,7 +52,8 @@ import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
-
+import com.dscorp.ispadmin.data.response.FaceRegisteredResponse
+import com.dscorp.ispadmin.data.apirequestmodel.RescheduleTicketRequest
 /**
  * Created by Sergio Carrillo Diestra on 19/11/2022.
  * scarrillo.peruapps@gmail.com
@@ -299,6 +300,12 @@ interface RestApiServices {
     @POST("assistanceTicket")
     suspend fun createTicket(@Body value: AssistanceTicketRequest): Response<AssistanceTicketResponse>
 
+    @PUT("assistanceTicket/{id}/reschedule")
+    suspend fun rescheduleTicket(
+        @Path("id") ticketId: Int,
+        @Body request: RescheduleTicketRequest
+    ): Response<AssistanceTicketResponse>
+
     @GET("subscription/fastSearch")
     suspend fun findSubscriptionByNames(@Query("keyword") keyword: String): Response<List<SubscriptionFastSearchResponse>>
 
@@ -382,6 +389,28 @@ interface RestApiServices {
         @Part photo: MultipartBody.Part
     ): Response<User>
 
+    // Consulta si el usuario ya tiene rostro registrado en face_data.
+    @GET("api/face-data/user/{userId}/exists")
+    suspend fun hasFaceRegistered(
+        @Path("userId") userId: Int
+    ): Response<FaceRegisteredResponse>
+
+    // Registra o actualiza el rostro del usuario enviando una foto al backend.
+    @Multipart
+    @POST("api/face-data/photo")
+    suspend fun registerFaceFromPhoto(
+        @Query("userId") userId: Int,
+        @Part photo: MultipartBody.Part
+    ): Response<Unit>
+
+    // Registra un rostro desde el login facial despues de validar credenciales.
+    @Multipart
+    @POST("api/face-data/photo/enroll")
+    suspend fun enrollFaceFromPhoto(
+        @Part("username") username: RequestBody,
+        @Part("password") password: RequestBody,
+        @Part photo: MultipartBody.Part
+    ): Response<User>
 
 }
 
