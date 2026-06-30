@@ -429,11 +429,15 @@ private fun NavGraphContent(
             SupportTicketListScreen(
                 uiState = uiState,
                 onTabChange = viewModel::onTabChange,
+                onDateFilterChange = viewModel::onDateFilterChange,
+                onSortOptionChange = viewModel::onSortOptionChange,
                 onTakeTicket = viewModel::takeTicket,
                 onCloseUnattendedTicket = viewModel::closeUnattendedTicket,
                 onCloseTicket = viewModel::closeTicket,
+                onRescheduleTicket = viewModel::rescheduleTicket,
                 onRefresh = viewModel::refreshData,
                 onDismissError = viewModel::dismissError,
+                onDismissSuccessMessage = viewModel::dismissSuccessMessage,
                 onTicketCardClick = { ticket ->
                     if (ticket.status == AssistanceTicketStatus.CLOSED && ticket.sheetImageUrl?.isNotEmpty() == true) {
                         navController.navigate(AsyncImageViewer(ticket.sheetImageUrl))

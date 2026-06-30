@@ -20,6 +20,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.util.Calendar
+import com.dscorp.ispadmin.data.apirequestmodel.RescheduleTicketRequest
 
 class SupportTicketListViewModel(
     private val repository: IRepository,
@@ -49,6 +50,26 @@ class SupportTicketListViewModel(
     fun onTabChange(tabIndex: Int) {
         _uiState.update { it.copy(activeTab = tabIndex) }
         loadTicketsForActiveTab()
+    }
+
+    fun onDateFilterChange(filter: TicketDateFilter) {
+        if (_uiState.value.selectedDateFilter == filter) return
+
+        _uiState.update { currentState ->
+            currentState.copy(
+                selectedDateFilter = filter
+            )
+        }
+    }
+
+    fun onSortOptionChange(sortOption: TicketSortOption) {
+        if (_uiState.value.selectedSortOption == sortOption) return
+
+        _uiState.update { currentState ->
+            currentState.copy(
+                selectedSortOption = sortOption
+            )
+        }
     }
     
     fun refreshData() {
@@ -160,6 +181,7 @@ class SupportTicketListViewModel(
                 
                 // Actualizar los tickets pendientes y en progreso
                 refreshData()
+
                 
                 _uiState.update { 
                     it.copy(
@@ -217,6 +239,57 @@ class SupportTicketListViewModel(
                             remove(ticket.id)
                         },
                         error = e.message ?: "Error al cancelar el ticket"
+                    )
+                }
+            }
+        }
+    }
+
+    fun rescheduleTicket(ticket: AssistanceTicketResponse, scheduledAt: Long) {
+        viewModelScope.launch {
+            try {
+                _uiState.update {
+                    it.copy(
+                        pendingTicketsLoading = it.pendingTicketsLoading.toMutableMap().apply {
+                            put(ticket.id, true)
+                        },
+                        inProgressTicketsLoading = it.inProgressTicketsLoading.toMutableMap().apply {
+                            put(ticket.id, true)
+                        },
+                        error = null
+                    )
+                }
+
+                repository.rescheduleTicket(
+                    ticketId = ticket.id,
+                    request = RescheduleTicketRequest(scheduledAt)
+                )
+
+                refreshData()
+
+                _uiState.update {
+                    it.copy(
+                        pendingTicketsLoading = it.pendingTicketsLoading.toMutableMap().apply {
+                            remove(ticket.id)
+                        },
+                        inProgressTicketsLoading = it.inProgressTicketsLoading.toMutableMap().apply {
+                            remove(ticket.id)
+                        },
+                        successMessage = "Ticket reprogramado correctamente",
+                        error = null
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        pendingTicketsLoading = it.pendingTicketsLoading.toMutableMap().apply {
+                            remove(ticket.id)
+                        },
+                        inProgressTicketsLoading = it.inProgressTicketsLoading.toMutableMap().apply {
+                            remove(ticket.id)
+                        },
+                        successMessage = null,
+                        error = e.message ?: "Error al reprogramar el ticket"
                     )
                 }
             }
@@ -290,6 +363,10 @@ class SupportTicketListViewModel(
     
     fun dismissError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    fun dismissSuccessMessage() {
+        _uiState.update { it.copy(successMessage = null) }
     }
     
     private fun getFileFromUri(context: Context, fileUri: Uri): File? {

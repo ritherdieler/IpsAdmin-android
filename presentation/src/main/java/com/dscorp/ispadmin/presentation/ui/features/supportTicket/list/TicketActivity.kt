@@ -35,9 +35,13 @@ class TicketActivity : AppCompatActivity() {
                         SupportTicketListScreen(
                             uiState = uiState,
                             onTabChange = viewModel::onTabChange,
+                            onDateFilterChange = viewModel::onDateFilterChange,
+                            onSortOptionChange = viewModel::onSortOptionChange,
                             onTakeTicket = viewModel::takeTicket,
                             onCloseUnattendedTicket = viewModel::closeUnattendedTicket,
                             onCloseTicket = viewModel::closeTicket,
+                            onDismissSuccessMessage = viewModel::dismissSuccessMessage,
+                            onRescheduleTicket = viewModel::rescheduleTicket,
                             onTicketCardClick = { /* Implementar navegación a detalles */ },
                             onRefresh = viewModel::refreshData,
                             onDismissError = viewModel::dismissError
@@ -47,4 +51,4 @@ class TicketActivity : AppCompatActivity() {
             }
         )
     }
-} 
+}
