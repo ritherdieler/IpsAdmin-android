@@ -117,7 +117,7 @@ interface RestApiServices {
     suspend fun findPlaceByLocation(
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double
-    ): Response<Place>
+    ): BaseResponse<Place>
 
     @POST("napbox")
     suspend fun registerNapBox(@Body napBox: NapBox): Response<NapBox>
