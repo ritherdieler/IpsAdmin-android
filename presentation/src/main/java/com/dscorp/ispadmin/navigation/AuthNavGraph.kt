@@ -81,6 +81,47 @@ fun AuthNavGraph(
             }
 
             // Ofrece registrar un rostro solo cuando el backend no reconoce el intento facial.
+//            if (loginState is LoginState.FaceEnrollmentOffer) {
+//                AlertDialog(
+//                    onDismissRequest = { },
+//                    title = {
+//                        Text("Rostro no reconocido")
+//                    },
+//                    text = {
+//                        Text("No encontramos un rostro registrado. Deseas registrar tu rostro ahora?")
+//                    },
+//                    confirmButton = {
+//                        Button(
+//                            onClick = {
+//                                viewModel.resetLoginState()
+//                                navController.navigate(
+//                                    NavRoutes.AuthRoutes.FaceEnrollmentCredentials
+//                                ) {
+//                                    popUpTo(NavRoutes.AuthRoutes.FaceLogin) {
+//                                        inclusive = true
+//                                    }
+//                                }
+//                            }
+//                        ) {
+//                            Text("Registrar rostro")
+//                        }
+//                    },
+//                    dismissButton = {
+//                        Button(
+//                            onClick = {
+//                                viewModel.resetLoginState()
+//                                navController.navigateUp()
+//                            }
+//                        ) {
+//                            Text("Cancelar")
+//                        }
+//                    }
+//                )
+//            }
+
+            // Flujo de registro facial deshabilitado temporalmente.
+// Antes, cuando el rostro no era reconocido, se ofrecía registrar un nuevo rostro.
+// Se conserva el código comentado abajo para poder reactivarlo si negocio lo pide.
             if (loginState is LoginState.FaceEnrollmentOffer) {
                 AlertDialog(
                     onDismissRequest = { },
@@ -88,22 +129,16 @@ fun AuthNavGraph(
                         Text("Rostro no reconocido")
                     },
                     text = {
-                        Text("No encontramos un rostro registrado. Deseas registrar tu rostro ahora?")
+                        Text("No pudimos reconocer tu rostro. Puedes intentar nuevamente o cancelar.")
                     },
                     confirmButton = {
                         Button(
                             onClick = {
                                 viewModel.resetLoginState()
-                                navController.navigate(
-                                    NavRoutes.AuthRoutes.FaceEnrollmentCredentials
-                                ) {
-                                    popUpTo(NavRoutes.AuthRoutes.FaceLogin) {
-                                        inclusive = true
-                                    }
-                                }
+                                faceRetryTrigger++
                             }
                         ) {
-                            Text("Registrar rostro")
+                            Text("Intentar nuevamente")
                         }
                     },
                     dismissButton = {

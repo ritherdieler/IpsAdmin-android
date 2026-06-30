@@ -43,7 +43,7 @@ import com.dscorp.ispadmin.data.response.AdministrativeOnuResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.facebook.stetho.inspector.elements.Descriptor
-
+import com.dscorp.ispadmin.data.apirequestmodel.RescheduleTicketRequest
 /**
  * Created by Sergio Carrillo Diestra on 25/12/2022.
  * scarrillo.peruapps@gmail.com
@@ -164,6 +164,12 @@ interface IRepository {
     ): AssistanceTicketResponse
 
     suspend fun createTicket(value: AssistanceTicketRequest): AssistanceTicketResponse
+
+    suspend fun rescheduleTicket(
+        ticketId: Int,
+        request: RescheduleTicketRequest
+    ): AssistanceTicketResponse
+
     suspend fun findSubscriptionByNames(names: String): List<SubscriptionFastSearchResponse>
     suspend fun doMigration(migrationRequest: MigrationRequest): SubscriptionResponse
     suspend fun getOnuBySn(s: String): AdministrativeOnuResponse

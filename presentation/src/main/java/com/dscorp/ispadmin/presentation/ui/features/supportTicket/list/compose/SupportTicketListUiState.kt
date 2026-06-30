@@ -10,7 +10,10 @@ data class SupportTicketListUiState(
     val user: User? = null,
     val activeTab: Int = 0,
     val tabTitles: List<String> = listOf("Pendientes", "En Progreso", "Cerrados"),
-    
+
+    val selectedDateFilter: TicketDateFilter = TicketDateFilter.ALL,
+    val selectedSortOption: TicketSortOption = TicketSortOption.DATE_DESCENDING,
+
     // Tickets
     val pendingTickets: List<AssistanceTicketResponse> = emptyList(),
     val inProgressTickets: List<AssistanceTicketResponse> = emptyList(),
@@ -22,5 +25,6 @@ data class SupportTicketListUiState(
     val inProgressTicketsLoading: Map<Int, Boolean> = emptyMap(),
     
     // Error
-    val error: String? = null
+    val error: String? = null,
+    val successMessage: String? = null
 ) 
