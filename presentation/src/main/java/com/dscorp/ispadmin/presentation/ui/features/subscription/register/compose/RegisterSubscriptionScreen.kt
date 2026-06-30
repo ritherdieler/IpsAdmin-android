@@ -1,14 +1,8 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
-import android.Manifest
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.content.res.Configuration
-import android.location.LocationManager
 import android.net.Uri
-import android.provider.Settings
-import android.util.Log
+import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -42,7 +36,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -53,18 +46,8 @@ import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
-import com.google.android.gms.location.CurrentLocationRequest
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import java.io.File
 
-private const val LOCATION_LOG_TAG = "RegisterSubscription"
-
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun RegisterSubscriptionFormScreen(
     modifier: Modifier = Modifier,
@@ -73,14 +56,13 @@ fun RegisterSubscriptionFormScreen(
     onSubscriptionRegisterSuccess: () -> Unit = {},
     installationOrderId: Int?,
 ) {
-    val locationPermissionState =
-        rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
-
+    val locationSetup = rememberLocationSetupState()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var dialogError by remember { mutableStateOf<String?>(null) }
     var successSubscription by remember { mutableStateOf<Subscription?>(null) }
     var showFacadePhotoOptionsDialog by remember { mutableStateOf(false) }
+    var locationFetched by remember { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
@@ -94,21 +76,12 @@ fun RegisterSubscriptionFormScreen(
         }
     }
 
-    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-
     val (takeFacadePhoto, _) = rememberPhotoTaker(
         context = context,
         onPhotoTaken = { uri ->
             viewModel.onFacadePhotoSelected(uri)
         }
     )
-
-    val locationSettingsLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) {
-        val isEnabled = isGpsEnabled(context)
-        viewModel.onGpsStateChanged(isEnabled)
-    }
 
     val facadePhotoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -118,96 +91,49 @@ fun RegisterSubscriptionFormScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadScreenData(installationOrderId)
-
-        val isGpsCurrentlyEnabled = isGpsEnabled(context)
-        viewModel.onGpsStateChanged(isGpsCurrentlyEnabled)
-        viewModel.onLocationPermissionChanged(locationPermissionState.status.isGranted)
     }
 
-    LaunchedEffect(locationPermissionState.status.isGranted) {
-        viewModel.onLocationPermissionChanged(locationPermissionState.status.isGranted)
-    }
-
-    LaunchedEffect(uiState.isGpsEnabled, uiState.hasLocationPermission) {
-        if (uiState.isGpsEnabled && uiState.hasLocationPermission) {
-            try {
-                val currentLocationRequest = CurrentLocationRequest.Builder()
-                    .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-                    .build()
-
-                if (ActivityCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ) == PackageManager.PERMISSION_GRANTED
-                ) {
-                    fusedLocationClient.getCurrentLocation(currentLocationRequest, null)
-                        .addOnSuccessListener { location ->
-                            location?.let {
-                                viewModel.processCurrentLocation(it.latitude, it.longitude)
-                            }
-                        }
-                }
-            } catch (e: Exception) {
-                Log.w(LOCATION_LOG_TAG, "getCurrentLocation failed", e)
+    LaunchedEffect(locationSetup.isReady) {
+        if (locationSetup.isReady && !locationFetched) {
+            locationFetched = true
+            locationSetup.fetchCurrentLocation { latitude, longitude ->
+                viewModel.processCurrentLocation(latitude, longitude)
             }
+        }
+        if (!locationSetup.isReady) {
+            locationFetched = false
         }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        when {
-            uiState.isGpsEnabled && uiState.hasLocationPermission -> {
-                RegisterSubscriptionForm(
-                    formState = uiState,
-                    onIntent = { intent ->
-                        if (intent is RegisterSubscriptionIntent.RegisterClick) {
-                            val facadePhotoFile =
-                                uiState.registerSubscriptionForm.facadePhotoUri?.let { uri ->
-                                    uriToFile(context = context, uri = uri)
-                                }
-                            viewModel.onIntent(
-                                RegisterSubscriptionIntent.RegisterClick(
-                                    facadePhotoFile = facadePhotoFile
-                                )
-                            )
-                        } else {
-                            viewModel.onIntent(intent)
-                        }
-                    },
-                    onFacadePhotoClick = { showFacadePhotoOptionsDialog = true },
-                )
-            }
-
-            !uiState.isGpsEnabled -> {
-                GpsDisabledContent(
-                    modifier = Modifier.fillMaxSize(),
-                    onOpenLocationSettings = {
-                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                        locationSettingsLauncher.launch(intent)
-                    }
-                )
-            }
-
-            locationPermissionState.status.shouldShowRationale -> {
-                LocationPermissionRationaleContent(
-                    modifier = Modifier.fillMaxSize(),
-                    onRequestPermission = { locationPermissionState.launchPermissionRequest() }
-                )
-            }
-
-            else -> {
-                LocationPermissionSettingsContent(
-                    modifier = Modifier.fillMaxSize(),
-                    packageName = context.packageName,
-                    onOpenAppSettings = { pkg ->
-                        val intent =
-                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                data = Uri.fromParts("package", pkg, null)
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (locationSetup.isReady) {
+            RegisterSubscriptionForm(
+                formState = uiState,
+                onIntent = { intent ->
+                    if (intent is RegisterSubscriptionIntent.RegisterClick) {
+                        val facadePhotoFile =
+                            uiState.registerSubscriptionForm.facadePhotoUri?.let { uri ->
+                                uriToFile(context = context, uri = uri)
                             }
-                        context.startActivity(intent)
+                        viewModel.onIntent(
+                            RegisterSubscriptionIntent.RegisterClick(
+                                facadePhotoFile = facadePhotoFile
+                            )
+                        )
+                    } else {
+                        viewModel.onIntent(intent)
                     }
-                )
-            }
+                },
+                onFacadePhotoClick = { showFacadePhotoOptionsDialog = true },
+            )
+        } else {
+            LocationSetupGate(
+                status = locationSetup.status,
+                onContinue = locationSetup.onContinue,
+                onOpenAppSettings = locationSetup.openAppSettings,
+                onOpenLocationSettings = locationSetup.openLocationSettings,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
 
         successSubscription?.let { subscription ->
@@ -222,17 +148,6 @@ fun RegisterSubscriptionFormScreen(
             ErrorDialog(
                 error = error,
                 onDismiss = { dialogError = null }
-            )
-        }
-
-        if (uiState.shouldShowGpsDialog) {
-            GpsDialog(
-                onActivateGps = {
-                    viewModel.dismissGpsDialog()
-                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                    locationSettingsLauncher.launch(intent)
-                },
-                onDismiss = { viewModel.dismissGpsDialog() }
             )
         }
 
@@ -264,81 +179,6 @@ fun RegisterSubscriptionFormScreen(
             )
         }
     }
-}
-
-@Composable
-private fun GpsDisabledContent(
-    modifier: Modifier = Modifier,
-    onOpenLocationSettings: () -> Unit,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Es necesario activar el GPS para continuar",
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onOpenLocationSettings) {
-            Text("Activar GPS")
-        }
-    }
-}
-
-@Composable
-private fun LocationPermissionRationaleContent(
-    modifier: Modifier = Modifier,
-    onRequestPermission: () -> Unit,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Se necesita permiso de ubicación para obtener su ubicación actual",
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onRequestPermission) {
-            Text("Solicitar permiso")
-        }
-    }
-}
-
-@Composable
-private fun LocationPermissionSettingsContent(
-    modifier: Modifier = Modifier,
-    packageName: String,
-    onOpenAppSettings: (String) -> Unit,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Por favor conceda el permiso o vaya a la configuración y habilite manualmente el permiso de ubicación para usar esta función.",
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { onOpenAppSettings(packageName) }) {
-            Text("Ir a Configuración")
-        }
-    }
-}
-
-private fun isGpsEnabled(context: Context): Boolean {
-    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-    return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
 }
 
 private fun uriToFile(context: Context, uri: Uri): File {
@@ -502,62 +342,6 @@ private fun ErrorDialog(
     )
 }
 
-@Composable
-private fun GpsDialog(
-    onActivateGps: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "GPS desactivado",
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
-            Text(
-                text = "Para utilizar esta funcionalidad, es necesario activar el GPS de su dispositivo.",
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        confirmButton = {
-            Button(onClick = onActivateGps) {
-                Text("Activar GPS")
-            }
-        },
-        dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancelar")
-            }
-        }
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun GpsDisabledContentPreview() {
-    MyTheme {
-        GpsDisabledContent(onOpenLocationSettings = {})
-    }
-}
-
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-private fun LocationPermissionRationaleContentPreview() {
-    MyTheme {
-        LocationPermissionRationaleContent(onRequestPermission = {})
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun LocationPermissionSettingsContentPreview() {
-    MyTheme {
-        LocationPermissionSettingsContent(packageName = "com.example", onOpenAppSettings = {})
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun SuccessDialogPreview() {
@@ -579,18 +363,10 @@ private fun SuccessDialogPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun ErrorDialogPreview() {
     MyTheme {
         ErrorDialog(error = "No se pudo completar la operación", onDismiss = {})
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun GpsDialogPreview() {
-    MyTheme {
-        GpsDialog(onActivateGps = {}, onDismiss = {})
     }
 }

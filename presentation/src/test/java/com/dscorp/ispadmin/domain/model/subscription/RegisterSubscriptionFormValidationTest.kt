@@ -175,17 +175,15 @@ class RegisterSubscriptionFormValidationTest {
     }
 
     @Test
-    fun `RegisterSubscriptionFormState isValid when all blocking pass`() {
+    fun `RegisterSubscriptionFormState wireless blocking fields pass without onu nap or facade photo uri`() {
         val plan = PlanResponse(
-            id = "p1",
-            name = "P",
+            id = "w1",
+            name = "Wireless",
             price = 1.0,
             downloadSpeed = "1",
             uploadSpeed = "1",
-            type = InstallationType.FIBER
+            type = InstallationType.WIRELESS
         )
-        val nap = NapBoxResponse(id = "n1", placeName = "P", placeId = 1)
-        val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
         val form = RegisterSubscriptionFormState(
             firstName = "Juan",
             lastName = "Perez",
@@ -195,13 +193,47 @@ class RegisterSubscriptionFormValidationTest {
             planList = listOf(plan),
             selectedPlan = plan,
             selectedPlace = Place(id = "1", name = "L"),
-            napBoxList = listOf(nap),
-            selectedNapBox = nap,
-            onuList = listOf(onu),
-            selectedOnu = onu,
-            installationType = InstallationType.FIBER
+            installationType = InstallationType.WIRELESS,
         )
-        assertTrue(form.isValid())
+        listOf(
+            FormFieldKey.FIRST_NAME,
+            FormFieldKey.LAST_NAME,
+            FormFieldKey.DNI,
+            FormFieldKey.ADDRESS,
+            FormFieldKey.PHONE,
+            FormFieldKey.PLAN,
+            FormFieldKey.PLACE,
+            FormFieldKey.ONU,
+            FormFieldKey.NAP_BOX,
+            FormFieldKey.NOTE,
+        ).forEach { field ->
+            assertNull(form.validate(field))
+        }
+        assertNotNull(form.validate(FormFieldKey.FACADE_PHOTO))
+    }
+
+    @Test
+    fun `RegisterSubscriptionFormState isValid false without facade photo`() {
+        val plan = PlanResponse(
+            id = "w1",
+            name = "Wireless",
+            price = 1.0,
+            downloadSpeed = "1",
+            uploadSpeed = "1",
+            type = InstallationType.WIRELESS
+        )
+        val form = RegisterSubscriptionFormState(
+            firstName = "Juan",
+            lastName = "Perez",
+            dni = "12345678",
+            address = "Calle larga 12345",
+            phone = "987654321",
+            planList = listOf(plan),
+            selectedPlan = plan,
+            selectedPlace = Place(id = "1", name = "L"),
+            installationType = InstallationType.WIRELESS,
+        )
+        assertFalse(form.isValid())
     }
 
     @Test

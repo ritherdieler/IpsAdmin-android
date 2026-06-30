@@ -9,13 +9,6 @@ data class RegisterSubscriptionState(
     val isRefreshingOnuList: Boolean = false,
     val isLoadingLocation: Boolean = false,
     val isLoadingNearbyNapBoxes: Boolean = false,
-    
-    // Estado de GPS y permisos (migrado desde Screen)
-    val isGpsEnabled: Boolean = false,
-    val hasLocationPermission: Boolean = false,
-    val shouldShowGpsDialog: Boolean = false,
-    
-    // Caché de datos (migrado desde variables privadas del ViewModel)
     val cachedNapBoxList: List<NapBoxResponse> = emptyList(),
     val cachedPlanList: List<PlanResponse> = emptyList(),
     val currentUser: User? = null,

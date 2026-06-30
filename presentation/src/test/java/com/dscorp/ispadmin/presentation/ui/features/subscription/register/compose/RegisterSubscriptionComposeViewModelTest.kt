@@ -306,6 +306,24 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
+    fun `processCurrentLocation toggles isLoadingLocation`() = runTest(testDispatcher) {
+        coEvery { getPlaceFromLocationUseCase(any(), any()) } coAnswers {
+            delay(50)
+            Result.success(Place(id = "1", name = "P"))
+        }
+        coEvery { getNearNapBoxesUseCase(any(), any()) } returns Result.success(emptyList())
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        viewModel.processCurrentLocation(-11.0, -77.0)
+        assertTrue(viewModel.uiState.value.isLoadingLocation)
+
+        advanceUntilIdle()
+        assertEquals(false, viewModel.uiState.value.isLoadingLocation)
+    }
+
+    @Test
     fun `saveSubscription ignores second call while first is in progress`() = runTest(testDispatcher) {
         val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
         val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")

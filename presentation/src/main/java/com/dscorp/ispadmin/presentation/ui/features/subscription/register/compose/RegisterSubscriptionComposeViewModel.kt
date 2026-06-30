@@ -392,10 +392,17 @@ fun processCurrentLocation(latitude: Double, longitude: Double) {
     onLocationChanged(LatLng(latitude, longitude))
     locationPipelineJob?.cancel()
     val expectedGen = locationRequestGeneration.incrementAndGet()
+    _uiState.update { it.copy(isLoadingLocation = true) }
     locationPipelineJob = viewModelScope.launch(mainImmediate) {
-        coroutineScope {
-            launch { resolvePlaceFromLocation(expectedGen, latitude, longitude) }
-            launch { fetchNearbyNapBoxes(expectedGen, latitude, longitude) }
+        try {
+            coroutineScope {
+                launch { resolvePlaceFromLocation(expectedGen, latitude, longitude) }
+                launch { fetchNearbyNapBoxes(expectedGen, latitude, longitude) }
+            }
+        } finally {
+            if (expectedGen == locationRequestGeneration.get()) {
+                _uiState.update { it.copy(isLoadingLocation = false) }
+            }
         }
     }
 }
@@ -605,23 +612,7 @@ fun onLocationChanged(currentLocation: LatLng) {
     }
 }
 
-fun onGpsStateChanged(isEnabled: Boolean) {
-    _uiState.update {
-        if (isEnabled) {
-            it.copy(isGpsEnabled = true)
-        } else {
-            it.copy(isGpsEnabled = false, shouldShowGpsDialog = true)
-        }
-    }
-}
-
-fun onLocationPermissionChanged(hasPermission: Boolean) {
-    _uiState.update { it.copy(hasLocationPermission = hasPermission) }
-}
-
-fun dismissGpsDialog() {
-    _uiState.update { it.copy(shouldShowGpsDialog = false) }
-}
+private fun currentUiState() = _uiState.value
 
 fun closeInstallationOrder(orderId: Int) = viewModelScope.launch(mainImmediate) {
     installationOrderUseCase.closeInstallationOrderResult(orderId).fold(
@@ -635,8 +626,6 @@ fun closeInstallationOrder(orderId: Int) = viewModelScope.launch(mainImmediate) 
         }
     )
 }
-
-private fun currentUiState() = _uiState.value
 
 private fun updateValidatedForm(
     vararg fields: FormFieldKey,
