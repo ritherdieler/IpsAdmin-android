@@ -87,6 +87,11 @@ sealed class DrawerGroup(
         listOf(DrawerItem.SubscriptionFinder, DrawerItem.RegisterSubscription)
     )
 
+    object SubscriptionFinderOnly : DrawerGroup(
+        "Suscripciones",
+        listOf(DrawerItem.SubscriptionFinder)
+    )
+
     object Payment : DrawerGroup("Pagos", listOf(DrawerItem.PayerFinder))
     object Plans : DrawerGroup("Planes", listOf(DrawerItem.PlanList))
     object Outlay : DrawerGroup("Egresos", listOf(DrawerItem.RegisterOutlay))
@@ -107,7 +112,17 @@ object DrawerNavigation {
                 DrawerGroup.Profile
             )
 
-            User.UserType.SECRETARY, User.UserType.ACCOUNTANT -> listOf(
+            User.UserType.SECRETARY -> listOf(
+                DrawerGroup.Dashboard,
+                DrawerGroup.SubscriptionFinderOnly,
+                DrawerGroup.Support,
+                DrawerGroup.Installation,
+                DrawerGroup.Payment,
+                DrawerGroup.Outlay,
+                DrawerGroup.Profile,
+            )
+
+            User.UserType.ACCOUNTANT -> listOf(
                 DrawerGroup.Dashboard,
                 DrawerGroup.Subscription,
                 DrawerGroup.Support,

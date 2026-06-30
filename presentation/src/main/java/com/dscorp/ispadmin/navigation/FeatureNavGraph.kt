@@ -45,6 +45,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.dscorp.ispadmin.domain.model.GeoLocation
+import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.AsyncImageViewer
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Dashboard
@@ -228,6 +229,7 @@ fun FeatureNavGraph(
             ) {
                 NavGraphContent(
                     navController, onLoggedOut = onLoggedOut,
+                    currentUser = uiState.currentUser,
                     startDestination = uiState.getDrawerGroups()
                         .firstOrNull()?.items?.firstOrNull()?.route
                 )
@@ -241,6 +243,7 @@ fun FeatureNavGraph(
 private fun NavGraphContent(
     navController: NavHostController,
     onLoggedOut: () -> Unit = {},
+    currentUser: User?,
     startDestination: Any?
 ) {
     NavHost(
@@ -280,13 +283,29 @@ private fun NavGraphContent(
         // SUBSCRIPTION MODULE
         composable<Subscription.Register> {
             val installationOrder = it.toRoute<Subscription.Register>().installationOrderId
-            RegisterSubscriptionFormScreen(
-                viewModel = koinViewModel(),
-                installationOrderId = installationOrder,
-                onSubscriptionRegisterSuccess = {
-                    navController.popBackStack()
-                }
+            val canRegisterSubscription = currentUser?.type in listOf(
+                User.UserType.ADMIN,
+                User.UserType.ACCOUNTANT,
+                User.UserType.TECHNICIAN
             )
+
+            when {
+                currentUser == null -> Unit
+                canRegisterSubscription -> {
+                    RegisterSubscriptionFormScreen(
+                        viewModel = koinViewModel(),
+                        installationOrderId = installationOrder,
+                        onSubscriptionRegisterSuccess = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+                else -> {
+                    LaunchedEffect(Unit) {
+                        navController.popBackStack()
+                    }
+                }
+            }
         }
         composable<Subscription.Find> {
             val viewModel: SubscriptionFinderViewModel = koinViewModel()
