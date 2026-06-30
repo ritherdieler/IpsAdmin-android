@@ -165,15 +165,15 @@ fun Login(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Boton secundario: abre el flujo facial que ya existe sin cambiar su logica.
-            LoginOptionButton(
-                text = "Iniciar sesion con reconocimiento facial",
-                icon = Icons.Default.Face,
-                enabled = loginState !is LoginState.Loading,
-                onClick = onFaceLoginClicked
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
+//            // Boton secundario: abre el flujo facial que ya existe sin cambiar su logica.
+//            LoginOptionButton(
+//                text = "Iniciar sesion con reconocimiento facial",
+//                icon = Icons.Default.Face,
+//                enabled = loginState !is LoginState.Loading,
+//                onClick = onFaceLoginClicked
+//            )
+//
+//            Spacer(modifier = Modifier.height(10.dp))
 
             // Boton secundario: abre el flujo de h  uella con AndroidX Biometric.
             LoginOptionButton(

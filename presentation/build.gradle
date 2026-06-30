@@ -26,8 +26,8 @@ android {
         applicationId "com.dscorp.ispadmin"
         minSdk rootProject.ext.minSdk
         targetSdk rootProject.ext.targetSdk
-        versionCode 47
-        versionName "2.4.0"
+        versionCode 48
+        versionName "2.5.0"
         testInstrumentationRunner "com.dscorp.ispadmin.test.InstrumentationTestRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -41,7 +41,7 @@ android {
             applicationIdSuffix ".dev"
             versionNameSuffix "-dev"
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
-            buildConfigField 'String', "BASE_URL", '"http://localhost:8080/ispadmin/"'
+            buildConfigField 'String', "BASE_URL", '"http://192.168.1.94:8080/ispadmin/"'
             buildConfigField 'String', "OLT_SERVICE_API_KET", "\"${oltServiceApiKey}\""
             buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", "\"${sendCloudMessagingApiKey}\""
         }
