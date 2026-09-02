@@ -50,12 +50,18 @@ object RegisterSubscriptionTestTags {
     const val SUCCESS_MESSAGE = "register_success_message"
     const val TR069_STATUS_CARD = "tr069_status_card"
     const val TR069_STATUS_MESSAGE = "tr069_status_message"
+    const val OLT_STATUS_CARD = "olt_status_card"
+    const val OLT_STATUS_MESSAGE = "olt_status_message"
+    const val OLT_PROVISION_STATUS_PREFIX = "olt_provision_status_"
+    const val TR069_PROVISION_STATUS_PREFIX = "tr069_provision_status_"
 
     fun onuItem(index: Int): String = "$ONU_ITEM_PREFIX$index"
     fun planItem(index: Int): String = "$PLAN_ITEM_PREFIX$index"
     fun installationTypeItem(index: Int): String = "$INSTALLATION_TYPE_ITEM_PREFIX$index"
     fun hostDeviceItem(index: Int): String = "$HOST_DEVICE_ITEM_PREFIX$index"
     fun vlanItem(index: Int): String = "$VLAN_ITEM_PREFIX$index"
+    fun oltProvisionStatus(status: String): String = "$OLT_PROVISION_STATUS_PREFIX$status"
+    fun tr069ProvisionStatus(status: String): String = "$TR069_PROVISION_STATUS_PREFIX$status"
 
     val interactive = listOf(
         FIRST_NAME,

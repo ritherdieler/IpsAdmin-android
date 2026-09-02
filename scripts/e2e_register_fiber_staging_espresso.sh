@@ -81,22 +81,54 @@ PLACE_HIT="$(curl -sS -G -H "Authorization: Bearer $TOKEN" \
   "$API_BASE/place/findByLocation" \
   --data-urlencode "latitude=$GEO_LAT" \
   --data-urlencode "longitude=$GEO_LON")"
-E2E_PLACE="$E2E_PLACE" python3 -c 'import json,sys,os
+E2E_PLACE="$E2E_PLACE" GEO_LAT="$GEO_LAT" GEO_LON="$GEO_LON" python3 -c 'import json,sys,os
 raw=sys.stdin.read()
 data=json.loads(raw)
 status=data.get("status")
 payload=data.get("data") or {}
 name=(payload.get("name") if isinstance(payload, dict) else None) or ""
 wanted=os.environ.get("E2E_PLACE","")
+lat=os.environ.get("GEO_LAT","")
+lon=os.environ.get("GEO_LON","")
 if status != 200 or not name:
-    print("GEO is outside every place.area polygon; apply scripts/sql/staging-e2e-registration-catalog.sql and use place.latitude/longitude", file=sys.stderr)
+    print("GEO fuera de todo place.area (findByLocation != 200).", file=sys.stderr)
+    print("Obligatorio: lat/lon DENTRO del polígono. Lab FIBER: lat=-11.2156 lon=-77.4107 (NAP NO-001).", file=sys.stderr)
+    print("Nunca intercambiar lat/lon; MySQL POINT es (lon lat). No usar centro de envelope ni camara mapa default.", file=sys.stderr)
+    print("Enviado: latitude=%s longitude=%s" % (lat, lon), file=sys.stderr)
     print(raw, file=sys.stderr)
     sys.exit(1)
 if wanted and wanted.lower() not in name.lower():
-    print("findByLocation resolved %s but E2E_PLACE=%s" % (name, wanted), file=sys.stderr)
+    print("findByLocation resolved %s but E2E_PLACE=%s (lat=%s lon=%s)" % (name, wanted, lat, lon), file=sys.stderr)
     sys.exit(1)
-print("findByLocation ok place=%s" % name)
+print("findByLocation ok place=%s lat=%s lon=%s" % (name, lat, lon))
 ' <<<"$PLACE_HIT"
+
+NEAR_HIT="$(curl -sS -G -H "Authorization: Bearer $TOKEN" \
+  "$API_BASE/napbox/near" \
+  --data-urlencode "latitude=$GEO_LAT" \
+  --data-urlencode "longitude=$GEO_LON")"
+E2E_NAP_CODE="$E2E_NAP_CODE" GEO_LAT="$GEO_LAT" GEO_LON="$GEO_LON" python3 -c 'import json,sys,os
+raw=sys.stdin.read()
+wanted=(os.environ.get("E2E_NAP_CODE") or "").strip().upper()
+lat=os.environ.get("GEO_LAT","")
+lon=os.environ.get("GEO_LON","")
+data=json.loads(raw)
+items=data if isinstance(data, list) else (data.get("data") or data.get("response") or [])
+if not isinstance(items, list) or not items:
+    print("napbox/near vacio para lat=%s lon=%s" % (lat, lon), file=sys.stderr)
+    print(raw, file=sys.stderr)
+    sys.exit(1)
+codes=[str((i or {}).get("code") or "").upper() for i in items]
+print("napbox/near ok first=%s count=%s" % (codes[0] if codes else "?", len(codes)))
+if wanted and wanted not in codes:
+    print("GEO no acerca la NAP pedida: E2E_NAP_CODE=%s ausente en /napbox/near." % wanted, file=sys.stderr)
+    print("Usar coords de esa nap_box (lab: NO-001 lat=-11.2156 lon=-77.4107).", file=sys.stderr)
+    print("place.latitude/longitude (-11.2177/-77.4137) estan en poligono pero near prioriza otras NAP.", file=sys.stderr)
+    print("near=%s" % codes[:12], file=sys.stderr)
+    sys.exit(1)
+if wanted and codes and codes[0] != wanted:
+    print("WARN near[0]=%s wanted=%s (sigue si esta en la lista)" % (codes[0], wanted), file=sys.stderr)
+' <<<"$NEAR_HIT"
 
 ONU_OK=0
 for _ in $(seq 1 12); do
@@ -130,6 +162,14 @@ fi
 echo "== prepare emulator location =="
 $ADB -s "$DEVICE" emu geo fix "$GEO_LON" "$GEO_LAT" 2>/dev/null || \
   $ADB -s "$DEVICE" shell am broadcast -a android.intent.action.SET_MOCK_LOCATION >/dev/null 2>&1 || true
+$ADB wait-for-device
+for _ in $(seq 1 30); do
+  if $ADB -s "$DEVICE" get-state 2>/dev/null | grep -q device; then
+    break
+  fi
+  sleep 1
+done
+$ADB -s "$DEVICE" get-state | grep -q device || { echo "Emulator lost after geo fix" >&2; exit 1; }
 
 echo "== ensure stagingDebug installed =="
 ./gradlew :presentation:installStagingDebug

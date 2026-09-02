@@ -23,6 +23,12 @@ class E2ePlaceLocationFixtureTest {
         assertThat(script).contains("GEO_LON=\"\${GEO_LON:-${E2ePlaceLocationFixture.LONGITUDE}}\"")
         assertThat(script).contains("E2E_PLACE=\"\${E2E_PLACE:-${E2ePlaceLocationFixture.PLACE_NAME}}\"")
         assertThat(script).contains("place/findByLocation")
+        assertThat(script).contains("napbox/near")
+        assertThat(script).contains("GEO fuera de todo place.area")
+        val localScript = File("../scripts/e2e_register_fiber_espresso.sh").readText()
+        assertThat(localScript).contains("GEO_LAT=\"\${GEO_LAT:-${E2ePlaceLocationFixture.LATITUDE}}\"")
+        assertThat(localScript).contains("GEO_LON=\"\${GEO_LON:-${E2ePlaceLocationFixture.LONGITUDE}}\"")
+        assertThat(localScript).doesNotContain("GEO_LAT=\"\${GEO_LAT:--11.2177}\"")
         val e2eSource = File(
             "src/androidTest/java/com/dscorp/ispadmin/presentation/ui/features/subscription/register/FiberRegisterFirstOnuE2ETest.kt"
         ).readText()

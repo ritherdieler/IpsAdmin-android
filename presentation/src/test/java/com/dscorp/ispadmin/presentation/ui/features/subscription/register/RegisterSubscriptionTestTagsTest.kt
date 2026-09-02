@@ -48,10 +48,22 @@ class RegisterSubscriptionTestTagsTest {
         assertThat(RegisterSubscriptionTestTags.WIZARD_CONTINUE).isEqualTo("wizard_continue")
         assertThat(RegisterSubscriptionTestTags.NEARBY_NAP_LOADING)
             .isEqualTo("register_nearby_nap_loading")
+        assertThat(RegisterSubscriptionTestTags.oltProvisionStatus("COMPLETE"))
+            .isEqualTo("olt_provision_status_COMPLETE")
+        assertThat(RegisterSubscriptionTestTags.tr069ProvisionStatus("COMPLETE"))
+            .isEqualTo("tr069_provision_status_COMPLETE")
+        val e2eSource = File(
+            "src/androidTest/java/com/dscorp/ispadmin/presentation/ui/features/subscription/register/FiberRegisterFirstOnuE2ETest.kt"
+        ).readText()
+        assertThat(e2eSource).contains("oltProvisionStatus(\"COMPLETE\")")
+        assertThat(e2eSource).contains("tr069ProvisionStatus(\"COMPLETE\")")
         val screenSource = File(
             "src/main/java/com/dscorp/ispadmin/presentation/ui/features/subscription/register/compose/RegisterSubscriptionScreen.kt"
         ).readText()
         assertThat(screenSource).contains("RegisterSubscriptionDebugActions.SET_FACADE_PHOTO")
+        assertThat(screenSource).contains("OltStatusCard")
+        assertThat(screenSource).contains("oltProvisionStatus(")
+        assertThat(screenSource).contains("tr069ProvisionStatus(")
     }
 
     @Test

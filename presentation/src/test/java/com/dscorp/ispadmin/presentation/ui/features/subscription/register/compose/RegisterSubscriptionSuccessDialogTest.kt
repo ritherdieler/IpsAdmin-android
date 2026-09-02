@@ -40,11 +40,49 @@ class RegisterSubscriptionSuccessDialogTest {
         }
 
         composeRule.onNodeWithTag("tr069_status_card").assertIsDisplayed()
+        composeRule.onNodeWithTag("tr069_provision_status_COMPLETE").assertIsDisplayed()
         composeRule.onNodeWithText(
             "ONU configurada automáticamente por TR-069. No requiere configuración manual."
         ).assertIsDisplayed()
         composeRule.onNodeWithText("Casa24").assertIsDisplayed()
         composeRule.onNodeWithText("Casa5").assertIsDisplayed()
+    }
+
+    @Test
+    fun `FIBER success requires OLT COMPLETE and ACS COMPLETE tags`() {
+        composeRule.setContent {
+            MaterialTheme {
+                RegisterSuccessFullScreen(
+                    subscription = Subscription(
+                        subscriptionId = 42,
+                        firstName = "Ana",
+                        lastName = "García",
+                        installationType = InstallationType.FIBER,
+                        oltProvisionStatus = "COMPLETE",
+                        tr069ProvisionStatus = "COMPLETE",
+                        wifiSsid24 = "Casa24",
+                        wifiSsid5 = "Casa5",
+                    ),
+                    onDismiss = {},
+                    onContinue = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("register_success_fullscreen").assertIsDisplayed()
+        composeRule.onNodeWithTag("olt_provision_status_COMPLETE")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag("olt_status_message")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("ONU autorizada en la OLT.").assertIsDisplayed()
+        composeRule.onNodeWithTag("tr069_provision_status_COMPLETE")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag("tr069_status_message")
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test

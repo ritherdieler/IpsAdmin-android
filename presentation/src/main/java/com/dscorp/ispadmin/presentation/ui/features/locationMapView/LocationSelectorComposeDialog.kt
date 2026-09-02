@@ -26,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +44,6 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.launch
 
 const val MAP_SELECTION_REQUEST_KEY = "map_selection_request"
 const val MAP_SELECTION_RESULT_KEY = "map_selection_result"
@@ -62,7 +60,6 @@ fun LocationSelectorComposeDialog(
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(cameraLatLng, DEFAULT_MANUAL_MAP_CAMERA_ZOOM)
     }
-    val scope = rememberCoroutineScope()
     var coordinateQuery by remember { mutableStateOf("") }
     var coordinateError by remember { mutableStateOf<String?>(null) }
     var selectedLatLng by remember(initialLocation) {
@@ -148,14 +145,12 @@ fun LocationSelectorComposeDialog(
                                     val target = LatLng(parsed.latitude, parsed.longitude)
                                     selectedLatLng = target
                                     if (mapsConfigured) {
-                                        scope.launch {
-                                            cameraPositionState.animate(
-                                                CameraUpdateFactory.newLatLngZoom(
-                                                    target,
-                                                    DEFAULT_MANUAL_MAP_CAMERA_ZOOM
-                                                )
+                                        cameraPositionState.move(
+                                            CameraUpdateFactory.newLatLngZoom(
+                                                target,
+                                                DEFAULT_MANUAL_MAP_CAMERA_ZOOM
                                             )
-                                        }
+                                        )
                                     }
                                 }
                             },
@@ -213,11 +208,11 @@ fun LocationSelectorComposeDialog(
                         )
                         Button(
                             onClick = {
-                                val center = if (mapsConfigured) {
-                                    cameraPositionState.position.target
-                                } else {
-                                    selectedLatLng ?: return@Button
-                                }
+                                val center = resolveManualMapSelectionTarget(
+                                    mapsConfigured = mapsConfigured,
+                                    searchedOrPinned = selectedLatLng,
+                                    cameraTarget = cameraPositionState.position.target,
+                                ) ?: return@Button
                                 onLocationSelected(center)
                             },
                             modifier = Modifier

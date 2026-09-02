@@ -32,7 +32,7 @@ class PollRegistrationProgressUseCase(
 
     companion object {
         const val DEFAULT_POLL_INTERVAL_MS = 2_000L
-        const val DEFAULT_TIMEOUT_MS = 120_000L
+        const val DEFAULT_TIMEOUT_MS = 300_000L
     }
 }
 

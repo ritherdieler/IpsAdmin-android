@@ -64,6 +64,7 @@ import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.LocationSelectorComposeDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionDebugActions
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionTestTags
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
 import java.io.File
@@ -372,6 +373,11 @@ internal fun RegisterSuccessFullScreen(
     val isPendingTr069 = tr069Status == "PENDING"
     val showTr069Section = tr069Status == "COMPLETE" || requiresManualTr069 || isPendingTr069
     val showRetryTr069 = (requiresManualTr069 || isPendingTr069) && onRetryTr069 != null
+    val oltStatus = subscription.oltProvisionStatus
+    val showOltSection = (subscription.installationType == InstallationType.FIBER ||
+        subscription.installationType == InstallationType.ONLY_TV_FIBER) &&
+        !oltStatus.isNullOrBlank() &&
+        oltStatus != "NA"
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -456,6 +462,18 @@ internal fun RegisterSuccessFullScreen(
                             "Tipo",
                             subscription.installationType?.toString() ?: "No especificado"
                         )
+                    }
+
+                    if (showOltSection) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Autorización OLT",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.testTag("register_success_section_olt")
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OltStatusCard(subscription = subscription)
                     }
 
                     if (showTr069Section) {
@@ -559,9 +577,10 @@ internal fun SuccessDialog(
 }
 
 @Composable
-internal fun Tr069StatusCard(subscription: Subscription) {
-    val isComplete = subscription.tr069ProvisionStatus == "COMPLETE"
-    val isPending = subscription.tr069ProvisionStatus == "PENDING"
+internal fun OltStatusCard(subscription: Subscription) {
+    val status = subscription.oltProvisionStatus.orEmpty()
+    val isComplete = status == "COMPLETE"
+    val isPending = status == "PENDING"
     val containerColor = when {
         isComplete -> MaterialTheme.colorScheme.tertiaryContainer
         isPending -> MaterialTheme.colorScheme.secondaryContainer
@@ -572,48 +591,103 @@ internal fun Tr069StatusCard(subscription: Subscription) {
         isPending -> MaterialTheme.colorScheme.onSecondaryContainer
         else -> MaterialTheme.colorScheme.onErrorContainer
     }
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("tr069_status_card"),
-        colors = CardDefaults.cardColors(containerColor = containerColor)
+            .testTag(RegisterSubscriptionTestTags.oltProvisionStatus(status))
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = when {
-                    isComplete ->
-                        "ONU configurada automáticamente por TR-069. No requiere configuración manual."
-                    isPending ->
-                        "Aplicando configuración WiFi en la ONU. Espere o reintente."
-                    else ->
-                        "No se pudo configurar la ONU por TR-069. Configure la ONU manualmente."
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = contentColor,
-                modifier = Modifier.testTag("tr069_status_message")
-            )
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(RegisterSubscriptionTestTags.OLT_STATUS_CARD),
+            colors = CardDefaults.cardColors(containerColor = containerColor)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = when {
+                        isComplete -> "ONU autorizada en la OLT."
+                        isPending -> "Autorizando ONU en la OLT…"
+                        else -> "Falló la autorización de la ONU en la OLT."
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = contentColor,
+                    modifier = Modifier.testTag(RegisterSubscriptionTestTags.OLT_STATUS_MESSAGE)
+                )
+            }
+        }
+    }
+}
 
-            if (!isComplete) {
-                subscription.tr069Message?.takeIf { it.isNotBlank() }?.let { reason ->
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = reason,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = contentColor,
-                        modifier = Modifier.testTag("tr069_status_reason")
-                    )
+@Composable
+internal fun Tr069StatusCard(subscription: Subscription) {
+    val status = subscription.tr069ProvisionStatus.orEmpty()
+    val isComplete = status == "COMPLETE"
+    val isPending = status == "PENDING"
+    val containerColor = when {
+        isComplete -> MaterialTheme.colorScheme.tertiaryContainer
+        isPending -> MaterialTheme.colorScheme.secondaryContainer
+        else -> MaterialTheme.colorScheme.errorContainer
+    }
+    val contentColor = when {
+        isComplete -> MaterialTheme.colorScheme.onTertiaryContainer
+        isPending -> MaterialTheme.colorScheme.onSecondaryContainer
+        else -> MaterialTheme.colorScheme.onErrorContainer
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (status.isNotBlank()) {
+                    Modifier.testTag(RegisterSubscriptionTestTags.tr069ProvisionStatus(status))
+                } else {
+                    Modifier
                 }
-            }
+            )
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("tr069_status_card"),
+            colors = CardDefaults.cardColors(containerColor = containerColor)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = when {
+                        isComplete ->
+                            "ONU configurada automáticamente por TR-069. No requiere configuración manual."
+                        isPending ->
+                            "Aplicando configuración WiFi en la ONU. Espere o reintente."
+                        else ->
+                            "No se pudo configurar la ONU por TR-069. Configure la ONU manualmente."
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = contentColor,
+                    modifier = Modifier.testTag("tr069_status_message")
+                )
 
-            Spacer(modifier = Modifier.height(8.dp))
-            InfoRow("SSID 2.4 GHz", subscription.wifiSsid24 ?: "—")
-            if (!isComplete) {
-                InfoRow("Clave 2.4 GHz", subscription.wifiPassword24 ?: "—")
-            }
-            InfoRow("SSID 5 GHz", subscription.wifiSsid5 ?: "—")
-            if (!isComplete) {
-                InfoRow("Clave 5 GHz", subscription.wifiPassword5 ?: "—")
+                if (!isComplete) {
+                    subscription.tr069Message?.takeIf { it.isNotBlank() }?.let { reason ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = reason,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = contentColor,
+                            modifier = Modifier.testTag("tr069_status_reason")
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                InfoRow("SSID 2.4 GHz", subscription.wifiSsid24 ?: "—")
+                if (!isComplete) {
+                    InfoRow("Clave 2.4 GHz", subscription.wifiPassword24 ?: "—")
+                }
+                InfoRow("SSID 5 GHz", subscription.wifiSsid5 ?: "—")
+                if (!isComplete) {
+                    InfoRow("Clave 5 GHz", subscription.wifiPassword5 ?: "—")
+                }
             }
         }
     }

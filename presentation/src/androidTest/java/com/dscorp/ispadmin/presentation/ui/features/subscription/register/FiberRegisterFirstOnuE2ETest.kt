@@ -152,16 +152,37 @@ class FiberRegisterFirstOnuE2ETest {
             ),
             timeoutMs = 30_000,
         )
-        waitUntilTag(RegisterSubscriptionTestTags.SUCCESS_FULLSCREEN, timeoutMs = 180_000)
+        waitUntilTag(RegisterSubscriptionTestTags.SUCCESS_FULLSCREEN, timeoutMs = 360_000)
 
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SUCCESS_FULLSCREEN)
             .assertIsDisplayed()
-        val tr069Nodes = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.TR069_STATUS_MESSAGE)
+        waitUntilTag(
+            RegisterSubscriptionTestTags.oltProvisionStatus("COMPLETE"),
+            timeoutMs = 180_000,
+        )
+        waitUntilTag(
+            RegisterSubscriptionTestTags.tr069ProvisionStatus("COMPLETE"),
+            timeoutMs = 300_000,
+        )
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.oltProvisionStatus("COMPLETE"))
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.OLT_STATUS_MESSAGE)
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.tr069ProvisionStatus("COMPLETE"))
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.TR069_STATUS_MESSAGE)
+            .assertIsDisplayed()
+        val tr069Text = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.TR069_STATUS_MESSAGE)
             .fetchSemanticsNodes()
-        if (tr069Nodes.isNotEmpty()) {
-            val text = tr069Nodes.first().config.toString()
-            assertThat(text.uppercase()).doesNotContain("MANUAL_REQUIRED")
-        }
+            .first()
+            .config
+            .toString()
+        assertThat(tr069Text).contains("TR-069")
+        val tr069Upper = tr069Text.uppercase()
+        assertThat(tr069Upper).doesNotContain("PENDIENTE")
+        assertThat(tr069Upper).doesNotContain("ESPERE")
+        assertThat(tr069Upper.contains("MANUAL_REQUIRED") ||
+            (tr069Upper.contains("MANUAL") && !tr069Upper.contains("NO REQUIERE"))).isFalse()
     }
 
     private fun loginIfNeeded() {
@@ -277,12 +298,25 @@ class FiberRegisterFirstOnuE2ETest {
             .performScrollTo()
             .performClick()
         waitUntilTag("map_coordinate_search", timeoutMs = 30_000)
+        val pasted = "$geoLat, $geoLon"
         composeRule.onNodeWithTag("map_coordinate_search").performTextClearance()
-        composeRule.onNodeWithTag("map_coordinate_search").performTextInput("$geoLat, $geoLon")
+        composeRule.onNodeWithTag("map_coordinate_search").performTextInput(pasted)
         composeRule.onNodeWithTag("map_coordinate_search_button").performClick()
-        waitUntilTag("map_select_location_button", timeoutMs = 15_000)
+        Thread.sleep(1_200)
         composeRule.onNodeWithTag("map_select_location_button").performClick()
         waitUntilTag(RegisterSubscriptionTestTags.LOCATION_COORDINATES, timeoutMs = 30_000)
+        val shown = runCatching {
+            composeRule.onNodeWithTag(RegisterSubscriptionTestTags.LOCATION_COORDINATES)
+                .fetchSemanticsNode()
+                .config
+                .toString()
+        }.getOrDefault("")
+        if (!shown.contains(geoLat) || !shown.contains(geoLon)) {
+            throw AssertionError(
+                "Location not inside lab fixture after map select. shown=$shown expected=$pasted. " +
+                    "Selecting before search/camera settle uses DEFAULT_MANUAL_MAP_CAMERA (San Jerónimo / La Villa)."
+            )
+        }
     }
 
     private fun clickWizardContinue() {
@@ -430,10 +464,30 @@ class FiberRegisterFirstOnuE2ETest {
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.NAP_BOX)
             .performScrollTo()
         waitUntilNearbyNapSettled()
-        if (napFieldHasAnySelection()) return
+        waitUntilNapFieldReady()
+        if (napFieldMatchesWanted()) return
         selectNapFromDropdown()
-        if (!napFieldHasAnySelection()) {
-            throw AssertionError("Could not select NAP from dropdown")
+        if (!napFieldMatchesWanted() && !napFieldHasAnySelection()) {
+            throw AssertionError(
+                "Could not select NAP from dropdown (wanted=${napCode ?: "any"}; " +
+                    "geo must be inside place.area and near the lab NAP)"
+            )
+        }
+        if (napCode != null && !napFieldMatchesWanted()) {
+            throw AssertionError(
+                "NAP field=${napFieldText()} does not match wanted=$napCode; " +
+                    "use E2ePlaceLocationFixture lat/lon (NO-001)"
+            )
+        }
+    }
+
+    private fun waitUntilNapFieldReady() {
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(20_000)
+        while (System.nanoTime() < deadline) {
+            if (napFieldMatchesWanted()) return
+            if (napCode == null && napFieldHasAnySelection()) return
+            Thread.sleep(400)
+            composeRule.waitForIdle()
         }
     }
 
