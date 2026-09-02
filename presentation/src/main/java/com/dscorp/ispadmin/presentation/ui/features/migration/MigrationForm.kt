@@ -54,6 +54,9 @@ import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.data.apirequestmodel.MigrationRequest
 import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.DEFAULT_REGISTRATION_VLAN
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.VLAN_OPTIONS
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.isRegistrationVlanSelectable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,6 +73,8 @@ fun MigrationForm(
 
     var selectedPlan by remember { mutableStateOf<PlanResponse?>(null) }
     var selectedOnu by remember { mutableStateOf<Onu?>(null) }
+    var selectedVlan by remember { mutableStateOf(DEFAULT_REGISTRATION_VLAN) }
+    var vlanDropDownExpanded by remember { mutableStateOf(false) }
 
 
     var price by remember { mutableStateOf("") }
@@ -175,6 +180,39 @@ fun MigrationForm(
 
 
         Spacer(modifier = Modifier.size(16.dp))
+        ExposedDropdownMenuBox(
+            expanded = vlanDropDownExpanded,
+            onExpandedChange = { vlanDropDownExpanded = !vlanDropDownExpanded }
+        ) {
+            OutlinedTextField(
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+                readOnly = true,
+                value = VLAN_OPTIONS.firstOrNull { it.value == selectedVlan }?.label
+                    ?: "VLAN $selectedVlan",
+                onValueChange = {},
+                label = { Text("VLAN") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = vlanDropDownExpanded) },
+            )
+            ExposedDropdownMenu(
+                expanded = vlanDropDownExpanded,
+                onDismissRequest = { vlanDropDownExpanded = false }
+            ) {
+                VLAN_OPTIONS.filter { it.selectable }.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(text = option.label) },
+                        onClick = {
+                            if (isRegistrationVlanSelectable(option.value)) {
+                                selectedVlan = option.value
+                            }
+                            vlanDropDownExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.size(16.dp))
         OutlinedTextField(
             value = note,
             onValueChange = {
@@ -208,6 +246,7 @@ fun MigrationForm(
                     subscriptionId = null,
                     price = price,
                     notes = note,
+                    vlan = selectedVlan,
                 )
 
                 onMigrationRequest(migrationRequest)

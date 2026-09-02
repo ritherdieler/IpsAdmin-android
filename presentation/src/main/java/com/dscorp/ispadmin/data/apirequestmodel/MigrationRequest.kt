@@ -7,7 +7,8 @@ data class MigrationRequest(
     val planId: String?,
     var subscriptionId: Int?,
     val price: String?,
-    val notes: String?
+    val notes: String?,
+    val vlan: String? = null,
 ) {
     fun isValid() = onu != null && planId != null && subscriptionId != null
 }
