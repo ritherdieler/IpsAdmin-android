@@ -35,6 +35,7 @@ import com.dscorp.ispadmin.domain.model.Plan
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.ServiceOrder
 import com.dscorp.ispadmin.domain.model.ServiceOrderResponse
+import com.dscorp.ispadmin.domain.model.RegistrationProgress
 import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.domain.model.PagedSubscriptionResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
@@ -366,6 +367,11 @@ interface RestApiServices {
     suspend fun retryTr069Provisioning(
         @Path("subscriptionId") subscriptionId: Int
     ): Response<Subscription>
+
+    @GET("subscription/{subscriptionId}/registration-progress")
+    suspend fun getRegistrationProgress(
+        @Path("subscriptionId") subscriptionId: Int
+    ): Response<RegistrationProgress>
 
     @GET("app/check_version")
     suspend fun getRemoteAppVersion(): Response<AppVersion>

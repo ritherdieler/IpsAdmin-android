@@ -112,7 +112,10 @@ fun subscriptionNapBoxError(
 ): String? = when {
     !requiresNapBox -> null
     selectedNapBox == null -> "Seleccione una caja NAP"
-    napBoxList.none { it.id == selectedNapBox.id } -> "Seleccione una caja NAP válida"
+    napBoxList.none { box ->
+        box.id == selectedNapBox.id ||
+            box.code.equals(selectedNapBox.code, ignoreCase = true)
+    } -> "Seleccione una caja NAP válida"
     else -> null
 }
 

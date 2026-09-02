@@ -81,14 +81,21 @@ data class RegisterSubscriptionFormState(
     val wifiPassword5: String = "",
     val wifiPassword5Error: String? = null,
     val useDifferentWifiNames: Boolean = false,
+    val tvCpeKind: TvCpeKind? = null,
+    val tvCpeKindError: String? = null,
 ) {
     fun requiresNapBox(): Boolean {
         return installationType == InstallationType.FIBER ||
             installationType == InstallationType.ONLY_TV_FIBER
     }
 
+    fun requiresTvCpeKind(): Boolean {
+        return installationType == InstallationType.ONLY_TV_FIBER
+    }
+
     fun requiresOnu(): Boolean {
-        return installationType == InstallationType.FIBER
+        return installationType == InstallationType.FIBER ||
+            (installationType == InstallationType.ONLY_TV_FIBER && tvCpeKind == TvCpeKind.ONU)
     }
 
     fun requiresWifiConfig(): Boolean {
@@ -142,6 +149,12 @@ data class RegisterSubscriptionFormState(
             FormFieldKey.WIFI_PASSWORD_5 -> null
             FormFieldKey.LOCATION ->
                 subscriptionLocationError(location?.latitude, location?.longitude)
+            FormFieldKey.TV_CPE_KIND ->
+                if (requiresTvCpeKind() && tvCpeKind == null) {
+                    "Seleccione ONU o receptor óptico CATV"
+                } else {
+                    null
+                }
         }
     }
 
@@ -149,6 +162,7 @@ data class RegisterSubscriptionFormState(
         val extra = buildList {
             if (requiresClientIpAddress) add(FormFieldKey.CLIENT_IP_ADDRESS)
             if (requiresWifiConfig() && useDifferentWifiNames) add(FormFieldKey.WIFI_SSID_5)
+            if (requiresTvCpeKind()) add(FormFieldKey.TV_CPE_KIND)
         }
         return FormFieldKey.blockingForSubmit + extra
     }
@@ -191,5 +205,6 @@ private fun RegisterSubscriptionFormState.withFieldError(
         FormFieldKey.WIFI_SSID_5 -> copy(wifiSsid5Error = message)
         FormFieldKey.WIFI_PASSWORD_5 -> copy(wifiPassword5Error = message)
         FormFieldKey.LOCATION -> copy(locationError = message)
+        FormFieldKey.TV_CPE_KIND -> copy(tvCpeKindError = message)
     }
 }

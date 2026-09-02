@@ -1,7 +1,11 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -31,9 +35,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -46,10 +50,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import com.dscorp.ispadmin.BuildConfig
 import com.dscorp.ispadmin.data.media.prepareFacadePhotoFile
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.InstallationType
@@ -57,9 +63,10 @@ import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.LocationSelectorComposeDialog
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionDebugActions
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
-import kotlinx.coroutines.delay
+import java.io.File
 
 @Composable
 fun RegisterSubscriptionFormScreen(
@@ -122,6 +129,36 @@ fun RegisterSubscriptionFormScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadScreenData(installationOrderId)
+    }
+
+    if (BuildConfig.DEBUG) {
+        DisposableEffect(viewModel) {
+            val receiver = object : BroadcastReceiver() {
+                override fun onReceive(ctx: Context?, intent: Intent?) {
+                    when (intent?.action) {
+                        RegisterSubscriptionDebugActions.SET_FACADE_PHOTO -> {
+                            val path = intent.getStringExtra(RegisterSubscriptionDebugActions.EXTRA_PATH)
+                                ?: return
+                            val file = File(path)
+                            if (!file.exists()) return
+                            viewModel.onFacadePhotoSelected(Uri.fromFile(file))
+                        }
+                    }
+                }
+            }
+            val filter = IntentFilter().apply {
+                addAction(RegisterSubscriptionDebugActions.SET_FACADE_PHOTO)
+            }
+            ContextCompat.registerReceiver(
+                context,
+                receiver,
+                filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+            onDispose {
+                runCatching { context.unregisterReceiver(receiver) }
+            }
+        }
     }
 
     LaunchedEffect(locationSetup.isReady) {
@@ -248,7 +285,9 @@ fun RegisterSubscriptionFormScreen(
         }
 
         if (uiState.isLoading) {
-            RegistrationProgressOverlay()
+            RegistrationProgressOverlay(
+                progressMessage = uiState.registrationProgressMessage
+            )
         }
     }
 }
@@ -274,17 +313,9 @@ private fun InfoRow(label: String, value: String) {
 }
 
 @Composable
-internal fun RegistrationProgressOverlay() {
-    var elapsedMs by remember { mutableLongStateOf(0L) }
-
-    LaunchedEffect(Unit) {
-        val startedAt = System.currentTimeMillis()
-        while (true) {
-            elapsedMs = System.currentTimeMillis() - startedAt
-            delay(500L)
-        }
-    }
-
+internal fun RegistrationProgressOverlay(
+    progressMessage: String? = null,
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -309,7 +340,7 @@ internal fun RegistrationProgressOverlay() {
                 CircularProgressIndicator()
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = registrationProgressStepMessage(elapsedMs),
+                    text = registrationProgressStepMessage(progressMessage),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,

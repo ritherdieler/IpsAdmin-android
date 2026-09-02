@@ -4,6 +4,7 @@ import com.dscorp.ispadmin.domain.repository.SubscriptionSyncOutcome
 import com.dscorp.ispadmin.domain.repository.SubscriptionSyncRemote
 import com.google.gson.Gson
 import com.google.gson.JsonParser
+import kotlinx.coroutines.delay
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -13,7 +14,10 @@ import java.io.IOException
 
 class SubscriptionSyncRemoteImpl(
     private val api: PendingSubscriptionSyncApi,
-    private val gson: Gson = Gson()
+    private val gson: Gson = Gson(),
+    private val pollIntervalMs: Long = 2_000L,
+    private val pollTimeoutMs: Long = 120_000L,
+    private val clock: () -> Long = { System.currentTimeMillis() },
 ) : SubscriptionSyncRemote {
 
     override suspend fun uploadPending(
@@ -32,10 +36,44 @@ class SubscriptionSyncRemoteImpl(
                 body = photoFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
             )
             val response = api.registerWithFacadePhoto(subscriptionBody, photoPart)
-            mapResponse(response)
+            when (val mapped = mapResponse(response)) {
+                SubscriptionSyncOutcome.Success -> {
+                    val subscriptionId = response.body()?.data?.id
+                    if (subscriptionId != null && response.body()?.data?.provisioningPending == true) {
+                        awaitRegistrationDone(subscriptionId)
+                    } else {
+                        mapped
+                    }
+                }
+                else -> mapped
+            }
         } catch (error: IOException) {
             SubscriptionSyncOutcome.Failure(error.message ?: "Error de red")
         }
+    }
+
+    private suspend fun awaitRegistrationDone(subscriptionId: Int): SubscriptionSyncOutcome {
+        val deadline = clock() + pollTimeoutMs
+        var lastError: String? = null
+        while (clock() <= deadline) {
+            try {
+                val response = api.getRegistrationProgress(subscriptionId)
+                if (response.code() in 200..299) {
+                    val body = response.body()
+                    if (body?.done == true) {
+                        return SubscriptionSyncOutcome.Success
+                    }
+                } else {
+                    lastError = "HTTP ${response.code()}"
+                }
+            } catch (error: IOException) {
+                lastError = error.message
+            }
+            delay(pollIntervalMs)
+        }
+        return SubscriptionSyncOutcome.Failure(
+            lastError ?: "Timeout esperando aprovisionamiento de la suscripción $subscriptionId"
+        )
     }
 
     private fun mapResponse(

@@ -65,6 +65,7 @@ import com.dscorp.ispadmin.domain.model.Plan
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.ServiceOrder
 import com.dscorp.ispadmin.domain.model.ServiceOrderResponse
+import com.dscorp.ispadmin.domain.model.RegistrationProgress
 import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
@@ -969,6 +970,17 @@ class Repository : IRepository, KoinComponent {
             throw Exception(msg ?: "No se pudo reintentar el aprovisionamiento TR-069")
         }
         return response.body() ?: throw Exception("Respuesta vacía al reintentar TR-069")
+    }
+
+    override suspend fun getRegistrationProgress(subscriptionId: Int): RegistrationProgress {
+        val response = restApiServices.getRegistrationProgress(subscriptionId)
+        if (response.code() !in 200..299) {
+            val msg = response.errorBody()?.string()?.let { body ->
+                runCatching { JSONObject(body).getString("error") }.getOrNull()
+            }
+            throw Exception(msg ?: "No se pudo obtener el progreso del registro")
+        }
+        return response.body() ?: throw Exception("Respuesta vacía al consultar progreso del registro")
     }
 
     override suspend fun getRemoteAppVersion(): AppVersion {

@@ -62,6 +62,12 @@ class RegisterSubscriptionFormHostDeviceTest {
         val showOnuSelectorIndex = formSource.indexOf("if (showOnuSelector)")
         assertTrue(showOnuSelectorIndex >= 0)
         assertTrue(vlanTagIndex > showOnuSelectorIndex)
+        assertThat(formSource).contains("testTag(\"register_onu_dropdown\")")
+        assertThat(formSource).contains("form.requiresOnu()")
+        assertThat(formSource).contains("requiresWifiConfig()")
+        assertThat(formSource).contains("testTag(\"register_tv_cpe_onu\")")
+        assertThat(formSource).contains("testTag(\"register_tv_cpe_optical_receiver\")")
+        assertThat(formSource).contains("RegisterSubscriptionIntent.TvCpeKindSelected")
     }
 
     @Test

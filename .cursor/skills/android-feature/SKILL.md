@@ -23,7 +23,7 @@ Pantalla Compose: orquesta este skill **y** `compose-feature`. Ruta nueva inexis
 
 ## 1. Discovery
 
-Leer `.cursor/context/project-profile.md` y 2–3 archivos de la feature vecina.
+Leer `AGENTS.md` y 2–3 archivos de la feature vecina.
 
 ¿La zona es Compose UDF o Fragment/`IRepository`? No mezclar.
 

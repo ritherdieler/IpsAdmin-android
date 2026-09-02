@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.E2ePlaceLocationFixture
 import com.google.android.gms.maps.model.LatLng
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -23,7 +24,7 @@ class LocationSelectorComposeDialogTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun `missing maps key still returns pasted coordinates`() {
+    fun `missing maps key still returns pasted coordinates inside place polygon`() {
         var selected: LatLng? = null
 
         composeRule.setContent {
@@ -39,12 +40,14 @@ class LocationSelectorComposeDialogTest {
         }
 
         composeRule.onNodeWithTag("map_missing_api_key").assertIsDisplayed()
-        composeRule.onNodeWithTag("map_coordinate_search").performTextInput("-11.1, -76.2")
+        composeRule.onNodeWithTag("map_coordinate_search").performTextInput(
+            E2ePlaceLocationFixture.pastedCoordinates()
+        )
         composeRule.onNodeWithTag("map_coordinate_search_button").performClick()
         composeRule.onNodeWithTag("map_select_location_button").performClick()
 
-        assertEquals(-11.1, selected!!.latitude, 0.0001)
-        assertEquals(-76.2, selected!!.longitude, 0.0001)
+        assertEquals(E2ePlaceLocationFixture.LATITUDE.toDouble(), selected!!.latitude, 0.0001)
+        assertEquals(E2ePlaceLocationFixture.LONGITUDE.toDouble(), selected!!.longitude, 0.0001)
     }
 
     @Test

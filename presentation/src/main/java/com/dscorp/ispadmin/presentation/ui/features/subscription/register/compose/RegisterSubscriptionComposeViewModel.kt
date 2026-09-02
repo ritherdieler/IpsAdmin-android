@@ -26,8 +26,10 @@ import com.dscorp.ispadmin.domain.usecase.subscription.GetPlaceFromLocationUseCa
 import com.dscorp.ispadmin.domain.usecase.subscription.GetUserSessionUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.ObserveOfflineRegistrationModeUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionResult
+import com.dscorp.ispadmin.domain.usecase.subscription.PollRegistrationProgressUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.RetryTr069ProvisioningUseCase
+import com.dscorp.ispadmin.domain.usecase.subscription.toSubscriptionOrNull
 import com.dscorp.ispadmin.observability.ObsBreadcrumbCategory
 import com.dscorp.ispadmin.observability.ObservabilityClient
 import com.dscorp.ispadmin.presentation.extension.removeSpecialCharacters
@@ -42,6 +44,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.TvCpeKind
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.canAdvanceWizardStep
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.isRegistrationVlanSelectable
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.wizardFieldsFor
@@ -73,6 +76,7 @@ class RegisterSubscriptionComposeViewModel(
     private val installationOrderUseCase: InstallationOrderUseCase,
     private val observeOfflineRegistrationModeUseCase: ObserveOfflineRegistrationModeUseCase,
     private val retryTr069ProvisioningUseCase: RetryTr069ProvisioningUseCase,
+    private val pollRegistrationProgressUseCase: PollRegistrationProgressUseCase,
     private val observabilityClient: ObservabilityClient,
     private val mainImmediate: CoroutineDispatcher = Dispatchers.Main.immediate
 ) : ViewModel() {
@@ -80,7 +84,6 @@ class RegisterSubscriptionComposeViewModel(
     private companion object {
         const val OBS_FEATURE = "subscription"
         const val OBS_SCREEN = "register_subscription"
-        const val MAX_TR069_AUTO_RETRIES = 3
     }
 
     private val _uiState = MutableStateFlow(RegisterSubscriptionState())
@@ -272,6 +275,7 @@ class RegisterSubscriptionComposeViewModel(
             is RegisterSubscriptionIntent.ClientIpAddressChanged ->
                 onClientIpAddressChanged(intent.value)
             is RegisterSubscriptionIntent.OnVlanChanged -> onVlanChanged(intent.vlan)
+            is RegisterSubscriptionIntent.TvCpeKindSelected -> onTvCpeKindSelected(intent.kind)
             is RegisterSubscriptionIntent.WifiSsid24Changed -> onWifiSsid24Changed(intent.value)
             is RegisterSubscriptionIntent.WifiPassword24Changed ->
                 onWifiPassword24Changed(intent.value)
@@ -552,6 +556,16 @@ private fun onVlanChanged(vlan: String) {
     }
 }
 
+private fun onTvCpeKindSelected(kind: TvCpeKind) {
+    updateValidatedForm(FormFieldKey.TV_CPE_KIND, FormFieldKey.ONU) { form ->
+        form.copy(
+            tvCpeKind = kind,
+            selectedOnu = if (kind == TvCpeKind.ONU) form.selectedOnu else null,
+            onuError = if (kind == TvCpeKind.ONU) form.onuError else null,
+        )
+    }
+}
+
 private fun onWifiSsid24Changed(value: String) {
     if (value.length > RegisterSubscriptionFormConstraints.MAX_WIFI_SSID_LENGTH) return
     updateValidatedForm(FormFieldKey.WIFI_SSID_24) { form ->
@@ -634,6 +648,8 @@ private fun onInstallationTypeSelected(type: InstallationType) {
                 selectedPlan = selectedPlan,
                 selectedOnu = null,
                 selectedNapBox = null,
+                tvCpeKind = null,
+                tvCpeKindError = null,
                 wifiSsid24 = "",
                 wifiPassword24 = "",
                 wifiSsid5 = "",
@@ -643,7 +659,12 @@ private fun onInstallationTypeSelected(type: InstallationType) {
                 wifiPassword24Error = null,
                 wifiSsid5Error = null,
                 wifiPassword5Error = null,
-            ).validated(FormFieldKey.PLAN, FormFieldKey.ONU, FormFieldKey.NAP_BOX)
+            ).validated(
+                FormFieldKey.PLAN,
+                FormFieldKey.ONU,
+                FormFieldKey.NAP_BOX,
+                FormFieldKey.TV_CPE_KIND,
+            )
         )
     }
 }
@@ -849,7 +870,10 @@ fun saveSubscription(facadePhotoFile: File? = null) {
     registerSubscriptionJob = viewModelScope.launch(mainImmediate) {
         try {
             _uiState.update {
-                it.copy(isLoading = true)
+                it.copy(
+                    isLoading = true,
+                    registrationProgressMessage = "Registrando y autorizando…"
+                )
             }
 
             registerSubscriptionUseCase(
@@ -873,13 +897,17 @@ fun saveSubscription(facadePhotoFile: File? = null) {
                                 wifiPassword24 = subscription.wifiPassword24,
                                 wifiPassword5 = subscription.wifiPassword5
                             )
-                            if (shouldFollowUpTr069(enriched)) {
-                                followUpPendingTr069(enriched)
+                            val subscriptionId = enriched.resolvedSubscriptionId()
+                            if (subscriptionId != null &&
+                                (enriched.provisioningPending || enriched.tr069ProvisionStatus == "PENDING")
+                            ) {
+                                pollRegistrationProgress(subscriptionId, enriched)
                             } else {
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
-                                        orderId = null
+                                        orderId = null,
+                                        registrationProgressMessage = "Registrando…"
                                     )
                                 }
                                 _uiEvent.emit(RegisterSubscriptionUiEvent.Success(enriched))
@@ -936,55 +964,64 @@ fun saveSubscription(facadePhotoFile: File? = null) {
     }
 }
 
-private fun shouldFollowUpTr069(subscription: Subscription): Boolean =
-    subscription.tr069ProvisionStatus == "PENDING" &&
-        subscription.resolvedSubscriptionId() != null
-
-private suspend fun followUpPendingTr069(initial: Subscription) {
-    val subscriptionId = initial.resolvedSubscriptionId() ?: return
-    var latest = initial
-    repeat(MAX_TR069_AUTO_RETRIES) {
-        val retryResult = retryTr069ProvisioningUseCase(subscriptionId)
-        retryResult.fold(
-            onSuccess = { updated ->
-                latest = updated.copy(
-                    wifiSsid24 = updated.wifiSsid24 ?: latest.wifiSsid24,
-                    wifiSsid5 = updated.wifiSsid5 ?: latest.wifiSsid5,
-                    wifiPassword24 = updated.wifiPassword24 ?: latest.wifiPassword24,
-                    wifiPassword5 = updated.wifiPassword5 ?: latest.wifiPassword5
-                )
-            },
-            onFailure = { error ->
-                _uiState.update { it.copy(isLoading = false, orderId = null) }
-                _uiEvent.emit(
-                    RegisterSubscriptionUiEvent.Error(
-                        error.message ?: "No se pudo reintentar el aprovisionamiento TR-069"
-                    )
-                )
-                return
-            }
+private suspend fun pollRegistrationProgress(
+    subscriptionId: Int,
+    initial: Subscription,
+) {
+    _uiState.update {
+        it.copy(
+            isLoading = true,
+            registrationProgressMessage = initial.tr069Message?.takeIf { msg -> msg.isNotBlank() }
+                ?: "Esperando ACS…"
         )
-        when (latest.tr069ProvisionStatus) {
-            "COMPLETE" -> {
-                _uiState.update { it.copy(isLoading = false, orderId = null) }
-                _uiEvent.emit(RegisterSubscriptionUiEvent.Success(latest))
-                return
+    }
+    pollRegistrationProgressUseCase(subscriptionId) { progress ->
+        _uiState.update {
+            it.copy(registrationProgressMessage = progress.message)
+        }
+    }.fold(
+        onSuccess = { progress ->
+            val finalSubscription = progress.toSubscriptionOrNull(wifiFallback = initial) ?: initial.copy(
+                tr069ProvisionStatus = progress.tr069ProvisionStatus ?: initial.tr069ProvisionStatus,
+                tr069Message = progress.tr069Message ?: initial.tr069Message,
+                mikrotikProvisionStatus = progress.mikrotikProvisionStatus
+                    ?: initial.mikrotikProvisionStatus,
+                oltProvisionStatus = progress.oltProvisionStatus ?: initial.oltProvisionStatus,
+                provisioningPending = !progress.done,
+            )
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    orderId = null,
+                    registrationProgressMessage = "Registrando…"
+                )
             }
-            "MANUAL_REQUIRED" -> {
-                _uiState.update { it.copy(isLoading = false, orderId = null) }
-                _uiEvent.emit(RegisterSubscriptionUiEvent.Success(latest))
+            _uiEvent.emit(RegisterSubscriptionUiEvent.Success(finalSubscription))
+            if (finalSubscription.tr069ProvisionStatus == "MANUAL_REQUIRED") {
                 _uiEvent.emit(
                     RegisterSubscriptionUiEvent.Error(
-                        latest.tr069Message
+                        finalSubscription.tr069Message
                             ?: "No se pudo completar el aprovisionamiento TR-069"
                     )
                 )
-                return
             }
+        },
+        onFailure = { error ->
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    orderId = null,
+                    registrationProgressMessage = "Registrando…"
+                )
+            }
+            _uiEvent.emit(RegisterSubscriptionUiEvent.Success(initial))
+            _uiEvent.emit(
+                RegisterSubscriptionUiEvent.Error(
+                    error.message ?: "No se pudo obtener el progreso del aprovisionamiento"
+                )
+            )
         }
-    }
-    _uiState.update { it.copy(isLoading = false, orderId = null) }
-    _uiEvent.emit(RegisterSubscriptionUiEvent.Success(latest))
+    )
 }
 
 private fun buildSubscriptionFromForm(
@@ -1010,13 +1047,13 @@ private fun buildSubscriptionFromForm(
         installationType = form.installationType,
         note = form.note,
         napBoxId = form.selectedNapBox?.id,
-        onu = form.selectedOnu,
+        onu = form.selectedOnu.takeIf { form.requiresOnu() },
         equipmentCondition = form.equipmentCondition,
         autoCut = true,
         facadePhotoUrl = null,
         clientIpAddress = form.clientIpAddress.trim().takeIf { it.isNotEmpty() },
         ip = form.clientIpAddress.trim().takeIf { it.isNotEmpty() },
-        vlan = form.vlan.takeIf { form.installationType == InstallationType.FIBER },
+        vlan = form.vlan.takeIf { form.requiresOnu() },
         wifiSsid24 = form.wifiSsid24.trim().takeIf { form.requiresWifiConfig() },
         wifiPassword24 = form.wifiPassword24.takeIf { form.requiresWifiConfig() },
         wifiSsid5 = form.resolvedWifiSsid5().takeIf { form.requiresWifiConfig() },

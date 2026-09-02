@@ -7,5 +7,7 @@ interface SubscriptionActionsRepository {
 
     suspend fun retryTr069Provisioning(subscriptionId: Int): com.dscorp.ispadmin.domain.model.Subscription
 
+    suspend fun getRegistrationProgress(subscriptionId: Int): com.dscorp.ispadmin.domain.model.RegistrationProgress
+
     suspend fun restoreInternetConnection(subscriptionId: Int, notes: String?)
 }

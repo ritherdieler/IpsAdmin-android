@@ -19,4 +19,5 @@ data class RegisterSubscriptionState(
     val tr069RetryLoading: Boolean = false,
     val showManualLocationMap: Boolean = false,
     val wizardStep: RegisterSubscriptionWizardStep = RegisterSubscriptionWizardStep.CLIENT_LOCATION,
+    val registrationProgressMessage: String = "Registrando…",
 )

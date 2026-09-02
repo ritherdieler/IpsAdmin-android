@@ -19,7 +19,8 @@ enum class FormFieldKey {
     WIFI_PASSWORD_24,
     WIFI_SSID_5,
     WIFI_PASSWORD_5,
-    LOCATION;
+    LOCATION,
+    TV_CPE_KIND;
 
     companion object {
         val blockingForSubmit: List<FormFieldKey> =
@@ -27,7 +28,8 @@ enum class FormFieldKey {
                 it != EQUIPMENT_CONDITION &&
                     it != CLIENT_IP_ADDRESS &&
                     it != WIFI_SSID_5 &&
-                    it != WIFI_PASSWORD_5
+                    it != WIFI_PASSWORD_5 &&
+                    it != TV_CPE_KIND
             }
     }
 }

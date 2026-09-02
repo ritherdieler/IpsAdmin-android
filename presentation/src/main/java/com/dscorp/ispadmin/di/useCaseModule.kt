@@ -23,6 +23,7 @@ import com.dscorp.ispadmin.domain.usecase.subscription.GetPlaceFromLocationUseCa
 import com.dscorp.ispadmin.domain.usecase.subscription.GetPlaceListUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetUserSessionUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionUseCase
+import com.dscorp.ispadmin.domain.usecase.subscription.PollRegistrationProgressUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.RetryTr069ProvisioningUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.SearchSubscriptionsUseCase
 import org.koin.dsl.module
@@ -47,6 +48,7 @@ val useCaseModule = module {
     single { RebootFiberOnuUseCase(get()) }
     single { RestoreInternetConnectionUseCase(get()) }
     single { RetryTr069ProvisioningUseCase(get()) }
+    single { PollRegistrationProgressUseCase(get()) }
     single { RegisterOutlayUseCase(get(), get()) }
     single { SearchSubscriptionsUseCase(get()) }
 }

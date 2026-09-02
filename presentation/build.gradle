@@ -40,8 +40,8 @@ android {
         applicationId "com.dscorp.ispadmin"
         minSdk rootProject.ext.minSdk
         targetSdk rootProject.ext.targetSdk
-        versionCode 58
-        versionName "2.6.6"
+        versionCode 59
+        versionName "2.6.7"
         testInstrumentationRunner "com.dscorp.ispadmin.test.InstrumentationTestRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -76,6 +76,18 @@ android {
             buildConfigField 'String', "OBS_API_KEY_ANDROID", "\"${obsApiKeyProd}\""
             buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", "\"${sendCloudMessagingApiKey}\""
         }
+        staging {
+            dimension "environment"
+            manifestPlaceholders += [MAPS_API_KEY: mapsApiKeyProd]
+            buildConfigField "boolean", "HAS_MAPS_API_KEY", (!mapsApiKeyProd.isEmpty()).toString()
+            buildConfigField 'boolean', 'SKIP_VERSION_CHECK', 'false'
+            buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
+            buildConfigField 'String', "BASE_URL", '"https://api.gigafiberperu.cloud/ispadmin-staging/"'
+            buildConfigField 'String', "OBS_BASE_URL", '"https://api.gigafiberperu.cloud/ispadmin-staging/"'
+            buildConfigField 'String', "OBS_API_KEY", "\"${obsApiKeyProd}\""
+            buildConfigField 'String', "OBS_API_KEY_ANDROID", "\"${obsApiKeyProd}\""
+            buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", "\"${sendCloudMessagingApiKey}\""
+        }
     }
 
     buildTypes {
@@ -106,6 +118,11 @@ android {
             assets.srcDirs = ['src/dev/assets']
         }
         prod {
+            java.srcDirs = ['src/prod/java']
+            res.srcDirs = ['src/prod/res']
+            assets.srcDirs = ['src/prod/assets']
+        }
+        staging {
             java.srcDirs = ['src/prod/java']
             res.srcDirs = ['src/prod/res']
             assets.srcDirs = ['src/prod/assets']
@@ -252,6 +269,14 @@ dependencies {
     testImplementation "com.squareup.okhttp3:mockwebserver:${rootProject.ext.okhttpVersion}"
     androidTestImplementation platform("androidx.compose:compose-bom:${rootProject.ext.composeBomVersion}")
     androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
+    androidTestImplementation "androidx.test.ext:junit-ktx:${rootProject.ext.junitExtVersion}"
+    androidTestImplementation "androidx.test:runner:${rootProject.ext.testRunnerVersion}"
+    androidTestImplementation "androidx.test:rules:${rootProject.ext.testCoreVersion}"
+    androidTestImplementation "androidx.test:core:${rootProject.ext.testCoreVersion}"
+    androidTestImplementation "androidx.test.espresso:espresso-core:${rootProject.ext.espressoVersion}"
+    androidTestImplementation "androidx.test.espresso:espresso-contrib:${rootProject.ext.espressoVersion}"
+    androidTestImplementation "androidx.test.uiautomator:uiautomator:2.3.0"
+    androidTestImplementation "com.google.truth:truth:${rootProject.ext.truthVersion}"
     testImplementation platform("androidx.compose:compose-bom:${rootProject.ext.composeBomVersion}")
     testImplementation 'androidx.compose.ui:ui-test-junit4'
     debugImplementation "androidx.fragment:fragment-testing:${rootProject.ext.fragmentTestVersion}"
@@ -273,10 +298,27 @@ dependencies {
     testImplementation "androidx.test.espresso:espresso-core:${rootProject.ext.espressoVersion}"
 }
 
+// AGP consistent resolution pins androidx.test.* from debugRuntimeClasspath
+// (ui-test-manifest) onto androidTest; force a coherent Espresso-capable set.
+configurations.configureEach { configuration ->
+    configuration.resolutionStrategy {
+        force(
+            "androidx.test:monitor:1.7.1",
+            "androidx.test:core:1.6.1",
+            "androidx.test:core-ktx:1.6.1",
+            "androidx.test:runner:1.6.2",
+            "androidx.test:rules:1.6.1",
+        )
+    }
+}
+
 // Configuración para usar diferentes archivos google-services.json según el flavor
 android.applicationVariants.all { variant ->
     def flavorName = variant.flavorName
     def googleServicesFile = "src/${flavorName}/google-services.json"
+    if (!file(googleServicesFile).exists() && flavorName == "staging") {
+        googleServicesFile = "src/prod/google-services.json"
+    }
     
     if (file(googleServicesFile).exists()) {
         copy {
@@ -308,7 +350,7 @@ tasks.register("debugWithReverse") {
 gradle.taskGraph.whenReady { graph ->
     def needsProdObsKey = graph.allTasks.any { task ->
         def name = task.name.toLowerCase()
-        name.contains("prod") && !name.contains("dev") &&
+        (name.contains("prod") || name.contains("staging")) && !name.contains("dev") &&
             (name.contains("assemble") || name.contains("install") || name.contains("bundle") ||
                 name.contains("compile") || name.contains("generate"))
     }

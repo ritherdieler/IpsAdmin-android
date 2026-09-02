@@ -89,15 +89,28 @@ class SubscriptionSyncRemoteImplTest {
     }
 
     @Test
-    fun `maps body status 200 with provisioningPending still to Success`() = runTest {
+    fun `maps body status 200 with provisioningPending polls until done`() = runTest {
         val api = mockk<PendingSubscriptionSyncApi>()
         coEvery { api.registerWithFacadePhoto(any(), any()) } returns Response.success(
             SubscriptionSyncApiResponse(
                 status = 200,
-                data = SubscriptionSyncData(provisioningPending = true)
+                data = SubscriptionSyncData(id = 55, provisioningPending = true)
             )
         )
-        val remote = SubscriptionSyncRemoteImpl(api)
+        coEvery { api.getRegistrationProgress(55) } returns Response.success(
+            RegistrationProgressDto(
+                subscriptionId = 55,
+                step = "DONE",
+                message = "Listo",
+                done = true,
+                tr069ProvisionStatus = "COMPLETE",
+            )
+        )
+        val remote = SubscriptionSyncRemoteImpl(
+            api = api,
+            pollIntervalMs = 1L,
+            pollTimeoutMs = 100L,
+        )
         val photo = File.createTempFile("facade", ".jpg").apply { writeText("photo") }
 
         val outcome = remote.uploadPending(

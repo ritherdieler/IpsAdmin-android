@@ -25,10 +25,13 @@ import com.dscorp.ispadmin.domain.usecase.subscription.GetUserSessionUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.ObserveOfflineRegistrationModeUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionResult
 import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionUseCase
+import com.dscorp.ispadmin.domain.model.RegistrationProgress
+import com.dscorp.ispadmin.domain.usecase.subscription.PollRegistrationProgressUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.RetryTr069ProvisioningUseCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.LocationCaptureMethod
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.TvCpeKind
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -70,6 +73,7 @@ class RegisterSubscriptionComposeViewModelTest {
     private lateinit var installationOrderUseCase: InstallationOrderUseCase
     private lateinit var observeOfflineRegistrationModeUseCase: ObserveOfflineRegistrationModeUseCase
     private lateinit var retryTr069ProvisioningUseCase: RetryTr069ProvisioningUseCase
+    private lateinit var pollRegistrationProgressUseCase: PollRegistrationProgressUseCase
     private val offlineModeFlow = MutableStateFlow(false)
 
     private lateinit var viewModel: RegisterSubscriptionComposeViewModel
@@ -139,6 +143,7 @@ class RegisterSubscriptionComposeViewModelTest {
         installationOrderUseCase = mockk(relaxed = true)
         observeOfflineRegistrationModeUseCase = mockk()
         retryTr069ProvisioningUseCase = mockk()
+        pollRegistrationProgressUseCase = mockk()
         every { observeOfflineRegistrationModeUseCase() } returns Result.success(offlineModeFlow)
 
         coEvery { getAvailableOnuListUseCase() } returns Result.success(emptyList())
@@ -157,6 +162,7 @@ class RegisterSubscriptionComposeViewModelTest {
             installationOrderUseCase = installationOrderUseCase,
             observeOfflineRegistrationModeUseCase = observeOfflineRegistrationModeUseCase,
             retryTr069ProvisioningUseCase = retryTr069ProvisioningUseCase,
+            pollRegistrationProgressUseCase = pollRegistrationProgressUseCase,
             observabilityClient = mockk(relaxed = true),
             mainImmediate = testDispatcher
         )
@@ -841,6 +847,89 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
+    fun `ONLY_TV without CPE kind blocks save`() = runTest(testDispatcher) {
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalogWithTv())
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        viewModel.onIntent(RegisterSubscriptionIntent.InstallationTypeSelected(InstallationType.ONLY_TV_FIBER))
+        fillValidTvCustomerFields()
+        viewModel.onIntent(RegisterSubscriptionIntent.NapBoxSelected(NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)))
+
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) }
+        assertEquals(
+            "Seleccione ONU o receptor óptico CATV",
+            viewModel.uiState.value.registerSubscriptionForm.tvCpeKindError
+        )
+    }
+
+    @Test
+    fun `saveSubscription ONLY_TV ONU sends vlan and onu without wifi`() = runTest(testDispatcher) {
+        val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
+        val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalogWithTv())
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        coEvery {
+            registerSubscriptionUseCase(any(), any(), facadePhotoFile = any())
+        } answers {
+            val sent = firstArg<Subscription>()
+            assertEquals(InstallationType.ONLY_TV_FIBER, sent.installationType)
+            assertEquals("100", sent.vlan)
+            assertEquals("sn1", sent.onu?.sn)
+            assertNull(sent.wifiSsid24)
+            Result.success(RegisterSubscriptionResult.Registered(Subscription(subscriptionId = 3)))
+        }
+
+        viewModel.onIntent(RegisterSubscriptionIntent.InstallationTypeSelected(InstallationType.ONLY_TV_FIBER))
+        viewModel.onIntent(RegisterSubscriptionIntent.TvCpeKindSelected(TvCpeKind.ONU))
+        fillValidTvCustomerFields()
+        viewModel.onIntent(RegisterSubscriptionIntent.NapBoxSelected(nap))
+        viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
+
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) }
+    }
+
+    @Test
+    fun `saveSubscription ONLY_TV CATV omits onu and vlan`() = runTest(testDispatcher) {
+        val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
+        val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalogWithTv())
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        coEvery {
+            registerSubscriptionUseCase(any(), any(), facadePhotoFile = any())
+        } answers {
+            val sent = firstArg<Subscription>()
+            assertEquals(InstallationType.ONLY_TV_FIBER, sent.installationType)
+            assertNull(sent.vlan)
+            assertNull(sent.onu)
+            Result.success(RegisterSubscriptionResult.Registered(Subscription(subscriptionId = 4)))
+        }
+
+        viewModel.onIntent(RegisterSubscriptionIntent.InstallationTypeSelected(InstallationType.ONLY_TV_FIBER))
+        viewModel.onIntent(RegisterSubscriptionIntent.TvCpeKindSelected(TvCpeKind.ONU))
+        viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
+        viewModel.onIntent(RegisterSubscriptionIntent.TvCpeKindSelected(TvCpeKind.OPTICAL_RECEIVER))
+        fillValidTvCustomerFields()
+        viewModel.onIntent(RegisterSubscriptionIntent.NapBoxSelected(nap))
+
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.registerSubscriptionForm.selectedOnu)
+        coVerify(exactly = 1) { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) }
+    }
+
+    @Test
     fun `InstallationTypeSelected clears wifi fields`() = runTest(testDispatcher) {
         coEvery { getRegistrationCatalogUseCase() } returns Result.success(
             sampleCatalog(
@@ -912,7 +1001,7 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
-    fun `saveSubscription auto retries TR-069 while PENDING until COMPLETE without Error`() =
+    fun `saveSubscription polls registration progress until COMPLETE without Error`() =
         runTest(testDispatcher) {
             val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
             val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
@@ -927,14 +1016,27 @@ class RegisterSubscriptionComposeViewModelTest {
                 firstName = "A",
                 lastName = "B",
                 tr069ProvisionStatus = "PENDING",
+                provisioningPending = true,
             )
-            val complete = pending.copy(tr069ProvisionStatus = "COMPLETE")
+            val complete = pending.copy(
+                tr069ProvisionStatus = "COMPLETE",
+                provisioningPending = false,
+            )
             coEvery {
                 registerSubscriptionUseCase(any(), any(), facadePhotoFile = any())
             } returns Result.success(RegisterSubscriptionResult.Registered(pending))
-            coEvery { retryTr069ProvisioningUseCase(1) } answers {
+            coEvery { pollRegistrationProgressUseCase(1, any()) } coAnswers {
                 assertTrue(viewModel.uiState.value.isLoading)
-                Result.success(complete)
+                Result.success(
+                    RegistrationProgress(
+                        subscriptionId = 1,
+                        step = "DONE",
+                        message = "Listo",
+                        done = true,
+                        tr069ProvisionStatus = "COMPLETE",
+                        subscription = complete,
+                    )
+                )
             }
 
             fillValidFiberForm(nap, onu)
@@ -946,7 +1048,8 @@ class RegisterSubscriptionComposeViewModelTest {
             viewModel.saveSubscription(facadePhotoFile)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { retryTr069ProvisioningUseCase(1) }
+            coVerify(exactly = 1) { pollRegistrationProgressUseCase(1, any()) }
+            coVerify(exactly = 0) { retryTr069ProvisioningUseCase(any()) }
             assertEquals(1, events.size)
             val success = events[0] as RegisterSubscriptionUiEvent.Success
             assertEquals("COMPLETE", success.subscription.tr069ProvisionStatus)
@@ -956,7 +1059,7 @@ class RegisterSubscriptionComposeViewModelTest {
         }
 
     @Test
-    fun `saveSubscription recoverable PENDING timeout does not emit Error`() = runTest(testDispatcher) {
+    fun `saveSubscription poll timeout emits Success with PENDING and Error`() = runTest(testDispatcher) {
         val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
         val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
         coEvery { getRegistrationCatalogUseCase() } returns Result.success(
@@ -970,12 +1073,15 @@ class RegisterSubscriptionComposeViewModelTest {
             firstName = "A",
             lastName = "B",
             tr069ProvisionStatus = "PENDING",
+            provisioningPending = true,
             tr069Message = "Los SSIDs no se confirmaron en el ACS dentro del tiempo de espera.",
         )
         coEvery {
             registerSubscriptionUseCase(any(), any(), facadePhotoFile = any())
         } returns Result.success(RegisterSubscriptionResult.Registered(pending))
-        coEvery { retryTr069ProvisioningUseCase(1) } returns Result.success(pending)
+        coEvery { pollRegistrationProgressUseCase(1, any()) } returns Result.failure(
+            IllegalStateException("Timeout esperando aprovisionamiento")
+        )
 
         fillValidFiberForm(nap, onu)
         fillWifiFields()
@@ -987,11 +1093,14 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel.saveSubscription(facadePhotoFile)
         advanceUntilIdle()
 
-        coVerify(exactly = 3) { retryTr069ProvisioningUseCase(1) }
-        assertEquals(1, events.size)
-        val success = events[0] as RegisterSubscriptionUiEvent.Success
-        assertEquals("PENDING", success.subscription.tr069ProvisionStatus)
-        assertTrue(events.none { it is RegisterSubscriptionUiEvent.Error })
+        coVerify(exactly = 1) { pollRegistrationProgressUseCase(1, any()) }
+        coVerify(exactly = 0) { retryTr069ProvisioningUseCase(any()) }
+        assertTrue(events.any { it is RegisterSubscriptionUiEvent.Success })
+        assertTrue(
+            events.filterIsInstance<RegisterSubscriptionUiEvent.Error>().any {
+                it.message.contains("Timeout")
+            }
+        )
         assertEquals(false, viewModel.uiState.value.isLoading)
         job.cancel()
     }
@@ -1028,6 +1137,7 @@ class RegisterSubscriptionComposeViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { retryTr069ProvisioningUseCase(any()) }
+        coVerify(exactly = 0) { pollRegistrationProgressUseCase(any(), any()) }
         assertEquals(1, events.size)
         assertEquals(
             "MANUAL_REQUIRED",
@@ -1250,4 +1360,46 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel.onIntent(RegisterSubscriptionIntent.PlaceSelected(Place(id = "1", name = "P")))
         selectValidLocation()
     }
+
+    private fun fillValidTvCustomerFields() {
+        viewModel.onIntent(RegisterSubscriptionIntent.FirstNameChanged("Juan"))
+        viewModel.onIntent(RegisterSubscriptionIntent.LastNameChanged("Perez"))
+        viewModel.onIntent(RegisterSubscriptionIntent.DniChanged("12345678"))
+        viewModel.onIntent(RegisterSubscriptionIntent.AddressChanged("Calle larga 12345"))
+        viewModel.onIntent(RegisterSubscriptionIntent.PhoneChanged("987654321"))
+        viewModel.onIntent(RegisterSubscriptionIntent.PlanSelected(sampleTvPlan))
+        viewModel.onIntent(RegisterSubscriptionIntent.PlaceSelected(Place(id = "1", name = "P")))
+    }
+
+    private val sampleTvPlan = PlanResponse(
+        id = "tv1",
+        name = "TV Cable",
+        price = 20.0,
+        downloadSpeed = "0",
+        uploadSpeed = "0",
+        type = InstallationType.ONLY_TV_FIBER
+    )
+
+    private fun catalogWithTv() = sampleCatalog(
+        plans = listOf(
+            CatalogPlan(
+                id = "p1",
+                name = "Plan",
+                price = 10.0,
+                downloadSpeed = "100",
+                uploadSpeed = "100",
+                type = "FIBER"
+            ),
+            CatalogPlan(
+                id = "tv1",
+                name = "TV Cable",
+                price = 20.0,
+                downloadSpeed = "0",
+                uploadSpeed = "0",
+                type = "ONLY_TV_FIBER"
+            )
+        ),
+        napBoxes = listOf(fiberNap()),
+        onus = listOf(fiberOnu())
+    )
 }

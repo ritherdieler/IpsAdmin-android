@@ -24,6 +24,7 @@ import com.dscorp.ispadmin.domain.model.Plan
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.ServiceOrder
 import com.dscorp.ispadmin.domain.model.ServiceOrderResponse
+import com.dscorp.ispadmin.domain.model.RegistrationProgress
 import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
@@ -189,6 +190,7 @@ interface IRepository {
     suspend fun changeSubscriptionNapBox(request: MoveOnuRequest)
     suspend fun rebootFiberOnu(subscriptionId: Int)
     suspend fun retryTr069Provisioning(subscriptionId: Int): Subscription
+    suspend fun getRegistrationProgress(subscriptionId: Int): RegistrationProgress
     suspend fun getRemoteAppVersion(): AppVersion
     suspend fun getTicketsByDateRange(
         closed: AssistanceTicketStatus,

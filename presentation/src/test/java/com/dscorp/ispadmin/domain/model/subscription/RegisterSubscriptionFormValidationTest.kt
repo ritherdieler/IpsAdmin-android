@@ -8,6 +8,7 @@ import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.FormFieldKey
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.TvCpeKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -163,6 +164,13 @@ class RegisterSubscriptionFormValidationTest {
         val nap = NapBoxResponse(id = "n1", placeName = "P", placeId = 1)
         assertNotNull(subscriptionNapBoxError(true, null, listOf(nap)))
         assertNull(subscriptionNapBoxError(true, nap, listOf(nap)))
+    }
+
+    @Test
+    fun `subscriptionNapBoxError accepts nap matched by code when id differs`() {
+        val listed = NapBoxResponse(id = "104", code = "NO-001", placeName = "P", placeId = 1)
+        val selected = NapBoxResponse(id = null, code = "NO-001", placeName = "P", placeId = 1)
+        assertNull(subscriptionNapBoxError(true, selected, listOf(listed)))
     }
 
     @Test
@@ -410,6 +418,37 @@ class RegisterSubscriptionFormValidationTest {
             RegisterSubscriptionFormState(installationType = InstallationType.ONLY_TV_FIBER)
                 .requiresWifiConfig()
         )
+    }
+
+    @Test
+    fun `ONLY_TV requires explicit CPE kind before ONU`() {
+        val unset = RegisterSubscriptionFormState(installationType = InstallationType.ONLY_TV_FIBER)
+        assertTrue(unset.requiresTvCpeKind())
+        assertFalse(unset.requiresOnu())
+        assertEquals(
+            "Seleccione ONU o receptor óptico CATV",
+            unset.validate(FormFieldKey.TV_CPE_KIND)
+        )
+        assertTrue(unset.blockingFields().contains(FormFieldKey.TV_CPE_KIND))
+        assertFalse(FormFieldKey.blockingForSubmit.contains(FormFieldKey.TV_CPE_KIND))
+    }
+
+    @Test
+    fun `ONLY_TV ONU requires onu and CATV does not`() {
+        val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
+        val onuPath = RegisterSubscriptionFormState(
+            installationType = InstallationType.ONLY_TV_FIBER,
+            tvCpeKind = TvCpeKind.ONU,
+            onuList = listOf(onu),
+        )
+        assertTrue(onuPath.requiresOnu())
+        assertNotNull(onuPath.validate(FormFieldKey.ONU))
+        assertNull(onuPath.validate(FormFieldKey.TV_CPE_KIND))
+
+        val catvPath = onuPath.copy(tvCpeKind = TvCpeKind.OPTICAL_RECEIVER, selectedOnu = null)
+        assertFalse(catvPath.requiresOnu())
+        assertNull(catvPath.validate(FormFieldKey.ONU))
+        assertNull(catvPath.validate(FormFieldKey.TV_CPE_KIND))
     }
 
     @Test

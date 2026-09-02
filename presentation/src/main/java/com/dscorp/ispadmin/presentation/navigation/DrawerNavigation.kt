@@ -55,7 +55,8 @@ sealed class DrawerItem(
     object RegisterSubscription : DrawerItem(
         "Registrar suscripción",
         FeatureRoutes.Subscription.Register(),
-        Icons.AutoMirrored.Filled.NoteAdd
+        Icons.AutoMirrored.Filled.NoteAdd,
+        menuTestTag = "drawer_nav_register_subscription"
     )
 
     object PendingSubscriptions : DrawerItem(

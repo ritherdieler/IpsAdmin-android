@@ -1,6 +1,0 @@
-# IpsAdmin — Cursor
-
-Lee `.cursor/context/project-profile.md` antes de implementar.
-
-Rules: `.cursor/rules/` (core + TDD always on; el resto por glob).
-Skills: `.cursor/skills/` — workflows, no duplicar las rules.

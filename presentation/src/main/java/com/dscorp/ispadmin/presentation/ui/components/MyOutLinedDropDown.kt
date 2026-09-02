@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +29,7 @@ fun <T> MyOutLinedDropDown(
     hasError: Boolean = false,
     enabled: Boolean = true,
     isItemEnabled: (T) -> Boolean = { true },
+    itemTestTag: ((index: Int, item: T) -> String)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -58,10 +60,13 @@ fun <T> MyOutLinedDropDown(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
-            items.forEach { option ->
+            items.forEachIndexed { index, option ->
                 val itemEnabled = enabled && isItemEnabled(option)
+                val tag = itemTestTag?.invoke(index, option)
                 DropdownMenuItem(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(if (tag != null) Modifier.testTag(tag) else Modifier),
                     enabled = itemEnabled,
                     onClick = {
                         if (!itemEnabled) return@DropdownMenuItem
@@ -76,4 +81,3 @@ fun <T> MyOutLinedDropDown(
         }
     }
 }
-

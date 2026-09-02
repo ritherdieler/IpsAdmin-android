@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,7 +59,10 @@ fun LocationSetupGate(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onContinue) {
+        Button(
+            modifier = Modifier.testTag("location_setup_continue"),
+            onClick = onContinue
+        ) {
             Text(content.primaryLabel)
         }
         content.secondaryLabel?.let { label ->

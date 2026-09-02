@@ -85,6 +85,7 @@ import com.dscorp.ispadmin.presentation.ui.components.MyAutoCompleteTextViewComp
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
 import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionTestTags
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.LocationCaptureMethod
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
@@ -112,7 +113,17 @@ fun RegisterSubscriptionForm(
     val form = formState.registerSubscriptionForm
     val isFormValid = form.isValid()
 
-    Surface(modifier = modifier.fillMaxSize()) {
+    Surface(
+        modifier = modifier
+            .fillMaxSize()
+            .then(
+                if (!formState.isLoading) {
+                    Modifier.testTag(RegisterSubscriptionTestTags.FORM_READY)
+                } else {
+                    Modifier
+                }
+            )
+    ) {
         Column(modifier = Modifier.fillMaxSize()) {
             RegisterSubscriptionWizardStepper(
                 currentStep = formState.wizardStep,
@@ -225,11 +236,13 @@ private fun ClientDataFields(
         error1 = form.firstNameError,
         onValueChange1 = onFirstNameChanged,
         keyboardType1 = KeyboardType.Text,
+        testTag1 = RegisterSubscriptionTestTags.FIRST_NAME,
         label2 = "Apellidos (ej: Pérez)",
         value2 = form.lastName,
         error2 = form.lastNameError,
         onValueChange2 = onLastNameChanged,
         keyboardType2 = KeyboardType.Text,
+        testTag2 = RegisterSubscriptionTestTags.LAST_NAME,
         enabled = !isLoading
     )
 
@@ -237,7 +250,8 @@ private fun ClientDataFields(
 
     MyOutlinedTextField(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .testTag(RegisterSubscriptionTestTags.DNI),
         label = "DNI (8 dígitos)",
         value = form.dni,
         errorMessage = form.dniError,
@@ -253,7 +267,8 @@ private fun ClientDataFields(
 
     MyOutlinedTextField(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .testTag(RegisterSubscriptionTestTags.PHONE),
         label = "Teléfono (9 dígitos)",
         value = form.phone,
         errorMessage = form.phoneError,
@@ -281,7 +296,8 @@ private fun AddressFields(
 
     MyOutlinedTextField(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .testTag(RegisterSubscriptionTestTags.ADDRESS),
         value = form.address,
         label = "Dirección completa",
         errorMessage = form.addressError,
@@ -323,7 +339,9 @@ private fun AddressFields(
     }
 
     MyAutoCompleteTextViewCompose(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(RegisterSubscriptionTestTags.PLACE),
         items = form.placeList,
         label = "Lugar",
         selectedItem = form.selectedPlace,
@@ -344,11 +362,13 @@ private fun InstallationBlock(
     Spacer(modifier = Modifier.height(8.dp))
 
     MyOutLinedDropDown(
+        modifier = Modifier.testTag(RegisterSubscriptionTestTags.INSTALLATION_TYPE),
         label = "Tipo de Instalación",
         items = listOf(InstallationType.FIBER, InstallationType.WIRELESS, InstallationType.ONLY_TV_FIBER),
         selected = form.installationType,
         onItemSelected = { onIntent(RegisterSubscriptionIntent.InstallationTypeSelected(it)) },
         enabled = !formState.isLoading,
+        itemTestTag = { index, _ -> RegisterSubscriptionTestTags.installationTypeItem(index) },
     )
 
     AnimatedVisibility(
@@ -357,29 +377,33 @@ private fun InstallationBlock(
         exit = fadeOut() + shrinkVertically()
     ) {
         MyOutLinedDropDown(
-            modifier = Modifier.testTag("register_host_device_dropdown"),
+            modifier = Modifier.testTag(RegisterSubscriptionTestTags.HOST_DEVICE),
             label = stringResource(R.string.host_device),
             items = form.activeCoreDevices(),
             selected = form.selectedHostDevice,
             onItemSelected = { onIntent(RegisterSubscriptionIntent.HostDeviceSelected(it)) },
             hasError = form.hostDeviceError != null,
             enabled = !formState.isLoading,
+            itemTestTag = { index, _ -> RegisterSubscriptionTestTags.hostDeviceItem(index) },
         )
     }
 
     MyOutLinedDropDown(
+        modifier = Modifier.testTag(RegisterSubscriptionTestTags.PLAN),
         label = "Plan",
         items = form.planList,
         selected = form.selectedPlan,
         onItemSelected = { onIntent(RegisterSubscriptionIntent.PlanSelected(it)) },
         hasError = form.planError != null,
         enabled = !formState.isLoading && form.planList.isNotEmpty(),
+        itemTestTag = { index, _ -> RegisterSubscriptionTestTags.planItem(index) },
     )
 
     if (form.requiresNapBox()) {
         if (formState.isLoadingNearbyNapBoxes) {
             Row(
                 modifier = Modifier
+                    .testTag(RegisterSubscriptionTestTags.NEARBY_NAP_LOADING)
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.Center,
@@ -395,6 +419,7 @@ private fun InstallationBlock(
             }
         }
         MyAutoCompleteTextViewCompose(
+            modifier = Modifier.testTag(RegisterSubscriptionTestTags.NAP_BOX),
             items = form.napBoxList,
             label = NAP_BOX_LABEL,
             selectedItem = form.selectedNapBox,
@@ -445,7 +470,7 @@ private fun InstallationBlock(
             MyOutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("tf_client_ip_address"),
+                    .testTag(RegisterSubscriptionTestTags.CLIENT_IP),
                 label = "IP del cliente",
                 value = form.clientIpAddress,
                 errorMessage = form.clientIpAddressError,
@@ -478,6 +503,7 @@ private fun FacadePhotoSection(
         modifier = Modifier
             .fillMaxWidth()
             .height(220.dp)
+            .testTag(RegisterSubscriptionTestTags.FACADE_PHOTO)
             .clip(photoShape)
             .border(
                 width = 1.dp,
@@ -537,7 +563,9 @@ private fun ObservationsField(
     SectionTitle("Observaciones")
     Spacer(modifier = Modifier.height(8.dp))
     MyOutlinedTextField(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(RegisterSubscriptionTestTags.NOTE),
         value = form.note,
         onValueChange = onNoteChanged,
         label = "Observaciones (opcional)",
@@ -653,7 +681,7 @@ private fun WizardNavigationBar(
                 enabled = !isLoading,
                 modifier = Modifier
                     .weight(1f)
-                    .testTag("wizard_back")
+                    .testTag(RegisterSubscriptionTestTags.WIZARD_BACK)
             ) {
                 Text("Atrás")
             }
@@ -662,7 +690,7 @@ private fun WizardNavigationBar(
             MyButton(
                 modifier = Modifier
                     .weight(1f)
-                    .testTag("wizard_register"),
+                    .testTag(RegisterSubscriptionTestTags.SUBMIT),
                 text = "Registrar suscripción",
                 onClick = onRegister,
                 enabled = isFormValid,
@@ -672,7 +700,7 @@ private fun WizardNavigationBar(
             MyButton(
                 modifier = Modifier
                     .weight(1f)
-                    .testTag("wizard_continue"),
+                    .testTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE),
                 text = "Continuar",
                 onClick = onContinue,
                 enabled = !isLoading,
@@ -767,17 +795,20 @@ private fun TwoFieldsRow(
     error1: String? = null,
     onValueChange1: (String) -> Unit,
     keyboardType1: KeyboardType = KeyboardType.Text,
+    testTag1: String? = null,
     label2: String,
     value2: String,
     error2: String? = null,
     onValueChange2: (String) -> Unit,
     keyboardType2: KeyboardType = KeyboardType.Text,
+    testTag2: String? = null,
     enabled: Boolean = true,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         MyOutlinedTextField(
             modifier = Modifier
-                .weight(1f),
+                .weight(1f)
+                .then(if (testTag1 != null) Modifier.testTag(testTag1) else Modifier),
             label = label1,
             value = value1,
             errorMessage = error1,
@@ -790,7 +821,8 @@ private fun TwoFieldsRow(
         )
         MyOutlinedTextField(
             modifier = Modifier
-                .weight(1f),
+                .weight(1f)
+                .then(if (testTag2 != null) Modifier.testTag(testTag2) else Modifier),
             label = label2,
             value = value2,
             errorMessage = error2,
@@ -931,12 +963,15 @@ fun FiberOpticForm(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 MyOutLinedDropDown(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(RegisterSubscriptionTestTags.ONU),
                     items = form.onuList,
                     selected = form.selectedOnu,
                     label = ONU_LABEL,
                     onItemSelected = { onIntent(RegisterSubscriptionIntent.OnuSelected(it)) },
-                    hasError = form.onuError != null
+                    hasError = form.onuError != null,
+                    itemTestTag = { index, _ -> RegisterSubscriptionTestTags.onuItem(index) },
                 )
 
                 RefreshIcon(
@@ -946,13 +981,14 @@ fun FiberOpticForm(
             }
 
             MyOutLinedDropDown(
-                modifier = Modifier.testTag("register_vlan_dropdown"),
+                modifier = Modifier.testTag(RegisterSubscriptionTestTags.VLAN),
                 items = VLAN_OPTIONS,
                 selected = VLAN_OPTIONS.firstOrNull { it.value == form.vlan },
                 label = VLAN_LABEL,
                 onItemSelected = { onIntent(RegisterSubscriptionIntent.OnVlanChanged(it.value)) },
                 enabled = !formState.isLoading,
                 isItemEnabled = { it.selectable },
+                itemTestTag = { index, _ -> RegisterSubscriptionTestTags.vlanItem(index) },
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -996,7 +1032,7 @@ private fun WifiFields(
         modifier = Modifier.fillMaxWidth()
     ) {
         Checkbox(
-            modifier = Modifier.testTag("cb_wifi_different_names"),
+            modifier = Modifier.testTag(RegisterSubscriptionTestTags.WIFI_DIFFERENT_NAMES),
             checked = form.useDifferentWifiNames,
             onCheckedChange = {
                 onIntent(RegisterSubscriptionIntent.UseDifferentWifiNamesChanged(it))
@@ -1020,7 +1056,7 @@ private fun WifiFields(
     MyOutlinedTextField(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("tf_wifi_ssid_24"),
+            .testTag(RegisterSubscriptionTestTags.WIFI_SSID_24),
         label = ssid24Label,
         value = form.wifiSsid24,
         errorMessage = form.wifiSsid24Error,
@@ -1050,7 +1086,7 @@ private fun WifiFields(
         MyOutlinedTextField(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("tf_wifi_ssid_5"),
+                .testTag(RegisterSubscriptionTestTags.WIFI_SSID_5),
             label = "SSID 5 GHz",
             value = form.wifiSsid5,
             errorMessage = form.wifiSsid5Error,
@@ -1068,7 +1104,7 @@ private fun WifiFields(
     MyOutlinedTextField(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("tf_wifi_password_24"),
+            .testTag(RegisterSubscriptionTestTags.WIFI_PASSWORD_24),
         label = "Clave WiFi",
         value = form.wifiPassword24,
         errorMessage = form.wifiPassword24Error,
@@ -1081,7 +1117,7 @@ private fun WifiFields(
         },
         trailingIcon = {
             IconButton(
-                modifier = Modifier.testTag("btn_toggle_wifi_password_24"),
+                modifier = Modifier.testTag(RegisterSubscriptionTestTags.WIFI_PASSWORD_24_TOGGLE),
                 onClick = { passwordVisible = !passwordVisible }
             ) {
                 Icon(
@@ -1122,7 +1158,9 @@ private fun RefreshIcon(
     )
 
     MyIconButton(
-        modifier = Modifier.padding(start = 8.dp),
+        modifier = Modifier
+            .padding(start = 8.dp)
+            .testTag(RegisterSubscriptionTestTags.REFRESH_ONU),
         onClick = onRefreshOnuList
     ) {
         Icon(
@@ -1232,7 +1270,7 @@ private fun LocationMethodSelector(
         RadioButtonWithLabel(
             modifier = Modifier
                 .weight(1f)
-                .testTag("location_method_current"),
+                .testTag(RegisterSubscriptionTestTags.LOCATION_METHOD_CURRENT),
             label = "Ubi. Actual",
             selected = selected == LocationCaptureMethod.CURRENT,
             onClick = onUseCurrentLocation,
@@ -1242,7 +1280,7 @@ private fun LocationMethodSelector(
         RadioButtonWithLabel(
             modifier = Modifier
                 .weight(1f)
-                .testTag("location_method_manual"),
+                .testTag(RegisterSubscriptionTestTags.LOCATION_METHOD_MANUAL),
             label = "Ubi. Manualmente",
             selected = selected == LocationCaptureMethod.MANUAL,
             onClick = onChooseManualLocation,
@@ -1257,7 +1295,7 @@ private fun LocationMethodSelector(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .padding(top = 4.dp)
-                .testTag("selected_location_coordinates")
+                .testTag(RegisterSubscriptionTestTags.LOCATION_COORDINATES)
         )
     }
     locationError?.let { error ->
