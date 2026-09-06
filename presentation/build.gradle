@@ -58,8 +58,8 @@ android {
             buildConfigField "boolean", "HAS_MAPS_API_KEY", (!mapsApiKeyDev.isEmpty()).toString()
             buildConfigField 'boolean', 'SKIP_VERSION_CHECK', 'true'
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
-            buildConfigField 'String', "BASE_URL", '"http://192.168.1.4:8080/ispadmin/"'
-            buildConfigField 'String', "OBS_BASE_URL", '"http://192.168.1.4:8080/ispadmin/"'
+            buildConfigField 'String', "BASE_URL", '"http://127.0.0.1:8080/ispadmin/"'
+            buildConfigField 'String', "OBS_BASE_URL", '"http://127.0.0.1:8080/ispadmin/"'
             buildConfigField 'String', "OBS_API_KEY", '"dev-obs-android-key"'
             buildConfigField 'String', "OBS_API_KEY_ANDROID", '""'
             buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", "\"${sendCloudMessagingApiKey}\""
