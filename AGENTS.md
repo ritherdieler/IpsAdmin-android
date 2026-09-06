@@ -209,6 +209,10 @@ gradlew.bat :presentation:testDevDebugUnitTest --tests "com.dscorp.ispadmin....F
 
 RED = comportamiento ausente, no test que no compile.
 
+### Pruebas largas / e2e: no bloquear el turno (obligatorio)
+
+Espresso, `connected*AndroidTest`, scripts `scripts/e2e_*.sh` y cualquier Gradle instrumentado: lanzar en **background**, avisar al usuario y **cerrar el turno**. Cursor notifica al terminar el job; ahí se lee el log y se reporta. **Prohibido** `AwaitShell`/polling mientras corre el e2e. Regla de plataforma: `gigafiber/AGENTS.md` → «Pruebas largas: no bloquear el turno».
+
 ### Legacy
 
 Sin cobertura: characterization → cambio mínimo → test del bug. No reescribir para “TDD perfecto”.

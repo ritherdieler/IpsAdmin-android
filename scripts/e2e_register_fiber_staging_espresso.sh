@@ -2,6 +2,9 @@
 # Orchestrates Espresso FIBER register e2e against staging + §4 hard cleanup.
 # Usage (from Android repo root):
 #   E2E_ONU_SN=ZTEGDC47BFFD ./scripts/e2e_register_fiber_staging_espresso.sh
+#
+# Agents: run this script in background and end the turn; do not AwaitShell/poll.
+# Rely on Cursor's background-job completion notification (gigafiber/AGENTS.md).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -160,21 +163,16 @@ if [[ "$ONU_OK" -ne 1 ]]; then
 fi
 
 echo "== prepare emulator location =="
-$ADB -s "$DEVICE" emu geo fix "$GEO_LON" "$GEO_LAT" 2>/dev/null || \
-  $ADB -s "$DEVICE" shell am broadcast -a android.intent.action.SET_MOCK_LOCATION >/dev/null 2>&1 || true
-$ADB wait-for-device
-for _ in $(seq 1 30); do
-  if $ADB -s "$DEVICE" get-state 2>/dev/null | grep -q device; then
-    break
-  fi
-  sleep 1
-done
-$ADB -s "$DEVICE" get-state | grep -q device || { echo "Emulator lost after geo fix" >&2; exit 1; }
+# FiberRegisterFirstOnuE2ETest pastes lat/lon into the map; do not use `adb emu geo fix`
+# (it often kills the emulator console on medium_phone).
+$ADB -s "$DEVICE" get-state 2>/dev/null | grep -q device || { echo "Emulator not ready before install" >&2; exit 1; }
 
-echo "== ensure stagingDebug installed =="
-./gradlew :presentation:installStagingDebug
+echo "== ensure stagingDebug + androidTest installed =="
+./gradlew :presentation:installStagingDebug :presentation:installStagingDebugAndroidTest
 echo "== clear app data for clean login =="
 $ADB -s "$DEVICE" shell pm clear "$PACKAGE" >/dev/null 2>&1 || true
+$ADB -s "$DEVICE" shell pm path "$PACKAGE.test" >/dev/null 2>&1 || \
+  ./gradlew :presentation:installStagingDebugAndroidTest
 
 echo "== connectedStagingDebugAndroidTest FiberRegisterFirstOnuE2ETest =="
 set +e
@@ -195,6 +193,10 @@ set -e
 
 PING_EXIT=0
 if [[ "$TEST_EXIT" -eq 0 ]]; then
+  E2E_WIFI_SSID_5="${E2E_WIFI_SSID_5:-${E2E_WIFI_SSID} - 5G}"
+  echo "== WiFi credentials (before ping/cleanup) =="
+  echo "wifi_24 ssid=$E2E_WIFI_SSID password=$E2E_WIFI_PASS"
+  echo "wifi_5 ssid=$E2E_WIFI_SSID_5 password=$E2E_WIFI_PASS"
   echo "== MikroTik2 ping to assigned IP (before cleanup) =="
   set +e
   "$MK_PING" --env staging --dni "$E2E_DNI"
@@ -202,11 +204,16 @@ if [[ "$TEST_EXIT" -eq 0 ]]; then
   set -e
 fi
 
-echo "== post cleanup (required) =="
-set +e
-"$CLEANUP" --env staging --sn "$E2E_ONU_SN" --dni "$E2E_DNI"
-CLEAN_EXIT=$?
-set -e
+if [[ "${SKIP_POST_CLEANUP:-0}" == "1" ]]; then
+  echo "== post cleanup skipped (SKIP_POST_CLEANUP=1) dni=$E2E_DNI sn=$E2E_ONU_SN =="
+  CLEAN_EXIT=0
+else
+  echo "== post cleanup (required) =="
+  set +e
+  "$CLEANUP" --env staging --sn "$E2E_ONU_SN" --dni "$E2E_DNI"
+  CLEAN_EXIT=$?
+  set -e
+fi
 
 if [[ "$TEST_EXIT" -ne 0 ]]; then
   echo "E2E test failed exit=$TEST_EXIT" >&2
@@ -220,4 +227,4 @@ if [[ "$CLEAN_EXIT" -ne 0 ]]; then
   echo "Post cleanup failed exit=$CLEAN_EXIT" >&2
   exit "$CLEAN_EXIT"
 fi
-echo "E2E_FIBER_STAGING_ESPRESSO_OK dni=$E2E_DNI sn=$E2E_ONU_SN wifi=${E2E_WIFI_SSID}/${E2E_WIFI_PASS}"
+echo "E2E_FIBER_STAGING_ESPRESSO_OK dni=$E2E_DNI sn=$E2E_ONU_SN wifi_24=${E2E_WIFI_SSID}/${E2E_WIFI_PASS} wifi_5=${E2E_WIFI_SSID_5:-${E2E_WIFI_SSID} - 5G}/${E2E_WIFI_PASS}"

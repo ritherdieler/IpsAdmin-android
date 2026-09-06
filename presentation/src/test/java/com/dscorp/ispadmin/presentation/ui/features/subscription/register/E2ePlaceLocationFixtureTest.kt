@@ -17,6 +17,19 @@ class E2ePlaceLocationFixtureTest {
     }
 
     @Test
+    fun `staging espresso script delivers wifi credentials before cleanup`() {
+        val script = File("../scripts/e2e_register_fiber_staging_espresso.sh").readText()
+        val wifiBlock = script.indexOf("== WiFi credentials (before ping/cleanup) ==")
+        val pingBlock = script.indexOf("== MikroTik2 ping to assigned IP (before cleanup) ==")
+        val cleanupBlock = script.indexOf("== post cleanup (required) ==")
+        assertThat(wifiBlock).isGreaterThan(-1)
+        assertThat(pingBlock).isGreaterThan(wifiBlock)
+        assertThat(cleanupBlock).isGreaterThan(pingBlock)
+        assertThat(script).contains("wifi_24 ssid=\$E2E_WIFI_SSID password=\$E2E_WIFI_PASS")
+        assertThat(script).contains("wifi_5 ssid=\$E2E_WIFI_SSID_5 password=\$E2E_WIFI_PASS")
+    }
+
+    @Test
     fun `staging espresso script and e2e test default to the polygon fixture`() {
         val script = File("../scripts/e2e_register_fiber_staging_espresso.sh").readText()
         assertThat(script).contains("GEO_LAT=\"\${GEO_LAT:-${E2ePlaceLocationFixture.LATITUDE}}\"")

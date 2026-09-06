@@ -2,6 +2,8 @@
 # Orchestrates Espresso FIBER register e2e + §4 hard cleanup (backend runbook).
 # Usage (from Android repo root):
 #   ./scripts/e2e_register_fiber_espresso.sh
+#
+# Agents: run in background and end the turn; do not AwaitShell/poll (gigafiber/AGENTS.md).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -60,6 +62,10 @@ TEST_EXIT=$?
 
 PING_EXIT=0
 if [[ "$TEST_EXIT" -eq 0 ]]; then
+  E2E_WIFI_SSID_5="${E2E_WIFI_SSID_5:-${E2E_WIFI_SSID} - 5G}"
+  echo "== WiFi credentials (before ping/cleanup) =="
+  echo "wifi_24 ssid=$E2E_WIFI_SSID password=$E2E_WIFI_PASS"
+  echo "wifi_5 ssid=$E2E_WIFI_SSID_5 password=$E2E_WIFI_PASS"
   echo "== MikroTik2 ping to assigned IP (before cleanup) =="
   set +e
   "$MK_PING" --dni "$E2E_DNI"
@@ -85,4 +91,4 @@ if [[ "$CLEAN_EXIT" -ne 0 ]]; then
   echo "Post cleanup failed exit=$CLEAN_EXIT" >&2
   exit "$CLEAN_EXIT"
 fi
-echo "E2E_FIBER_ESPRESSO_OK dni=$E2E_DNI wifi=${E2E_WIFI_SSID}/${E2E_WIFI_PASS}"
+echo "E2E_FIBER_ESPRESSO_OK dni=$E2E_DNI wifi_24=${E2E_WIFI_SSID}/${E2E_WIFI_PASS} wifi_5=${E2E_WIFI_SSID_5:-${E2E_WIFI_SSID} - 5G}/${E2E_WIFI_PASS}"
