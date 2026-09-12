@@ -61,8 +61,16 @@ import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.model.extensions.toFormattedDateString
+import com.dscorp.ispadmin.domain.model.AccessMigrationStage
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.CleanDetailField
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.accessmigration.AccessMigrationIntent
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.accessmigration.AccessMigrationUiState
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.accessmigration.AccessMigrationViewModel
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.accessmigration.AccessMigrationContent
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.accessmigration.canMigrateAccess
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.accessmigration.resolveNetworkAccess
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.accessmigration.toUserMessage
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.ErrorView
 import org.koin.androidx.compose.koinViewModel
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -90,6 +98,7 @@ import androidx.compose.foundation.layout.heightIn
 fun SubscriptionDetailScreen(
     subscriptionId: Int,
     viewModel: SubscriptionDetailViewModel = koinViewModel(),
+    accessMigrationViewModel: AccessMigrationViewModel = koinViewModel(),
     navController: NavController
 ) {
 
@@ -97,6 +106,20 @@ fun SubscriptionDetailScreen(
         viewModel.getSubscription(subscriptionId)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val accessMigrationState by accessMigrationViewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(uiState.subscription?.id) {
+        val subscription = uiState.subscription ?: return@LaunchedEffect
+        accessMigrationViewModel.onIntent(
+            AccessMigrationIntent.Bind(
+                subscriptionId = subscription.id,
+                accessMode = subscription.accessMode,
+                ip = subscription.ip,
+                pppoeUsername = subscription.resolvedPppoeUsername(),
+                migrationStage = subscription.resolvedMigrationStage(),
+                installationType = subscription.installationType,
+            )
+        )
+    }
     val context = LocalContext.current
     var showFacadePhotoOptionsDialog by remember { mutableStateOf(false) }
 
@@ -159,12 +182,14 @@ fun SubscriptionDetailScreen(
     }
 
     MyTheme {
+        val loadedSubscription = uiState.subscription
+        val loadError = uiState.error
         when {
-            uiState.isLoading ->Loader()
+            uiState.isLoading -> Loader()
 
-            uiState.error != null -> {
+            loadError != null -> {
                 ErrorView(
-                    errorMessage = uiState.error!!,
+                    errorMessage = loadError,
                     onRetry = { viewModel.getSubscription(subscriptionId) },
                     onBack = {
                         viewModel.clearError()
@@ -173,18 +198,49 @@ fun SubscriptionDetailScreen(
                 )
             }
 
-            uiState.subscription != null -> SubscriptionDetailForm(subscription = uiState.subscription!!, onFacadePhotoClick = {
-                showFacadePhotoOptionsDialog = true
-            }
+            loadedSubscription != null -> SubscriptionDetailForm(
+                subscription = loadedSubscription,
+                onFacadePhotoClick = {
+                    showFacadePhotoOptionsDialog = true
+                },
+                accessMigrationState = accessMigrationState,
+                onAccessMigrationIntent = accessMigrationViewModel::onIntent,
             )
         }
     }
 }
 
 @Composable
-fun SubscriptionDetailForm(subscription: SubscriptionResponse, onFacadePhotoClick: ()-> Unit ={}) {
+fun SubscriptionDetailForm(
+    subscription: SubscriptionResponse,
+    onFacadePhotoClick: () -> Unit = {},
+    accessMigrationState: AccessMigrationUiState = AccessMigrationUiState(),
+    onAccessMigrationIntent: (AccessMigrationIntent) -> Unit = {},
+) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+    val boundMigrationState = if (accessMigrationState.subscriptionId == subscription.id) {
+        accessMigrationState
+    } else {
+        val stage = AccessMigrationStage.parse(subscription.resolvedMigrationStage())
+        val (label, value) = resolveNetworkAccess(
+            accessMode = subscription.accessMode,
+            ip = subscription.ip,
+            pppoeUsername = subscription.resolvedPppoeUsername(),
+        )
+        AccessMigrationUiState(
+            subscriptionId = subscription.id,
+            accessLabel = label,
+            accessValue = value,
+            canMigrate = canMigrateAccess(
+                accessMode = subscription.accessMode,
+                installationType = subscription.installationType,
+                stage = stage,
+            ),
+            stage = stage,
+            stageMessage = stage?.toUserMessage(),
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -440,16 +496,10 @@ fun SubscriptionDetailForm(subscription: SubscriptionResponse, onFacadePhotoClic
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            subscription.ip?.let {
-                if (it.isNotEmpty()) {
-                    CleanDetailField(
-                        icon = Icons.Rounded.Router,
-                        label = "Dirección IP",
-                        value = it
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-            }
+            AccessMigrationContent(
+                uiState = boundMigrationState,
+                onIntent = onAccessMigrationIntent,
+            )
 
             subscription.napBox?.let {
                 CleanDetailField(

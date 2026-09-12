@@ -42,8 +42,21 @@ data class SubscriptionResponse(
     val totalDebt: Double,
     val lastPaymentDate: String?,
     val hasFiberOnu: Boolean = false,
+    val accessMode: String? = null,
+    val pppoeUsername: String? = null,
+    val accessMigrationStage: String? = null,
+    val accessMigrationFailureReason: String? = null,
+    val accessMigrationQuarantineUntil: String? = null,
+    val accessMigration: AccessMigrationEmbedded? = null,
 ) : java.io.Serializable {
     fun getFullName() = "$firstName $lastName"
+
+    fun resolvedPppoeUsername(): String? =
+        pppoeUsername?.trim()?.takeIf { it.isNotEmpty() }
+            ?: accessMigration?.pppoeUsername?.trim()?.takeIf { it.isNotEmpty() }
+
+    fun resolvedMigrationStage(): String? =
+        accessMigrationStage ?: accessMigration?.stage
 
     fun dateAsString() = subscriptionDate?.toFormattedDateString()
     fun toDomain() = SubscriptionResume(

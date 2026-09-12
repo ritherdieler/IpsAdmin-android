@@ -450,7 +450,7 @@ internal fun RegisterSuccessFullScreen(
                         title = "Red",
                         testTag = "register_success_section_network"
                     ) {
-                        InfoRow("IP", subscription.ip ?: "No asignada")
+                        InfoRow(subscription.networkAccessLabel(), subscription.networkAccessValue())
 
                         if (subscription.installationType == InstallationType.FIBER ||
                             subscription.installationType == InstallationType.ONLY_TV_FIBER

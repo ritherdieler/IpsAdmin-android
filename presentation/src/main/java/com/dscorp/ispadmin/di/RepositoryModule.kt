@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.di
 
+import com.dscorp.ispadmin.data.repository.AccessMigrationRepositoryImpl
 import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.data.repository.InstallationOrderRepository
 import com.dscorp.ispadmin.data.repository.InstallationOrderRepositoryImpl
@@ -14,6 +15,7 @@ import com.dscorp.ispadmin.data.repository.adapters.SubscriptionActionsRepositor
 import com.dscorp.ispadmin.data.repository.adapters.SubscriptionRegistrationQueryRepositoryAdapter
 import com.dscorp.ispadmin.data.repository.adapters.SubscriptionWriteRepositoryAdapter
 import com.dscorp.ispadmin.data.repository.adapters.UserSessionReaderAdapter
+import com.dscorp.ispadmin.domain.repository.AccessMigrationRepository
 import com.dscorp.ispadmin.domain.repository.OutlayReceiptPreparer
 import com.dscorp.ispadmin.domain.repository.OutlayRepository
 import com.dscorp.ispadmin.domain.repository.PaymentRepository
@@ -33,6 +35,7 @@ val repositoryModule = module {
     single<OutlayReceiptPreparer> { OutlayReceiptPreparerImpl(get()) }
     single<PlanRepository> { PlanRepositoryAdapter(get()) }
     single<SubscriptionActionsRepository> { SubscriptionActionsRepositoryAdapter(get()) }
+    single<AccessMigrationRepository> { AccessMigrationRepositoryImpl(get()) }
     single<SubscriptionRegistrationQueryRepository> { SubscriptionRegistrationQueryRepositoryAdapter(get()) }
     single<UserSessionReader> { UserSessionReaderAdapter(get()) }
     single<SubscriptionWriteRepository> { SubscriptionWriteRepositoryAdapter(get()) }

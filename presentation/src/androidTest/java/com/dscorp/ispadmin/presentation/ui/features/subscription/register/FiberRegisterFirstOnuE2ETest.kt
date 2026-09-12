@@ -106,6 +106,8 @@ class FiberRegisterFirstOnuE2ETest {
     private val placeHint = args.getString("e2e.place") ?: E2ePlaceLocationFixture.PLACE_NAME
     private val wifiSsid = args.getString("e2e.wifiSsid") ?: "mimiwifi"
     private val wifiPass = args.getString("e2e.wifiPass") ?: "MimiWifi24pass"
+    private val firstName = args.getString("e2e.firstName") ?: "EeeFiber"
+    private val lastName = args.getString("e2e.lastName") ?: "Prueba"
     private val onuSn = E2eOnuSnResolver.resolve(args.getString("e2e.onuSn"))
     private val napCode = E2eNapCodeResolver.resolve(args.getString("e2e.napCode"))
     private val geoLat = args.getString("e2e.lat") ?: E2ePlaceLocationFixture.LATITUDE
@@ -232,9 +234,8 @@ class FiberRegisterFirstOnuE2ETest {
     }
 
     private fun fillClientFields() {
-        // Names must match ^[a-zA-Z\\s]+$ (no digits) — "E2e..." would keep Submit disabled.
-        typeInto(RegisterSubscriptionTestTags.FIRST_NAME, "EeeFiber")
-        typeInto(RegisterSubscriptionTestTags.LAST_NAME, "Prueba")
+        typeInto(RegisterSubscriptionTestTags.FIRST_NAME, firstName)
+        typeInto(RegisterSubscriptionTestTags.LAST_NAME, lastName)
         typeInto(RegisterSubscriptionTestTags.DNI, dni)
         typeInto(RegisterSubscriptionTestTags.PHONE, "999888777")
         closeSoftKeyboard()

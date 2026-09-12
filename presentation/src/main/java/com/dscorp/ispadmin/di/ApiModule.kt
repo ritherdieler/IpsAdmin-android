@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.di
 
 import com.dscorp.ispadmin.BuildConfig
+import com.dscorp.ispadmin.data.datasource.remote.AccessMigrationApiService
 import com.dscorp.ispadmin.data.datasource.remote.InstallationOrderApi
 import com.dscorp.ispadmin.data.datasource.remote.InstallationOrderApiService
 import com.dscorp.ispadmin.data.datasource.remote.SendMessagingCloudApi
@@ -13,6 +14,7 @@ val apiModule = module {
     single { provideFirebaseCloudMessagingApi(provideRetrofit(BuildConfig.FIRE_BASE_URL, get())) }
     single { provideInstallationOrderApi(get()) }
     single { provideInstallationOrderApiDirect(get()) }
+    single { provideAccessMigrationApi(get()) }
 }
 
 fun providesApi(retrofit: Retrofit): RestApiServices {
@@ -29,4 +31,8 @@ fun provideInstallationOrderApi(retrofit: Retrofit): InstallationOrderApiService
 
 fun provideInstallationOrderApiDirect(retrofit: Retrofit): InstallationOrderApi {
     return retrofit.create(InstallationOrderApi::class.java)
+}
+
+fun provideAccessMigrationApi(retrofit: Retrofit): AccessMigrationApiService {
+    return retrofit.create(AccessMigrationApiService::class.java)
 }

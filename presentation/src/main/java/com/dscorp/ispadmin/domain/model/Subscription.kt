@@ -53,9 +53,22 @@ data class Subscription(
     var tr069ProvisionStatus: String? = null,
     var tr069RequiresManualConfig: Boolean = false,
     var tr069Message: String? = null,
+    var accessMode: String? = null,
+    var pppoeUsername: String? = null,
+    var accessMigrationStage: String? = null,
 
     ) : java.io.Serializable {
     fun resolvedSubscriptionId(): Int? = subscriptionId
+
+    fun networkAccessLabel(): String =
+        if (AccessMode.parse(accessMode)?.usesPppoe() == true) "Usuario PPPoE" else "IP"
+
+    fun networkAccessValue(): String =
+        if (AccessMode.parse(accessMode)?.usesPppoe() == true) {
+            pppoeUsername?.trim()?.takeIf { it.isNotEmpty() } ?: "No asignado"
+        } else {
+            ip ?: "No asignada"
+        }
 
     override fun toString(): String {
         return firstName ?: ""
@@ -68,6 +81,4 @@ data class Subscription(
             false
         }
     }
-
-
 }

@@ -18,9 +18,21 @@ E2E_DNI="${E2E_DNI:-$(python3 -c 'import time; print("9"+("%07d"%(time.time()%10
 E2E_USER="${E2E_USER:-dscorp}"
 E2E_PASSWORD="${E2E_PASSWORD:-nohacker}"
 E2E_PLACE="${E2E_PLACE:-9 de octubre}"
-E2E_WIFI_SSID="${E2E_WIFI_SSID:-lab-zte-e2e-24}"
-E2E_WIFI_PASS="${E2E_WIFI_PASS:-LabZteWifi24!}"
 E2E_ONU_SN="${E2E_ONU_SN:-ZTEGDC47BFFD}"
+case "$E2E_ONU_SN" in
+  VSOL*|56534F4C*)
+    _E2E_WIFI_SSID_DEFAULT="lab-vsol-e2e-24"
+    _E2E_WIFI_PASS_DEFAULT="LabVsolWifi24!"
+    ;;
+  *)
+    _E2E_WIFI_SSID_DEFAULT="lab-zte-e2e-24"
+    _E2E_WIFI_PASS_DEFAULT="LabZteWifi24!"
+    ;;
+esac
+E2E_WIFI_SSID="${E2E_WIFI_SSID:-$_E2E_WIFI_SSID_DEFAULT}"
+E2E_WIFI_PASS="${E2E_WIFI_PASS:-$_E2E_WIFI_PASS_DEFAULT}"
+E2E_FIRST_NAME="${E2E_FIRST_NAME:-EeeFiber}"
+E2E_LAST_NAME="${E2E_LAST_NAME:-Prueba}"
 E2E_NAP_CODE="${E2E_NAP_CODE:-NO-001}"
 GEO_LON="${GEO_LON:--77.4107}"
 GEO_LAT="${GEO_LAT:--11.2156}"
@@ -184,6 +196,8 @@ set +e
   -Pandroid.testInstrumentationRunnerArguments.e2e.place="$E2E_PLACE" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.wifiSsid="$E2E_WIFI_SSID" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.wifiPass="$E2E_WIFI_PASS" \
+  -Pandroid.testInstrumentationRunnerArguments.e2e.firstName="$E2E_FIRST_NAME" \
+  -Pandroid.testInstrumentationRunnerArguments.e2e.lastName="$E2E_LAST_NAME" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.onuSn="$E2E_ONU_SN" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.napCode="$E2E_NAP_CODE" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.lat="$GEO_LAT" \
