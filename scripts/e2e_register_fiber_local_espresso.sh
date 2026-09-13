@@ -3,11 +3,63 @@
 # App BASE_URL is http://127.0.0.1:8080/ispadmin/ ; adb reverse maps 8080 → Core 8082.
 #
 # Usage (from Android repo root):
-#   ./scripts/e2e_register_fiber_local_espresso.sh
+#   ./scripts/e2e_register_fiber_local_espresso.sh --wifi-ssid 'mimiwifi' --wifi-pass 'MimiWifi24pass'
+# 5 GHz SSID is always "<ssid> - 5G". Password is the same on both bands.
+# Env alternatives: E2E_WIFI_SSID, E2E_WIFI_PASS (flags win).
+# After Espresso, --cleanup-mode auto (default) hard-cleans. --cleanup-mode ask prompts [s/N].
+# --cleanup-mode skip / --no-cleanup skips. Aliases: --ask-cleanup, --auto-cleanup, --cleanup.
+# Env: CLEANUP_MODE=ask|auto|skip. SKIP_POST_CLEANUP=1 is skip.
 #
 # Agents: run in background and end the turn; do not AwaitShell/poll (gigafiber/AGENTS.md).
 # Runbook: ispadmin-backend/.agent-docs/pruebas-local-gateway-acs-lab.md
 set -euo pipefail
+
+CLI_WIFI_SSID=""
+CLI_WIFI_PASS=""
+CLEANUP_MODE="${CLEANUP_MODE:-auto}"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --wifi-ssid)
+      [[ $# -ge 2 ]] || { echo "--wifi-ssid requires a value" >&2; exit 2; }
+      CLI_WIFI_SSID="$2"
+      shift 2
+      ;;
+    --wifi-pass)
+      [[ $# -ge 2 ]] || { echo "--wifi-pass requires a value" >&2; exit 2; }
+      CLI_WIFI_PASS="$2"
+      shift 2
+      ;;
+    --cleanup-mode)
+      [[ $# -ge 2 ]] || { echo "--cleanup-mode requires ask, auto, or skip" >&2; exit 2; }
+      case "$2" in
+        ask|auto|skip) CLEANUP_MODE="$2" ;;
+        *) echo "--cleanup-mode must be ask, auto, or skip" >&2; exit 2 ;;
+      esac
+      shift 2
+      ;;
+    --ask-cleanup)
+      CLEANUP_MODE=ask
+      shift
+      ;;
+    --cleanup|--auto-cleanup)
+      CLEANUP_MODE=auto
+      shift
+      ;;
+    --no-cleanup)
+      CLEANUP_MODE=skip
+      SKIP_POST_CLEANUP=1
+      shift
+      ;;
+    -h|--help)
+      sed -n '1,12p' "$0"
+      exit 0
+      ;;
+    *)
+      echo "Unknown arg: $1" >&2
+      exit 2
+      ;;
+  esac
+done
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BACKEND="${BACKEND_ROOT:-$(cd "$ROOT/../ispadmin-backend" && pwd)}"
@@ -33,8 +85,17 @@ case "$E2E_ONU_SN" in
     _E2E_WIFI_PASS_DEFAULT="MimiWifi24pass"
     ;;
 esac
-E2E_WIFI_SSID="${E2E_WIFI_SSID:-$_E2E_WIFI_SSID_DEFAULT}"
-E2E_WIFI_PASS="${E2E_WIFI_PASS:-$_E2E_WIFI_PASS_DEFAULT}"
+E2E_WIFI_SSID="${CLI_WIFI_SSID:-${E2E_WIFI_SSID:-$_E2E_WIFI_SSID_DEFAULT}}"
+E2E_WIFI_PASS="${CLI_WIFI_PASS:-${E2E_WIFI_PASS:-$_E2E_WIFI_PASS_DEFAULT}}"
+if [[ ${#E2E_WIFI_SSID} -lt 1 || ${#E2E_WIFI_SSID} -gt 27 ]]; then
+  echo "SSID WiFi must be 1-27 characters (5 GHz adds ' - 5G')" >&2
+  exit 2
+fi
+if [[ ${#E2E_WIFI_PASS} -lt 8 || ${#E2E_WIFI_PASS} -gt 63 ]]; then
+  echo "WiFi password must be 8-63 characters (same for 2.4 and 5)" >&2
+  exit 2
+fi
+E2E_WIFI_SSID_5="${E2E_WIFI_SSID} - 5G"
 E2E_NAP_CODE="${E2E_NAP_CODE:-NO-001}"
 GEO_LON="${GEO_LON:--77.4107}"
 GEO_LAT="${GEO_LAT:--11.2156}"
@@ -205,17 +266,41 @@ TEST_EXIT=$?
 set -e
 
 if [[ "$TEST_EXIT" -eq 0 ]]; then
-  E2E_WIFI_SSID_5="${E2E_WIFI_SSID_5:-${E2E_WIFI_SSID} - 5G}"
-  echo "== WiFi credentials (before ping/cleanup) =="
+  echo "== WiFi credentials (before cleanup) =="
   echo "wifi_24 ssid=$E2E_WIFI_SSID password=$E2E_WIFI_PASS"
   echo "wifi_5 ssid=$E2E_WIFI_SSID_5 password=$E2E_WIFI_PASS"
 fi
 
-if [[ "${SKIP_POST_CLEANUP:-0}" == "1" ]]; then
-  echo "== post cleanup skipped (SKIP_POST_CLEANUP=1) dni=$E2E_DNI sn=$E2E_ONU_SN =="
-  CLEAN_EXIT=0
-else
-  echo "== post cleanup local ONU =="
+should_run_post_cleanup() {
+  if [[ "${CLEANUP_MODE}" == "skip" || "${SKIP_POST_CLEANUP:-0}" == "1" ]]; then
+    echo "== post cleanup skipped (SKIP_POST_CLEANUP=1) dni=$E2E_DNI sn=$E2E_ONU_SN =="
+    return 1
+  fi
+  if [[ "${CLEANUP_MODE}" == "ask" ]]; then
+    local reply=""
+    echo "dni=$E2E_DNI sn=$E2E_ONU_SN"
+    if [[ -r /dev/tty ]]; then
+      if ! read -r -p "¿Ejecutar hard cleanup ahora? [s/N] " reply </dev/tty; then
+        reply=""
+      fi
+    else
+      echo "== post cleanup skipped (user) dni=$E2E_DNI sn=$E2E_ONU_SN =="
+      return 1
+    fi
+    case "$reply" in
+      s|S|y|Y|si|sí|Si|SI) return 0 ;;
+      *)
+        echo "== post cleanup skipped (user) dni=$E2E_DNI sn=$E2E_ONU_SN =="
+        return 1
+        ;;
+    esac
+  fi
+  return 0
+}
+
+CLEAN_EXIT=0
+if should_run_post_cleanup; then
+  echo "== post cleanup =="
   set +e
   local_clean_onu "$E2E_ONU_SN"
   CLEAN_EXIT=$?
@@ -230,4 +315,4 @@ if [[ "$CLEAN_EXIT" -ne 0 ]]; then
   echo "Post cleanup failed exit=$CLEAN_EXIT" >&2
   exit "$CLEAN_EXIT"
 fi
-echo "E2E_FIBER_LOCAL_ESPRESSO_OK dni=$E2E_DNI sn=$E2E_ONU_SN wifi_24=${E2E_WIFI_SSID}/${E2E_WIFI_PASS} wifi_5=${E2E_WIFI_SSID_5:-${E2E_WIFI_SSID} - 5G}/${E2E_WIFI_PASS}"
+echo "E2E_FIBER_LOCAL_ESPRESSO_OK dni=$E2E_DNI sn=$E2E_ONU_SN wifi_24=${E2E_WIFI_SSID}/${E2E_WIFI_PASS} wifi_5=${E2E_WIFI_SSID_5}/${E2E_WIFI_PASS}"

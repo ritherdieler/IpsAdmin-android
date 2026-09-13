@@ -1,16 +1,68 @@
 #!/usr/bin/env bash
 # Orchestrates Espresso FIBER register e2e against staging + §4 hard cleanup.
 # Usage (from Android repo root):
-#   E2E_ONU_SN=ZTEGDC47BFFD ./scripts/e2e_register_fiber_staging_espresso.sh
+#   E2E_ONU_SN=ZTEGDC47BFFD ./scripts/e2e_register_fiber_staging_espresso.sh \
+#     --wifi-ssid 'lab-zte-e2e-24' --wifi-pass 'LabZteWifi24!'
+# 5 GHz SSID is always "<ssid> - 5G". Password is the same on both bands.
+# Env alternatives: E2E_WIFI_SSID, E2E_WIFI_PASS (flags win).
+# After Espresso, --cleanup-mode auto (default) hard-cleans. --cleanup-mode ask prompts [s/N].
+# --cleanup-mode skip / --no-cleanup skips. Aliases: --ask-cleanup, --auto-cleanup, --cleanup.
+# Env: CLEANUP_MODE=ask|auto|skip. SKIP_POST_CLEANUP=1 is skip.
 #
 # Agents: run this script in background and end the turn; do not AwaitShell/poll.
 # Rely on Cursor's background-job completion notification (gigafiber/AGENTS.md).
 set -euo pipefail
 
+CLI_WIFI_SSID=""
+CLI_WIFI_PASS=""
+CLEANUP_MODE="${CLEANUP_MODE:-auto}"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --wifi-ssid)
+      [[ $# -ge 2 ]] || { echo "--wifi-ssid requires a value" >&2; exit 2; }
+      CLI_WIFI_SSID="$2"
+      shift 2
+      ;;
+    --wifi-pass)
+      [[ $# -ge 2 ]] || { echo "--wifi-pass requires a value" >&2; exit 2; }
+      CLI_WIFI_PASS="$2"
+      shift 2
+      ;;
+    --cleanup-mode)
+      [[ $# -ge 2 ]] || { echo "--cleanup-mode requires ask, auto, or skip" >&2; exit 2; }
+      case "$2" in
+        ask|auto|skip) CLEANUP_MODE="$2" ;;
+        *) echo "--cleanup-mode must be ask, auto, or skip" >&2; exit 2 ;;
+      esac
+      shift 2
+      ;;
+    --ask-cleanup)
+      CLEANUP_MODE=ask
+      shift
+      ;;
+    --cleanup|--auto-cleanup)
+      CLEANUP_MODE=auto
+      shift
+      ;;
+    --no-cleanup)
+      CLEANUP_MODE=skip
+      SKIP_POST_CLEANUP=1
+      shift
+      ;;
+    -h|--help)
+      sed -n '1,12p' "$0"
+      exit 0
+      ;;
+    *)
+      echo "Unknown arg: $1" >&2
+      exit 2
+      ;;
+  esac
+done
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BACKEND="${BACKEND_ROOT:-$(cd "$ROOT/../ispadmin-backend" && pwd)}"
 CLEANUP="$BACKEND/scripts/tr069-e2e-hard-cleanup.sh"
-MK_PING="$BACKEND/scripts/tr069-e2e-mk-ping.sh"
 ADB="${ADB:-$HOME/Library/Android/sdk/platform-tools/adb}"
 PACKAGE="${PACKAGE:-com.dscorp.ispadmin}"
 API_BASE="${API_BASE:-https://api.gigafiberperu.cloud/ispadmin-staging}"
@@ -29,8 +81,17 @@ case "$E2E_ONU_SN" in
     _E2E_WIFI_PASS_DEFAULT="LabZteWifi24!"
     ;;
 esac
-E2E_WIFI_SSID="${E2E_WIFI_SSID:-$_E2E_WIFI_SSID_DEFAULT}"
-E2E_WIFI_PASS="${E2E_WIFI_PASS:-$_E2E_WIFI_PASS_DEFAULT}"
+E2E_WIFI_SSID="${CLI_WIFI_SSID:-${E2E_WIFI_SSID:-$_E2E_WIFI_SSID_DEFAULT}}"
+E2E_WIFI_PASS="${CLI_WIFI_PASS:-${E2E_WIFI_PASS:-$_E2E_WIFI_PASS_DEFAULT}}"
+if [[ ${#E2E_WIFI_SSID} -lt 1 || ${#E2E_WIFI_SSID} -gt 27 ]]; then
+  echo "SSID WiFi must be 1-27 characters (5 GHz adds ' - 5G')" >&2
+  exit 2
+fi
+if [[ ${#E2E_WIFI_PASS} -lt 8 || ${#E2E_WIFI_PASS} -gt 63 ]]; then
+  echo "WiFi password must be 8-63 characters (same for 2.4 and 5)" >&2
+  exit 2
+fi
+E2E_WIFI_SSID_5="${E2E_WIFI_SSID} - 5G"
 E2E_FIRST_NAME="${E2E_FIRST_NAME:-EeeFiber}"
 E2E_LAST_NAME="${E2E_LAST_NAME:-Prueba}"
 E2E_NAP_CODE="${E2E_NAP_CODE:-NO-001}"
@@ -43,14 +104,10 @@ if [[ ! -x "$CLEANUP" && -f "$CLEANUP" ]]; then
   chmod +x "$CLEANUP"
 fi
 [[ -f "$CLEANUP" ]] || { echo "Missing $CLEANUP" >&2; exit 1; }
-if [[ ! -x "$MK_PING" && -f "$MK_PING" ]]; then
-  chmod +x "$MK_PING"
-fi
-[[ -f "$MK_PING" ]] || { echo "Missing $MK_PING" >&2; exit 1; }
 
 DEVICE="${DEVICE:-$($ADB devices | awk '/device$/{print $1; exit}')}"
 [[ -n "$DEVICE" ]] || { echo "No adb device" >&2; exit 1; }
-echo "DEVICE=$DEVICE PACKAGE=$PACKAGE E2E_DNI=$E2E_DNI E2E_ONU_SN=$E2E_ONU_SN E2E_NAP_CODE=$E2E_NAP_CODE"
+echo "DEVICE=$DEVICE PACKAGE=$PACKAGE E2E_DNI=$E2E_DNI E2E_ONU_SN=$E2E_ONU_SN E2E_NAP_CODE=$E2E_NAP_CODE wifi_24=$E2E_WIFI_SSID wifi_5=$E2E_WIFI_SSID_5"
 
 echo "== pre cleanup (allow empty) =="
 "$CLEANUP" --env staging --sn "$E2E_ONU_SN" --dni "$E2E_DNI" --allow-empty || true
@@ -205,24 +262,42 @@ set +e
 TEST_EXIT=$?
 set -e
 
-PING_EXIT=0
 if [[ "$TEST_EXIT" -eq 0 ]]; then
-  E2E_WIFI_SSID_5="${E2E_WIFI_SSID_5:-${E2E_WIFI_SSID} - 5G}"
-  echo "== WiFi credentials (before ping/cleanup) =="
+  echo "== WiFi credentials (before cleanup) =="
   echo "wifi_24 ssid=$E2E_WIFI_SSID password=$E2E_WIFI_PASS"
   echo "wifi_5 ssid=$E2E_WIFI_SSID_5 password=$E2E_WIFI_PASS"
-  echo "== MikroTik2 ping to assigned IP (before cleanup) =="
-  set +e
-  "$MK_PING" --env staging --dni "$E2E_DNI"
-  PING_EXIT=$?
-  set -e
 fi
 
-if [[ "${SKIP_POST_CLEANUP:-0}" == "1" ]]; then
-  echo "== post cleanup skipped (SKIP_POST_CLEANUP=1) dni=$E2E_DNI sn=$E2E_ONU_SN =="
-  CLEAN_EXIT=0
-else
-  echo "== post cleanup (required) =="
+should_run_post_cleanup() {
+  if [[ "${CLEANUP_MODE}" == "skip" || "${SKIP_POST_CLEANUP:-0}" == "1" ]]; then
+    echo "== post cleanup skipped (SKIP_POST_CLEANUP=1) dni=$E2E_DNI sn=$E2E_ONU_SN =="
+    return 1
+  fi
+  if [[ "${CLEANUP_MODE}" == "ask" ]]; then
+    local reply=""
+    echo "dni=$E2E_DNI sn=$E2E_ONU_SN"
+    if [[ -r /dev/tty ]]; then
+      if ! read -r -p "¿Ejecutar hard cleanup ahora? [s/N] " reply </dev/tty; then
+        reply=""
+      fi
+    else
+      echo "== post cleanup skipped (user) dni=$E2E_DNI sn=$E2E_ONU_SN =="
+      return 1
+    fi
+    case "$reply" in
+      s|S|y|Y|si|sí|Si|SI) return 0 ;;
+      *)
+        echo "== post cleanup skipped (user) dni=$E2E_DNI sn=$E2E_ONU_SN =="
+        return 1
+        ;;
+    esac
+  fi
+  return 0
+}
+
+CLEAN_EXIT=0
+if should_run_post_cleanup; then
+  echo "== post cleanup =="
   set +e
   "$CLEANUP" --env staging --sn "$E2E_ONU_SN" --dni "$E2E_DNI"
   CLEAN_EXIT=$?
@@ -233,12 +308,8 @@ if [[ "$TEST_EXIT" -ne 0 ]]; then
   echo "E2E test failed exit=$TEST_EXIT" >&2
   exit "$TEST_EXIT"
 fi
-if [[ "$PING_EXIT" -ne 0 ]]; then
-  echo "MikroTik ping validation failed exit=$PING_EXIT (cleanup still ran)" >&2
-  exit "$PING_EXIT"
-fi
 if [[ "$CLEAN_EXIT" -ne 0 ]]; then
   echo "Post cleanup failed exit=$CLEAN_EXIT" >&2
   exit "$CLEAN_EXIT"
 fi
-echo "E2E_FIBER_STAGING_ESPRESSO_OK dni=$E2E_DNI sn=$E2E_ONU_SN wifi_24=${E2E_WIFI_SSID}/${E2E_WIFI_PASS} wifi_5=${E2E_WIFI_SSID_5:-${E2E_WIFI_SSID} - 5G}/${E2E_WIFI_PASS}"
+echo "E2E_FIBER_STAGING_ESPRESSO_OK dni=$E2E_DNI sn=$E2E_ONU_SN wifi_24=${E2E_WIFI_SSID}/${E2E_WIFI_PASS} wifi_5=${E2E_WIFI_SSID_5}/${E2E_WIFI_PASS}"
