@@ -55,22 +55,55 @@ e2e_http_phase() {
   esac
 }
 
+e2e_http_status_color() {
+  case "$1" in
+    2[0-9][0-9]) printf '%s' '\033[32m' ;;
+    3[0-9][0-9]) printf '%s' '\033[36m' ;;
+    4[0-9][0-9]) printf '%s' '\033[33m' ;;
+    5[0-9][0-9]|000) printf '%s' '\033[31m' ;;
+    *) printf '%s' '\033[37m' ;;
+  esac
+}
+
 e2e_fields() {
   local out=""
+  local body=""
+  local http_code=""
   local pair key value
   for pair in "$@"; do
     [[ "$pair" == *=* ]] || continue
     key="${pair%%=*}"
     value="${pair#*=}"
     [[ -n "$value" && "$value" != "-" && "$value" != "null" ]] || continue
+    if [[ "$key" == "body" ]]; then
+      body="$value"
+      continue
+    fi
+    if [[ "$key" == "status" ]]; then
+      http_code="$value"
+      continue
+    fi
     if [[ -n "$out" ]]; then
       out="$out  $key=$value"
     else
       out="$key=$value"
     fi
   done
+  if [[ -n "$http_code" ]]; then
+    local painted
+    painted="$(e2e_paint "$(e2e_http_status_color "$http_code")" "$http_code")"
+    if [[ -n "$out" ]]; then
+      out="$out  status=$painted"
+    else
+      out="status=$painted"
+    fi
+  fi
   if [[ -n "$out" ]]; then
     printf '  %s\n' "$out" >&2
+  fi
+  if [[ -n "$body" ]]; then
+    printf '  body=\n' >&2
+    printf '%s\n' "$body" | sed 's/^/    /' >&2
   fi
 }
 
@@ -126,12 +159,12 @@ def redact(obj):
     return obj
 text = raw.strip()
 try:
-    text = json.dumps(redact(json.loads(text)), ensure_ascii=False, separators=(",", ":"))
+    text = json.dumps(redact(json.loads(text)), ensure_ascii=False, indent=2)
 except Exception:
     text = secret.sub(r"\1:<redacted>", text)
     text = re.sub(r"(?i)(Bearer\s+)[A-Za-z0-9._\-]+", r"\1<redacted>", text)
 if len(text) > limit:
-    text = text[:limit] + "...<clipped>"
+    text = text[:limit].rstrip() + "\n    ...<clipped>"
 print(text)
 '
 }
