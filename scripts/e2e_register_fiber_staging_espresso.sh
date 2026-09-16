@@ -313,24 +313,12 @@ if [[ "$TEST_EXIT" -eq 0 ]]; then
   echo "wifi_5 ssid=$E2E_WIFI_SSID_5 password=$E2E_WIFI_PASS"
   echo "== service-health collection =="
   e2e_doing "GET $API_BASE/subscription/all then service-health + TR-069 poll"
-  SUB_ID="$(E2E_DNI="$E2E_DNI" TOKEN="$TOKEN" API_BASE="$API_BASE" python3 -c '
-import json, os, sys, urllib.request
-token=os.environ["TOKEN"]
-base=os.environ["API_BASE"]
+  SUBS_BODY="$(e2e_http GET "$API_BASE/subscription/all" --max-time 60 \
+    -H "Authorization: Bearer $TOKEN")"
+  SUB_ID="$(E2E_DNI="$E2E_DNI" python3 -c '
+import json, os, sys
 dni=os.environ["E2E_DNI"]
-url=base+"/subscription/all"
-print("DOING: HTTP GET %s" % url, file=sys.stderr)
-print("URL: GET %s" % url, file=sys.stderr)
-req=urllib.request.Request(url, headers={"Authorization":"Bearer "+token})
-try:
-    with urllib.request.urlopen(req, timeout=60) as r:
-        items=json.load(r)
-        code=r.status
-except Exception as e:
-    print("HTTP: 000", file=sys.stderr)
-    print("HTTP_FAIL: GET %s %s" % (url, e), file=sys.stderr)
-    sys.exit(1)
-print("HTTP: %s" % code, file=sys.stderr)
+items=json.load(sys.stdin)
 subs=items if isinstance(items, list) else []
 print("BODY: subscriptions=%s" % len(subs), file=sys.stderr)
 match=None
@@ -344,17 +332,16 @@ if match is None:
 sid=match.get("id")
 print("TR069: subscription=%s olt=%s tr069=%s" % (
     sid, match.get("oltProvisionStatus"), match.get("tr069ProvisionStatus")), file=sys.stderr)
-health_url=base+"/subscription/%s/service-health" % sid
-print("DOING: HTTP GET %s" % health_url, file=sys.stderr)
-print("URL: GET %s" % health_url, file=sys.stderr)
-req=urllib.request.Request(health_url, headers={"Authorization":"Bearer "+token})
-with urllib.request.urlopen(req, timeout=60) as r:
-    health=json.load(r)
-    print("HTTP: %s" % r.status, file=sys.stderr)
-print("service-health id=%s evaluated_at=%s" % (sid, health.get("evaluated_at")), file=sys.stderr)
 print(sid)
-')"
+' <<<"$SUBS_BODY")"
   if [[ -n "$SUB_ID" ]]; then
+    HEALTH_BODY="$(e2e_http GET "$API_BASE/subscription/$SUB_ID/service-health" --max-time 60 \
+      -H "Authorization: Bearer $TOKEN")"
+    SUB_ID="$SUB_ID" python3 -c '
+import json, os, sys
+health=json.load(sys.stdin)
+print("service-health id=%s evaluated_at=%s" % (os.environ["SUB_ID"], health.get("evaluated_at")), file=sys.stderr)
+' <<<"$HEALTH_BODY"
     set +e
     e2e_poll_tr069 "$API_BASE" "$TOKEN" "$SUB_ID" 12 5
     TR069_EXIT=$?
