@@ -67,6 +67,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT/scripts/e2e_console.sh"
 BACKEND="${BACKEND_ROOT:-$(cd "$ROOT/../ispadmin-backend" && pwd)}"
 CLEANUP="$BACKEND/scripts/tr069-e2e-hard-cleanup.sh"
 ADB="${ADB:-$HOME/Library/Android/sdk/platform-tools/adb}"
@@ -122,21 +123,33 @@ fi
 
 DEVICE="${DEVICE:-$($ADB devices | awk '/device$/{print $1; exit}')}"
 [[ -n "$DEVICE" ]] || { echo "No adb device" >&2; exit 1; }
-echo "DEVICE=$DEVICE PACKAGE=$PACKAGE E2E_DNI=$E2E_DNI"
+e2e_step "e2e config"
+echo "DEVICE=$DEVICE PACKAGE=$PACKAGE E2E_DNI=$E2E_DNI accessMode=$E2E_ACCESS_MODE cleanupMode=$CLEANUP_MODE"
 
 echo "== pre cleanup (allow empty) =="
-"$CLEANUP" --dni "$E2E_DNI" --allow-empty || true
+e2e_doing "hard cleanup dni=$E2E_DNI allow-empty"
+set +e
+"$CLEANUP" --dni "$E2E_DNI" --allow-empty
+PRE_CLEAN_EXIT=$?
+set -e
+echo "pre-cleanup exit=$PRE_CLEAN_EXIT"
 
 echo "== prepare emulator location =="
+e2e_doing "adb emu geo fix $GEO_LON $GEO_LAT"
 $ADB -s "$DEVICE" emu geo fix "$GEO_LON" "$GEO_LAT" 2>/dev/null || \
   $ADB -s "$DEVICE" shell am broadcast -a android.intent.action.SET_MOCK_LOCATION >/dev/null 2>&1 || true
 
 echo "== ensure prodDebug installed =="
+e2e_doing "gradlew :presentation:installProdDebug"
 ./gradlew :presentation:installProdDebug
 echo "== clear app data for clean login =="
+e2e_doing "adb pm clear $PACKAGE"
 $ADB -s "$DEVICE" shell pm clear "$PACKAGE" >/dev/null 2>&1 || true
 
 echo "== connectedProdDebugAndroidTest FiberRegisterFirstOnuE2ETest =="
+e2e_step "espresso start FiberRegisterFirstOnuE2ETest accessMode=$E2E_ACCESS_MODE"
+e2e_doing "gradlew :presentation:connectedProdDebugAndroidTest class=FiberRegisterFirstOnuE2ETest"
+set +e
 ./gradlew :presentation:connectedProdDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=com.dscorp.ispadmin.presentation.ui.features.subscription.register.FiberRegisterFirstOnuE2ETest \
   -Pandroid.testInstrumentationRunnerArguments.e2e.dni="$E2E_DNI" \
@@ -148,6 +161,8 @@ echo "== connectedProdDebugAndroidTest FiberRegisterFirstOnuE2ETest =="
   -Pandroid.testInstrumentationRunnerArguments.e2e.accessMode="$E2E_ACCESS_MODE"
 
 TEST_EXIT=$?
+set -e
+e2e_step "espresso end FiberRegisterFirstOnuE2ETest exit=$TEST_EXIT"
 
 if [[ "$TEST_EXIT" -eq 0 ]]; then
   echo "== WiFi credentials (before cleanup) =="
@@ -185,10 +200,14 @@ should_run_post_cleanup() {
 CLEAN_EXIT=0
 if should_run_post_cleanup; then
   echo "== post cleanup =="
+  e2e_doing "hard cleanup dni=$E2E_DNI"
   set +e
   "$CLEANUP" --dni "$E2E_DNI"
   CLEAN_EXIT=$?
   set -e
+  echo "post-cleanup exit=$CLEAN_EXIT"
+else
+  e2e_doing "post cleanup skipped cleanupMode=$CLEANUP_MODE"
 fi
 
 if [[ "$TEST_EXIT" -ne 0 ]]; then

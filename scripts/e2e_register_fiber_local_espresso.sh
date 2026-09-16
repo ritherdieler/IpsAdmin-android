@@ -70,6 +70,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT/scripts/e2e_console.sh"
 BACKEND="${BACKEND_ROOT:-$(cd "$ROOT/../ispadmin-backend" && pwd)}"
 ADB="${ADB:-$HOME/Library/Android/sdk/platform-tools/adb}"
 PACKAGE="${PACKAGE:-com.dscorp.ispadmin.dev}"
@@ -136,23 +137,32 @@ fi
 
 DEVICE="${DEVICE:-$($ADB devices | awk '/device$/{print $1; exit}')}"
 [[ -n "$DEVICE" ]] || { echo "No adb device" >&2; exit 1; }
-echo "DEVICE=$DEVICE PACKAGE=$PACKAGE E2E_DNI=$E2E_DNI E2E_ONU_SN=$E2E_ONU_SN E2E_NAP_CODE=$E2E_NAP_CODE"
+e2e_step "e2e config"
+echo "DEVICE=$DEVICE PACKAGE=$PACKAGE E2E_DNI=$E2E_DNI E2E_ONU_SN=$E2E_ONU_SN E2E_NAP_CODE=$E2E_NAP_CODE accessMode=$E2E_ACCESS_MODE cleanupMode=$CLEANUP_MODE"
 
 echo "== health Core + Gateway =="
-curl -sS --max-time 15 -o /dev/null -w 'core:%{http_code}\n' "$CORE/actuator/health" | grep -q 'core:200' \
-  || { echo "Core no responde en $CORE" >&2; exit 1; }
-GW_HEALTH="$(curl -sS --max-time 20 -H "X-Olt-Gateway-Key: $GKEY" "$GW/api/olt-gateway/health")"
+e2e_doing "GET $CORE/actuator/health"
+CORE_HEALTH="$(e2e_http GET "$CORE/actuator/health" --max-time 15)" || true
+printf '%s' "$CORE_HEALTH" | python3 -c 'import sys,json
+raw=sys.stdin.read()
+d=json.loads(raw) if raw.strip() else {}
+assert (d.get("status") or "").upper()=="UP" or "UP" in raw.upper(), raw
+' || { echo "Core no responde en $CORE" >&2; exit 1; }
+e2e_doing "GET $GW/api/olt-gateway/health"
+GW_HEALTH="$(e2e_http GET "$GW/api/olt-gateway/health" --max-time 20 -H "X-Olt-Gateway-Key: $GKEY")"
 echo "$GW_HEALTH" | python3 -c 'import sys,json; d=json.load(sys.stdin); assert d.get("oltReachable") is True, d' \
   || { echo "Gateway oltReachable!=true: $GW_HEALTH" >&2; exit 1; }
 
 echo "== adb reverse emulator 8080 -> Core 8082 =="
+e2e_doing "adb reverse tcp:8080 tcp:8082"
 $ADB -s "$DEVICE" reverse tcp:8080 tcp:8082
 $ADB -s "$DEVICE" reverse --list
 
 local_clean_onu() {
   local sn="$1"
   local raw ext
-  raw="$(curl -sS --max-time 45 -H "X-Olt-Gateway-Key: $GKEY" "$GW/api/olt-gateway/onu/get_onus_details_by_sn/$sn" || true)"
+  e2e_doing "local cleanup sn=$sn"
+  raw="$(e2e_http GET "$GW/api/olt-gateway/onu/get_onus_details_by_sn/$sn" --max-time 45 -H "X-Olt-Gateway-Key: $GKEY" || true)"
   ext="$(echo "$raw" | python3 -c '
 import sys,json
 try:
@@ -166,10 +176,11 @@ print((onus[0] or {}).get("unique_external_id") or "" if isinstance(onus, list) 
 ')"
   if [[ -n "$ext" ]]; then
     echo "delete Gateway $ext"
-    curl -sS --max-time 60 -X POST -H "X-Olt-Gateway-Key: $GKEY" "$GW/api/olt-gateway/onu/delete/$ext" || true
+    e2e_http POST "$GW/api/olt-gateway/onu/delete/$ext" --max-time 60 -H "X-Olt-Gateway-Key: $GKEY" || true
     echo
   fi
   if [[ -n "${MYSQL_PWD:-}" && -x "$MYSQL" ]]; then
+    e2e_doing "mysql clear olt_activation_operation + fiber_onu_sn sn=$sn"
     "$MYSQL" -uroot -e "DELETE FROM dev_oltgateway.olt_activation_operation WHERE sn='$sn';" || true
     "$MYSQL" -uroot ispadmin_dev -e "UPDATE subscription SET fiber_onu_sn=NULL WHERE fiber_onu_sn='$sn';" || true
   fi
@@ -179,17 +190,20 @@ echo "== pre cleanup local ONU (allow empty) =="
 local_clean_onu "$E2E_ONU_SN"
 
 echo "== ensure local e2e user + catalog =="
+e2e_doing "$BACKEND/scripts/local-e2e-ensure-catalog.sh"
 "$BACKEND/scripts/local-e2e-ensure-catalog.sh"
 
 echo "== login Core =="
-TOKEN="$(curl -sS --max-time 20 -X POST "$CORE/users/login" \
+TOKEN="$(e2e_http POST "$CORE/users/login" --max-time 20 \
   -H 'Content-Type: application/json' \
   -d "{\"username\":\"$E2E_USER\",\"password\":\"$E2E_PASSWORD\"}" \
   | python3 -c 'import json,sys; print(json.load(sys.stdin).get("accessToken") or "")')"
 [[ -n "$TOKEN" ]] || { echo "Core login failed user=$E2E_USER" >&2; exit 1; }
+e2e_doing "login ok user=$E2E_USER"
 
-PLACE_HIT="$(curl -sS -G -H "Authorization: Bearer $TOKEN" \
-  "$CORE/place/findByLocation" \
+e2e_step "place/findByLocation"
+PLACE_HIT="$(e2e_http GET "$CORE/place/findByLocation" -G \
+  -H "Authorization: Bearer $TOKEN" \
   --data-urlencode "latitude=$GEO_LAT" \
   --data-urlencode "longitude=$GEO_LON")"
 E2E_PLACE="$E2E_PLACE" GEO_LAT="$GEO_LAT" GEO_LON="$GEO_LON" python3 -c 'import json,sys,os
@@ -213,8 +227,9 @@ if wanted and wanted.lower() not in name.lower():
 print("findByLocation ok place=%s lat=%s lon=%s" % (name, lat, lon))
 ' <<<"$PLACE_HIT"
 
-NEAR_HIT="$(curl -sS -G -H "Authorization: Bearer $TOKEN" \
-  "$CORE/napbox/near" \
+e2e_step "napbox/near"
+NEAR_HIT="$(e2e_http GET "$CORE/napbox/near" -G \
+  -H "Authorization: Bearer $TOKEN" \
   --data-urlencode "latitude=$GEO_LAT" \
   --data-urlencode "longitude=$GEO_LON")"
 E2E_NAP_CODE="$E2E_NAP_CODE" python3 -c 'import json,sys,os,re
@@ -235,9 +250,13 @@ if wanted and wanted not in codes:
 
 echo "== wait autofind lab ONU =="
 ONU_OK=0
-for _ in $(seq 1 18); do
-  if curl -sS --max-time 30 -H "X-Olt-Gateway-Key: $GKEY" "$GW/api/olt-gateway/onu/unconfigured_onus" \
-    | python3 -c 'import json,sys,os,re
+for ONU_TRY in $(seq 1 18); do
+  e2e_retry "unconfigured_onus $ONU_TRY/18 sn=$E2E_ONU_SN"
+  set +e
+  ONU_BODY="$(e2e_http GET "$GW/api/olt-gateway/onu/unconfigured_onus" --max-time 30 -H "X-Olt-Gateway-Key: $GKEY")"
+  ONU_HTTP=$?
+  set -e
+  if [[ "$ONU_HTTP" -eq 0 ]] && printf '%s' "$ONU_BODY" | python3 -c 'import json,sys,os,re
 wanted=re.sub(r"[^A-Z0-9]","",os.environ["E2E_ONU_SN"].upper())
 wanted_hex="5A544547"+wanted[4:] if wanted.startswith("ZTEG") else wanted
 data=json.load(sys.stdin)
@@ -252,7 +271,7 @@ sys.exit(0 if any(ok(i) for i in items) else 1)'; then
     ONU_OK=1
     break
   fi
-  echo "waiting for unconfigured $E2E_ONU_SN ..."
+  e2e_retry "waiting for unconfigured $E2E_ONU_SN sleep=5"
   sleep 5
 done
 if [[ "$ONU_OK" -ne 1 ]]; then
@@ -261,15 +280,20 @@ if [[ "$ONU_OK" -ne 1 ]]; then
 fi
 
 echo "== prepare emulator location =="
+e2e_doing "adb get-state device=$DEVICE"
 $ADB -s "$DEVICE" get-state 2>/dev/null | grep -q device || { echo "Emulator not ready before install" >&2; exit 1; }
 
 echo "== installDevDebug + androidTest =="
+e2e_doing "gradlew :presentation:installDevDebug :presentation:installDevDebugAndroidTest"
 ./gradlew :presentation:installDevDebug :presentation:installDevDebugAndroidTest
 echo "== clear app data for clean login =="
+e2e_doing "adb pm clear $PACKAGE"
 $ADB -s "$DEVICE" shell pm clear "$PACKAGE" >/dev/null 2>&1 || true
 $ADB -s "$DEVICE" reverse tcp:8080 tcp:8082
 
 echo "== connectedDevDebugAndroidTest FiberRegisterFirstOnuE2ETest =="
+e2e_step "espresso start FiberRegisterFirstOnuE2ETest accessMode=$E2E_ACCESS_MODE"
+e2e_doing "gradlew :presentation:connectedDevDebugAndroidTest class=FiberRegisterFirstOnuE2ETest"
 set +e
 ./gradlew :presentation:connectedDevDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=com.dscorp.ispadmin.presentation.ui.features.subscription.register.FiberRegisterFirstOnuE2ETest \
@@ -286,6 +310,7 @@ set +e
   -Pandroid.testInstrumentationRunnerArguments.e2e.lon="$GEO_LON"
 TEST_EXIT=$?
 set -e
+e2e_step "espresso end FiberRegisterFirstOnuE2ETest exit=$TEST_EXIT"
 
 if [[ "$TEST_EXIT" -eq 0 ]]; then
   echo "== WiFi credentials (before cleanup) =="
@@ -323,10 +348,14 @@ should_run_post_cleanup() {
 CLEAN_EXIT=0
 if should_run_post_cleanup; then
   echo "== post cleanup =="
+  e2e_doing "local cleanup sn=$E2E_ONU_SN"
   set +e
   local_clean_onu "$E2E_ONU_SN"
   CLEAN_EXIT=$?
   set -e
+  echo "post-cleanup exit=$CLEAN_EXIT"
+else
+  e2e_doing "post cleanup skipped cleanupMode=$CLEANUP_MODE"
 fi
 
 if [[ "$TEST_EXIT" -ne 0 ]]; then

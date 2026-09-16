@@ -2,7 +2,7 @@
 # Orchestrates Espresso FIBER register e2e against staging + §4 hard cleanup.
 # Usage (from Android repo root):
 #   E2E_ONU_SN=ZTEGDC47BFFD ./scripts/e2e_register_fiber_staging_espresso.sh \
-#     --wifi-ssid 'lab-zte-e2e-24' --wifi-pass 'LabZteWifi24!'
+#     --wifi-ssid 'ztelab' --wifi-pass '11111111'
 # 5 GHz SSID is always "<ssid> - 5G". Password is the same on both bands.
 # Env alternatives: E2E_WIFI_SSID, E2E_WIFI_PASS (flags win).
 # WAN: --access-mode pppoe|static (aliases PPPOE_DYNAMIC, STATIC_IP, PPPOE_FIXED).
@@ -69,6 +69,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT/scripts/e2e_console.sh"
 BACKEND="${BACKEND_ROOT:-$(cd "$ROOT/../ispadmin-backend" && pwd)}"
 CLEANUP="$BACKEND/scripts/tr069-e2e-hard-cleanup.sh"
 ADB="${ADB:-$HOME/Library/Android/sdk/platform-tools/adb}"
@@ -98,8 +99,8 @@ case "$E2E_ONU_SN" in
     _E2E_WIFI_PASS_DEFAULT="LabVsolWifi24!"
     ;;
   *)
-    _E2E_WIFI_SSID_DEFAULT="lab-zte-e2e-24"
-    _E2E_WIFI_PASS_DEFAULT="LabZteWifi24!"
+    _E2E_WIFI_SSID_DEFAULT="ztelab"
+    _E2E_WIFI_PASS_DEFAULT="11111111"
     ;;
 esac
 E2E_WIFI_SSID="${CLI_WIFI_SSID:-${E2E_WIFI_SSID:-$_E2E_WIFI_SSID_DEFAULT}}"
@@ -128,41 +129,53 @@ fi
 
 DEVICE="${DEVICE:-$($ADB devices | awk '/device$/{print $1; exit}')}"
 [[ -n "$DEVICE" ]] || { echo "No adb device" >&2; exit 1; }
-echo "DEVICE=$DEVICE PACKAGE=$PACKAGE E2E_DNI=$E2E_DNI E2E_ONU_SN=$E2E_ONU_SN E2E_NAP_CODE=$E2E_NAP_CODE wifi_24=$E2E_WIFI_SSID wifi_5=$E2E_WIFI_SSID_5 accessMode=${E2E_ACCESS_MODE:-PPPOE}"
+e2e_step "e2e config"
+echo "DEVICE=$DEVICE PACKAGE=$PACKAGE E2E_DNI=$E2E_DNI E2E_ONU_SN=$E2E_ONU_SN E2E_NAP_CODE=$E2E_NAP_CODE wifi_24=$E2E_WIFI_SSID wifi_5=$E2E_WIFI_SSID_5 accessMode=${E2E_ACCESS_MODE:-PPPOE} cleanupMode=$CLEANUP_MODE"
 
 echo "== pre cleanup (allow empty) =="
-"$CLEANUP" --env staging --sn "$E2E_ONU_SN" --dni "$E2E_DNI" --allow-empty || true
+e2e_doing "hard cleanup env=staging sn=$E2E_ONU_SN dni=$E2E_DNI allow-empty"
+set +e
+"$CLEANUP" --env staging --sn "$E2E_ONU_SN" --dni "$E2E_DNI" --allow-empty
+PRE_CLEAN_EXIT=$?
+set -e
+echo "pre-cleanup exit=$PRE_CLEAN_EXIT"
 
 echo "== wait for ONU in unconfigured_onus =="
 export E2E_ONU_SN
-TOKEN="$(curl -sS -X POST "$API_BASE/users/login" \
+e2e_step "login staging"
+TOKEN="$(e2e_http POST "$API_BASE/users/login" \
   -H 'Content-Type: application/json' \
   -d "{\"username\":\"$E2E_USER\",\"password\":\"$E2E_PASSWORD\"}" \
   | python3 -c 'import json,sys; print(json.load(sys.stdin).get("accessToken") or "")')"
 [[ -n "$TOKEN" ]] || { echo "Staging login failed" >&2; exit 1; }
+e2e_doing "login ok user=$E2E_USER"
 
-PLACE_COUNT="$(curl -sS -H "Authorization: Bearer $TOKEN" "$API_BASE/place" \
+e2e_step "catalog places"
+PLACE_COUNT="$(e2e_http GET "$API_BASE/place" -H "Authorization: Bearer $TOKEN" \
   | python3 -c 'import json,sys; data=json.load(sys.stdin); items=data if isinstance(data,list) else []; print(len(items))')"
 if [[ "${PLACE_COUNT:-0}" -lt 1 ]]; then
   echo "Staging catalog has no places; apply ispadmin-backend/scripts/sql/staging-e2e-registration-catalog.sql" >&2
   exit 1
 fi
 
-FIBER_PLAN_COUNT="$(curl -sS -H "Authorization: Bearer $TOKEN" "$API_BASE/plan" \
+e2e_step "catalog plans"
+FIBER_PLAN_COUNT="$(e2e_http GET "$API_BASE/plan" -H "Authorization: Bearer $TOKEN" \
   | python3 -c 'import json,sys; data=json.load(sys.stdin); items=data if isinstance(data,list) else []; print(sum(1 for p in items if (p.get("type") or "").upper()=="FIBER"))')"
 if [[ "${FIBER_PLAN_COUNT:-0}" -lt 1 ]]; then
   echo "Staging has no active FIBER plan; apply ispadmin-backend/scripts/sql/staging-e2e-registration-catalog.sql" >&2
   exit 1
 fi
 
-NAP_COUNT="$(curl -sS -H "Authorization: Bearer $TOKEN" "$API_BASE/napbox" \
+e2e_step "catalog napbox"
+NAP_COUNT="$(e2e_http GET "$API_BASE/napbox" -H "Authorization: Bearer $TOKEN" \
   | python3 -c 'import json,sys; data=json.load(sys.stdin); items=data if isinstance(data,list) else []; print(len(items))')"
 if [[ "${NAP_COUNT:-0}" -lt 1 ]]; then
   echo "Staging has no nap_box rows; apply ispadmin-backend/scripts/sql/staging-e2e-registration-catalog.sql" >&2
   exit 1
 fi
 
-CORE_COUNT="$(curl -sS -H "Authorization: Bearer $TOKEN" "$API_BASE/networkDevice/coreTypes" \
+e2e_step "catalog core routers"
+CORE_COUNT="$(e2e_http GET "$API_BASE/networkDevice/coreTypes" -H "Authorization: Bearer $TOKEN" \
   | python3 -c 'import json,sys; data=json.load(sys.stdin); items=data if isinstance(data,list) else []; print(sum(1 for d in items if not d.get("disabled")))' 2>/dev/null || echo 0)"
 if [[ "${CORE_COUNT:-0}" -lt 1 ]]; then
   echo "Staging has no active core router (network_device); apply ispadmin-backend/scripts/sql/staging-e2e-registration-catalog.sql" >&2
@@ -170,8 +183,9 @@ if [[ "${CORE_COUNT:-0}" -lt 1 ]]; then
 fi
 echo "catalog ok places=$PLACE_COUNT fiber_plans=$FIBER_PLAN_COUNT nap_boxes=$NAP_COUNT core_routers=$CORE_COUNT"
 
-PLACE_HIT="$(curl -sS -G -H "Authorization: Bearer $TOKEN" \
-  "$API_BASE/place/findByLocation" \
+e2e_step "place/findByLocation"
+PLACE_HIT="$(e2e_http GET "$API_BASE/place/findByLocation" -G \
+  -H "Authorization: Bearer $TOKEN" \
   --data-urlencode "latitude=$GEO_LAT" \
   --data-urlencode "longitude=$GEO_LON")"
 E2E_PLACE="$E2E_PLACE" GEO_LAT="$GEO_LAT" GEO_LON="$GEO_LON" python3 -c 'import json,sys,os
@@ -196,8 +210,9 @@ if wanted and wanted.lower() not in name.lower():
 print("findByLocation ok place=%s lat=%s lon=%s" % (name, lat, lon))
 ' <<<"$PLACE_HIT"
 
-NEAR_HIT="$(curl -sS -G -H "Authorization: Bearer $TOKEN" \
-  "$API_BASE/napbox/near" \
+e2e_step "napbox/near"
+NEAR_HIT="$(e2e_http GET "$API_BASE/napbox/near" -G \
+  -H "Authorization: Bearer $TOKEN" \
   --data-urlencode "latitude=$GEO_LAT" \
   --data-urlencode "longitude=$GEO_LON")"
 E2E_NAP_CODE="$E2E_NAP_CODE" GEO_LAT="$GEO_LAT" GEO_LON="$GEO_LON" python3 -c 'import json,sys,os
@@ -224,9 +239,13 @@ if wanted and codes and codes[0] != wanted:
 ' <<<"$NEAR_HIT"
 
 ONU_OK=0
-for _ in $(seq 1 12); do
-  if curl -sS -H "Authorization: Bearer $TOKEN" "$API_BASE/onu/unconfigured_onus" \
-    | python3 -c 'import json,sys,os,re
+for ONU_TRY in $(seq 1 12); do
+  e2e_retry "unconfigured_onus $ONU_TRY/12 sn=$E2E_ONU_SN"
+  set +e
+  ONU_BODY="$(e2e_http GET "$API_BASE/onu/unconfigured_onus" -H "Authorization: Bearer $TOKEN")"
+  ONU_HTTP=$?
+  set -e
+  if [[ "$ONU_HTTP" -eq 0 ]] && printf '%s' "$ONU_BODY" | python3 -c 'import json,sys,os,re
 wanted=re.sub(r"[^A-Z0-9]","",os.environ["E2E_ONU_SN"].upper())
 prefixes={"ZTEG":"5A544547","HWTC":"48575443","VSOL":"56534F4C"}
 wanted_hex=wanted
@@ -244,7 +263,7 @@ sys.exit(0 if any(ok(i) for i in items) else 1)'; then
     ONU_OK=1
     break
   fi
-  echo "waiting for unconfigured $E2E_ONU_SN ..."
+  e2e_retry "waiting for unconfigured $E2E_ONU_SN sleep=5"
   sleep 5
 done
 if [[ "$ONU_OK" -ne 1 ]]; then
@@ -253,18 +272,21 @@ if [[ "$ONU_OK" -ne 1 ]]; then
 fi
 
 echo "== prepare emulator location =="
-# FiberRegisterFirstOnuE2ETest pastes lat/lon into the map; do not use `adb emu geo fix`
-# (it often kills the emulator console on medium_phone).
+e2e_doing "adb get-state device=$DEVICE"
 $ADB -s "$DEVICE" get-state 2>/dev/null | grep -q device || { echo "Emulator not ready before install" >&2; exit 1; }
 
 echo "== ensure stagingDebug + androidTest installed =="
+e2e_doing "gradlew :presentation:installStagingDebug :presentation:installStagingDebugAndroidTest"
 ./gradlew :presentation:installStagingDebug :presentation:installStagingDebugAndroidTest
 echo "== clear app data for clean login =="
+e2e_doing "adb pm clear $PACKAGE"
 $ADB -s "$DEVICE" shell pm clear "$PACKAGE" >/dev/null 2>&1 || true
 $ADB -s "$DEVICE" shell pm path "$PACKAGE.test" >/dev/null 2>&1 || \
   ./gradlew :presentation:installStagingDebugAndroidTest
 
 echo "== connectedStagingDebugAndroidTest FiberRegisterFirstOnuE2ETest =="
+e2e_step "espresso start FiberRegisterFirstOnuE2ETest accessMode=$E2E_ACCESS_MODE"
+e2e_doing "gradlew :presentation:connectedStagingDebugAndroidTest class=FiberRegisterFirstOnuE2ETest"
 set +e
 ./gradlew :presentation:connectedStagingDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=com.dscorp.ispadmin.presentation.ui.features.subscription.register.FiberRegisterFirstOnuE2ETest \
@@ -283,22 +305,34 @@ set +e
   -Pandroid.testInstrumentationRunnerArguments.e2e.lon="$GEO_LON"
 TEST_EXIT=$?
 set -e
+e2e_step "espresso end FiberRegisterFirstOnuE2ETest exit=$TEST_EXIT"
 
 if [[ "$TEST_EXIT" -eq 0 ]]; then
   echo "== WiFi credentials (before cleanup) =="
   echo "wifi_24 ssid=$E2E_WIFI_SSID password=$E2E_WIFI_PASS"
   echo "wifi_5 ssid=$E2E_WIFI_SSID_5 password=$E2E_WIFI_PASS"
   echo "== service-health collection =="
-  E2E_DNI="$E2E_DNI" E2E_ONU_SN="$E2E_ONU_SN" TOKEN="$TOKEN" API_BASE="$API_BASE" python3 -c '
+  e2e_doing "GET $API_BASE/subscription/all then service-health + TR-069 poll"
+  SUB_ID="$(E2E_DNI="$E2E_DNI" TOKEN="$TOKEN" API_BASE="$API_BASE" python3 -c '
 import json, os, sys, urllib.request
 token=os.environ["TOKEN"]
 base=os.environ["API_BASE"]
 dni=os.environ["E2E_DNI"]
-sn=os.environ["E2E_ONU_SN"].upper()
-req=urllib.request.Request(base+"/subscription/all", headers={"Authorization":"Bearer "+token})
-with urllib.request.urlopen(req, timeout=60) as r:
-    items=json.load(r)
+url=base+"/subscription/all"
+print("DOING: HTTP GET %s" % url, file=sys.stderr)
+print("URL: GET %s" % url, file=sys.stderr)
+req=urllib.request.Request(url, headers={"Authorization":"Bearer "+token})
+try:
+    with urllib.request.urlopen(req, timeout=60) as r:
+        items=json.load(r)
+        code=r.status
+except Exception as e:
+    print("HTTP: 000", file=sys.stderr)
+    print("HTTP_FAIL: GET %s %s" % (url, e), file=sys.stderr)
+    sys.exit(1)
+print("HTTP: %s" % code, file=sys.stderr)
 subs=items if isinstance(items, list) else []
+print("BODY: subscriptions=%s" % len(subs), file=sys.stderr)
 match=None
 for s in subs:
     if str(s.get("dni") or "")==dni:
@@ -308,11 +342,25 @@ if match is None:
     print("subscription not found for dni=%s" % dni, file=sys.stderr)
     sys.exit(1)
 sid=match.get("id")
-req=urllib.request.Request(base+"/subscription/%s/service-health" % sid, headers={"Authorization":"Bearer "+token})
+print("TR069: subscription=%s olt=%s tr069=%s" % (
+    sid, match.get("oltProvisionStatus"), match.get("tr069ProvisionStatus")), file=sys.stderr)
+health_url=base+"/subscription/%s/service-health" % sid
+print("DOING: HTTP GET %s" % health_url, file=sys.stderr)
+print("URL: GET %s" % health_url, file=sys.stderr)
+req=urllib.request.Request(health_url, headers={"Authorization":"Bearer "+token})
 with urllib.request.urlopen(req, timeout=60) as r:
     health=json.load(r)
-print("service-health id=%s evaluated_at=%s" % (sid, health.get("evaluated_at")))
-'
+    print("HTTP: %s" % r.status, file=sys.stderr)
+print("service-health id=%s evaluated_at=%s" % (sid, health.get("evaluated_at")), file=sys.stderr)
+print(sid)
+')"
+  if [[ -n "$SUB_ID" ]]; then
+    set +e
+    e2e_poll_tr069 "$API_BASE" "$TOKEN" "$SUB_ID" 12 5
+    TR069_EXIT=$?
+    set -e
+    echo "TR069 poll exit=$TR069_EXIT (non-fatal)"
+  fi
 fi
 
 should_run_post_cleanup() {
@@ -345,10 +393,14 @@ should_run_post_cleanup() {
 CLEAN_EXIT=0
 if should_run_post_cleanup; then
   echo "== post cleanup =="
+  e2e_doing "hard cleanup env=staging sn=$E2E_ONU_SN dni=$E2E_DNI"
   set +e
   "$CLEANUP" --env staging --sn "$E2E_ONU_SN" --dni "$E2E_DNI"
   CLEAN_EXIT=$?
   set -e
+  echo "post-cleanup exit=$CLEAN_EXIT"
+else
+  e2e_doing "post cleanup skipped cleanupMode=$CLEANUP_MODE"
 fi
 
 if [[ "$TEST_EXIT" -ne 0 ]]; then
