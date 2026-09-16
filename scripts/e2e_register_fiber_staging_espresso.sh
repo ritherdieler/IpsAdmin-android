@@ -269,6 +269,35 @@ if [[ "$TEST_EXIT" -eq 0 ]]; then
   echo "== WiFi credentials (before cleanup) =="
   echo "wifi_24 ssid=$E2E_WIFI_SSID password=$E2E_WIFI_PASS"
   echo "wifi_5 ssid=$E2E_WIFI_SSID_5 password=$E2E_WIFI_PASS"
+  echo "== service-health collection =="
+  E2E_DNI="$E2E_DNI" E2E_ONU_SN="$E2E_ONU_SN" TOKEN="$TOKEN" API_BASE="$API_BASE" python3 -c '
+import json, os, sys, urllib.request
+token=os.environ["TOKEN"]
+base=os.environ["API_BASE"]
+dni=os.environ["E2E_DNI"]
+sn=os.environ["E2E_ONU_SN"].upper()
+req=urllib.request.Request(base+"/subscription/all", headers={"Authorization":"Bearer "+token})
+with urllib.request.urlopen(req, timeout=60) as r:
+    items=json.load(r)
+subs=items if isinstance(items, list) else []
+match=None
+for s in subs:
+    if str(s.get("dni") or "")==dni:
+        match=s
+        break
+if match is None:
+    print("subscription not found for dni=%s" % dni, file=sys.stderr)
+    sys.exit(1)
+sid=match.get("id")
+req=urllib.request.Request(base+"/subscription/%s/service-health" % sid, headers={"Authorization":"Bearer "+token})
+with urllib.request.urlopen(req, timeout=60) as r:
+    health=json.load(r)
+pilot=health.get("pilot_enabled")
+print("service-health id=%s pilot_enabled=%s" % (sid, pilot))
+if pilot is not True:
+    print("staging e2e must keep collection on; got pilot_enabled=%s" % pilot, file=sys.stderr)
+    sys.exit(1)
+'
 fi
 
 should_run_post_cleanup() {

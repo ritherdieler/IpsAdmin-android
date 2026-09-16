@@ -45,6 +45,9 @@ class E2ePlaceLocationFixtureTest {
         assertThat(script).doesNotContain("tr069-e2e-mk-ping.sh")
         assertThat(script).doesNotContain("MikroTik2 ping to assigned IP")
         assertThat(script).doesNotContain("MikroTik ping validation failed")
+        assertThat(script).contains("== service-health collection ==")
+        assertThat(script).contains("pilot_enabled")
+        assertThat(script).contains("staging e2e must keep collection on")
     }
 
     @Test
