@@ -8,7 +8,7 @@
 # --cleanup-mode skip / --no-cleanup skips. Aliases: --ask-cleanup, --auto-cleanup, --cleanup.
 # Env: CLEANUP_MODE=ask|auto|skip. SKIP_POST_CLEANUP=1 is skip.
 #
-# Agents: run in background and end the turn; do not AwaitShell/poll (gigafiber/AGENTS.md).
+# Agents: run with visible console output; keep the turn open with AwaitShell until done (gigafiber/AGENTS.md).
 set -euo pipefail
 
 CLI_WIFI_SSID=""

@@ -9,7 +9,7 @@
 # --cleanup-mode skip / --no-cleanup skips. Aliases: --ask-cleanup, --auto-cleanup, --cleanup.
 # Env: CLEANUP_MODE=ask|auto|skip. SKIP_POST_CLEANUP=1 is skip.
 #
-# Agents: run this script in background and end the turn; do not AwaitShell/poll.
+# Agents: run with visible console output; keep the turn open with AwaitShell until done.
 # Rely on Cursor's background-job completion notification (gigafiber/AGENTS.md).
 set -euo pipefail
 

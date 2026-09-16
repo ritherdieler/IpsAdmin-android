@@ -3,7 +3,7 @@
 # Usage (after fiber register with SKIP_POST_CLEANUP=1):
 #   E2E_DNI=9xxxxxxx ./scripts/e2e_search_subscription_staging_espresso.sh
 #
-# Agents: run in background and end the turn; do not AwaitShell/poll (gigafiber/AGENTS.md).
+# Agents: run with visible console output; keep the turn open with AwaitShell until done (gigafiber/AGENTS.md).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
