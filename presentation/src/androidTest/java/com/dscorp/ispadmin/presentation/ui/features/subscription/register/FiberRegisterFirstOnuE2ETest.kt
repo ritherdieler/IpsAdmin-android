@@ -38,6 +38,8 @@ import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.anything
 import org.hamcrest.TypeSafeMatcher
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -113,6 +115,16 @@ class FiberRegisterFirstOnuE2ETest {
     private val geoLat = args.getString("e2e.lat") ?: E2ePlaceLocationFixture.LATITUDE
     private val geoLon = args.getString("e2e.lon") ?: E2ePlaceLocationFixture.LONGITUDE
     private val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+
+    @Before
+    fun applyE2eAccessMode() {
+        E2eAccessModeResolver.override = args.getString("e2e.accessMode")
+    }
+
+    @After
+    fun clearE2eAccessMode() {
+        E2eAccessModeResolver.override = null
+    }
 
     @Test
     fun registerFiber_withFirstOnu_reachesSuccess() {

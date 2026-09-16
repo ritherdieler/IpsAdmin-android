@@ -33,6 +33,7 @@ import com.dscorp.ispadmin.domain.usecase.subscription.toSubscriptionOrNull
 import com.dscorp.ispadmin.observability.ObsBreadcrumbCategory
 import com.dscorp.ispadmin.observability.ObservabilityClient
 import com.dscorp.ispadmin.presentation.extension.removeSpecialCharacters
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.E2eAccessModeResolver
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.mapper.toNapBoxResponse
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.mapper.toNetworkDevice
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.mapper.toOnu
@@ -1057,7 +1058,8 @@ private fun buildSubscriptionFromForm(
         wifiSsid24 = form.wifiSsid24.trim().takeIf { form.requiresWifiConfig() },
         wifiPassword24 = form.wifiPassword24.takeIf { form.requiresWifiConfig() },
         wifiSsid5 = form.resolvedWifiSsid5().takeIf { form.requiresWifiConfig() },
-        wifiPassword5 = form.wifiPassword24.takeIf { form.requiresWifiConfig() }
+        wifiPassword5 = form.wifiPassword24.takeIf { form.requiresWifiConfig() },
+        accessMode = E2eAccessModeResolver.resolve(),
     )
 }
 

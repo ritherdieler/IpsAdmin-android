@@ -71,10 +71,12 @@ E2E_USER="${E2E_USER:-dscorp}"
 E2E_PASSWORD="${E2E_PASSWORD:-nohacker}"
 E2E_PLACE="${E2E_PLACE:-9 de octubre}"
 E2E_ONU_SN="${E2E_ONU_SN:-ZTEGDC47BFFD}"
+E2E_ACCESS_MODE="${E2E_ACCESS_MODE:-}"
 case "$E2E_ONU_SN" in
   VSOL*|56534F4C*)
     _E2E_WIFI_SSID_DEFAULT="lab-vsol-e2e-24"
     _E2E_WIFI_PASS_DEFAULT="LabVsolWifi24!"
+    E2E_ACCESS_MODE="${E2E_ACCESS_MODE:-STATIC_IP}"
     ;;
   *)
     _E2E_WIFI_SSID_DEFAULT="lab-zte-e2e-24"
@@ -107,7 +109,7 @@ fi
 
 DEVICE="${DEVICE:-$($ADB devices | awk '/device$/{print $1; exit}')}"
 [[ -n "$DEVICE" ]] || { echo "No adb device" >&2; exit 1; }
-echo "DEVICE=$DEVICE PACKAGE=$PACKAGE E2E_DNI=$E2E_DNI E2E_ONU_SN=$E2E_ONU_SN E2E_NAP_CODE=$E2E_NAP_CODE wifi_24=$E2E_WIFI_SSID wifi_5=$E2E_WIFI_SSID_5"
+echo "DEVICE=$DEVICE PACKAGE=$PACKAGE E2E_DNI=$E2E_DNI E2E_ONU_SN=$E2E_ONU_SN E2E_NAP_CODE=$E2E_NAP_CODE wifi_24=$E2E_WIFI_SSID wifi_5=$E2E_WIFI_SSID_5 accessMode=${E2E_ACCESS_MODE:-PPPOE}"
 
 echo "== pre cleanup (allow empty) =="
 "$CLEANUP" --env staging --sn "$E2E_ONU_SN" --dni "$E2E_DNI" --allow-empty || true
@@ -256,6 +258,7 @@ set +e
   -Pandroid.testInstrumentationRunnerArguments.e2e.firstName="$E2E_FIRST_NAME" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.lastName="$E2E_LAST_NAME" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.onuSn="$E2E_ONU_SN" \
+  -Pandroid.testInstrumentationRunnerArguments.e2e.accessMode="$E2E_ACCESS_MODE" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.napCode="$E2E_NAP_CODE" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.lat="$GEO_LAT" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.lon="$GEO_LON"

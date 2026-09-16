@@ -28,6 +28,7 @@ import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionUseCa
 import com.dscorp.ispadmin.domain.model.RegistrationProgress
 import com.dscorp.ispadmin.domain.usecase.subscription.PollRegistrationProgressUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.RetryTr069ProvisioningUseCase
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.E2eAccessModeResolver
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.LocationCaptureMethod
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
@@ -131,6 +132,7 @@ class RegisterSubscriptionComposeViewModelTest {
 
     @Before
     fun setup() {
+        E2eAccessModeResolver.override = null
         Dispatchers.setMain(testDispatcher)
         facadePhotoFile = File.createTempFile("facade_test", ".jpg")
         getAvailableOnuListUseCase = mockk()
@@ -170,6 +172,7 @@ class RegisterSubscriptionComposeViewModelTest {
 
     @After
     fun tearDown() {
+        E2eAccessModeResolver.override = null
         Dispatchers.resetMain()
     }
 
@@ -740,6 +743,32 @@ class RegisterSubscriptionComposeViewModelTest {
             assertEquals("clave24xx", sent.wifiPassword24)
             assertEquals("CasaFibra24 - 5G", sent.wifiSsid5)
             assertEquals("clave24xx", sent.wifiPassword5)
+            Result.success(RegisterSubscriptionResult.Registered(Subscription(subscriptionId = 1)))
+        }
+
+        fillValidFiberForm(nap, onu)
+        fillWifiFields()
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) }
+    }
+
+    @Test
+    fun `saveSubscription sends static ip when e2e override is set`() = runTest(testDispatcher) {
+        E2eAccessModeResolver.override = "STATIC_IP"
+        val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
+        val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu()))
+        )
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        coEvery {
+            registerSubscriptionUseCase(any(), any(), facadePhotoFile = any())
+        } answers {
+            assertEquals("STATIC_IP", firstArg<Subscription>().accessMode)
             Result.success(RegisterSubscriptionResult.Registered(Subscription(subscriptionId = 1)))
         }
 

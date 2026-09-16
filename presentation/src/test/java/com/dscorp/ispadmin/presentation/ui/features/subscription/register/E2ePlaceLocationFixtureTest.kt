@@ -56,6 +56,8 @@ class E2ePlaceLocationFixtureTest {
         assertThat(script).contains("lab-zte-e2e-24")
         assertThat(script).contains("LabZteWifi24!")
         assertThat(script).contains("VSOL*")
+        assertThat(script).contains("E2E_ACCESS_MODE=\"\${E2E_ACCESS_MODE:-STATIC_IP}\"")
+        assertThat(script).contains("e2e.accessMode=")
         val onuAt = script.indexOf("E2E_ONU_SN=\"\${E2E_ONU_SN:-ZTEGDC47BFFD}\"")
         val wifiCaseAt = script.indexOf("lab-vsol-e2e-24")
         assertThat(wifiCaseAt).isGreaterThan(onuAt)
