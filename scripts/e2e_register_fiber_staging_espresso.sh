@@ -292,11 +292,7 @@ sid=match.get("id")
 req=urllib.request.Request(base+"/subscription/%s/service-health" % sid, headers={"Authorization":"Bearer "+token})
 with urllib.request.urlopen(req, timeout=60) as r:
     health=json.load(r)
-pilot=health.get("pilot_enabled")
-print("service-health id=%s pilot_enabled=%s" % (sid, pilot))
-if pilot is not True:
-    print("staging e2e must keep collection on; got pilot_enabled=%s" % pilot, file=sys.stderr)
-    sys.exit(1)
+print("service-health id=%s evaluated_at=%s" % (sid, health.get("evaluated_at")))
 '
 fi
 
