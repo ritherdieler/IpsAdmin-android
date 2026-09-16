@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # Orchestrates Espresso FIBER register e2e against staging + §4 hard cleanup.
 # Usage (from Android repo root):
-#   E2E_ONU_SN=ZTEGDC47BFFD ./scripts/e2e_register_fiber_staging_espresso.sh \
+#   ./scripts/e2e_register_fiber_staging_espresso.sh \
+#     --onu-sn ZTEGDC47BFFD --first-name EeeFiber --last-name Prueba \
 #     --wifi-ssid 'ztelab' --wifi-pass '11111111'
 # 5 GHz SSID is always "<ssid> - 5G". Password is the same on both bands.
-# Env alternatives: E2E_WIFI_SSID, E2E_WIFI_PASS (flags win).
+# ONU: --onu-sn (default ZTEGDC47BFFD). Name: --first-name / --last-name.
 # WAN: --access-mode pppoe|static (aliases PPPOE_DYNAMIC, STATIC_IP, PPPOE_FIXED).
-# Default PPPoE. Env: E2E_ACCESS_MODE.
+# Default PPPoE.
 # After Espresso, --cleanup-mode auto (default) hard-cleans. --cleanup-mode ask prompts [s/N].
 # --cleanup-mode skip / --no-cleanup skips. Aliases: --ask-cleanup, --auto-cleanup, --cleanup.
-# Env: CLEANUP_MODE=ask|auto|skip. SKIP_POST_CLEANUP=1 is skip.
 #
 # Agents: run with visible console output; keep the turn open with AwaitShell until done.
 # Rely on Cursor's background-job completion notification (gigafiber/AGENTS.md).
@@ -18,9 +18,17 @@ set -euo pipefail
 CLI_WIFI_SSID=""
 CLI_WIFI_PASS=""
 CLI_ACCESS_MODE=""
+CLI_ONU_SN=""
+CLI_FIRST_NAME=""
+CLI_LAST_NAME=""
 CLEANUP_MODE="${CLEANUP_MODE:-auto}"
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --onu-sn)
+      [[ $# -ge 2 ]] || { echo "--onu-sn requires a value" >&2; exit 2; }
+      CLI_ONU_SN="$2"
+      shift 2
+      ;;
     --wifi-ssid)
       [[ $# -ge 2 ]] || { echo "--wifi-ssid requires a value" >&2; exit 2; }
       CLI_WIFI_SSID="$2"
@@ -29,6 +37,16 @@ while [[ $# -gt 0 ]]; do
     --wifi-pass)
       [[ $# -ge 2 ]] || { echo "--wifi-pass requires a value" >&2; exit 2; }
       CLI_WIFI_PASS="$2"
+      shift 2
+      ;;
+    --first-name)
+      [[ $# -ge 2 ]] || { echo "--first-name requires a value" >&2; exit 2; }
+      CLI_FIRST_NAME="$2"
+      shift 2
+      ;;
+    --last-name)
+      [[ $# -ge 2 ]] || { echo "--last-name requires a value" >&2; exit 2; }
+      CLI_LAST_NAME="$2"
       shift 2
       ;;
     --access-mode)
@@ -79,6 +97,9 @@ E2E_DNI="${E2E_DNI:-$(python3 -c 'import time; print("9"+("%07d"%(time.time()%10
 E2E_USER="${E2E_USER:-dscorp}"
 E2E_PASSWORD="${E2E_PASSWORD:-nohacker}"
 E2E_PLACE="${E2E_PLACE:-9 de octubre}"
+if [[ -n "$CLI_ONU_SN" ]]; then
+  E2E_ONU_SN="$CLI_ONU_SN"
+fi
 E2E_ONU_SN="${E2E_ONU_SN:-ZTEGDC47BFFD}"
 if [[ -n "$CLI_ACCESS_MODE" ]]; then
   E2E_ACCESS_MODE="$CLI_ACCESS_MODE"
@@ -114,6 +135,12 @@ if [[ ${#E2E_WIFI_PASS} -lt 8 || ${#E2E_WIFI_PASS} -gt 63 ]]; then
   exit 2
 fi
 E2E_WIFI_SSID_5="${E2E_WIFI_SSID} - 5G"
+if [[ -n "$CLI_FIRST_NAME" ]]; then
+  E2E_FIRST_NAME="$CLI_FIRST_NAME"
+fi
+if [[ -n "$CLI_LAST_NAME" ]]; then
+  E2E_LAST_NAME="$CLI_LAST_NAME"
+fi
 E2E_FIRST_NAME="${E2E_FIRST_NAME:-EeeFiber}"
 E2E_LAST_NAME="${E2E_LAST_NAME:-Prueba}"
 E2E_NAP_CODE="${E2E_NAP_CODE:-NO-001}"
