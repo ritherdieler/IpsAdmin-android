@@ -156,8 +156,14 @@ fi
 
 DEVICE="${DEVICE:-$($ADB devices | awk '/device$/{print $1; exit}')}"
 [[ -n "$DEVICE" ]] || { echo "No adb device" >&2; exit 1; }
-e2e_step "e2e config"
-echo "DEVICE=$DEVICE PACKAGE=$PACKAGE E2E_DNI=$E2E_DNI E2E_ONU_SN=$E2E_ONU_SN E2E_NAP_CODE=$E2E_NAP_CODE wifi_24=$E2E_WIFI_SSID wifi_5=$E2E_WIFI_SSID_5 accessMode=${E2E_ACCESS_MODE:-PPPOE} cleanupMode=$CLEANUP_MODE"
+E2E_PHASE=alta
+e2e_hit alta wait "e2e config" \
+  sn="$E2E_ONU_SN" \
+  accessMode="$E2E_ACCESS_MODE" \
+  ssid="$E2E_WIFI_SSID" \
+  dni="$E2E_DNI" \
+  cleanupMode="$CLEANUP_MODE" \
+  device="$DEVICE"
 
 echo "== pre cleanup (allow empty) =="
 e2e_doing "hard cleanup env=staging sn=$E2E_ONU_SN dni=$E2E_DNI allow-empty"
@@ -169,14 +175,16 @@ echo "pre-cleanup exit=$PRE_CLEAN_EXIT"
 
 echo "== wait for ONU in unconfigured_onus =="
 export E2E_ONU_SN
+E2E_PHASE=login
 e2e_step "login staging"
 TOKEN="$(e2e_http POST "$API_BASE/users/login" \
   -H 'Content-Type: application/json' \
   -d "{\"username\":\"$E2E_USER\",\"password\":\"$E2E_PASSWORD\"}" \
   | python3 -c 'import json,sys; print(json.load(sys.stdin).get("accessToken") or "")')"
-[[ -n "$TOKEN" ]] || { echo "Staging login failed" >&2; exit 1; }
-e2e_doing "login ok user=$E2E_USER"
+[[ -n "$TOKEN" ]] || { e2e_hit login fail "login staging" user="$E2E_USER" endpoint="POST /users/login"; exit 1; }
+e2e_hit login pass "login staging" user="$E2E_USER" endpoint="POST /users/login"
 
+E2E_PHASE=alta
 e2e_step "catalog places"
 PLACE_COUNT="$(e2e_http GET "$API_BASE/place" -H "Authorization: Bearer $TOKEN" \
   | python3 -c 'import json,sys; data=json.load(sys.stdin); items=data if isinstance(data,list) else []; print(len(items))')"
@@ -267,6 +275,7 @@ if wanted and codes and codes[0] != wanted:
 
 ONU_OK=0
 for ONU_TRY in $(seq 1 12); do
+  E2E_HTTP_RETRY="$ONU_TRY/12"
   e2e_retry "unconfigured_onus $ONU_TRY/12 sn=$E2E_ONU_SN"
   set +e
   ONU_BODY="$(e2e_http GET "$API_BASE/onu/unconfigured_onus" -H "Authorization: Bearer $TOKEN")"
@@ -286,15 +295,16 @@ def ok(item):
   disp=re.sub(r"[^A-Z0-9]","",str((item or {}).get("sn","")).upper())
   return wanted in disp or disp in wanted or wanted_hex in disp
 sys.exit(0 if any(ok(i) for i in items) else 1)'; then
-    echo "ONU $E2E_ONU_SN is unconfigured"
+    e2e_hit alta pass "ONU unconfigured" sn="$E2E_ONU_SN" retry="$ONU_TRY/12"
     ONU_OK=1
     break
   fi
   e2e_retry "waiting for unconfigured $E2E_ONU_SN sleep=5"
   sleep 5
 done
+unset E2E_HTTP_RETRY
 if [[ "$ONU_OK" -ne 1 ]]; then
-  echo "ONU lab $E2E_ONU_SN no en unconfigured_onus" >&2
+  e2e_hit alta fail "ONU no en unconfigured_onus" sn="$E2E_ONU_SN" retry="12/12"
   exit 1
 fi
 
@@ -312,6 +322,7 @@ $ADB -s "$DEVICE" shell pm path "$PACKAGE.test" >/dev/null 2>&1 || \
   ./gradlew :presentation:installStagingDebugAndroidTest
 
 echo "== connectedStagingDebugAndroidTest FiberRegisterFirstOnuE2ETest =="
+E2E_PHASE=alta
 e2e_step "espresso start FiberRegisterFirstOnuE2ETest accessMode=$E2E_ACCESS_MODE"
 e2e_doing "gradlew :presentation:connectedStagingDebugAndroidTest class=FiberRegisterFirstOnuE2ETest"
 set +e
@@ -332,36 +343,54 @@ set +e
   -Pandroid.testInstrumentationRunnerArguments.e2e.lon="$GEO_LON"
 TEST_EXIT=$?
 set -e
-e2e_step "espresso end FiberRegisterFirstOnuE2ETest exit=$TEST_EXIT"
+if [[ "$TEST_EXIT" -eq 0 ]]; then
+  e2e_hit alta pass "espresso FiberRegisterFirstOnuE2ETest" \
+    sn="$E2E_ONU_SN" accessMode="$E2E_ACCESS_MODE" ssid="$E2E_WIFI_SSID"
+else
+  e2e_hit alta fail "espresso FiberRegisterFirstOnuE2ETest" \
+    sn="$E2E_ONU_SN" accessMode="$E2E_ACCESS_MODE" status="$TEST_EXIT"
+fi
 
 if [[ "$TEST_EXIT" -eq 0 ]]; then
   echo "== WiFi credentials (before cleanup) =="
   echo "wifi_24 ssid=$E2E_WIFI_SSID password=$E2E_WIFI_PASS"
   echo "wifi_5 ssid=$E2E_WIFI_SSID_5 password=$E2E_WIFI_PASS"
   echo "== service-health collection =="
+  E2E_PHASE=acs
   e2e_doing "GET $API_BASE/subscription/all then service-health + TR-069 poll"
   SUBS_BODY="$(e2e_http GET "$API_BASE/subscription/all" --max-time 60 \
     -H "Authorization: Bearer $TOKEN")"
-  SUB_ID="$(E2E_DNI="$E2E_DNI" python3 -c '
+  SUB_META="$(E2E_DNI="$E2E_DNI" python3 -c '
 import json, os, sys
 dni=os.environ["E2E_DNI"]
 items=json.load(sys.stdin)
 subs=items if isinstance(items, list) else []
-print("BODY: subscriptions=%s" % len(subs), file=sys.stderr)
 match=None
 for s in subs:
     if str(s.get("dni") or "")==dni:
         match=s
         break
 if match is None:
-    print("subscription not found for dni=%s" % dni, file=sys.stderr)
     sys.exit(1)
-sid=match.get("id")
-print("TR069: subscription=%s olt=%s tr069=%s" % (
-    sid, match.get("oltProvisionStatus"), match.get("tr069ProvisionStatus")), file=sys.stderr)
-print(sid)
-' <<<"$SUBS_BODY")"
+print("%s\t%s\t%s\t%s" % (
+    match.get("id") or "",
+    match.get("ip") or "",
+    match.get("pppoeUsername") or "",
+    match.get("accessMode") or "",
+))
+' <<<"$SUBS_BODY")" || true
+  SUB_ID="${SUB_META%%	*}"
   if [[ -n "$SUB_ID" ]]; then
+    E2E_SUB_ID="$SUB_ID"
+    E2E_SUB_IP="$(printf '%s' "$SUB_META" | cut -f2)"
+    E2E_SUB_PPPOE="$(printf '%s' "$SUB_META" | cut -f3)"
+    E2E_SUB_ACCESS="$(printf '%s' "$SUB_META" | cut -f4)"
+    e2e_hit acs pass "subscription found" \
+      subscription="$SUB_ID" \
+      sn="$E2E_ONU_SN" \
+      accessMode="${E2E_SUB_ACCESS:-$E2E_ACCESS_MODE}" \
+      ip="$E2E_SUB_IP" \
+      pppoeUsername="$E2E_SUB_PPPOE"
     HEALTH_BODY="$(e2e_http GET "$API_BASE/subscription/$SUB_ID/service-health" --max-time 60 \
       -H "Authorization: Bearer $TOKEN")"
     SUB_ID="$SUB_ID" python3 -c '
@@ -373,7 +402,9 @@ print("service-health id=%s evaluated_at=%s" % (os.environ["SUB_ID"], health.get
     e2e_poll_tr069 "$API_BASE" "$TOKEN" "$SUB_ID" 12 5
     TR069_EXIT=$?
     set -e
-    echo "TR069 poll exit=$TR069_EXIT (non-fatal)"
+    e2e_hit acs wait "TR-069 poll exit=$TR069_EXIT (non-fatal)" subscription="$SUB_ID"
+  else
+    e2e_hit acs fail "subscription not found" dni="$E2E_DNI" sn="$E2E_ONU_SN"
   fi
 fi
 
@@ -418,11 +449,32 @@ else
 fi
 
 if [[ "$TEST_EXIT" -ne 0 ]]; then
+  e2e_summary fail \
+    sn="$E2E_ONU_SN" \
+    accessMode="$E2E_ACCESS_MODE" \
+    subscription="${E2E_SUB_ID:-}" \
+    ip="${E2E_SUB_IP:-}" \
+    pppoeUsername="${E2E_SUB_PPPOE:-}" \
+    ssid="$E2E_WIFI_SSID" \
+    status="$TEST_EXIT"
   echo "E2E test failed exit=$TEST_EXIT" >&2
   exit "$TEST_EXIT"
 fi
 if [[ "$CLEAN_EXIT" -ne 0 ]]; then
+  e2e_summary fail \
+    sn="$E2E_ONU_SN" \
+    accessMode="$E2E_ACCESS_MODE" \
+    subscription="${E2E_SUB_ID:-}" \
+    ssid="$E2E_WIFI_SSID" \
+    status="$CLEAN_EXIT"
   echo "Post cleanup failed exit=$CLEAN_EXIT" >&2
   exit "$CLEAN_EXIT"
 fi
+e2e_summary pass \
+  sn="$E2E_ONU_SN" \
+  accessMode="${E2E_SUB_ACCESS:-$E2E_ACCESS_MODE}" \
+  subscription="${E2E_SUB_ID:-}" \
+  ip="${E2E_SUB_IP:-}" \
+  pppoeUsername="${E2E_SUB_PPPOE:-}" \
+  ssid="$E2E_WIFI_SSID"
 echo "E2E_FIBER_STAGING_ESPRESSO_OK dni=$E2E_DNI sn=$E2E_ONU_SN wifi_24=${E2E_WIFI_SSID}/${E2E_WIFI_PASS} wifi_5=${E2E_WIFI_SSID_5}/${E2E_WIFI_PASS}"

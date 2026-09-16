@@ -1,3 +1,106 @@
+e2e_use_color() {
+  [[ -z "${NO_COLOR:-}" && "${TERM:-dumb}" != "dumb" && -t 2 ]]
+}
+
+e2e_paint() {
+  local color="$1"
+  shift
+  if e2e_use_color; then
+    printf '%b%s%b' "$color" "$*" '\033[0m'
+  else
+    printf '%s' "$*"
+  fi
+}
+
+e2e_phase_color() {
+  case "$1" in
+    login) printf '%s' '\033[36m' ;;
+    alta) printf '%s' '\033[35m' ;;
+    acs) printf '%s' '\033[34m' ;;
+    http) printf '%s' '\033[33m' ;;
+    ok) printf '%s' '\033[32m' ;;
+    fail) printf '%s' '\033[31m' ;;
+    wait) printf '%s' '\033[33m' ;;
+    *) printf '%s' '\033[37m' ;;
+  esac
+}
+
+e2e_status_tag() {
+  case "$1" in
+    pass|ok|PASS|OK) printf '%s' 'OK' ;;
+    fail|FAIL) printf '%s' 'FAIL' ;;
+    wait|WAIT|retry|RETRY) printf '%s' 'WAIT' ;;
+    *) printf '%s' "$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')" ;;
+  esac
+}
+
+e2e_url_path() {
+  local url="$1"
+  url="${url#*://}"
+  url="${url#*/}"
+  if [[ "$url" == */* ]]; then
+    printf '/%s' "${url#*/}"
+  else
+    printf '/%s' "$url"
+  fi
+}
+
+e2e_http_phase() {
+  local url="$1"
+  case "$url" in
+    */users/login*) printf '%s' login ;;
+    */registration-progress*|*/service-health*|*/tr069*|*/acs*) printf '%s' acs ;;
+    */onu/unconfigured*|*/subscription*|*/place*|*/napbox*|*/plan*|*/networkDevice*) printf '%s' alta ;;
+    *) printf '%s' http ;;
+  esac
+}
+
+e2e_fields() {
+  local out=""
+  local pair key value
+  for pair in "$@"; do
+    [[ "$pair" == *=* ]] || continue
+    key="${pair%%=*}"
+    value="${pair#*=}"
+    [[ -n "$value" && "$value" != "-" && "$value" != "null" ]] || continue
+    if [[ -n "$out" ]]; then
+      out="$out  $key=$value"
+    else
+      out="$key=$value"
+    fi
+  done
+  if [[ -n "$out" ]]; then
+    printf '  %s\n' "$out" >&2
+  fi
+}
+
+e2e_hit() {
+  local phase="$1"
+  local hit_status="$2"
+  local title="$3"
+  shift 3
+  local tag
+  tag="$(e2e_status_tag "$hit_status")"
+  local color
+  if [[ "$tag" == "FAIL" ]]; then
+    color="$(e2e_phase_color fail)"
+  elif [[ "$tag" == "OK" && "$phase" == "ok" ]]; then
+    color="$(e2e_phase_color ok)"
+  else
+    color="$(e2e_phase_color "$phase")"
+  fi
+  local phase_u
+  phase_u="$(printf '%s' "$phase" | tr '[:lower:]' '[:upper:]')"
+  local line
+  if [[ "$phase" == "fail" ]]; then
+    line="$(printf '[%s] %s' "$tag" "$title")"
+  else
+    line="$(printf '[%s] %-5s %s' "$tag" "$phase_u" "$title")"
+  fi
+  printf '%s\n' "$(e2e_paint "$color" "$line")" >&2
+  e2e_fields "$@"
+}
+
 e2e_clip_body() {
   local raw="$1"
   E2E_CLIP_BODY_IN="$raw" python3 -c '
@@ -34,27 +137,34 @@ print(text)
 }
 
 e2e_step() {
-  echo "== $* ==" >&2
+  e2e_hit "${E2E_PHASE:-http}" wait "$*"
 }
 
 e2e_doing() {
-  echo "DOING: $*" >&2
+  e2e_hit "${E2E_PHASE:-http}" wait "$*"
 }
 
 e2e_retry() {
-  echo "RETRY: $*" >&2
+  e2e_hit "${E2E_PHASE:-http}" wait "$*"
 }
 
 e2e_http_fail() {
-  echo "HTTP_FAIL: $*" >&2
+  e2e_hit http fail "$*"
 }
 
 e2e_http() {
   local method="$1"
   local url="$2"
   shift 2
-  echo "DOING: HTTP $method $url" >&2
-  echo "URL: $method $url" >&2
+  local path
+  path="$(e2e_url_path "$url")"
+  local phase="${E2E_PHASE:-$(e2e_http_phase "$url")}"
+  e2e_hit "$phase" wait "HTTP $method $path" \
+    endpoint="$method $path" \
+    retry="${E2E_HTTP_RETRY:-}" \
+    sn="${E2E_ONU_SN:-}" \
+    accessMode="${E2E_ACCESS_MODE:-}" \
+    subscription="${E2E_SUB_ID:-}"
   local body=""
   local code="000"
   local curl_ec=0
@@ -66,9 +176,11 @@ e2e_http() {
   curl_ec=$?
   if [[ "$had_e" -eq 1 ]]; then set -e; fi
   if [[ "$curl_ec" -ne 0 ]]; then
-    echo "HTTP: 000" >&2
-    echo "BODY: $(e2e_clip_body "$resp")" >&2
-    e2e_http_fail "$method $url curl_exit=$curl_ec"
+    e2e_hit fail fail "HTTP $method $path" \
+      endpoint="$method $path" \
+      status="000" \
+      retry="${E2E_HTTP_RETRY:-}" \
+      body="$(e2e_clip_body "$resp")"
     printf '%s' "$resp"
     return "$curl_ec"
   fi
@@ -78,10 +190,20 @@ e2e_http() {
   else
     body=""
   fi
-  echo "HTTP: $code" >&2
-  echo "BODY: $(e2e_clip_body "$body")" >&2
-  if [[ ! "$code" =~ ^[23][0-9][0-9]$ ]]; then
-    e2e_http_fail "$method $url code=$code"
+  local clipped
+  clipped="$(e2e_clip_body "$body")"
+  if [[ "$code" =~ ^[23][0-9][0-9]$ ]]; then
+    e2e_hit "$phase" pass "HTTP $method $path" \
+      endpoint="$method $path" \
+      status="$code" \
+      retry="${E2E_HTTP_RETRY:-}" \
+      body="$clipped"
+  else
+    e2e_hit fail fail "HTTP $method $path" \
+      endpoint="$method $path" \
+      status="$code" \
+      retry="${E2E_HTTP_RETRY:-}" \
+      body="$clipped"
   fi
   printf '%s' "$body"
   return 0
@@ -95,17 +217,22 @@ e2e_poll_tr069() {
   local sleep_s="${5:-5}"
   local i
   local body=""
-  local status=""
-  e2e_step "poll TR-069 COMPLETE subscription=$sub_id"
+  local tr069_status=""
+  local prev_phase="${E2E_PHASE:-}"
+  E2E_PHASE=acs
+  E2E_SUB_ID="$sub_id"
+  e2e_hit acs wait "poll TR-069 COMPLETE" subscription="$sub_id" retry="0/$attempts"
   for i in $(seq 1 "$attempts"); do
-    e2e_retry "TR-069 poll $i/$attempts GET $base/subscription/$sub_id/registration-progress"
+    E2E_HTTP_RETRY="$i/$attempts"
+    e2e_hit acs wait "TR-069 poll" subscription="$sub_id" retry="$i/$attempts" \
+      endpoint="GET /subscription/$sub_id/registration-progress"
     local had_e=0
     case "$-" in *e*) had_e=1 ;; esac
     set +e
     body="$(e2e_http GET "$base/subscription/$sub_id/registration-progress" \
       -H "Authorization: Bearer $token")"
     if [[ "$had_e" -eq 1 ]]; then set -e; fi
-    status="$(E2E_TR069_BODY="$body" python3 -c '
+    tr069_status="$(E2E_TR069_BODY="$body" python3 -c '
 import json, os
 raw = os.environ.get("E2E_TR069_BODY") or ""
 try:
@@ -118,17 +245,33 @@ if not isinstance(payload, dict):
     payload = {}
 print(payload.get("tr069ProvisionStatus") or payload.get("cpeProvisionStatus") or "")
 ')"
-    echo "TR069: subscription=$sub_id status=${status:-?} attempt=$i/$attempts" >&2
-    if [[ "$status" == "COMPLETE" ]]; then
-      echo "TR069: COMPLETE" >&2
+    if [[ "$tr069_status" == "COMPLETE" ]]; then
+      e2e_hit acs pass "TR-069 COMPLETE" subscription="$sub_id" status="$tr069_status" retry="$i/$attempts"
+      E2E_PHASE="$prev_phase"
+      unset E2E_HTTP_RETRY
       return 0
     fi
-    if [[ "$status" == "FAILED" || "$status" == "MANUAL_REQUIRED" ]]; then
-      e2e_http_fail "TR-069 status=$status subscription=$sub_id"
+    if [[ "$tr069_status" == "FAILED" || "$tr069_status" == "MANUAL_REQUIRED" ]]; then
+      e2e_hit acs fail "TR-069 $tr069_status" subscription="$sub_id" status="$tr069_status" retry="$i/$attempts"
+      E2E_PHASE="$prev_phase"
+      unset E2E_HTTP_RETRY
       return 1
     fi
+    e2e_hit acs wait "TR-069 pending" subscription="$sub_id" status="${tr069_status:-?}" retry="$i/$attempts"
     sleep "$sleep_s"
   done
-  e2e_http_fail "TR-069 poll timeout last=${status:-?} subscription=$sub_id"
+  e2e_hit acs fail "TR-069 poll timeout" subscription="$sub_id" status="${tr069_status:-?}" retry="$attempts/$attempts"
+  E2E_PHASE="$prev_phase"
+  unset E2E_HTTP_RETRY
   return 1
+}
+
+e2e_summary() {
+  local summary_status="$1"
+  shift
+  if [[ "$summary_status" == "pass" || "$summary_status" == "ok" ]]; then
+    e2e_hit ok pass "E2E summary" "$@"
+  else
+    e2e_hit fail fail "E2E summary" "$@"
+  fi
 }
