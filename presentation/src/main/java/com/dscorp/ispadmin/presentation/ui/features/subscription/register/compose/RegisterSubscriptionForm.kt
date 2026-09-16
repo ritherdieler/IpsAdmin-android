@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dscorp.components.components.formfields.MyOutlinedTextField
 import com.dscorp.ispadmin.R
+import com.dscorp.ispadmin.domain.model.AccessMode
 import com.dscorp.ispadmin.domain.model.EquipmentCondition
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
@@ -370,6 +371,18 @@ private fun InstallationBlock(
         enabled = !formState.isLoading,
         itemTestTag = { index, _ -> RegisterSubscriptionTestTags.installationTypeItem(index) },
     )
+
+    AnimatedVisibility(
+        visible = form.shouldShowAccessModeSelector(),
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically()
+    ) {
+        WanAccessModeSelector(
+            selected = form.accessMode,
+            onSelected = { onIntent(RegisterSubscriptionIntent.AccessModeSelected(it)) },
+            enabled = !formState.isLoading,
+        )
+    }
 
     AnimatedVisibility(
         visible = form.shouldShowHostDeviceSelector(),
@@ -864,6 +877,41 @@ fun InstallationTypeSelector(
                 onClick = { onTypeSelected(InstallationType.ONLY_TV_FIBER) }
             )
             Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+fun WanAccessModeSelector(
+    selected: AccessMode,
+    onSelected: (AccessMode) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    Column(modifier = modifier.testTag(RegisterSubscriptionTestTags.ACCESS_MODE)) {
+        Text(
+            text = "Tipo de WAN",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        Row(modifier = Modifier.fillMaxWidth()) {
+            AccessMode.registerChoices().forEach { mode ->
+                val tag = if (mode == AccessMode.STATIC_IP) {
+                    RegisterSubscriptionTestTags.ACCESS_MODE_STATIC_IP
+                } else {
+                    RegisterSubscriptionTestTags.ACCESS_MODE_PPPOE
+                }
+                val isSelected = selected == mode ||
+                    (mode == AccessMode.PPPOE_DYNAMIC && selected.usesPppoe())
+                RadioButtonWithLabel(
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(tag),
+                    label = mode.registerLabel(),
+                    selected = isSelected,
+                    onClick = { if (enabled) onSelected(mode) },
+                )
+            }
         }
     }
 }

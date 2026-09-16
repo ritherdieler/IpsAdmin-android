@@ -29,6 +29,7 @@ import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
 import androidx.test.uiautomator.UiDevice
+import com.dscorp.ispadmin.domain.model.AccessMode
 import com.dscorp.ispadmin.presentation.ui.features.main.MainActivity
 import com.dscorp.ispadmin.presentation.ui.features.main.MainNavTestTags
 import com.google.android.material.textfield.TextInputLayout
@@ -110,6 +111,7 @@ class FiberRegisterFirstOnuE2ETest {
     private val wifiPass = args.getString("e2e.wifiPass") ?: "MimiWifi24pass"
     private val firstName = args.getString("e2e.firstName") ?: "EeeFiber"
     private val lastName = args.getString("e2e.lastName") ?: "Prueba"
+    private val accessMode = E2eAccessModeResolver.resolve(args.getString("e2e.accessMode"))
     private val onuSn = E2eOnuSnResolver.resolve(args.getString("e2e.onuSn"))
     private val napCode = E2eNapCodeResolver.resolve(args.getString("e2e.napCode"))
     private val geoLat = args.getString("e2e.lat") ?: E2ePlaceLocationFixture.LATITUDE
@@ -462,8 +464,22 @@ class FiberRegisterFirstOnuE2ETest {
         waitUntilTag(RegisterSubscriptionTestTags.planItem(0), timeoutMs = 10_000)
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.planItem(0)).performClick()
     }
+
+    private fun selectAccessMode() {
+        val tag = when (accessMode) {
+            AccessMode.STATIC_IP -> RegisterSubscriptionTestTags.ACCESS_MODE_STATIC_IP
+            AccessMode.PPPOE_DYNAMIC, AccessMode.PPPOE_FIXED ->
+                RegisterSubscriptionTestTags.ACCESS_MODE_PPPOE
+        }
+        waitUntilTag(tag, timeoutMs = 15_000)
+        composeRule.onNodeWithTag(tag)
+            .performScrollTo()
+            .performClick()
+    }
+
     private fun completeInstallationStepAndAdvance() {
         ensureFiberPlanSelected()
+        selectAccessMode()
         selectNapIfNeeded()
         selectOnu()
         fillWifi()

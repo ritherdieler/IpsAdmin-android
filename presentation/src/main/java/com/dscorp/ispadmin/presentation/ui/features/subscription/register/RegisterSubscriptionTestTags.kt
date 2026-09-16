@@ -13,6 +13,9 @@ object RegisterSubscriptionTestTags {
     const val NAP_BOX = "register_nap_box_field"
     const val NEARBY_NAP_LOADING = "register_nearby_nap_loading"
     const val INSTALLATION_TYPE = "register_installation_type_dropdown"
+    const val ACCESS_MODE = "register_access_mode"
+    const val ACCESS_MODE_PPPOE = "register_access_mode_pppoe"
+    const val ACCESS_MODE_STATIC_IP = "register_access_mode_static_ip"
     const val PLAN = "register_plan_dropdown"
     const val HOST_DEVICE = "register_host_device_dropdown"
     const val ONU = "register_onu_dropdown"
@@ -73,6 +76,9 @@ object RegisterSubscriptionTestTags {
         PLACE,
         NAP_BOX,
         INSTALLATION_TYPE,
+        ACCESS_MODE,
+        ACCESS_MODE_PPPOE,
+        ACCESS_MODE_STATIC_IP,
         PLAN,
         HOST_DEVICE,
         ONU,

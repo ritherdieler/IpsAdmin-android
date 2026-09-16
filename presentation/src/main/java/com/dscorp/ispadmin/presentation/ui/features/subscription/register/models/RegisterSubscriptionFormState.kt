@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 
 import android.net.Uri
+import com.dscorp.ispadmin.domain.model.AccessMode
 import com.dscorp.ispadmin.domain.model.EquipmentCondition
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
@@ -67,6 +68,7 @@ data class RegisterSubscriptionFormState(
     val facadePhotoUri: Uri? = null,
     val facadePhotoError: String? = null,
     val installationType: InstallationType = InstallationType.FIBER,
+    val accessMode: AccessMode = AccessMode.PPPOE_DYNAMIC,
     val equipmentCondition: EquipmentCondition = EquipmentCondition.LOAN,
     val clientIpAddress: String = "",
     val clientIpAddressError: String? = null,
@@ -108,6 +110,9 @@ data class RegisterSubscriptionFormState(
     fun activeCoreDevices(): List<NetworkDevice> = coreDeviceList.filter { !it.disabled }
 
     fun shouldShowHostDeviceSelector(): Boolean = activeCoreDevices().size > 1
+
+    fun shouldShowAccessModeSelector(): Boolean =
+        installationType == InstallationType.FIBER || installationType == InstallationType.WIRELESS
 
     fun validate(field: FormFieldKey): String? {
         return when (field) {

@@ -4,6 +4,8 @@
 #   ./scripts/e2e_register_fiber_espresso.sh --wifi-ssid 'mimiwifi' --wifi-pass 'MimiWifi24pass'
 # 5 GHz SSID is always "<ssid> - 5G". Password is the same on both bands.
 # Env alternatives: E2E_WIFI_SSID, E2E_WIFI_PASS (flags win).
+# WAN: --access-mode pppoe|static (aliases PPPOE_DYNAMIC, STATIC_IP, PPPOE_FIXED).
+# Default PPPoE. Env: E2E_ACCESS_MODE.
 # After Espresso, --cleanup-mode auto (default) hard-cleans. --cleanup-mode ask prompts [s/N].
 # --cleanup-mode skip / --no-cleanup skips. Aliases: --ask-cleanup, --auto-cleanup, --cleanup.
 # Env: CLEANUP_MODE=ask|auto|skip. SKIP_POST_CLEANUP=1 is skip.
@@ -13,6 +15,7 @@ set -euo pipefail
 
 CLI_WIFI_SSID=""
 CLI_WIFI_PASS=""
+CLI_ACCESS_MODE=""
 CLEANUP_MODE="${CLEANUP_MODE:-auto}"
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -24,6 +27,11 @@ while [[ $# -gt 0 ]]; do
     --wifi-pass)
       [[ $# -ge 2 ]] || { echo "--wifi-pass requires a value" >&2; exit 2; }
       CLI_WIFI_PASS="$2"
+      shift 2
+      ;;
+    --access-mode)
+      [[ $# -ge 2 ]] || { echo "--access-mode requires pppoe|static" >&2; exit 2; }
+      CLI_ACCESS_MODE="$2"
       shift 2
       ;;
     --cleanup-mode)
@@ -68,12 +76,23 @@ E2E_USER="${E2E_USER:-dscorp}"
 E2E_PASSWORD="${E2E_PASSWORD:-nohacker}"
 E2E_PLACE="${E2E_PLACE:-9 de octubre}"
 E2E_ONU_SN="${E2E_ONU_SN:-}"
-E2E_ACCESS_MODE="${E2E_ACCESS_MODE:-}"
+if [[ -n "$CLI_ACCESS_MODE" ]]; then
+  E2E_ACCESS_MODE="$CLI_ACCESS_MODE"
+fi
+E2E_ACCESS_MODE="${E2E_ACCESS_MODE:-PPPOE_DYNAMIC}"
+case "$(printf '%s' "$E2E_ACCESS_MODE" | tr '[:upper:]' '[:lower:]')" in
+  pppoe|pppoe_dynamic) E2E_ACCESS_MODE="PPPOE_DYNAMIC" ;;
+  static|static_ip) E2E_ACCESS_MODE="STATIC_IP" ;;
+  pppoe_fixed) E2E_ACCESS_MODE="PPPOE_FIXED" ;;
+  *)
+    echo "--access-mode / E2E_ACCESS_MODE must be pppoe|static" >&2
+    exit 2
+    ;;
+esac
 case "$E2E_ONU_SN" in
   VSOL*|56534F4C*)
     _E2E_WIFI_SSID_DEFAULT="lab-vsol-e2e-24"
     _E2E_WIFI_PASS_DEFAULT="LabVsolWifi24!"
-    E2E_ACCESS_MODE="${E2E_ACCESS_MODE:-STATIC_IP}"
     ;;
   *)
     _E2E_WIFI_SSID_DEFAULT="mimiwifi"

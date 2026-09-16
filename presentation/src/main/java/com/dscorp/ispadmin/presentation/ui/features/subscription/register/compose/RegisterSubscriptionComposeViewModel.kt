@@ -3,6 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compo
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dscorp.ispadmin.domain.model.AccessMode
 import com.dscorp.ispadmin.domain.model.EquipmentCondition
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.InstallationType
@@ -87,7 +88,13 @@ class RegisterSubscriptionComposeViewModel(
         const val OBS_SCREEN = "register_subscription"
     }
 
-    private val _uiState = MutableStateFlow(RegisterSubscriptionState())
+    private val _uiState = MutableStateFlow(
+        RegisterSubscriptionState(
+            registerSubscriptionForm = RegisterSubscriptionFormState(
+                accessMode = E2eAccessModeResolver.resolve(),
+            )
+        )
+    )
     val uiState: StateFlow<RegisterSubscriptionState> = _uiState.asStateFlow()
 
     private val _uiEvent = MutableSharedFlow<RegisterSubscriptionUiEvent>(
@@ -269,6 +276,8 @@ class RegisterSubscriptionComposeViewModel(
             RegisterSubscriptionIntent.NapBoxSelectionCleared -> onNapBoxSelectionCleared()
             is RegisterSubscriptionIntent.InstallationTypeSelected ->
                 onInstallationTypeSelected(intent.type)
+            is RegisterSubscriptionIntent.AccessModeSelected ->
+                onAccessModeSelected(intent.mode)
             RegisterSubscriptionIntent.RefreshOnuList -> refreshOnuList()
             is RegisterSubscriptionIntent.NoteChanged -> onNoteChanged(intent.value)
             is RegisterSubscriptionIntent.EquipmentConditionChanged ->
@@ -630,6 +639,14 @@ private fun onPlaceSelectionCleared() {
 private fun onNapBoxSelectionCleared() {
     updateValidatedForm(FormFieldKey.NAP_BOX) { form ->
         form.copy(selectedNapBox = null)
+    }
+}
+
+private fun onAccessModeSelected(mode: AccessMode) {
+    _uiState.update { current ->
+        current.copy(
+            registerSubscriptionForm = current.registerSubscriptionForm.copy(accessMode = mode)
+        )
     }
 }
 
@@ -1059,7 +1076,7 @@ private fun buildSubscriptionFromForm(
         wifiPassword24 = form.wifiPassword24.takeIf { form.requiresWifiConfig() },
         wifiSsid5 = form.resolvedWifiSsid5().takeIf { form.requiresWifiConfig() },
         wifiPassword5 = form.wifiPassword24.takeIf { form.requiresWifiConfig() },
-        accessMode = E2eAccessModeResolver.resolve(),
+        accessMode = form.accessMode.name,
     )
 }
 

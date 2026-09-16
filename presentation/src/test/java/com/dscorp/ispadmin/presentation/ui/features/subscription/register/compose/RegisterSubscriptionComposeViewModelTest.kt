@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
+import com.dscorp.ispadmin.domain.model.AccessMode
 import com.dscorp.ispadmin.domain.model.CatalogCoreDevice
 import com.dscorp.ispadmin.domain.model.CatalogNapBox
 import com.dscorp.ispadmin.domain.model.CatalogOnu
@@ -755,8 +756,96 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
+    fun `form defaults accessMode to PPPoE`() {
+        assertEquals(
+            AccessMode.PPPOE_DYNAMIC,
+            viewModel.uiState.value.registerSubscriptionForm.accessMode,
+        )
+    }
+
+    @Test
+    fun `AccessModeSelected updates form wan type`() {
+        viewModel.onIntent(RegisterSubscriptionIntent.AccessModeSelected(AccessMode.STATIC_IP))
+        assertEquals(
+            AccessMode.STATIC_IP,
+            viewModel.uiState.value.registerSubscriptionForm.accessMode,
+        )
+        viewModel.onIntent(RegisterSubscriptionIntent.AccessModeSelected(AccessMode.PPPOE_DYNAMIC))
+        assertEquals(
+            AccessMode.PPPOE_DYNAMIC,
+            viewModel.uiState.value.registerSubscriptionForm.accessMode,
+        )
+    }
+
+    @Test
+    fun `saveSubscription sends PPPOE_DYNAMIC by default`() = runTest(testDispatcher) {
+        val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
+        val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu()))
+        )
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        coEvery {
+            registerSubscriptionUseCase(any(), any(), facadePhotoFile = any())
+        } answers {
+            assertEquals("PPPOE_DYNAMIC", firstArg<Subscription>().accessMode)
+            Result.success(RegisterSubscriptionResult.Registered(Subscription(subscriptionId = 1)))
+        }
+
+        fillValidFiberForm(nap, onu)
+        fillWifiFields()
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) }
+    }
+
+    @Test
+    fun `saveSubscription sends static ip when wan type is selected`() = runTest(testDispatcher) {
+        val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
+        val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu()))
+        )
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        coEvery {
+            registerSubscriptionUseCase(any(), any(), facadePhotoFile = any())
+        } answers {
+            assertEquals("STATIC_IP", firstArg<Subscription>().accessMode)
+            Result.success(RegisterSubscriptionResult.Registered(Subscription(subscriptionId = 1)))
+        }
+
+        fillValidFiberForm(nap, onu)
+        fillWifiFields()
+        viewModel.onIntent(RegisterSubscriptionIntent.AccessModeSelected(AccessMode.STATIC_IP))
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) }
+    }
+
+    @Test
     fun `saveSubscription sends static ip when e2e override is set`() = runTest(testDispatcher) {
-        E2eAccessModeResolver.override = "STATIC_IP"
+        E2eAccessModeResolver.override = "static"
+        viewModel = RegisterSubscriptionComposeViewModel(
+            getAvailableOnuListUseCase = getAvailableOnuListUseCase,
+            getRegistrationCatalogUseCase = getRegistrationCatalogUseCase,
+            refreshRegistrationCatalogUseCase = refreshRegistrationCatalogUseCase,
+            getPlaceFromLocationUseCase = getPlaceFromLocationUseCase,
+            registerSubscriptionUseCase = registerSubscriptionUseCase,
+            getUserSessionUseCase = getUserSessionUseCase,
+            getNearNapBoxesUseCase = getNearNapBoxesUseCase,
+            installationOrderUseCase = installationOrderUseCase,
+            observeOfflineRegistrationModeUseCase = observeOfflineRegistrationModeUseCase,
+            retryTr069ProvisioningUseCase = retryTr069ProvisioningUseCase,
+            pollRegistrationProgressUseCase = pollRegistrationProgressUseCase,
+            observabilityClient = mockk(relaxed = true),
+            mainImmediate = testDispatcher
+        )
         val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
         val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
         coEvery { getRegistrationCatalogUseCase() } returns Result.success(
@@ -1398,6 +1487,7 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel.onIntent(RegisterSubscriptionIntent.PhoneChanged("987654321"))
         viewModel.onIntent(RegisterSubscriptionIntent.PlanSelected(sampleTvPlan))
         viewModel.onIntent(RegisterSubscriptionIntent.PlaceSelected(Place(id = "1", name = "P")))
+        selectValidLocation()
     }
 
     private val sampleTvPlan = PlanResponse(

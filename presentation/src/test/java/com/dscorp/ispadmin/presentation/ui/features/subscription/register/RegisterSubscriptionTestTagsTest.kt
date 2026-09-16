@@ -41,9 +41,17 @@ class RegisterSubscriptionTestTagsTest {
             "RegisterSubscriptionTestTags.WIZARD_CONTINUE",
             "RegisterSubscriptionTestTags.LOCATION_METHOD_CURRENT",
             "RegisterSubscriptionTestTags.LOCATION_METHOD_MANUAL",
+            "RegisterSubscriptionTestTags.ACCESS_MODE",
+            "RegisterSubscriptionTestTags.ACCESS_MODE_PPPOE",
+            "RegisterSubscriptionTestTags.ACCESS_MODE_STATIC_IP",
         ).forEach { ref ->
             assertThat(formSource).contains(ref)
         }
+        assertThat(RegisterSubscriptionTestTags.ACCESS_MODE).isEqualTo("register_access_mode")
+        assertThat(RegisterSubscriptionTestTags.ACCESS_MODE_PPPOE)
+            .isEqualTo("register_access_mode_pppoe")
+        assertThat(RegisterSubscriptionTestTags.ACCESS_MODE_STATIC_IP)
+            .isEqualTo("register_access_mode_static_ip")
         assertThat(RegisterSubscriptionTestTags.FORM_READY).isEqualTo("register_form_ready")
         assertThat(RegisterSubscriptionTestTags.WIZARD_CONTINUE).isEqualTo("wizard_continue")
         assertThat(RegisterSubscriptionTestTags.NEARBY_NAP_LOADING)
@@ -57,6 +65,9 @@ class RegisterSubscriptionTestTagsTest {
         ).readText()
         assertThat(e2eSource).contains("oltProvisionStatus(\"COMPLETE\")")
         assertThat(e2eSource).contains("tr069ProvisionStatus(\"COMPLETE\")")
+        assertThat(e2eSource).contains("selectAccessMode()")
+        assertThat(e2eSource).contains("ACCESS_MODE_STATIC_IP")
+        assertThat(e2eSource).contains("ACCESS_MODE_PPPOE")
         val screenSource = File(
             "src/main/java/com/dscorp/ispadmin/presentation/ui/features/subscription/register/compose/RegisterSubscriptionScreen.kt"
         ).readText()

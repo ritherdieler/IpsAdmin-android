@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 
+import com.dscorp.ispadmin.domain.model.AccessMode
 import com.dscorp.ispadmin.domain.model.EquipmentCondition
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
@@ -23,6 +24,7 @@ sealed interface RegisterSubscriptionIntent {
     data object PlaceSelectionCleared : RegisterSubscriptionIntent
     data object NapBoxSelectionCleared : RegisterSubscriptionIntent
     data class InstallationTypeSelected(val type: InstallationType) : RegisterSubscriptionIntent
+    data class AccessModeSelected(val mode: AccessMode) : RegisterSubscriptionIntent
     data object RefreshOnuList : RegisterSubscriptionIntent
     data class NoteChanged(val value: String) : RegisterSubscriptionIntent
     data class EquipmentConditionChanged(val value: EquipmentCondition) : RegisterSubscriptionIntent
