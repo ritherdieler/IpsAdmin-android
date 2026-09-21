@@ -27,6 +27,10 @@ object SubscriptionFinderTestTags {
     const val MENU_CHANGE_NAP_BOX = "change_nap_box"
     const val MENU_UPDATE_LOCATION = "update_location"
     const val MENU_REBOOT_ONU = "reboot_onu"
+    const val MENU_RETRY_TR069 = "retry_tr069"
+
+    const val RETRY_TR069_DIALOG_DISMISS = "subscription_retry_tr069_dialog_dismiss"
+    const val RETRY_TR069_DIALOG_CONFIRM = "subscription_retry_tr069_dialog_confirm"
 
     const val CANCEL_DIALOG_DISMISS = "subscription_cancel_dialog_dismiss"
     const val CANCEL_DIALOG_CONFIRM = "subscription_cancel_dialog_confirm"
@@ -48,6 +52,7 @@ object SubscriptionFinderTestTags {
     const val LOCATION_CANCEL = "subscription_location_cancel"
     const val LOCATION_UPDATE = "subscription_location_update"
 
+    fun listRetryTr069(subscriptionId: Int) = "btn_list_retry_tr069_$subscriptionId"
     fun resultItem(subscriptionId: Int) = "subscription_result_item_$subscriptionId"
     fun resultExpand(subscriptionId: Int) = "subscription_result_expand_$subscriptionId"
     fun resultMenu(subscriptionId: Int) = "subscription_result_menu_$subscriptionId"
@@ -74,6 +79,7 @@ object SubscriptionFinderTestTags {
         SubscriptionMenu.CHANGE_NAP_BOX -> MENU_CHANGE_NAP_BOX
         SubscriptionMenu.UPDATE_LOCATION -> MENU_UPDATE_LOCATION
         SubscriptionMenu.REBOOT_FIBER_ONU -> MENU_REBOOT_ONU
+        SubscriptionMenu.RETRY_TR069 -> MENU_RETRY_TR069
     }
 
     val searchInteractive = listOf(
@@ -101,6 +107,8 @@ object SubscriptionFinderTestTags {
         REACTIVATE_NOTES,
         REBOOT_DIALOG_DISMISS,
         REBOOT_DIALOG_CONFIRM,
+        RETRY_TR069_DIALOG_DISMISS,
+        RETRY_TR069_DIALOG_CONFIRM,
         NAP_BOX_DROPDOWN,
         NAP_BOX_CONFIRM,
         NAP_BOX_CLOSE,

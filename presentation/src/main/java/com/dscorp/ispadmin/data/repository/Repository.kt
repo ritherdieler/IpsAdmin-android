@@ -14,6 +14,7 @@ import com.dscorp.ispadmin.data.datasource.remote.SendMessagingCloudApi
 import com.dscorp.ispadmin.data.response.AdministrativeOnuResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
+import com.dscorp.ispadmin.data.utils.ApiErrorBodyParser
 import com.dscorp.ispadmin.data.utils.HttpCodes
 import com.dscorp.ispadmin.data.utils.REMEMBER_CHECKBOX_STATUS
 import com.dscorp.ispadmin.data.utils.BIOMETRIC_SESSION_ACCESS_TOKEN
@@ -48,6 +49,7 @@ import com.dscorp.ispadmin.domain.model.DeviceTokenRequest
 import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
 import com.dscorp.ispadmin.domain.model.FireBaseResponse
 import com.dscorp.ispadmin.domain.model.FirebaseBody
+import retrofit2.HttpException
 import com.dscorp.ispadmin.domain.model.FixedCost
 import com.dscorp.ispadmin.domain.model.Ip
 import com.dscorp.ispadmin.domain.model.IpPool
@@ -79,7 +81,6 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import retrofit2.Response
@@ -254,17 +255,25 @@ class Repository : IRepository, KoinComponent {
 
 
     override suspend fun registerSubscription(subscription: Subscription): Subscription {
-        val response = restApiServices.registerSubscription(subscription)
-
-        return when (response.status) {
-            in 200..299 -> response.data!!
-            else -> throw Exception(response.error)
+        return try {
+            val response = restApiServices.registerSubscription(subscription)
+            when (response.status) {
+                in 200..299 -> response.data!!
+                else -> throw Exception(
+                    response.error
+                        ?: response.message
+                        ?: "No se puede registrar la suscripcion"
+                )
+            }
+        } catch (e: HttpException) {
+            throw Exception(
+                ApiErrorBodyParser.parse(
+                    e.response()?.errorBody()?.string(),
+                    e.message() ?: "No se puede registrar la suscripcion"
+                )
+            )
         }
     }
-
-    //Registra una suscripcion con foto de fachada
-    //convierte la suscripcion a JSON multipart y envia la imagen al backend
-    // el backend se encarga de subir la foto a firebase y guardar la URL
 
     override  suspend fun registerSubscriptionWithFacadePhoto(
         subscription: Subscription,
@@ -284,15 +293,24 @@ class Repository : IRepository, KoinComponent {
             filename = facadePhotoFile.name,
             body = photoBody
         )
-        val response = restApiServices.registerSubscriptionWithFacadePhoto(
-            subscription = subscriptionBody,
-            facadePhoto = photoPart
-        )
+        return try {
+            val response = restApiServices.registerSubscriptionWithFacadePhoto(
+                subscription = subscriptionBody,
+                facadePhoto = photoPart
+            )
 
-        return when (response.status){
-            200 -> response.data!!
-            409 -> throw Exception(response.error?: "Este usuario ya se encuentra registrado")
-            else -> throw Exception(response.error?: "No se puede registrar la suscripcion")
+            when (response.status){
+                200 -> response.data!!
+                409 -> throw Exception(response.error?: "Este usuario ya se encuentra registrado")
+                else -> throw Exception(response.error?: "No se puede registrar la suscripcion")
+            }
+        } catch (e: HttpException) {
+            throw Exception(
+                ApiErrorBodyParser.parse(
+                    e.response()?.errorBody()?.string(),
+                    e.message() ?: "No se puede registrar la suscripcion"
+                )
+            )
         }
     }
 
@@ -955,8 +973,8 @@ class Repository : IRepository, KoinComponent {
         val response = restApiServices.rebootFiberOnu(subscriptionId)
         if (response.code() !in 200..299) {
             val msg = response.errorBody()?.string()?.let { body ->
-                runCatching { JSONObject(body).getString("error") }.getOrNull()
-            }
+                ApiErrorBodyParser.parse(body, "")
+            }?.takeIf { it.isNotBlank() }
             throw Exception(msg ?: "No se pudo reiniciar la ONU")
         }
     }
@@ -965,8 +983,8 @@ class Repository : IRepository, KoinComponent {
         val response = restApiServices.retryTr069Provisioning(subscriptionId)
         if (response.code() !in 200..299) {
             val msg = response.errorBody()?.string()?.let { body ->
-                runCatching { JSONObject(body).getString("error") }.getOrNull()
-            }
+                ApiErrorBodyParser.parse(body, "")
+            }?.takeIf { it.isNotBlank() }
             throw Exception(msg ?: "No se pudo reintentar el aprovisionamiento TR-069")
         }
         return response.body() ?: throw Exception("Respuesta vacía al reintentar TR-069")
@@ -976,8 +994,8 @@ class Repository : IRepository, KoinComponent {
         val response = restApiServices.getRegistrationProgress(subscriptionId)
         if (response.code() !in 200..299) {
             val msg = response.errorBody()?.string()?.let { body ->
-                runCatching { JSONObject(body).getString("error") }.getOrNull()
-            }
+                ApiErrorBodyParser.parse(body, "")
+            }?.takeIf { it.isNotBlank() }
             throw Exception(msg ?: "No se pudo obtener el progreso del registro")
         }
         return response.body() ?: throw Exception("Respuesta vacía al consultar progreso del registro")

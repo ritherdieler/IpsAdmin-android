@@ -295,7 +295,7 @@ class RegisterSubscriptionComposeViewModel(
             is RegisterSubscriptionIntent.UseDifferentWifiNamesChanged ->
                 onUseDifferentWifiNamesChanged(intent.enabled)
             is RegisterSubscriptionIntent.RegisterClick -> saveSubscription(intent.facadePhotoFile)
-            is RegisterSubscriptionIntent.RetryTr069 -> retryTr069Provisioning(intent.subscriptionId)
+            is RegisterSubscriptionIntent.RetryTr069 -> retryTr069Provisioning(intent.subscription)
             RegisterSubscriptionIntent.UseCurrentLocationClicked -> onUseCurrentLocationClicked()
             RegisterSubscriptionIntent.ChooseManualLocationClicked -> onChooseManualLocationClicked()
             RegisterSubscriptionIntent.DismissManualLocationMap -> onDismissManualLocationMap()
@@ -363,23 +363,53 @@ class RegisterSubscriptionComposeViewModel(
         }
     }
 
-    fun retryTr069Provisioning(subscriptionId: Int) {
+    fun retryTr069Provisioning(subscription: Subscription) {
+        val subscriptionId = subscription.resolvedSubscriptionId() ?: return
         if (_uiState.value.tr069RetryLoading) return
         retryTr069Job?.cancel()
         retryTr069Job = viewModelScope.launch(mainImmediate) {
             try {
-                _uiState.update { it.copy(tr069RetryLoading = true) }
+                _uiState.update {
+                    it.copy(
+                        tr069RetryLoading = true,
+                        registrationProgressMessage = "Reintentando aprovisionamiento TR-069…",
+                    )
+                }
                 retryTr069ProvisioningUseCase(subscriptionId).fold(
                     onSuccess = { updated ->
-                        _uiState.update { it.copy(tr069RetryLoading = false) }
-                        _uiEvent.emit(RegisterSubscriptionUiEvent.Success(updated))
-                        if (updated.tr069ProvisionStatus == "MANUAL_REQUIRED") {
-                            _uiEvent.emit(
-                                RegisterSubscriptionUiEvent.Error(
-                                    updated.tr069Message
-                                        ?: "No se pudo completar el aprovisionamiento TR-069"
+                        val merged = updated.copy(
+                            wifiSsid24 = updated.wifiSsid24 ?: subscription.wifiSsid24,
+                            wifiSsid5 = updated.wifiSsid5 ?: subscription.wifiSsid5,
+                            wifiPassword24 = subscription.wifiPassword24 ?: updated.wifiPassword24,
+                            wifiPassword5 = subscription.wifiPassword5 ?: updated.wifiPassword5,
+                        )
+                        when (merged.tr069ProvisionStatus) {
+                            "COMPLETE" -> {
+                                _uiState.update { it.copy(tr069RetryLoading = false) }
+                                _uiEvent.emit(RegisterSubscriptionUiEvent.Success(merged))
+                            }
+                            "MANUAL_REQUIRED", "FAILED" -> {
+                                _uiState.update { it.copy(tr069RetryLoading = false) }
+                                _uiEvent.emit(RegisterSubscriptionUiEvent.Success(merged))
+                                _uiEvent.emit(
+                                    RegisterSubscriptionUiEvent.Error(
+                                        merged.tr069Message
+                                            ?: "No se pudo completar el aprovisionamiento TR-069"
+                                    )
                                 )
-                            )
+                            }
+                            else -> {
+                                _uiState.update {
+                                    it.copy(
+                                        registrationProgressMessage = "Reintentando aprovisionamiento TR-069…"
+                                    )
+                                }
+                                pollRegistrationProgress(
+                                    subscriptionId = subscriptionId,
+                                    initial = merged,
+                                    fromRetry = true,
+                                )
+                            }
                         }
                     },
                     onFailure = { error ->
@@ -985,12 +1015,17 @@ fun saveSubscription(facadePhotoFile: File? = null) {
 private suspend fun pollRegistrationProgress(
     subscriptionId: Int,
     initial: Subscription,
+    fromRetry: Boolean = false,
 ) {
     _uiState.update {
         it.copy(
-            isLoading = true,
-            registrationProgressMessage = initial.tr069Message?.takeIf { msg -> msg.isNotBlank() }
-                ?: "Esperando ACS…"
+            isLoading = !fromRetry,
+            tr069RetryLoading = fromRetry || it.tr069RetryLoading,
+            registrationProgressMessage = when {
+                fromRetry -> "Reintentando aprovisionamiento TR-069…"
+                !initial.tr069Message.isNullOrBlank() -> initial.tr069Message!!
+                else -> "Esperando ACS…"
+            }
         )
     }
     pollRegistrationProgressUseCase(subscriptionId) { progress ->
@@ -1010,6 +1045,7 @@ private suspend fun pollRegistrationProgress(
             _uiState.update {
                 it.copy(
                     isLoading = false,
+                    tr069RetryLoading = false,
                     orderId = null,
                     registrationProgressMessage = "Registrando…"
                 )
@@ -1028,6 +1064,7 @@ private suspend fun pollRegistrationProgress(
             _uiState.update {
                 it.copy(
                     isLoading = false,
+                    tr069RetryLoading = false,
                     orderId = null,
                     registrationProgressMessage = "Registrando…"
                 )

@@ -229,8 +229,14 @@ fun RegisterSubscriptionFormScreen(
             RegisterSuccessFullScreen(
                 subscription = subscription,
                 tr069RetryLoading = uiState.tr069RetryLoading,
-                onRetryTr069 = subscription.resolvedSubscriptionId()?.let { subscriptionId ->
-                    { viewModel.onIntent(RegisterSubscriptionIntent.RetryTr069(subscriptionId)) }
+                tr069RetryMessage = uiState.registrationProgressMessage.takeIf {
+                    uiState.tr069RetryLoading
+                },
+                onRetryTr069 = subscription.resolvedSubscriptionId()?.let {
+                    {
+                        dialogError = null
+                        viewModel.onIntent(RegisterSubscriptionIntent.RetryTr069(subscription))
+                    }
                 },
                 onDismiss = { successSubscription = null },
                 onContinue = onSubscriptionRegisterSuccess
@@ -364,6 +370,7 @@ internal fun RegistrationProgressOverlay(
 internal fun RegisterSuccessFullScreen(
     subscription: Subscription,
     tr069RetryLoading: Boolean = false,
+    tr069RetryMessage: String? = null,
     onRetryTr069: (() -> Unit)? = null,
     onDismiss: () -> Unit,
     onContinue: () -> Unit
@@ -371,8 +378,9 @@ internal fun RegisterSuccessFullScreen(
     val tr069Status = subscription.tr069ProvisionStatus
     val requiresManualTr069 = tr069Status == "MANUAL_REQUIRED" || subscription.tr069RequiresManualConfig
     val isPendingTr069 = tr069Status == "PENDING"
-    val showTr069Section = tr069Status == "COMPLETE" || requiresManualTr069 || isPendingTr069
-    val showRetryTr069 = (requiresManualTr069 || isPendingTr069) && onRetryTr069 != null
+    val isFailedTr069 = tr069Status == "FAILED"
+    val showTr069Section = tr069Status == "COMPLETE" || requiresManualTr069 || isPendingTr069 || isFailedTr069
+    val showRetryTr069 = (requiresManualTr069 || isPendingTr069 || isFailedTr069) && onRetryTr069 != null
     val oltStatus = subscription.oltProvisionStatus
     val showOltSection = (subscription.installationType == InstallationType.FIBER ||
         subscription.installationType == InstallationType.ONLY_TV_FIBER) &&
@@ -425,6 +433,37 @@ internal fun RegisterSuccessFullScreen(
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.testTag("register_success_message")
                     )
+
+                    if (tr069RetryLoading) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("tr069_retry_feedback"),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(22.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                Text(
+                                    text = tr069RetryMessage
+                                        ?.takeIf { it.isNotBlank() }
+                                        ?: "Reintentando aprovisionamiento TR-069…",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.testTag("tr069_retry_feedback_message")
+                                )
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
@@ -503,10 +542,16 @@ internal fun RegisterSuccessFullScreen(
                             onClick = onRetryTr069,
                         ) {
                             if (tr069RetryLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                    Text("Reintentando…")
+                                }
                             } else {
                                 Text("Reintentar TR-069")
                             }
@@ -563,6 +608,7 @@ private fun RegisterSuccessSectionCard(
 internal fun SuccessDialog(
     subscription: Subscription,
     tr069RetryLoading: Boolean = false,
+    tr069RetryMessage: String? = null,
     onRetryTr069: (() -> Unit)? = null,
     onDismiss: () -> Unit,
     onContinue: () -> Unit
@@ -570,6 +616,7 @@ internal fun SuccessDialog(
     RegisterSuccessFullScreen(
         subscription = subscription,
         tr069RetryLoading = tr069RetryLoading,
+        tr069RetryMessage = tr069RetryMessage,
         onRetryTr069 = onRetryTr069,
         onDismiss = onDismiss,
         onContinue = onContinue

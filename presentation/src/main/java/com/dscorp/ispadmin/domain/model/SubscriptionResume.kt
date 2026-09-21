@@ -19,7 +19,18 @@ data class SubscriptionResume(
     val placeId: String,
     val location: GeoLocation,
     val hasFiberOnu: Boolean = false,
+    val tr069ProvisionStatus: String? = null,
 )
+
+private val INCOMPLETE_TR069_STATUSES = setOf("PENDING", "MANUAL_REQUIRED", "FAILED")
+
+fun SubscriptionResume.needsTr069Retry(): Boolean {
+    if (serviceStatus == ServiceStatus.CANCELLED) return false
+    val fiber = installationType == InstallationType.FIBER ||
+        installationType == InstallationType.ONLY_TV_FIBER
+    if (!fiber) return false
+    return tr069ProvisionStatus in INCOMPLETE_TR069_STATUSES
+}
 fun SubscriptionResume.createReminderMessage(): String {
         val message = """
         ¡Hola ${customerName}! 🌟

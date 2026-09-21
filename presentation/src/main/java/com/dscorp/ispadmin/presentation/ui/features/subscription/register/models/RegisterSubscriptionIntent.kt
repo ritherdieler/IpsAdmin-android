@@ -8,6 +8,7 @@ import com.dscorp.ispadmin.domain.model.NetworkDevice
 import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.Subscription
 import java.io.File
 
 sealed interface RegisterSubscriptionIntent {
@@ -37,7 +38,7 @@ sealed interface RegisterSubscriptionIntent {
     data class WifiPassword5Changed(val value: String) : RegisterSubscriptionIntent
     data class UseDifferentWifiNamesChanged(val enabled: Boolean) : RegisterSubscriptionIntent
     data class RegisterClick(val facadePhotoFile: File? = null) : RegisterSubscriptionIntent
-    data class RetryTr069(val subscriptionId: Int) : RegisterSubscriptionIntent
+    data class RetryTr069(val subscription: Subscription) : RegisterSubscriptionIntent
     data object UseCurrentLocationClicked : RegisterSubscriptionIntent
     data object ChooseManualLocationClicked : RegisterSubscriptionIntent
     data object DismissManualLocationMap : RegisterSubscriptionIntent

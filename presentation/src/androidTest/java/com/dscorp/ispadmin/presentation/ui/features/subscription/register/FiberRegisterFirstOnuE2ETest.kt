@@ -85,7 +85,7 @@ private object E2eLoginTags {
 
 /**
  * E2E FIBER: login → registro → primera ONU del dropdown → éxito TR-069.
- * Cleanup MySQL/SmartOLT/Firebase lo orquesta scripts/e2e_register_fiber_espresso.sh.
+ * Cleanup MySQL/Gateway/Firebase lo orquesta scripts/e2e_register_fiber_espresso.sh.
  */
 @LargeTest
 @RunWith(AndroidJUnit4::class)

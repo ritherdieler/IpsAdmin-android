@@ -1105,7 +1105,15 @@ class RegisterSubscriptionComposeViewModelTest {
             )
         )
 
-        viewModel.retryTr069Provisioning(42)
+        viewModel.onIntent(
+            RegisterSubscriptionIntent.RetryTr069(
+                Subscription(
+                    subscriptionId = 42,
+                    tr069ProvisionStatus = "MANUAL_REQUIRED",
+                    wifiPassword24 = "wifi-pass-24",
+                )
+            )
+        )
         advanceUntilIdle()
 
         assertTrue(events.any { it is RegisterSubscriptionUiEvent.Success })
@@ -1115,8 +1123,111 @@ class RegisterSubscriptionComposeViewModelTest {
             }
         )
         assertFalse(viewModel.uiState.value.tr069RetryLoading)
+        coVerify(exactly = 0) { pollRegistrationProgressUseCase(any(), any()) }
         job.cancel()
     }
+
+    @Test
+    fun `retryTr069 PENDING keeps retry loading feedback while polling`() =
+        runTest(testDispatcher) {
+            coEvery { retryTr069ProvisioningUseCase(2378) } returns Result.success(
+                Subscription(
+                    subscriptionId = 2378,
+                    tr069ProvisionStatus = "PENDING",
+                    tr069Message = "Esperando aprovisionamiento TR-069.",
+                )
+            )
+            coEvery { pollRegistrationProgressUseCase(2378, any()) } coAnswers {
+                assertTrue(viewModel.uiState.value.tr069RetryLoading)
+                assertFalse(viewModel.uiState.value.isLoading)
+                assertTrue(
+                    viewModel.uiState.value.registrationProgressMessage.contains(
+                        "Reintentando",
+                        ignoreCase = true,
+                    )
+                )
+                Result.success(
+                    RegistrationProgress(
+                        subscriptionId = 2378,
+                        step = "DONE",
+                        message = "Listo",
+                        done = true,
+                        tr069ProvisionStatus = "COMPLETE",
+                        subscription = Subscription(
+                            subscriptionId = 2378,
+                            tr069ProvisionStatus = "COMPLETE",
+                        ),
+                    )
+                )
+            }
+
+            viewModel.onIntent(
+                RegisterSubscriptionIntent.RetryTr069(
+                    Subscription(
+                        subscriptionId = 2378,
+                        tr069ProvisionStatus = "PENDING",
+                        wifiPassword24 = "clave-wifi-24",
+                    )
+                )
+            )
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.tr069RetryLoading)
+            assertFalse(viewModel.uiState.value.isLoading)
+        }
+
+    @Test
+    fun `retryTr069 PENDING polls until COMPLETE and preserves wifi passwords`() =
+        runTest(testDispatcher) {
+            val events = mutableListOf<RegisterSubscriptionUiEvent>()
+            val job = launch { viewModel.uiEvent.collect { events.add(it) } }
+
+            coEvery { retryTr069ProvisioningUseCase(2378) } returns Result.success(
+                Subscription(
+                    subscriptionId = 2378,
+                    tr069ProvisionStatus = "PENDING",
+                    tr069Message = "Esperando aprovisionamiento TR-069.",
+                    wifiSsid24 = "ARLENI",
+                )
+            )
+            coEvery { pollRegistrationProgressUseCase(2378, any()) } returns Result.success(
+                RegistrationProgress(
+                    subscriptionId = 2378,
+                    step = "DONE",
+                    message = "Listo",
+                    done = true,
+                    tr069ProvisionStatus = "COMPLETE",
+                    subscription = Subscription(
+                        subscriptionId = 2378,
+                        tr069ProvisionStatus = "COMPLETE",
+                        wifiSsid24 = "ARLENI",
+                    ),
+                )
+            )
+
+            viewModel.onIntent(
+                RegisterSubscriptionIntent.RetryTr069(
+                    Subscription(
+                        subscriptionId = 2378,
+                        tr069ProvisionStatus = "PENDING",
+                        wifiSsid24 = "ARLENI",
+                        wifiPassword24 = "clave-wifi-24",
+                        wifiPassword5 = "clave-wifi-5g",
+                    )
+                )
+            )
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { retryTr069ProvisioningUseCase(2378) }
+            coVerify(exactly = 1) { pollRegistrationProgressUseCase(2378, any()) }
+            val success = events.filterIsInstance<RegisterSubscriptionUiEvent.Success>().last()
+            assertEquals("COMPLETE", success.subscription.tr069ProvisionStatus)
+            assertEquals("clave-wifi-24", success.subscription.wifiPassword24)
+            assertEquals("clave-wifi-5g", success.subscription.wifiPassword5)
+            assertFalse(viewModel.uiState.value.tr069RetryLoading)
+            assertFalse(viewModel.uiState.value.isLoading)
+            job.cancel()
+        }
 
     @Test
     fun `saveSubscription polls registration progress until COMPLETE without Error`() =

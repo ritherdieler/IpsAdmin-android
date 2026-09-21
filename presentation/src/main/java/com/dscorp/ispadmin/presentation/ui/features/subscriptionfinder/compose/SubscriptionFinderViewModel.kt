@@ -8,6 +8,7 @@ import com.dscorp.ispadmin.domain.model.CustomerData
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.ServiceStatus
+import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.domain.model.extensions.isAValidAddress
 import com.dscorp.ispadmin.domain.model.extensions.isAValidName
@@ -16,6 +17,7 @@ import com.dscorp.ispadmin.domain.model.extensions.isValidEmail
 import com.dscorp.ispadmin.domain.model.extensions.isValidPhone
 import com.dscorp.ispadmin.domain.usecase.service.ReactivateServiceUseCase
 import com.dscorp.ispadmin.domain.usecase.service.RebootFiberOnuUseCase
+import com.dscorp.ispadmin.domain.usecase.subscription.RetryTr069ProvisioningUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.SearchSubscriptionsUseCase
 import com.dscorp.ispadmin.observability.ObsBreadcrumbCategory
 import com.dscorp.ispadmin.observability.ObservabilityClient
@@ -50,6 +52,7 @@ data class SubscriptionFinderUiState(
     val isFetchingCurrentLocation: Boolean = false,
     val lastUsedFilter: SubscriptionFilter? = null,
     val rebootOnuState: RebootOnuState = RebootOnuState.Empty,
+    val retryTr069State: RetryTr069State = RetryTr069State.Empty,
     val isSearching: Boolean = false,
     val searchError: String? = null,
     val searchPerformed: Boolean = false,
@@ -100,6 +103,7 @@ class SubscriptionFinderViewModel(
     private val rebootFiberOnuUseCase: RebootFiberOnuUseCase,
     private val searchSubscriptionsUseCase: SearchSubscriptionsUseCase,
     private val observabilityClient: ObservabilityClient,
+    private val retryTr069ProvisioningUseCase: RetryTr069ProvisioningUseCase,
 ) : ViewModel() {
 
     private companion object {
@@ -434,6 +438,51 @@ class SubscriptionFinderViewModel(
 
     fun clearRebootOnuState() {
         _uiState.update { it.copy(rebootOnuState = RebootOnuState.Empty) }
+    }
+
+    fun retryTr069(subscriptionId: Int) = viewModelScope.launch {
+        _uiState.update { it.copy(retryTr069State = RetryTr069State.Loading) }
+        retryTr069ProvisioningUseCase(subscriptionId).fold(
+            onSuccess = { updated ->
+                subscriptionsFlow.value = subscriptionsFlow.value.map { item ->
+                    if (item.id == subscriptionId) {
+                        item.copy(tr069ProvisionStatus = updated.tr069ProvisionStatus)
+                    } else {
+                        item
+                    }
+                }
+                _uiState.update {
+                    it.copy(retryTr069State = RetryTr069State.Success(retryTr069Feedback(updated)))
+                }
+            },
+            onFailure = { error ->
+                observabilityClient.reportError(
+                    throwable = error,
+                    message = "Fallo al reintentar aprovisionamiento TR-069",
+                    tags = mapOf(
+                        "feature" to OBS_FEATURE,
+                        "screen" to OBS_SCREEN,
+                        "action" to "retry_tr069",
+                        "entityId" to subscriptionId
+                    )
+                )
+                _uiState.update {
+                    it.copy(retryTr069State = RetryTr069State.Error(error.message))
+                }
+            }
+        )
+    }
+
+    fun clearRetryTr069State() {
+        _uiState.update { it.copy(retryTr069State = RetryTr069State.Empty) }
+    }
+
+    private fun retryTr069Feedback(subscription: Subscription): String {
+        return when (subscription.tr069ProvisionStatus) {
+            "COMPLETE" -> "Aprovisionamiento TR-069 completado"
+            else -> subscription.tr069Message?.takeIf { it.isNotBlank() }
+                ?: "Reintento enviado. El aprovisionamiento TR-069 sigue en curso."
+        }
     }
 
     fun getNapBoxes() = viewModelScope.launch {
@@ -805,6 +854,13 @@ sealed class RebootOnuState {
     object Loading : RebootOnuState()
     object Success : RebootOnuState()
     data class Error(val message: String?) : RebootOnuState()
+}
+
+sealed class RetryTr069State {
+    object Empty : RetryTr069State()
+    object Loading : RetryTr069State()
+    data class Success(val message: String) : RetryTr069State()
+    data class Error(val message: String?) : RetryTr069State()
 }
 
 sealed class NapBoxesState {

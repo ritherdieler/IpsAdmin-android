@@ -21,6 +21,19 @@ class E2eOnuSnResolverTest {
     }
 
     @Test
+    fun `matches genieacs vsol serial against olt vendor serial by hex suffix`() {
+        assertThat(E2eOnuSnResolver.matches("VSOL0031C0B6", "12345B4641531C0B6")).isTrue()
+        assertThat(E2eOnuSnResolver.matches("12345B4641531C0B6 (VSOL-0031C0B6)", "VSOL0031C0B6")).isTrue()
+        assertThat(
+            E2eOnuSnResolver.matches(
+                "TestTag=onu_item_0 Text=VSOL0031C0B6 Enabled=true",
+                "12345B4641531C0B6",
+            ),
+        ).isTrue()
+        assertThat(E2eOnuSnResolver.matches("HWTC15F5BB66", "12345B4641531C0B6")).isFalse()
+    }
+
+    @Test
     fun `matches zteg vendor prefix against smartolt hex form`() {
         val displayed = "5A544547DC47BFFD (ZTEG-DC47BFFD)"
         assertThat(E2eOnuSnResolver.matches(displayed, "ZTEGDC47BFFD")).isTrue()

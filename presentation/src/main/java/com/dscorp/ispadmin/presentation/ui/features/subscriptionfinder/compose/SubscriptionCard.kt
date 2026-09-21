@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,6 +58,7 @@ import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
+import com.dscorp.ispadmin.domain.model.needsTr069Retry
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.CustomOutlinedTextField
 import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
@@ -129,6 +132,17 @@ fun SubscriptionCard(
             )
 
             CardBody(subscriptionResume = subscriptionResume)
+
+            if (subscriptionResume.needsTr069Retry()) {
+                OutlinedButton(
+                    onClick = { onMenuItemSelected(SubscriptionMenu.RETRY_TR069) },
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .testTag(SubscriptionFinderTestTags.listRetryTr069(subscriptionResume.id))
+                ) {
+                    Text(text = stringResource(R.string.retry_tr069))
+                }
+            }
 
             ExpandableCardFooter(
                 expanded = expanded,

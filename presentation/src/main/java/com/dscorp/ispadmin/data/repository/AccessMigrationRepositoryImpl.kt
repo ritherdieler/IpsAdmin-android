@@ -3,9 +3,9 @@ package com.dscorp.ispadmin.data.repository
 import com.dscorp.ispadmin.data.datasource.remote.AccessMigrationApiService
 import com.dscorp.ispadmin.data.datasource.remote.AccessMigrationProgressDto
 import com.dscorp.ispadmin.data.datasource.remote.toDomain
+import com.dscorp.ispadmin.data.utils.ApiErrorBodyParser
 import com.dscorp.ispadmin.domain.model.AccessMigrationProgress
 import com.dscorp.ispadmin.domain.repository.AccessMigrationRepository
-import com.google.gson.JsonParser
 import retrofit2.Response
 
 class AccessMigrationRepositoryImpl(
@@ -34,17 +34,6 @@ class AccessMigrationRepositoryImpl(
             ?: throw Exception("Respuesta vacía al consultar la migración a PPPoE")
     }
 
-    private fun errorMessage(errorBody: String?, fallback: String): String {
-        val body = errorBody?.takeIf { it.isNotBlank() } ?: return fallback
-        return runCatching {
-            val element = JsonParser.parseString(body)
-            if (!element.isJsonObject) return@runCatching null
-            val obj = element.asJsonObject
-            sequenceOf("error", "message", "failureReason")
-                .mapNotNull { key ->
-                    obj.get(key)?.takeIf { it.isJsonPrimitive }?.asString
-                }
-                .firstOrNull { it.isNotBlank() }
-        }.getOrNull() ?: fallback
-    }
+    private fun errorMessage(errorBody: String?, fallback: String): String =
+        ApiErrorBodyParser.parse(errorBody, fallback)
 }

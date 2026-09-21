@@ -14,7 +14,20 @@ object E2eOnuSnResolver {
             return true
         }
         val wantedHex = vendorPrefixToHex(wantedCompact)
-        return wantedHex != wantedCompact && displayedCompact.contains(wantedHex)
+        if (wantedHex != wantedCompact && displayedCompact.contains(wantedHex)) {
+            return true
+        }
+        val displayedHex = vendorPrefixToHex(displayedCompact)
+        if (displayedHex != displayedCompact && wantedCompact.contains(displayedHex)) {
+            return true
+        }
+        val suffix = hexSuffix(wantedCompact)
+        return suffix.isNotEmpty() && displayedCompact.contains(suffix)
+    }
+
+    private fun hexSuffix(compactSn: String): String {
+        val hex = compactSn.takeLast(6)
+        return if (hex.length == 6 && hex.all { it in '0'..'9' || it in 'A'..'F' }) hex else ""
     }
 
     private fun compact(value: String): String =

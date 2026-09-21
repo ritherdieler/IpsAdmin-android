@@ -250,6 +250,60 @@ class RegisterSubscriptionSuccessDialogTest {
     }
 
     @Test
+    fun `retry loading shows feedback message and reintentando label`() {
+        composeRule.setContent {
+            MaterialTheme {
+                RegisterSuccessFullScreen(
+                    subscription = Subscription(
+                        subscriptionId = 42,
+                        firstName = "Ana",
+                        lastName = "García",
+                        installationType = InstallationType.FIBER,
+                        tr069ProvisionStatus = "PENDING",
+                        tr069Message = "Esperando ACS",
+                    ),
+                    tr069RetryLoading = true,
+                    tr069RetryMessage = "Reintentando aprovisionamiento TR-069…",
+                    onRetryTr069 = {},
+                    onDismiss = {},
+                    onContinue = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("tr069_retry_feedback").assertIsDisplayed()
+        composeRule.onNodeWithText("Reintentando aprovisionamiento TR-069…").assertIsDisplayed()
+        composeRule.onNodeWithTag("btn_retry_tr069").assertIsDisplayed()
+        composeRule.onNodeWithText("Reintentando…").assertIsDisplayed()
+    }
+
+    @Test
+    fun `FAILED shows retry button`() {
+        composeRule.setContent {
+            MaterialTheme {
+                RegisterSuccessFullScreen(
+                    subscription = Subscription(
+                        subscriptionId = 42,
+                        firstName = "Ana",
+                        lastName = "García",
+                        installationType = InstallationType.FIBER,
+                        tr069ProvisionStatus = "FAILED",
+                        tr069Message = "ACS no respondió",
+                    ),
+                    onRetryTr069 = {},
+                    onDismiss = {},
+                    onContinue = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("btn_retry_tr069").assertIsDisplayed()
+        composeRule.onNodeWithTag("tr069_status_card")
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun `NA hides tr069 card in SuccessDialog`() {
         composeRule.setContent {
             MaterialTheme {

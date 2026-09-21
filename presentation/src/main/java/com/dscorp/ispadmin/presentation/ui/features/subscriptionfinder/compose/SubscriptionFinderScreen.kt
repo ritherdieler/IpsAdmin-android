@@ -75,6 +75,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.MIGRATE_TO_FIBER
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.REACTIVATE_SERVICE
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.REBOOT_FIBER_ONU
+import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.RETRY_TR069
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SEE_DETAILS
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SHOW_PAYMENT_HISTORY
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.UPDATE_LOCATION
@@ -105,6 +106,7 @@ fun SubscriptionFinderScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     var showChangeNapBoxDialog by remember { mutableStateOf(false) }
     var showRebootOnuDialog by remember { mutableStateOf(false) }
+    var showRetryTr069Dialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
@@ -176,6 +178,30 @@ fun SubscriptionFinderScreen(
                     duration = androidx.compose.material3.SnackbarDuration.Long
                 )
                 viewModel.clearRebootOnuState()
+            }
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(uiState.retryTr069State) {
+        when (val state = uiState.retryTr069State) {
+            is RetryTr069State.Error -> {
+                showRetryTr069Dialog = false
+                snackbarHostState.showSnackbar(
+                    message = state.message ?: "No se pudo reintentar el aprovisionamiento TR-069",
+                    actionLabel = "Cerrar",
+                    duration = androidx.compose.material3.SnackbarDuration.Indefinite
+                )
+                viewModel.clearRetryTr069State()
+            }
+            is RetryTr069State.Success -> {
+                showRetryTr069Dialog = false
+                snackbarHostState.showSnackbar(
+                    message = state.message,
+                    actionLabel = "Cerrar",
+                    duration = androidx.compose.material3.SnackbarDuration.Long
+                )
+                viewModel.clearRetryTr069State()
             }
             else -> {}
         }
@@ -508,7 +534,8 @@ fun SubscriptionFinderScreen(
                             onShowCancelDialog = { showCancelSubscriptionConfirmDialog = true },
                             onShowChangeNapBoxDialog = { showChangeNapBoxDialog = true },
                             onShowReactivateDialog = { showReactivateServiceDialog = true },
-                            onShowRebootOnuDialog = { showRebootOnuDialog = true }
+                            onShowRebootOnuDialog = { showRebootOnuDialog = true },
+                            onShowRetryTr069Dialog = { showRetryTr069Dialog = true }
                         )
                     },
                     onSubscriptionExpanded = { subscription, expanded ->
@@ -591,6 +618,20 @@ fun SubscriptionFinderScreen(
         )
     }
 
+    if (showRetryTr069Dialog) {
+        RetryTr069ConfirmDialog(
+            onDismiss = {
+                if (uiState.retryTr069State != RetryTr069State.Loading) {
+                    showRetryTr069Dialog = false
+                }
+            },
+            onConfirm = {
+                uiState.selectedSubscription?.id?.let { viewModel.retryTr069(it) }
+            },
+            isLoading = uiState.retryTr069State == RetryTr069State.Loading
+        )
+    }
+
     // Change NAP box dialog
     if (showChangeNapBoxDialog) {
         ChangeNapBoxDialog(
@@ -669,6 +710,7 @@ private fun handleMenuAction(
     onShowChangeNapBoxDialog: () -> Unit,
     onShowReactivateDialog: () -> Unit,
     onShowRebootOnuDialog: () -> Unit,
+    onShowRetryTr069Dialog: () -> Unit,
 ) {
     when (menuItem) {
         SHOW_PAYMENT_HISTORY -> {
@@ -721,6 +763,11 @@ private fun handleMenuAction(
         REBOOT_FIBER_ONU -> {
             viewModel.setSelectedSubscription(subscription)
             onShowRebootOnuDialog()
+        }
+
+        RETRY_TR069 -> {
+            viewModel.setSelectedSubscription(subscription)
+            onShowRetryTr069Dialog()
         }
     }
 }
@@ -900,6 +947,96 @@ private fun RebootOnuConfirmDialog(
                     } else {
                         Text(
                             text = "Reiniciar ONU",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                }
+            }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun RetryTr069ConfirmDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    isLoading: Boolean = false,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Reintentar TR-069",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        },
+        text = {
+            Column(modifier = Modifier.padding(top = 0.dp)) {
+                Text(
+                    text = "¿Reintentar el aprovisionamiento TR-069 de esta suscripción?",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "El equipo vuelve a aplicar WiFi e IP. Puede tardar unos minutos.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+                )
+            }
+        },
+        confirmButton = {
+            Row(
+                modifier = Modifier.padding(end = 4.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    modifier = Modifier.testTag(SubscriptionFinderTestTags.RETRY_TR069_DIALOG_DISMISS),
+                    onClick = onDismiss,
+                    enabled = !isLoading
+                ) {
+                    Text(
+                        text = "Volver",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (isLoading)
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(
+                    modifier = Modifier.testTag(SubscriptionFinderTestTags.RETRY_TR069_DIALOG_CONFIRM),
+                    onClick = onConfirm,
+                    enabled = !isLoading,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    if (isLoading) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Reintentando...",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "Reintentar",
                             style = MaterialTheme.typography.labelLarge
                         )
                     }

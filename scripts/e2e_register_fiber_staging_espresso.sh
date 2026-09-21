@@ -115,7 +115,7 @@ case "$(printf '%s' "$E2E_ACCESS_MODE" | tr '[:upper:]' '[:lower:]')" in
     ;;
 esac
 case "$E2E_ONU_SN" in
-  VSOL*|56534F4C*)
+  VSOL*|56534F4C*|12345B*|B46415*)
     _E2E_WIFI_SSID_DEFAULT="lab-vsol-e2e-24"
     _E2E_WIFI_PASS_DEFAULT="LabVsolWifi24!"
     ;;
@@ -289,11 +289,15 @@ for ascii,hexv in prefixes.items():
   if wanted.startswith(ascii):
     wanted_hex=hexv+wanted[len(ascii):]
     break
+wanted_suffix=wanted[-6:]
 data=json.load(sys.stdin)
 items=data if isinstance(data,list) else (data.get("response") or data.get("data") or [])
 def ok(item):
   disp=re.sub(r"[^A-Z0-9]","",str((item or {}).get("sn","")).upper())
-  return wanted in disp or disp in wanted or wanted_hex in disp
+  if wanted in disp or disp in wanted or wanted_hex in disp:
+    return True
+  disp_suffix=disp[-6:] if len(disp)>=6 else ""
+  return len(wanted_suffix)==6 and wanted_suffix.isalnum() and (disp.endswith(wanted_suffix) or wanted.endswith(disp_suffix))
 sys.exit(0 if any(ok(i) for i in items) else 1)'; then
     e2e_hit alta pass "ONU unconfigured" sn="$E2E_ONU_SN" retry="$ONU_TRY/12"
     ONU_OK=1

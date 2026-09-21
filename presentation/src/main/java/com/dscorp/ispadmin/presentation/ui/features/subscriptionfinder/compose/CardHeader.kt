@@ -35,6 +35,7 @@ import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
+import com.dscorp.ispadmin.domain.model.needsTr069Retry
 
 /**
  * Enum representing the menu options available for a subscription
@@ -48,7 +49,8 @@ enum class SubscriptionMenu(val menuId: Int) {
     REACTIVATE_SERVICE(R.string.reactivate_service),
     CHANGE_NAP_BOX(R.string.change_nap_box),
     UPDATE_LOCATION(R.string.update_location),
-    REBOOT_FIBER_ONU(R.string.reboot_fiber_onu);
+    REBOOT_FIBER_ONU(R.string.reboot_fiber_onu),
+    RETRY_TR069(R.string.retry_tr069);
 
     fun getTitle(context: Context): String {
         return context.getString(menuId)
@@ -151,6 +153,8 @@ private fun SubscriptionDropdownMenu(
                 (subscription.installationType == InstallationType.FIBER ||
                     subscription.installationType == InstallationType.ONLY_TV_FIBER) &&
                     subscription.hasFiberOnu
+
+            menuItem == SubscriptionMenu.RETRY_TR069 -> subscription.needsTr069Retry()
             
             else -> true
         }
