@@ -11,6 +11,7 @@ import com.dscorp.ispadmin.data.apirequestmodel.UpdateSubscriptionDataBody
 import com.dscorp.ispadmin.data.apirequestmodel.UpdateSubscriptionPlanBody
 import com.dscorp.ispadmin.data.datasource.remote.RestApiServices
 import com.dscorp.ispadmin.data.datasource.remote.SendMessagingCloudApi
+import com.dscorp.ispadmin.data.network.ConfirmedActionHeaders
 import com.dscorp.ispadmin.data.response.AdministrativeOnuResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
@@ -970,7 +971,11 @@ class Repository : IRepository, KoinComponent {
     }
 
     override suspend fun rebootFiberOnu(subscriptionId: Int) {
-        val response = restApiServices.rebootFiberOnu(subscriptionId)
+        val response = restApiServices.rebootFiberOnu(
+            subscriptionId = subscriptionId,
+            confirmAction = ConfirmedActionHeaders.CONFIRM_VALUE,
+            idempotencyKey = ConfirmedActionHeaders.newIdempotencyKey(),
+        )
         if (response.code() !in 200..299) {
             val msg = response.errorBody()?.string()?.let { body ->
                 ApiErrorBodyParser.parse(body, "")
@@ -980,7 +985,11 @@ class Repository : IRepository, KoinComponent {
     }
 
     override suspend fun retryTr069Provisioning(subscriptionId: Int): Subscription {
-        val response = restApiServices.retryTr069Provisioning(subscriptionId)
+        val response = restApiServices.retryTr069Provisioning(
+            subscriptionId = subscriptionId,
+            confirmAction = ConfirmedActionHeaders.CONFIRM_VALUE,
+            idempotencyKey = ConfirmedActionHeaders.newIdempotencyKey(),
+        )
         if (response.code() !in 200..299) {
             val msg = response.errorBody()?.string()?.let { body ->
                 ApiErrorBodyParser.parse(body, "")

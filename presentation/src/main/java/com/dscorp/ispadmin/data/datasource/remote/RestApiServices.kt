@@ -48,6 +48,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -360,12 +361,16 @@ interface RestApiServices {
 
     @PUT("subscription/reboot-fiber-onu")
     suspend fun rebootFiberOnu(
-        @Query("subscriptionId") subscriptionId: Int
+        @Query("subscriptionId") subscriptionId: Int,
+        @Header("X-Confirm-Action") confirmAction: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
     ): Response<Unit>
 
     @POST("subscription/{subscriptionId}/acs/retry-tr069")
     suspend fun retryTr069Provisioning(
-        @Path("subscriptionId") subscriptionId: Int
+        @Path("subscriptionId") subscriptionId: Int,
+        @Header("X-Confirm-Action") confirmAction: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
     ): Response<Subscription>
 
     @GET("subscription/{subscriptionId}/registration-progress")
