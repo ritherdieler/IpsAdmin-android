@@ -17,4 +17,20 @@ class RegisterSubscriptionProgressStepsTest {
         assertEquals("Registrando…", registrationProgressStepMessage(""))
         assertEquals("Registrando…", registrationProgressStepMessage("   "))
     }
+
+    @Test
+    fun `catalog load is not shown as registering overlay`() {
+        assertEquals(
+            RegisterScreenBusyMode.CATALOG,
+            registerScreenBusyMode(isLoading = true, isRegistering = false)
+        )
+        assertEquals(
+            RegisterScreenBusyMode.REGISTERING,
+            registerScreenBusyMode(isLoading = true, isRegistering = true)
+        )
+        assertEquals(
+            RegisterScreenBusyMode.NONE,
+            registerScreenBusyMode(isLoading = false, isRegistering = false)
+        )
+    }
 }

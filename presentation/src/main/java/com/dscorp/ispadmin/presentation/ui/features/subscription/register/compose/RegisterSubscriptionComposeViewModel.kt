@@ -920,6 +920,7 @@ fun saveSubscription(facadePhotoFile: File? = null) {
             _uiState.update {
                 it.copy(
                     isLoading = true,
+                    isRegistering = true,
                     registrationProgressMessage = "Registrando y autorizando…"
                 )
             }
@@ -954,6 +955,7 @@ fun saveSubscription(facadePhotoFile: File? = null) {
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
+                                        isRegistering = false,
                                         orderId = null,
                                         registrationProgressMessage = "Registrando…"
                                     )
@@ -965,6 +967,7 @@ fun saveSubscription(facadePhotoFile: File? = null) {
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
+                                    isRegistering = false,
                                     orderId = null
                                 )
                             }
@@ -979,7 +982,7 @@ fun saveSubscription(facadePhotoFile: File? = null) {
                 },
                 onFailure = { error ->
                     _uiState.update {
-                        it.copy(isLoading = false)
+                        it.copy(isLoading = false, isRegistering = false)
                     }
                     observabilityClient.reportError(
                         throwable = error,
@@ -1006,7 +1009,7 @@ fun saveSubscription(facadePhotoFile: File? = null) {
                 }
             )
         } catch (e: CancellationException) {
-            _uiState.update { it.copy(isLoading = false) }
+            _uiState.update { it.copy(isLoading = false, isRegistering = false) }
             throw e
         }
     }
@@ -1020,6 +1023,7 @@ private suspend fun pollRegistrationProgress(
     _uiState.update {
         it.copy(
             isLoading = !fromRetry,
+            isRegistering = !fromRetry,
             tr069RetryLoading = fromRetry || it.tr069RetryLoading,
             registrationProgressMessage = when {
                 fromRetry -> "Reintentando aprovisionamiento TR-069…"
@@ -1045,6 +1049,7 @@ private suspend fun pollRegistrationProgress(
             _uiState.update {
                 it.copy(
                     isLoading = false,
+                    isRegistering = false,
                     tr069RetryLoading = false,
                     orderId = null,
                     registrationProgressMessage = "Registrando…"
@@ -1064,6 +1069,7 @@ private suspend fun pollRegistrationProgress(
             _uiState.update {
                 it.copy(
                     isLoading = false,
+                    isRegistering = false,
                     tr069RetryLoading = false,
                     orderId = null,
                     registrationProgressMessage = "Registrando…"

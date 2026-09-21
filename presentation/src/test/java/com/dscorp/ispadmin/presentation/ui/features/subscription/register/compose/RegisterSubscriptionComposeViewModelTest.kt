@@ -189,12 +189,30 @@ class RegisterSubscriptionComposeViewModelTest {
 
         assertTrue(events.isEmpty())
         assertEquals(false, viewModel.uiState.value.isLoading)
+        assertEquals(false, viewModel.uiState.value.isRegistering)
         assertEquals(sampleUser, viewModel.uiState.value.currentUser)
         assertEquals(samplePlan, viewModel.uiState.value.registerSubscriptionForm.selectedPlan)
         coVerify(exactly = 1) { refreshRegistrationCatalogUseCase() }
         coVerify(exactly = 1) { getRegistrationCatalogUseCase() }
 
         job.cancel()
+    }
+
+    @Test
+    fun `loadScreenData does not mark registering while catalog loads`() = runTest(testDispatcher) {
+        coEvery { getRegistrationCatalogUseCase() } coAnswers {
+            delay(50)
+            Result.success(sampleCatalog())
+        }
+
+        viewModel.loadScreenData(null)
+        testScheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.isLoading)
+        assertEquals(false, viewModel.uiState.value.isRegistering)
+
+        advanceUntilIdle()
+        assertEquals(false, viewModel.uiState.value.isLoading)
+        assertEquals(false, viewModel.uiState.value.isRegistering)
     }
 
     @Test

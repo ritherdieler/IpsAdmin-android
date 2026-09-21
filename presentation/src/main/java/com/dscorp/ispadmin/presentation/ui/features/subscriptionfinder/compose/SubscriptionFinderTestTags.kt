@@ -15,8 +15,10 @@ object SubscriptionFinderTestTags {
     const val DATE_START = "subscription_search_date_start"
     const val DATE_END = "subscription_search_date_end"
     const val DATE_SUBMIT = "subscription_search_date_submit"
+    const val DATE_TODAY = "subscription_search_date_today"
     const val DATE_PICKER_CONFIRM = "subscription_search_date_picker_confirm"
     const val DATE_PICKER_DISMISS = "subscription_search_date_picker_dismiss"
+    const val DATE_PICKER_TODAY = "subscription_search_date_picker_today"
 
     const val MENU_PAYMENT_HISTORY = "payment_history"
     const val MENU_EDIT_PLAN = "edit_plan"
@@ -95,8 +97,10 @@ object SubscriptionFinderTestTags {
         DATE_START,
         DATE_END,
         DATE_SUBMIT,
+        DATE_TODAY,
         DATE_PICKER_CONFIRM,
-        DATE_PICKER_DISMISS
+        DATE_PICKER_DISMISS,
+        DATE_PICKER_TODAY
     )
 
     val dialogInteractive = listOf(

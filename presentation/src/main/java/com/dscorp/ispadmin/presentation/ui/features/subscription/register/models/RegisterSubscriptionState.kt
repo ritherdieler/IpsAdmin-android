@@ -6,6 +6,7 @@ import com.dscorp.ispadmin.domain.model.User
 
 data class RegisterSubscriptionState(
     val isLoading: Boolean = false,
+    val isRegistering: Boolean = false,
     val isRefreshingOnuList: Boolean = false,
     val isLoadingLocation: Boolean = false,
     val isLoadingNearbyNapBoxes: Boolean = false,

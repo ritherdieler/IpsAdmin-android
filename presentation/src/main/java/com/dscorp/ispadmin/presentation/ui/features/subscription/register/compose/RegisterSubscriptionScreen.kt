@@ -291,10 +291,12 @@ fun RegisterSubscriptionFormScreen(
             )
         }
 
-        if (uiState.isLoading) {
-            RegistrationProgressOverlay(
+        when (registerScreenBusyMode(uiState.isLoading, uiState.isRegistering)) {
+            RegisterScreenBusyMode.REGISTERING -> RegistrationProgressOverlay(
                 progressMessage = uiState.registrationProgressMessage
             )
+            RegisterScreenBusyMode.CATALOG -> CatalogLoadingOverlay()
+            RegisterScreenBusyMode.NONE -> Unit
         }
     }
 }
@@ -320,6 +322,43 @@ private fun InfoRow(label: String, value: String) {
 }
 
 @Composable
+internal fun CatalogLoadingOverlay() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f))
+            .testTag(RegisterSubscriptionTestTags.CATALOG_LOADING_OVERLAY),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator()
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Cargando…",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.testTag(RegisterSubscriptionTestTags.CATALOG_LOADING_MESSAGE)
+                )
+            }
+        }
+    }
+}
+
+@Composable
 internal fun RegistrationProgressOverlay(
     progressMessage: String? = null,
 ) {
@@ -327,7 +366,7 @@ internal fun RegistrationProgressOverlay(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f))
-            .testTag("registration_progress_overlay"),
+            .testTag(RegisterSubscriptionTestTags.PROGRESS_OVERLAY),
         contentAlignment = Alignment.Center
     ) {
         Card(
@@ -351,7 +390,7 @@ internal fun RegistrationProgressOverlay(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.testTag("registration_progress_step")
+                    modifier = Modifier.testTag(RegisterSubscriptionTestTags.PROGRESS_STEP)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -359,7 +398,7 @@ internal fun RegistrationProgressOverlay(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.testTag("registration_progress_hint")
+                    modifier = Modifier.testTag(RegisterSubscriptionTestTags.PROGRESS_HINT)
                 )
             }
         }

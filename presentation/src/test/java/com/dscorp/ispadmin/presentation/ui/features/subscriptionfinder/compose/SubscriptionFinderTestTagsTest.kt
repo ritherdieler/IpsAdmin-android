@@ -59,14 +59,30 @@ class SubscriptionFinderTestTagsTest {
             "SubscriptionFinderTestTags.QUERY_DOCUMENT",
             "SubscriptionFinderTestTags.QUERY_IP",
             "SubscriptionFinderTestTags.QUERY_CODE",
-            "SubscriptionFinderTestTags.DATE_START",
-            "SubscriptionFinderTestTags.DATE_END",
-            "SubscriptionFinderTestTags.DATE_SUBMIT",
             "ObservabilityComposeText.report"
         ).forEach { ref ->
             assertThat(source).contains(ref)
         }
         assertThat(source).doesNotContain("ObservabilityComposeClick.report")
+    }
+
+    @Test
+    fun `DateRangeSelector aplica testTags de fechas y Hoy`() {
+        val source = File(
+            "src/main/java/com/dscorp/ispadmin/presentation/ui/features/subscriptionfinder/compose/DateRangeSelector.kt"
+        ).readText()
+
+        listOf(
+            "SubscriptionFinderTestTags.DATE_START",
+            "SubscriptionFinderTestTags.DATE_END",
+            "SubscriptionFinderTestTags.DATE_SUBMIT",
+            "SubscriptionFinderTestTags.DATE_TODAY",
+            "SubscriptionFinderTestTags.DATE_PICKER_TODAY",
+            "formatDatePickerUtcMillis",
+            "todayDdMmYyyy"
+        ).forEach { ref ->
+            assertThat(source).contains(ref)
+        }
     }
 
     @Test

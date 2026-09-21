@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
@@ -29,8 +28,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,11 +38,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,9 +76,6 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.UPDATE_LOCATION
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
 
 const val SUBSCRIPTION_ID = "subscriptionId"
 
@@ -1167,200 +1159,4 @@ private fun ReactivateServiceDialog(
         titleContentColor = MaterialTheme.colorScheme.onSurface,
         textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
     )
-}
-
-/**
- * Componente para seleccionar un rango de fechas para búsqueda
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DateRangeSelector(
-    onSearch: (String, String) -> Unit
-) {
-    var startDate by remember { mutableStateOf("") }
-    var endDate by remember { mutableStateOf("") }
-    var showStartDatePicker by remember { mutableStateOf(false) }
-    var showEndDatePicker by remember { mutableStateOf(false) }
-
-    // Función para formatear la fecha
-    fun formatDate(millis: Long): String {
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = millis
-        }
-        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        return dateFormat.format(calendar.time)
-    }
-
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = "Rango de fechas",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Campo de fecha inicial
-            OutlinedTextField(
-                value = startDate,
-                onValueChange = { },
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag(SubscriptionFinderTestTags.DATE_START)
-                    .clickable { showStartDatePicker = true },
-                label = { Text("Fecha inicial") },
-                placeholder = { Text("Seleccione") },
-                readOnly = true,
-                enabled = false,
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.CalendarMonth,
-                        contentDescription = "Seleccionar fecha inicial",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                },
-                shape = RoundedCornerShape(8.dp)
-            )
-
-            // Campo de fecha final
-            OutlinedTextField(
-                value = endDate,
-                onValueChange = { },
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag(SubscriptionFinderTestTags.DATE_END)
-                    .clickable { showEndDatePicker = true },
-                label = { Text("Fecha final") },
-                placeholder = { Text("Seleccione") },
-                readOnly = true,
-                enabled = false,
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.CalendarMonth,
-                        contentDescription = "Seleccionar fecha final",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                },
-                shape = RoundedCornerShape(8.dp)
-            )
-        }
-
-        // Botón de búsqueda
-        Button(
-            onClick = {
-                if (startDate.isNotEmpty() || endDate.isNotEmpty()) {
-                    onSearch(startDate, endDate)
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp)
-                .testTag(SubscriptionFinderTestTags.DATE_SUBMIT),
-            enabled = startDate.isNotEmpty() || endDate.isNotEmpty(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
-            ),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Search,
-                contentDescription = SubscriptionFinderContentDescriptions.DATE_SEARCH_ICON,
-                modifier = Modifier.size(20.dp)
-            )
-            Text(
-                text = "Buscar",
-                modifier = Modifier.padding(start = 8.dp)
-            )
-        }
-    }
-
-    // Diálogo de selección de fecha inicial
-    if (showStartDatePicker) {
-        val datePickerState = rememberDatePickerState()
-        val confirmEnabled = remember {
-            derivedStateOf { datePickerState.selectedDateMillis != null }
-        }
-
-        DatePickerDialog(
-            onDismissRequest = { showStartDatePicker = false },
-            confirmButton = {
-                TextButton(
-                    modifier = Modifier.testTag(SubscriptionFinderTestTags.DATE_PICKER_CONFIRM),
-                    onClick = {
-                        datePickerState.selectedDateMillis?.let {
-                            startDate = formatDate(it)
-                            ObservabilityComposeText.report(
-                                tag = SubscriptionFinderTestTags.DATE_START,
-                                label = "Fecha inicial",
-                                value = startDate
-                            )
-                        }
-                        showStartDatePicker = false
-                    },
-                    enabled = confirmEnabled.value
-                ) {
-                    Text("Aceptar")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    modifier = Modifier.testTag(SubscriptionFinderTestTags.DATE_PICKER_DISMISS),
-                    onClick = { showStartDatePicker = false }
-                ) {
-                    Text("Cancelar")
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
-    }
-
-    // Diálogo de selección de fecha final
-    if (showEndDatePicker) {
-        val datePickerState = rememberDatePickerState()
-        val confirmEnabled = remember {
-            derivedStateOf { datePickerState.selectedDateMillis != null }
-        }
-
-        DatePickerDialog(
-            onDismissRequest = { showEndDatePicker = false },
-            confirmButton = {
-                TextButton(
-                    modifier = Modifier.testTag(SubscriptionFinderTestTags.DATE_PICKER_CONFIRM),
-                    onClick = {
-                        datePickerState.selectedDateMillis?.let {
-                            endDate = formatDate(it)
-                            ObservabilityComposeText.report(
-                                tag = SubscriptionFinderTestTags.DATE_END,
-                                label = "Fecha final",
-                                value = endDate
-                            )
-                        }
-                        showEndDatePicker = false
-                    },
-                    enabled = confirmEnabled.value
-                ) {
-                    Text("Aceptar")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    modifier = Modifier.testTag(SubscriptionFinderTestTags.DATE_PICKER_DISMISS),
-                    onClick = { showEndDatePicker = false }
-                ) {
-                    Text("Cancelar")
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
-    }
 }
