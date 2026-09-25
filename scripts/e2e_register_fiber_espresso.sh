@@ -11,6 +11,7 @@
 # After Espresso, --cleanup-mode auto (default) hard-cleans. --cleanup-mode ask prompts [s/N].
 # --cleanup-mode skip / --no-cleanup skips. Aliases: --ask-cleanup, --auto-cleanup, --cleanup.
 #
+# If no adb device is attached, starts AVD E2E_AVD (default medium_phone) and waits until boot.
 # Agents: run with visible console output; keep the turn open with AwaitShell until done.
 # Rely on Cursor's background-job completion notification (gigafiber/AGENTS.md).
 set -euo pipefail
@@ -88,6 +89,7 @@ done
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/scripts/e2e_console.sh"
+e2e_enable_kvm4
 BACKEND="${BACKEND_ROOT:-$(cd "$ROOT/../ispadmin-backend" && pwd)}"
 CLEANUP="$BACKEND/scripts/tr069-e2e-hard-cleanup.sh"
 ADB="${ADB:-$HOME/Library/Android/sdk/platform-tools/adb}"
@@ -154,8 +156,7 @@ if [[ ! -x "$CLEANUP" && -f "$CLEANUP" ]]; then
 fi
 [[ -f "$CLEANUP" ]] || { echo "Missing $CLEANUP" >&2; exit 1; }
 
-DEVICE="${DEVICE:-$($ADB devices | awk '/device$/{print $1; exit}')}"
-[[ -n "$DEVICE" ]] || { echo "No adb device" >&2; exit 1; }
+e2e_ensure_device
 E2E_PHASE=alta
 e2e_hit alta wait "e2e config" \
   sn="$E2E_ONU_SN" \

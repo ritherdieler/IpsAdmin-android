@@ -395,6 +395,16 @@ private fun NavGraphContent(
                 navController = navController
             )
         }
+        composable<Subscription.Provisioning> { backStackEntry ->
+            val subscriptionId = backStackEntry.toRoute<Subscription.Provisioning>().subscriptionId
+            com.dscorp.ispadmin.presentation.ui.features.subscription.provisioning.ProvisioningScreen(subscriptionId = subscriptionId,
+                onNavigate = { destination ->
+                    when (destination) {
+                        com.dscorp.ispadmin.presentation.ui.features.subscription.provisioning.ProvisioningDestination.BACK -> navController.popBackStack()
+                        com.dscorp.ispadmin.presentation.ui.features.subscription.provisioning.ProvisioningDestination.NEW_REGISTRATION -> navController.navigate(Subscription.Register())
+                    }
+                })
+        }
         composable<Subscription.ChangePlan> { backStackEntry ->
             val subscriptionId = backStackEntry.toRoute<Subscription.ChangePlan>().subscriptionId
             val viewModel = koinViewModel<EditSubscriptionViewModel>()

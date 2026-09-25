@@ -67,6 +67,9 @@ sealed class NavRoutes {
             data class Details(val subscriptionId: Int) : Subscription()
 
             @Serializable
+            data class Provisioning(val subscriptionId: Int) : Subscription()
+
+            @Serializable
             data class ChangePlan(val subscriptionId: Int) : Subscription()
 
             @Serializable
@@ -163,6 +166,8 @@ sealed class NavRoutes {
                     Subscription.Find::class.qualifiedName -> Subscription.Find
                     Subscription.PendingSubscriptions::class.qualifiedName -> Subscription.PendingSubscriptions
                     Subscription.Details::class.qualifiedName -> Subscription.Details(0)
+                    Subscription.Provisioning::class.qualifiedName,
+                    "${Subscription.Provisioning::class.qualifiedName}/{subscriptionId}" -> Subscription.Provisioning(0)
                     Subscription.ChangePlan::class.qualifiedName -> Subscription.ChangePlan(0)
                     Subscription.Migrate::class.qualifiedName -> Subscription.Migrate(0)
                     Subscription.Edit::class.qualifiedName -> Subscription.Edit(0)

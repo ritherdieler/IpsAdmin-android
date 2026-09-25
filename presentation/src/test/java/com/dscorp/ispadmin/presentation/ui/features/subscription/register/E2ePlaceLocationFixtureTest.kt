@@ -144,8 +144,9 @@ class E2ePlaceLocationFixtureTest {
     private fun normalizeEspressoEnv(raw: String): String =
         raw
             .replace("e2e_register_fiber_staging_espresso.sh", "SCRIPT")
-            .replace("e2e_register_fiber_espresso.sh", "SCRIPT")
-            .replace("https://api.gigafiberperu.cloud/ispadmin-staging", "API_BASE")
+            .replace("e2e_point_device_at_kvm4 \"\$ADB\" \"\$DEVICE\"", "POINT_KVM4")
+            .replace("e2e_doing \"adb reverse tcp:8080 tcp:8080\"\n\$ADB -s \"\$DEVICE\" reverse tcp:8080 tcp:8080", "POINT_KVM4")
+            .replace("https://api.gigafiberperu.tech/ispadmin-staging", "API_BASE")
             .replace("https://api.gigafiberperu.cloud/ispadmin", "API_BASE")
             .replace("connectedStagingDebugAndroidTest", "connectedFlavorAndroidTest")
             .replace("connectedProdDebugAndroidTest", "connectedFlavorAndroidTest")

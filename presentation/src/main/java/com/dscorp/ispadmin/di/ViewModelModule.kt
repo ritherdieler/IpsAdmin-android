@@ -42,6 +42,7 @@ import org.koin.dsl.module
  *
  **/
 val viewModelModule = module {
+    viewModel { com.dscorp.ispadmin.presentation.ui.features.subscription.provisioning.ProvisioningViewModel(get()) }
     viewModel { LoginViewModel(get(), get()) }
     viewModel { RegisterViewModel(get(), get(), get()) }
     viewModel {

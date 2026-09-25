@@ -26,6 +26,10 @@ import org.koin.dsl.module
 import retrofit2.Retrofit
 
 val dataModule = module {
+    single { get<Retrofit>().create(com.dscorp.ispadmin.data.remote.ProvisioningApi::class.java) }
+    single<com.dscorp.ispadmin.domain.repository.ProvisioningRepository> {
+        com.dscorp.ispadmin.data.repository.ProvisioningRepositoryImpl(get())
+    }
     single {
         Room.databaseBuilder(
             androidContext(),
@@ -61,4 +65,3 @@ val dataModule = module {
     single { get<Retrofit>().create(PendingSubscriptionSyncApi::class.java) }
     single<SubscriptionSyncRemote> { SubscriptionSyncRemoteImpl(get()) }
 }
-

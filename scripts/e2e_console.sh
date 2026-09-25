@@ -185,6 +185,28 @@ e2e_http_fail() {
   e2e_hit http fail "$*"
 }
 
+e2e_kvm4_host() {
+  printf '%s' "${E2E_KVM4_HOST:-2.24.66.53}"
+}
+
+e2e_enable_kvm4() {
+  local host
+  host="$(e2e_kvm4_host)"
+  export E2E_CURL_RESOLVE="${E2E_CURL_RESOLVE:-api.gigafiberperu.cloud:443:${host}}"
+  export E2E_VPS_HOST="${E2E_VPS_HOST:-$host}"
+}
+
+e2e_point_device_at_kvm4() {
+  local adb="$1"
+  local device="$2"
+  local host
+  host="$(e2e_kvm4_host)"
+  "$adb" -s "$device" root >/dev/null 2>&1 || true
+  "$adb" -s "$device" wait-for-device
+  "$adb" -s "$device" shell "grep -q 'api.gigafiberperu.cloud' /etc/hosts || printf '%s api.gigafiberperu.cloud\n' '$host' >> /etc/hosts" \
+    || { echo "No se pudo apuntar el emulador a KVM4" >&2; exit 1; }
+}
+
 e2e_http() {
   local method="$1"
   local url="$2"
@@ -205,7 +227,11 @@ e2e_http() {
   local had_e=0
   case "$-" in *e*) had_e=1 ;; esac
   set +e
-  resp="$(curl -sS -X "$method" -w $'\n%{http_code}' "$@" "$url" 2>&1)"
+  if [[ -n "${E2E_CURL_RESOLVE:-}" ]]; then
+    resp="$(curl -sS --resolve "$E2E_CURL_RESOLVE" -X "$method" -w $'\n%{http_code}' "$@" "$url" 2>&1)"
+  else
+    resp="$(curl -sS -X "$method" -w $'\n%{http_code}' "$@" "$url" 2>&1)"
+  fi
   curl_ec=$?
   if [[ "$had_e" -eq 1 ]]; then set -e; fi
   if [[ "$curl_ec" -ne 0 ]]; then
@@ -296,6 +322,36 @@ print(payload.get("tr069ProvisionStatus") or payload.get("cpeProvisionStatus") o
   e2e_hit acs fail "TR-069 poll timeout" subscription="$sub_id" status="${tr069_status:-?}" retry="$attempts/$attempts"
   E2E_PHASE="$prev_phase"
   unset E2E_HTTP_RETRY
+  return 1
+}
+
+e2e_ensure_device() {
+  ADB="${ADB:-$HOME/Library/Android/sdk/platform-tools/adb}"
+  "$ADB" start-server >/dev/null
+  if [[ -z "${DEVICE:-}" ]]; then
+    DEVICE="$("$ADB" devices | awk '/\tdevice$/{print $1; exit}')"
+  fi
+  if [[ -n "${DEVICE:-}" ]]; then
+    return 0
+  fi
+  local emulator avd i booted
+  emulator="${EMULATOR:-$HOME/Library/Android/sdk/emulator/emulator}"
+  avd="${E2E_AVD:-medium_phone}"
+  [[ -x "$emulator" ]] || { echo "Emulator binary missing: $emulator" >&2; return 1; }
+  echo "== start emulator avd=$avd ==" >&2
+  "$emulator" -avd "$avd" -no-snapshot-load -no-snapshot-save >/dev/null 2>&1 &
+  for i in $(seq 1 90); do
+    DEVICE="$("$ADB" devices | awk '/\tdevice$/{print $1; exit}')"
+    if [[ -n "$DEVICE" ]]; then
+      booted="$("$ADB" -s "$DEVICE" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
+      if [[ "$booted" == "1" ]]; then
+        echo "== emulator ready device=$DEVICE ==" >&2
+        return 0
+      fi
+    fi
+    sleep 2
+  done
+  echo "Emulator did not become ready (avd=$avd)" >&2
   return 1
 }
 

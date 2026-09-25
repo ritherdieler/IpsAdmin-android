@@ -205,6 +205,7 @@ fun SubscriptionDetailScreen(
                 },
                 accessMigrationState = accessMigrationState,
                 onAccessMigrationIntent = accessMigrationViewModel::onIntent,
+                onProvisioningClick = { navController.navigate(com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription.Provisioning(subscriptionId)) },
             )
         }
     }
@@ -216,6 +217,7 @@ fun SubscriptionDetailForm(
     onFacadePhotoClick: () -> Unit = {},
     accessMigrationState: AccessMigrationUiState = AccessMigrationUiState(),
     onAccessMigrationIntent: (AccessMigrationIntent) -> Unit = {},
+    onProvisioningClick: () -> Unit = {},
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -247,6 +249,11 @@ fun SubscriptionDetailForm(
             .fillMaxSize()
             .verticalScroll(scrollState)    
     ) {
+        if (subscription.installationType == InstallationType.FIBER) {
+            Button(modifier = Modifier.testTag("subscription_provisioning"), onClick = onProvisioningClick) {
+                Text("Ver registro de la ONU")
+            }
+        }
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = when (subscription.serviceStatus) {

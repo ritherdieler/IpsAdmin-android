@@ -28,7 +28,7 @@ Fuente de verdad auditada. No inventar stack ni arquitectura.
 | versionCode / versionName | ver `presentation/build.gradle` |
 
 `dev` → `applicationIdSuffix ".dev"`, `BASE_URL = http://127.0.0.1:8080/ispadmin/`  
-`staging` → `BASE_URL = https://api.gigafiberperu.cloud/ispadmin-staging/` (mismo `applicationId` que prod)  
+`staging` → `BASE_URL = https://api.gigafiberperu.tech/ispadmin-staging/` (KVM4; mismo `applicationId` que prod)  
 `prod` → `BASE_URL = https://api.gigafiberperu.cloud/ispadmin/`
 
 ### Arquitectura REAL
@@ -191,7 +191,7 @@ Canónico nuevo:
 
 ## Tests (Android)
 
-Cumple TDD de plataforma (`gigafiber/AGENTS.md`). Detalle de stack en este repo:
+Si el usuario eligió **con TDD** (`gigafiber/AGENTS.md`), aplica el ciclo de esa regla. Detalle de stack en este repo:
 
 **Ámbito:** `presentation/**/*Test.kt`, `domain/**/*Test.kt`, `data/**/*Test.kt`, `observability/**/*Test.kt`, `**/*AndroidTest.kt`.
 
