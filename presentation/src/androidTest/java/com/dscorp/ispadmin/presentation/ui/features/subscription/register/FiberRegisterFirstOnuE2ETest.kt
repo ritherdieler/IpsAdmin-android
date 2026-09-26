@@ -46,6 +46,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import com.google.android.material.R as MaterialR
 
@@ -121,6 +122,7 @@ class FiberRegisterFirstOnuE2ETest {
     @Before
     fun applyE2eAccessMode() {
         E2eAccessModeResolver.override = args.getString("e2e.accessMode")
+        File(InstrumentationRegistry.getInstrumentation().targetContext.filesDir, "e2e-keep-open").delete()
     }
 
     @After
@@ -199,6 +201,13 @@ class FiberRegisterFirstOnuE2ETest {
         assertThat(tr069Upper).doesNotContain("ESPERE")
         assertThat(tr069Upper.contains("MANUAL_REQUIRED") ||
             (tr069Upper.contains("MANUAL") && !tr069Upper.contains("NO REQUIERE"))).isFalse()
+        holdAppOpen()
+    }
+
+    private fun holdAppOpen() {
+        if (args.getString("e2e.keepOpen") == "false") return
+        File(InstrumentationRegistry.getInstrumentation().targetContext.filesDir, "e2e-keep-open").writeText("1")
+        CountDownLatch(1).await()
     }
 
     private fun loginIfNeeded() {

@@ -207,6 +207,80 @@ e2e_point_device_at_kvm4() {
     || { echo "No se pudo apuntar el emulador a KVM4" >&2; exit 1; }
 }
 
+e2e_parallel_catalog() {
+  local api_base="$1"
+  local token="$2"
+  local lat="$3"
+  local lon="$4"
+  local dir
+  dir="$(mktemp -d "${TMPDIR:-/tmp}/e2e-catalog.XXXXXX")"
+  E2E_CATALOG_DIR="$dir"
+  local -a pids=()
+  e2e_catalog_bg() {
+    local name="$1"
+    shift
+    (
+      set +e
+      e2e_http "$@" >"$dir/$name.body"
+      printf '%s\n' "$?" >"$dir/$name.ec"
+    ) &
+    pids+=("$!")
+  }
+  e2e_step "catalog and geo in parallel"
+  e2e_catalog_bg place GET "$api_base/place" -H "Authorization: Bearer $token"
+  e2e_catalog_bg plan GET "$api_base/plan" -H "Authorization: Bearer $token"
+  e2e_catalog_bg napbox GET "$api_base/napbox" -H "Authorization: Bearer $token"
+  e2e_catalog_bg core GET "$api_base/networkDevice/coreTypes" -H "Authorization: Bearer $token"
+  e2e_catalog_bg location GET "$api_base/place/findByLocation" -G \
+    -H "Authorization: Bearer $token" \
+    --data-urlencode "latitude=$lat" \
+    --data-urlencode "longitude=$lon"
+  e2e_catalog_bg near GET "$api_base/napbox/near" -G \
+    -H "Authorization: Bearer $token" \
+    --data-urlencode "latitude=$lat" \
+    --data-urlencode "longitude=$lon"
+  local pid name ec
+  for pid in "${pids[@]}"; do
+    wait "$pid" || true
+  done
+  for name in place plan napbox core location near; do
+    ec="$(cat "$dir/$name.ec" 2>/dev/null || echo 1)"
+    if [[ "$ec" != "0" ]]; then
+      e2e_hit alta fail "catalog prefetch" endpoint="$name" status="$ec"
+      return 1
+    fi
+  done
+}
+
+e2e_catalog_body() {
+  cat "$E2E_CATALOG_DIR/$1.body"
+}
+
+e2e_app_hold_ready() {
+  local adb="$1"
+  local device="$2"
+  local package="$3"
+  "$adb" -s "$device" shell run-as "$package" cat files/e2e-keep-open >/dev/null 2>&1
+}
+
+e2e_wait_app_hold() {
+  local adb="$1"
+  local device="$2"
+  local package="$3"
+  local gradle_pid="$4"
+  local i
+  for i in $(seq 1 480); do
+    if e2e_app_hold_ready "$adb" "$device" "$package"; then
+      return 0
+    fi
+    if ! kill -0 "$gradle_pid" 2>/dev/null; then
+      return 1
+    fi
+    sleep 5
+  done
+  return 1
+}
+
 e2e_http() {
   local method="$1"
   local url="$2"
