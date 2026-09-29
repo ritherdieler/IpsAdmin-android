@@ -66,6 +66,7 @@ data class RegisterSubscriptionFormState(
     val note: String = "",
     val noteError: String? = null,
     val facadePhotoUri: Uri? = null,
+    val facadePhotoUrl: String? = null,
     val facadePhotoError: String? = null,
     val installationType: InstallationType = InstallationType.FIBER,
     val accessMode: AccessMode = AccessMode.PPPOE_DYNAMIC,
@@ -129,7 +130,9 @@ data class RegisterSubscriptionFormState(
                 selectedNapBox,
                 napBoxList
             )
-            FormFieldKey.FACADE_PHOTO -> subscriptionFacadePhotoError(facadePhotoUri != null)
+            FormFieldKey.FACADE_PHOTO -> subscriptionFacadePhotoError(
+                facadePhotoUri != null || !facadePhotoUrl.isNullOrBlank()
+            )
             FormFieldKey.NOTE -> subscriptionNoteError(note)
             FormFieldKey.HOST_DEVICE -> subscriptionHostDeviceError(
                 selectedHostDevice,

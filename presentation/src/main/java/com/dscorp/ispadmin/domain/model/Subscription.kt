@@ -40,6 +40,7 @@ data class Subscription(
     var equipmentCondition: EquipmentCondition? = null,
     var autoCut: Boolean = true,
     var clientRequestId: String? = null,
+    var registrationOperationId: String? = null,
     var installationOrderId: Int? = null,
     var clientIpAddress: String? = null,
     var provisioningPending: Boolean = false,

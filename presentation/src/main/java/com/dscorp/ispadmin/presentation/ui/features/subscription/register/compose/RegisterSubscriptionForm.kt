@@ -128,6 +128,7 @@ fun RegisterSubscriptionForm(
         Column(modifier = Modifier.fillMaxSize()) {
             RegisterSubscriptionWizardStepper(
                 currentStep = formState.wizardStep,
+                preauthorizationEnabled = formState.preauthorizationEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
@@ -140,6 +141,9 @@ fun RegisterSubscriptionForm(
                     .verticalScroll(rememberScrollState())
             ) {
                 when (formState.wizardStep) {
+                    RegisterSubscriptionWizardStep.ONU_SELECTION -> OnuSelectionBlock(formState, form, onIntent)
+                    RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> OnuConfirmationBlock(form)
+                    RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> AcsWaitingBlock(formState)
                     RegisterSubscriptionWizardStep.CLIENT_LOCATION -> {
                         ClientDataFields(
                             form = form,
@@ -200,7 +204,7 @@ fun RegisterSubscriptionForm(
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                         SubscriptionSummary(
                             form = form,
-                            isOfflineMode = formState.isOfflineMode,
+                            isOfflineMode = formState.isOfflineMode && !formState.preauthorizationEnabled,
                         )
                     }
                 }
@@ -211,9 +215,22 @@ fun RegisterSubscriptionForm(
                 step = formState.wizardStep,
                 isLoading = formState.isLoading,
                 isFormValid = isFormValid,
+                preauthorizationEnabled = formState.preauthorizationEnabled,
+                selectedOnu = form.selectedOnu != null,
                 onBack = { onIntent(RegisterSubscriptionIntent.WizardBackClicked) },
                 onContinue = { onIntent(RegisterSubscriptionIntent.WizardContinueClicked) },
                 onRegister = { onIntent(RegisterSubscriptionIntent.RegisterClick()) },
+                retryLabel = when (formState.preauthorizationOperation?.state) {
+                    "CANCEL_FAILED" -> "Reintentar limpieza"
+                    "CANCEL_REQUESTED", "CANCELLING" -> "Consultar limpieza"
+                    else -> "Reintentar"
+                },
+                onRetryAcs = {
+                    if (formState.preauthorizationOperation?.state in setOf("CANCEL_FAILED", "CANCEL_REQUESTED", "CANCELLING")) {
+                        onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
+                    } else onIntent(RegisterSubscriptionIntent.RetryOnuRegistration)
+                },
+                onCancelPreauthorization = { onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) },
             )
         }
     }
@@ -509,7 +526,8 @@ private fun FacadePhotoSection(
     SectionTitle("Foto de Fachada")
 
     val facadePhotoUri = formState.registerSubscriptionForm.facadePhotoUri
-    val hasFacadePhoto = facadePhotoUri != null
+    val facadePhotoSource = formState.registerSubscriptionForm.facadePhotoUrl ?: facadePhotoUri?.toString()
+    val hasFacadePhoto = facadePhotoSource != null
     val photoShape = RoundedCornerShape(8.dp)
 
     Box(
@@ -542,7 +560,7 @@ private fun FacadePhotoSection(
     ) {
         if (hasFacadePhoto) {
             Image(
-                painter = rememberAsyncImagePainter(facadePhotoUri.toString()),
+                painter = rememberAsyncImagePainter(facadePhotoSource),
                 contentDescription = "Foto de fachada",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
@@ -610,11 +628,73 @@ private fun SectionTitle(title: String) {
 }
 
 @Composable
+private fun OnuSelectionBlock(
+    formState: RegisterSubscriptionState,
+    form: RegisterSubscriptionFormState,
+    onIntent: (RegisterSubscriptionIntent) -> Unit,
+) {
+    SectionTitle("Selecciona la ONU")
+    Text("Confirma primero el equipo que se autorizará en la OLT.", style = MaterialTheme.typography.bodyMedium)
+    Spacer(modifier = Modifier.height(12.dp))
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        MyOutLinedDropDown(
+            modifier = Modifier.weight(1f).testTag(RegisterSubscriptionTestTags.ONU),
+            items = form.onuList,
+            selected = form.selectedOnu,
+            label = ONU_LABEL,
+            onItemSelected = { onIntent(RegisterSubscriptionIntent.OnuSelected(it)) },
+            hasError = form.onuError != null,
+            itemTestTag = { index, _ -> RegisterSubscriptionTestTags.onuItem(index) },
+        )
+        RefreshIcon(onRefreshOnuList = { onIntent(RegisterSubscriptionIntent.RefreshOnuList) }, formState = formState)
+    }
+    form.onuError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+}
+
+@Composable
+private fun OnuConfirmationBlock(form: RegisterSubscriptionFormState) {
+    SectionTitle("Confirma la ONU")
+    Text("Se autorizará este equipo en la OLT y se esperará su primer contacto con ACS antes de abrir el formulario.")
+    Spacer(modifier = Modifier.height(12.dp))
+    Text("Serial: ${form.selectedOnu?.sn ?: "—"}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    Text("OLT: ${form.selectedOnu?.olt_id ?: "—"} · Board ${form.selectedOnu?.board ?: "—"} · Puerto ${form.selectedOnu?.port ?: "—"}")
+    Text("Tipo: ${form.selectedOnu?.onu_type_name ?: "—"} · VLAN cliente: ${form.vlan}")
+}
+
+@Composable
+private fun AcsWaitingBlock(formState: RegisterSubscriptionState) {
+    SectionTitle("Esperando respuesta de ACS")
+    val operation = formState.preauthorizationOperation
+    Text(
+        if (operation?.phase == "OLT_AUTHORIZATION") {
+            "La autorización en la OLT todavía no se confirmó. Reintenta la comprobación o cancela para limpiar el intento."
+        } else {
+            "La ONU se autorizó. ACS todavía no ha recibido el primer Inform TR-069; el formulario seguirá bloqueado hasta confirmarlo."
+        }
+    )
+    if (operation?.state == "CANCEL_REQUESTED" || operation?.state == "CANCELLING") {
+        Text("Limpiando la autorización de la ONU en la OLT…", modifier = Modifier.padding(top = 8.dp))
+    }
+    Text("Serial: ${operation?.serial ?: formState.registerSubscriptionForm.selectedOnu?.sn.orEmpty()}", modifier = Modifier.padding(top = 8.dp))
+    val failure = operation?.operationFailure ?: operation?.checkpoints?.firstOrNull { it.failure != null }?.failure
+    failure?.let {
+        Text("${it.code}: ${it.message}", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
+        it.technicalDetails?.let { details -> Text(details, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    }
+    formState.preauthorizationError?.let {
+        Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
+    }
+}
+
+@Composable
 private fun RegisterSubscriptionWizardStepper(
     currentStep: RegisterSubscriptionWizardStep,
+    preauthorizationEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val steps = RegisterSubscriptionWizardStep.entries
+    val steps = RegisterSubscriptionWizardStep.entries.filter {
+        preauthorizationEnabled || !it.isPreauthorizationStep()
+    }
     Row(
         modifier = modifier.testTag("wizard_stepper"),
         verticalAlignment = Alignment.CenterVertically,
@@ -677,9 +757,14 @@ private fun WizardNavigationBar(
     step: RegisterSubscriptionWizardStep,
     isLoading: Boolean,
     isFormValid: Boolean,
+    preauthorizationEnabled: Boolean,
+    selectedOnu: Boolean,
     onBack: () -> Unit,
     onContinue: () -> Unit,
     onRegister: () -> Unit,
+    retryLabel: String,
+    onRetryAcs: () -> Unit,
+    onCancelPreauthorization: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -688,37 +773,55 @@ private fun WizardNavigationBar(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (step != RegisterSubscriptionWizardStep.CLIENT_LOCATION) {
-            OutlinedButton(
-                onClick = onBack,
-                enabled = !isLoading,
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag(RegisterSubscriptionTestTags.WIZARD_BACK)
-            ) {
-                Text("Atrás")
+        if (step == RegisterSubscriptionWizardStep.WAITING_FOR_ACS) {
+            OutlinedButton(onClick = onCancelPreauthorization, enabled = !isLoading, modifier = Modifier.weight(1f)) {
+                Text("Cancelar")
             }
-        }
-        if (step == RegisterSubscriptionWizardStep.CONFIRMATION) {
             MyButton(
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag(RegisterSubscriptionTestTags.SUBMIT),
-                text = "Registrar suscripción",
-                onClick = onRegister,
-                enabled = isFormValid,
-                isLoading = isLoading
+                modifier = Modifier.weight(1f),
+                text = retryLabel,
+                onClick = onRetryAcs,
+                enabled = !isLoading,
+                isLoading = isLoading,
             )
         } else {
-            MyButton(
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE),
-                text = "Continuar",
-                onClick = onContinue,
-                enabled = !isLoading,
-                isLoading = isLoading
-            )
+            if (step != RegisterSubscriptionWizardStep.CLIENT_LOCATION && step != RegisterSubscriptionWizardStep.ONU_SELECTION) {
+                OutlinedButton(
+                    onClick = onBack,
+                    enabled = !isLoading,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(RegisterSubscriptionTestTags.WIZARD_BACK)
+                ) {
+                    Text("Atrás")
+                }
+            }
+            if (step == RegisterSubscriptionWizardStep.CONFIRMATION) {
+                MyButton(
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(RegisterSubscriptionTestTags.SUBMIT),
+                    text = "Registrar suscripción",
+                    onClick = onRegister,
+                    enabled = isFormValid,
+                    isLoading = isLoading
+                )
+            } else {
+                val label = if (step == RegisterSubscriptionWizardStep.ONU_CONFIRMATION) "Autorizar ONU" else "Continuar"
+                val canContinue = when (step) {
+                    RegisterSubscriptionWizardStep.ONU_SELECTION, RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> selectedOnu
+                    else -> isFormValid
+                }
+                MyButton(
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE),
+                    text = label,
+                    onClick = onContinue,
+                    enabled = !isLoading && (preauthorizationEnabled.not() || canContinue),
+                    isLoading = isLoading
+                )
+            }
         }
     }
 }

@@ -22,7 +22,9 @@ class RegisterSubscriptionUseCase(
         orderId: Int?,
         facadePhotoFile: File? = null
     ): Result<RegisterSubscriptionResult> = runCatching {
-        if (canRegisterOnline()) {
+        if (!subscription.registrationOperationId.isNullOrBlank()) {
+            registerOnline(subscription, orderId, null)
+        } else if (canRegisterOnline()) {
             registerOnline(subscription, orderId, facadePhotoFile)
         } else {
             enqueueOffline(subscription, orderId, facadePhotoFile)
@@ -40,7 +42,9 @@ class RegisterSubscriptionUseCase(
         facadePhotoFile: File?
     ): RegisterSubscriptionResult.Registered {
         val payload = subscription.copy(
-            clientRequestId = uuidGenerator(),
+            clientRequestId = subscription.registrationOperationId?.takeIf(String::isNotBlank)
+                ?: subscription.clientRequestId?.takeIf(String::isNotBlank)
+                ?: uuidGenerator(),
             installationOrderId = orderId
         )
         val registered = if (facadePhotoFile != null) {

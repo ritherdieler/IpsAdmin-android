@@ -6,6 +6,7 @@ import com.dscorp.ispadmin.domain.usecase.subscription.EnqueuePendingSubscriptio
 import com.dscorp.ispadmin.domain.usecase.subscription.ObserveOfflineRegistrationModeUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.ObservePendingSubscriptionsUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.SyncPendingSubscriptionsUseCase
+import com.dscorp.ispadmin.domain.usecase.subscription.OnuRegistrationOperationUseCase
 import org.koin.dsl.module
 
 val domainModule = module {
@@ -15,4 +16,5 @@ val domainModule = module {
     single { ObservePendingSubscriptionsUseCase(get()) }
     single { ObserveOfflineRegistrationModeUseCase(get(), get()) }
     single { SyncPendingSubscriptionsUseCase(get(), get(), get(), get()) }
+    single { OnuRegistrationOperationUseCase(get()) }
 }

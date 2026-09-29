@@ -39,6 +39,8 @@ sealed interface RegisterSubscriptionIntent {
     data class UseDifferentWifiNamesChanged(val enabled: Boolean) : RegisterSubscriptionIntent
     data class RegisterClick(val facadePhotoFile: File? = null) : RegisterSubscriptionIntent
     data class RetryTr069(val subscription: Subscription) : RegisterSubscriptionIntent
+    data object RetryOnuRegistration : RegisterSubscriptionIntent
+    data object CancelOnuRegistration : RegisterSubscriptionIntent
     data object UseCurrentLocationClicked : RegisterSubscriptionIntent
     data object ChooseManualLocationClicked : RegisterSubscriptionIntent
     data object DismissManualLocationMap : RegisterSubscriptionIntent

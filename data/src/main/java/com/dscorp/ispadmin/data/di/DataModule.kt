@@ -26,6 +26,10 @@ import org.koin.dsl.module
 import retrofit2.Retrofit
 
 val dataModule = module {
+    single { get<Retrofit>().create(com.dscorp.ispadmin.data.remote.OnuRegistrationOperationApi::class.java) }
+    single<com.dscorp.ispadmin.domain.repository.OnuRegistrationOperationRepository> {
+        com.dscorp.ispadmin.data.repository.OnuRegistrationOperationRepositoryImpl(get())
+    }
     single { get<Retrofit>().create(com.dscorp.ispadmin.data.remote.ProvisioningApi::class.java) }
     single<com.dscorp.ispadmin.domain.repository.ProvisioningRepository> {
         com.dscorp.ispadmin.data.repository.ProvisioningRepositoryImpl(get())

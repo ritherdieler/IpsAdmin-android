@@ -13,6 +13,11 @@ import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.Subscription
+import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
+import com.dscorp.ispadmin.domain.model.canManuallyRetry
+import com.dscorp.ispadmin.domain.model.canOpenRegistrationForm
+import com.dscorp.ispadmin.domain.repository.OnuRegistrationTarget
+import com.dscorp.ispadmin.domain.repository.StartOnuRegistrationRequest
 import com.dscorp.ispadmin.domain.model.subscription.RegisterSubscriptionFormConstraints
 import com.dscorp.ispadmin.domain.model.subscription.napBoxToPreselectAfterNearbyRefresh
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionFacadePhotoError
@@ -25,6 +30,7 @@ import com.dscorp.ispadmin.domain.usecase.subscription.GetAvailableOnuListUseCas
 import com.dscorp.ispadmin.domain.usecase.subscription.GetNearNapBoxesUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetPlaceFromLocationUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetUserSessionUseCase
+import com.dscorp.ispadmin.domain.usecase.subscription.OnuRegistrationOperationUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.ObserveOfflineRegistrationModeUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionResult
 import com.dscorp.ispadmin.domain.usecase.subscription.PollRegistrationProgressUseCase
@@ -46,6 +52,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.TvCpeKind
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.canAdvanceWizardStep
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.isRegistrationVlanSelectable
@@ -56,15 +63,20 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
 class RegisterSubscriptionComposeViewModel(
@@ -80,7 +92,8 @@ class RegisterSubscriptionComposeViewModel(
     private val retryTr069ProvisioningUseCase: RetryTr069ProvisioningUseCase,
     private val pollRegistrationProgressUseCase: PollRegistrationProgressUseCase,
     private val observabilityClient: ObservabilityClient,
-    private val mainImmediate: CoroutineDispatcher = Dispatchers.Main.immediate
+    private val mainImmediate: CoroutineDispatcher = Dispatchers.Main.immediate,
+    private val onuRegistrationOperationUseCase: OnuRegistrationOperationUseCase? = null,
 ) : ViewModel() {
 
     private companion object {
@@ -90,6 +103,10 @@ class RegisterSubscriptionComposeViewModel(
 
     private val _uiState = MutableStateFlow(
         RegisterSubscriptionState(
+            wizardStep = if (onuRegistrationOperationUseCase != null) {
+                RegisterSubscriptionWizardStep.ONU_SELECTION
+            } else RegisterSubscriptionWizardStep.CLIENT_LOCATION,
+            preauthorizationEnabled = onuRegistrationOperationUseCase != null,
             registerSubscriptionForm = RegisterSubscriptionFormState(
                 accessMode = E2eAccessModeResolver.resolve(),
             )
@@ -103,12 +120,32 @@ class RegisterSubscriptionComposeViewModel(
     )
     val uiEvent: SharedFlow<RegisterSubscriptionUiEvent> = _uiEvent.asSharedFlow()
 
-    fun onFacadePhotoSelected(uri: Uri) {
+    fun onFacadePhotoSelected(uri: Uri, photoFile: File? = null) {
         updateValidatedForm(FormFieldKey.FACADE_PHOTO) { form ->
             form.copy(
                 facadePhotoUri = uri,
+                facadePhotoUrl = null,
                 facadePhotoError = null
             )
+        }
+        val operation = _uiState.value.preauthorizationOperation
+        if (onuRegistrationOperationUseCase != null && operation?.canOpenRegistrationForm() == true && photoFile != null) {
+            photoUploadJob?.cancel()
+            photoUploadJob = viewModelScope.launch(mainImmediate) {
+                _uiState.update { it.copy(preauthorizationError = null, isLoading = true) }
+                try {
+                    val url = onuRegistrationOperationUseCase.uploadPhoto(operation.id, photoFile)
+                    _uiState.update { state ->
+                        state.copy(isLoading = false, registerSubscriptionForm = state.registerSubscriptionForm.copy(facadePhotoUrl = url))
+                    }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    _uiState.update { it.copy(isLoading = false, preauthorizationError = error.message ?: "No se pudo cargar la foto") }
+                } finally {
+                    photoFile.delete()
+                }
+            }
         }
     }
 
@@ -120,6 +157,31 @@ class RegisterSubscriptionComposeViewModel(
     private var registerSubscriptionJob: Job? = null
     private var retryTr069Job: Job? = null
     private var offlineModeJob: Job? = null
+    private var photoUploadJob: Job? = null
+
+    init {
+        onuRegistrationOperationUseCase?.let { operationUseCase ->
+            viewModelScope.launch(mainImmediate) {
+                uiState.map { state ->
+                    val operation = state.preauthorizationOperation
+                    if (operation?.canOpenRegistrationForm() == true) {
+                        operation.id to buildRegistrationDraft(state)
+                    } else null
+                }.distinctUntilChanged().collectLatest { snapshot ->
+                    if (snapshot != null) {
+                        delay(500)
+                        try {
+                            operationUseCase.saveDraft(snapshot.first, snapshot.second)
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (error: Exception) {
+                            _uiState.update { it.copy(preauthorizationError = error.message ?: "No se pudo guardar el borrador") }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     fun loadScreenData(installationOrderId: Int?) {
         loadScreenJob?.cancel()
@@ -172,7 +234,10 @@ class RegisterSubscriptionComposeViewModel(
                                 )
                             )
                             return@launch
-                        }
+                    }
+                }
+                if (onuRegistrationOperationUseCase != null) {
+                    restoreActivePreauthorization()
                 }
                 _uiState.update { it.copy(isLoading = false) }
             } catch (e: CancellationException) {
@@ -296,6 +361,8 @@ class RegisterSubscriptionComposeViewModel(
                 onUseDifferentWifiNamesChanged(intent.enabled)
             is RegisterSubscriptionIntent.RegisterClick -> saveSubscription(intent.facadePhotoFile)
             is RegisterSubscriptionIntent.RetryTr069 -> retryTr069Provisioning(intent.subscription)
+            RegisterSubscriptionIntent.RetryOnuRegistration -> retryOnuRegistration()
+            RegisterSubscriptionIntent.CancelOnuRegistration -> cancelOnuRegistration()
             RegisterSubscriptionIntent.UseCurrentLocationClicked -> onUseCurrentLocationClicked()
             RegisterSubscriptionIntent.ChooseManualLocationClicked -> onChooseManualLocationClicked()
             RegisterSubscriptionIntent.DismissManualLocationMap -> onDismissManualLocationMap()
@@ -341,6 +408,26 @@ class RegisterSubscriptionComposeViewModel(
 
     private fun onWizardContinueClicked() {
         val current = currentUiState()
+        if (current.preauthorizationEnabled) {
+            when (current.wizardStep) {
+                RegisterSubscriptionWizardStep.ONU_SELECTION -> {
+                    val validated = current.registerSubscriptionForm.validated(FormFieldKey.ONU)
+                    if (validated.validate(FormFieldKey.ONU) == null) {
+                        _uiState.update { it.copy(registerSubscriptionForm = validated, wizardStep = RegisterSubscriptionWizardStep.ONU_CONFIRMATION) }
+                    } else {
+                        _uiState.update { it.copy(registerSubscriptionForm = validated) }
+                    }
+                }
+                RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> startOnuPreauthorization()
+                RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> Unit
+                else -> advanceExistingWizard(current)
+            }
+            return
+        }
+        advanceExistingWizard(current)
+    }
+
+    private fun advanceExistingWizard(current: RegisterSubscriptionState) {
         val fields = wizardFieldsFor(current.wizardStep, current.registerSubscriptionForm)
         val validated = current.registerSubscriptionForm.validated(*fields.toTypedArray())
         val nextStep = if (canAdvanceWizardStep(current.wizardStep, validated)) {
@@ -355,6 +442,226 @@ class RegisterSubscriptionComposeViewModel(
             )
         }
     }
+
+    private fun startOnuPreauthorization() {
+        val useCase = onuRegistrationOperationUseCase ?: return
+        val selectedOnu = currentUiState().registerSubscriptionForm.selectedOnu ?: return
+        val vlan = currentUiState().registerSubscriptionForm.vlan.toIntOrNull() ?: return
+        registerSubscriptionJob?.cancel()
+        registerSubscriptionJob = viewModelScope.launch(mainImmediate) {
+            _uiState.update { it.copy(isLoading = true, preauthorizationError = null) }
+            try {
+                val operation = useCase.start(
+                    StartOnuRegistrationRequest(
+                        requestKey = UUID.randomUUID().toString(),
+                        serial = selectedOnu.sn,
+                        target = OnuRegistrationTarget(
+                            oltId = selectedOnu.olt_id,
+                            ponType = selectedOnu.pon_type,
+                            board = selectedOnu.board,
+                            port = selectedOnu.port,
+                            onuType = selectedOnu.onu_type_name,
+                            vlan = vlan,
+                        ),
+                    ),
+                )
+                showPreauthorizationOperation(operation, restoreDraft = false)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                _uiState.update { it.copy(isLoading = false, preauthorizationError = error.message ?: "No se pudo autorizar la ONU") }
+                _uiEvent.emit(RegisterSubscriptionUiEvent.Error(error.message ?: "No se pudo autorizar la ONU"))
+            }
+        }
+    }
+
+    private fun retryOnuRegistration() {
+        val useCase = onuRegistrationOperationUseCase ?: return
+        val operation = currentUiState().preauthorizationOperation ?: return
+        if (!operation.canManuallyRetry() || currentUiState().isLoading) return
+        registerSubscriptionJob?.cancel()
+        registerSubscriptionJob = viewModelScope.launch(mainImmediate) {
+            _uiState.update { it.copy(isLoading = true, preauthorizationError = null) }
+            try {
+                showPreauthorizationOperation(useCase.retry(operation.id, operation.revision), restoreDraft = true)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                _uiState.update { it.copy(isLoading = false, preauthorizationError = error.message ?: "No se pudo consultar ACS") }
+            }
+        }
+    }
+
+    private fun cancelOnuRegistration() {
+        val useCase = onuRegistrationOperationUseCase ?: return
+        val operation = currentUiState().preauthorizationOperation ?: return
+        if (currentUiState().isLoading) return
+        registerSubscriptionJob?.cancel()
+        registerSubscriptionJob = viewModelScope.launch(mainImmediate) {
+            _uiState.update { it.copy(isLoading = true, preauthorizationError = null) }
+            try {
+                var latest = useCase.cancel(operation.id, operation.revision)
+                _uiState.update { it.copy(preauthorizationOperation = latest) }
+                repeat(40) {
+                    when (latest.state) {
+                        "CANCELLED" -> {
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    preauthorizationOperation = null,
+                                    preauthorizationError = null,
+                                    wizardStep = RegisterSubscriptionWizardStep.ONU_SELECTION,
+                                    registerSubscriptionForm = clearRegistrationForm(it.registerSubscriptionForm),
+                                )
+                            }
+                            return@launch
+                        }
+                        "CANCEL_FAILED" -> {
+                            _uiState.update { it.copy(isLoading = false, preauthorizationOperation = latest, preauthorizationError = preauthorizationFailure(latest)) }
+                            return@launch
+                        }
+                    }
+                    delay(750)
+                    latest = useCase.get(operation.id)
+                    _uiState.update { it.copy(preauthorizationOperation = latest) }
+                }
+                _uiState.update { it.copy(isLoading = false, preauthorizationError = "La limpieza de la ONU sigue en curso. Consulta su estado o reintenta la cancelación.") }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                _uiState.update { it.copy(isLoading = false, preauthorizationError = error.message ?: "No se pudo confirmar la limpieza de la ONU") }
+            }
+        }
+    }
+
+    private suspend fun restoreActivePreauthorization() {
+        val useCase = onuRegistrationOperationUseCase ?: return
+        try {
+            val operation = useCase.active() ?: return
+            if (operation.subscriptionId != null) return
+            showPreauthorizationOperation(operation, restoreDraft = true)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            _uiState.update { it.copy(preauthorizationError = error.message ?: "No se pudo recuperar el registro pendiente") }
+        }
+    }
+
+    private suspend fun showPreauthorizationOperation(operation: OnuRegistrationOperation, restoreDraft: Boolean) {
+        val useCase = onuRegistrationOperationUseCase ?: return
+        val selectedOnu = _uiState.value.registerSubscriptionForm.onuList.firstOrNull { it.sn.equals(operation.serial, true) }
+        var form = _uiState.value.registerSubscriptionForm.copy(selectedOnu = selectedOnu ?: _uiState.value.registerSubscriptionForm.selectedOnu)
+        if (operation.canOpenRegistrationForm() && restoreDraft) {
+            useCase.draft(operation.id)?.let { form = restoreRegistrationDraft(form, it) }
+        }
+        _uiState.update { current ->
+            current.copy(
+                isLoading = false,
+                preauthorizationEnabled = true,
+                preauthorizationOperation = operation,
+                preauthorizationError = preauthorizationFailure(operation),
+                wizardStep = if (operation.canOpenRegistrationForm()) RegisterSubscriptionWizardStep.CLIENT_LOCATION
+                    else RegisterSubscriptionWizardStep.WAITING_FOR_ACS,
+                registerSubscriptionForm = form,
+            )
+        }
+    }
+
+    private fun preauthorizationFailure(operation: OnuRegistrationOperation): String? {
+        val failure = operation.operationFailure ?: operation.checkpoints.firstNotNullOfOrNull { it.failure }
+        return failure?.let { "${it.code}: ${it.message}" + (it.technicalDetails?.let { details -> " · $details" } ?: "") }
+    }
+
+    private fun clearRegistrationForm(form: RegisterSubscriptionFormState): RegisterSubscriptionFormState =
+        RegisterSubscriptionFormState(
+            accessMode = E2eAccessModeResolver.resolve(),
+            planList = form.planList,
+            selectedPlan = getAutoSelectedPlan(form.planList, null),
+            placeList = form.placeList,
+            coreDeviceList = form.coreDeviceList,
+            selectedHostDevice = form.activeCoreDevices().singleOrNull(),
+            napBoxList = form.napBoxList,
+            onuList = form.onuList,
+        )
+
+    private fun buildRegistrationDraft(state: RegisterSubscriptionState): Map<String, Any?> {
+        val form = state.registerSubscriptionForm
+        val onu = form.selectedOnu
+        val location = form.location
+        return mapOf(
+            "firstName" to form.firstName.removeSpecialCharacters(), "lastName" to form.lastName.removeSpecialCharacters(),
+            "dni" to form.dni, "address" to form.address, "phone" to form.phone,
+            "subscriptionDate" to form.subscriptionDate.takeIf { it > 0 }, "planId" to form.selectedPlan?.id,
+            "placeId" to form.selectedPlace?.id,
+            "location" to location?.let { mapOf("latitude" to it.latitude, "longitude" to it.longitude) },
+            "technicianId" to state.currentUser?.id, "hostDeviceId" to form.selectedHostDevice?.id,
+            "napBoxId" to form.selectedNapBox?.id,
+            "onu" to onu?.let { mapOf("olt_id" to it.olt_id, "pon_type" to it.pon_type, "board" to it.board,
+                "port" to it.port, "onu_type_name" to it.onu_type_name, "sn" to it.sn) },
+            "installationType" to form.installationType.name, "note" to form.note,
+            "facadePhotoUrl" to form.facadePhotoUrl, "vlan" to form.vlan,
+            "wifiSsid24" to form.wifiSsid24, "wifiPassword24" to form.wifiPassword24,
+            "wifiSsid5" to form.resolvedWifiSsid5(),
+            "wifiPassword5" to form.wifiPassword24,
+            "equipmentCondition" to form.equipmentCondition.name,
+            "useDifferentWifiNames" to form.useDifferentWifiNames,
+            "tvCpeKind" to form.tvCpeKind?.name,
+            "coupon" to form.coupon,
+            "clientIpAddress" to form.clientIpAddress,
+            "accessMode" to form.accessMode.name, "registrationOperationId" to state.preauthorizationOperation?.id,
+        ).filterValues { it != null }
+    }
+
+    private fun restoreRegistrationDraft(
+        current: RegisterSubscriptionFormState,
+        draft: Map<String, Any?>,
+    ): RegisterSubscriptionFormState {
+        val location = draft["location"] as? Map<*, *>
+        val onuData = draft["onu"] as? Map<*, *>
+        val photoUrl = draft["facadePhotoUrl"]?.toString()?.takeIf(String::isNotBlank)
+        val planId = draft["planId"]?.toString()
+        val placeId = draft["placeId"]?.toString()
+        val napBoxId = draft["napBoxId"]?.toString()
+        val hostId = draft["hostDeviceId"]?.toString()?.toIntOrNull()
+        val serial = onuData?.get("sn")?.toString()
+        val installationType = draft["installationType"]?.toString()?.let { value ->
+            runCatching { InstallationType.valueOf(value) }.getOrNull()
+        }
+        val accessMode = draft["accessMode"]?.toString()?.let { value ->
+            runCatching { AccessMode.valueOf(value) }.getOrNull()
+        }
+        val condition = draft["equipmentCondition"]?.toString()?.let { value ->
+            runCatching { EquipmentCondition.valueOf(value) }.getOrNull()
+        }
+        val tvCpeKind = draft["tvCpeKind"]?.toString()?.let { value ->
+            runCatching { TvCpeKind.valueOf(value) }.getOrNull()
+        }
+        return current.copy(
+            firstName = draft.text("firstName"), lastName = draft.text("lastName"), dni = draft.text("dni"),
+            address = draft.text("address"), phone = draft.text("phone"), note = draft.text("note"),
+            subscriptionDate = draft["subscriptionDate"].asLongOrNull() ?: current.subscriptionDate,
+            selectedPlan = current.planList.firstOrNull { it.id == planId } ?: current.selectedPlan,
+            selectedPlace = current.placeList.firstOrNull { it.id == placeId || it.id.toString() == placeId } ?: current.selectedPlace,
+            selectedNapBox = current.napBoxList.firstOrNull { it.id == napBoxId || it.id.toString() == napBoxId } ?: current.selectedNapBox,
+            selectedHostDevice = current.coreDeviceList.firstOrNull { it.id == hostId } ?: current.selectedHostDevice,
+            selectedOnu = current.onuList.firstOrNull { it.sn.equals(serial, true) } ?: current.selectedOnu,
+            location = if (location != null) LatLng(location["latitude"].asDoubleOrNull() ?: 0.0, location["longitude"].asDoubleOrNull() ?: 0.0) else current.location,
+            installationType = installationType ?: current.installationType,
+            accessMode = accessMode ?: current.accessMode,
+            equipmentCondition = condition ?: current.equipmentCondition,
+            useDifferentWifiNames = draft["useDifferentWifiNames"] as? Boolean ?: current.useDifferentWifiNames,
+            tvCpeKind = tvCpeKind ?: current.tvCpeKind,
+            coupon = draft.text("coupon"), clientIpAddress = draft.text("clientIpAddress"),
+            vlan = draft.text("vlan").ifBlank { current.vlan },
+            wifiSsid24 = draft.text("wifiSsid24"), wifiPassword24 = draft.text("wifiPassword24"),
+            wifiSsid5 = draft.text("wifiSsid5"), wifiPassword5 = draft.text("wifiPassword5"),
+            facadePhotoUrl = photoUrl,
+        )
+    }
+
+    private fun Map<String, Any?>.text(key: String): String = this[key]?.toString().orEmpty()
+    private fun Any?.asLongOrNull(): Long? = when (this) { is Number -> toLong(); else -> this?.toString()?.toLongOrNull() }
+    private fun Any?.asDoubleOrNull(): Double? = when (this) { is Number -> toDouble(); else -> this?.toString()?.toDoubleOrNull() }
 
     private fun onWizardBackClicked() {
         _uiState.update { current ->
@@ -646,9 +953,9 @@ private fun observeOfflineMode() {
         observeOfflineRegistrationModeUseCase().getOrElse { return@launch }.collect { offline ->
             _uiState.update { current ->
                 current.copy(
-                    isOfflineMode = offline,
+                    isOfflineMode = offline && !current.preauthorizationEnabled,
                     registerSubscriptionForm = current.registerSubscriptionForm.copy(
-                        requiresClientIpAddress = offline
+                        requiresClientIpAddress = offline && !current.preauthorizationEnabled
                     )
                 )
             }
@@ -847,7 +1154,9 @@ private suspend fun fetchNearbyNapBoxes(
 fun saveSubscription(facadePhotoFile: File? = null) {
     val form = uiState.value.registerSubscriptionForm
     val validatedForm = form.validated()
-    val hasFacadePhoto = form.facadePhotoUri != null || facadePhotoFile != null
+    val hasFacadePhoto = if (uiState.value.preauthorizationOperation != null) {
+        !form.facadePhotoUrl.isNullOrBlank()
+    } else form.facadePhotoUri != null || facadePhotoFile != null
     observabilityClient.addBreadcrumb(
         category = ObsBreadcrumbCategory.USER_ACTION,
         message = "$OBS_FEATURE.register_click",
@@ -1111,7 +1420,7 @@ private fun buildSubscriptionFromForm(
         onu = form.selectedOnu.takeIf { form.requiresOnu() },
         equipmentCondition = form.equipmentCondition,
         autoCut = true,
-        facadePhotoUrl = null,
+        facadePhotoUrl = form.facadePhotoUrl,
         clientIpAddress = form.clientIpAddress.trim().takeIf { it.isNotEmpty() },
         ip = form.clientIpAddress.trim().takeIf { it.isNotEmpty() },
         vlan = form.vlan.takeIf { form.requiresOnu() },
@@ -1120,6 +1429,8 @@ private fun buildSubscriptionFromForm(
         wifiSsid5 = form.resolvedWifiSsid5().takeIf { form.requiresWifiConfig() },
         wifiPassword5 = form.wifiPassword24.takeIf { form.requiresWifiConfig() },
         accessMode = form.accessMode.name,
+        registrationOperationId = currentUiState().preauthorizationOperation?.id,
+        clientRequestId = currentUiState().preauthorizationOperation?.id,
     )
 }
 

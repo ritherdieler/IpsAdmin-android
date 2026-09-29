@@ -89,6 +89,11 @@ fun RegisterSubscriptionFormScreen(
     var showFacadePhotoOptionsDialog by remember { mutableStateOf(false) }
     var showCurrentLocationGate by remember { mutableStateOf(false) }
 
+    val selectFacadePhoto: (Uri) -> Unit = { uri ->
+        val file = runCatching { prepareFacadePhotoFile(context = context, uri = uri) }.getOrNull()
+        viewModel.onFacadePhotoSelected(uri, file)
+    }
+
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -118,14 +123,14 @@ fun RegisterSubscriptionFormScreen(
     val (takeFacadePhoto, _) = rememberPhotoTaker(
         context = context,
         onPhotoTaken = { uri ->
-            viewModel.onFacadePhotoSelected(uri)
+            selectFacadePhoto(uri)
         }
     )
 
     val facadePhotoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
-        uri?.let { viewModel.onFacadePhotoSelected(it) }
+        uri?.let(selectFacadePhoto)
     }
 
     LaunchedEffect(Unit) {
@@ -142,7 +147,7 @@ fun RegisterSubscriptionFormScreen(
                                 ?: return
                             val file = File(path)
                             if (!file.exists()) return
-                            viewModel.onFacadePhotoSelected(Uri.fromFile(file))
+                            viewModel.onFacadePhotoSelected(Uri.fromFile(file), file)
                         }
                     }
                 }
@@ -173,10 +178,11 @@ fun RegisterSubscriptionFormScreen(
             formState = uiState,
             onIntent = { intent ->
                 if (intent is RegisterSubscriptionIntent.RegisterClick) {
-                    val facadePhotoFile =
+                    val facadePhotoFile = if (uiState.preauthorizationOperation == null) {
                         uiState.registerSubscriptionForm.facadePhotoUri?.let { uri ->
                             prepareFacadePhotoFile(context = context, uri = uri)
                         }
+                    } else null
                     viewModel.onIntent(
                         RegisterSubscriptionIntent.RegisterClick(
                             facadePhotoFile = facadePhotoFile

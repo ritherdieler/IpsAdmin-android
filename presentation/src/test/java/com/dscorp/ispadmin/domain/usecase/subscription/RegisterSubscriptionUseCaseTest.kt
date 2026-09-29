@@ -61,6 +61,27 @@ class RegisterSubscriptionUseCaseTest {
     }
 
     @Test
+    fun `preauthorized registration is always online and reuses operation idempotency key`() = runTest {
+        every { connectivityMonitor.isConnected() } returns false
+        val captured = slot<Subscription>()
+        coEvery { subscriptionWriteRepository.registerSubscription(capture(captured)) } returns Subscription(subscriptionId = 81)
+
+        val result = useCase(
+            Subscription(firstName = "Ana", registrationOperationId = "preauth-op-81", facadePhotoUrl = "https://storage/photo.jpg"),
+            orderId = null,
+            facadePhotoFile = facadePhotoFile,
+        )
+
+        assertTrue(result.isSuccess)
+        assertEquals("preauth-op-81", captured.captured.clientRequestId)
+        assertEquals("preauth-op-81", captured.captured.registrationOperationId)
+        assertEquals("https://storage/photo.jpg", captured.captured.facadePhotoUrl)
+        coVerify(exactly = 1) { subscriptionWriteRepository.registerSubscription(any()) }
+        coVerify(exactly = 0) { enqueuePendingSubscriptionUseCase(any(), any(), any()) }
+        coVerify(exactly = 0) { subscriptionWriteRepository.registerSubscriptionWithFacadePhoto(any(), any()) }
+    }
+
+    @Test
     fun `online success with provisioningPending still returns Registered`() = runTest {
         val registered = Subscription(subscriptionId = 22, provisioningPending = true)
         coEvery { subscriptionWriteRepository.registerSubscription(any()) } returns registered

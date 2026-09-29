@@ -47,6 +47,7 @@ import androidx.navigation.toRoute
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.domain.usecase.subscription.OnuRegistrationOperationUseCase
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.AsyncImageViewer
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Dashboard
@@ -97,7 +98,9 @@ import com.dscorp.ispadmin.presentation.utils.PermissionUtils
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,6 +109,7 @@ fun FeatureNavGraph(
     onLoggedOut: () -> Unit = {},
 ) {
     val viewModel: MainViewModel = koinViewModel()
+    val onuRegistrationOperationUseCase: OnuRegistrationOperationUseCase = koinInject()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
@@ -149,6 +153,20 @@ fun FeatureNavGraph(
 
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = FeatureRoutes.FromString(currentEntry?.destination?.route)
+
+    LaunchedEffect(uiState.currentUser?.id) {
+        if (uiState.currentUser == null || currentRoute is Subscription.Register) return@LaunchedEffect
+        val pending = try {
+            onuRegistrationOperationUseCase.active()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
+        if (pending?.subscriptionId == null) {
+            navController.navigate(Subscription.Register()) { launchSingleTop = true }
+        }
+    }
     val title = when (currentRoute) {
         is Dashboard -> "Panel"
         is Profile -> "Perfil"

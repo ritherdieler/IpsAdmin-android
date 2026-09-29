@@ -3,6 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register.model
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
 
 data class RegisterSubscriptionState(
     val isLoading: Boolean = false,
@@ -20,5 +21,8 @@ data class RegisterSubscriptionState(
     val tr069RetryLoading: Boolean = false,
     val showManualLocationMap: Boolean = false,
     val wizardStep: RegisterSubscriptionWizardStep = RegisterSubscriptionWizardStep.CLIENT_LOCATION,
+    val preauthorizationEnabled: Boolean = false,
+    val preauthorizationOperation: OnuRegistrationOperation? = null,
+    val preauthorizationError: String? = null,
     val registrationProgressMessage: String = "Registrando…",
 )

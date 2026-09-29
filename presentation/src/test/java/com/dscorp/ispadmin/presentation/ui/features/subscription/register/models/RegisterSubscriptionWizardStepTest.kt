@@ -30,6 +30,15 @@ class RegisterSubscriptionWizardStepTest {
     private val core = NetworkDevice(id = 10, name = "Core-A", disabled = false)
 
     @Test
+    fun `preauthorization steps precede the current form and ACS wait has no forward transition`() {
+        assertEquals(RegisterSubscriptionWizardStep.ONU_CONFIRMATION, RegisterSubscriptionWizardStep.ONU_SELECTION.next())
+        assertEquals(RegisterSubscriptionWizardStep.WAITING_FOR_ACS, RegisterSubscriptionWizardStep.ONU_CONFIRMATION.next())
+        assertNull(RegisterSubscriptionWizardStep.WAITING_FOR_ACS.next())
+        assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, RegisterSubscriptionWizardStep.WAITING_FOR_ACS.afterAcsConfirmed())
+        assertNull(RegisterSubscriptionWizardStep.WAITING_FOR_ACS.previous())
+    }
+
+    @Test
     fun `next and previous keep wizard order`() {
         assertEquals(
             RegisterSubscriptionWizardStep.INSTALLATION,
