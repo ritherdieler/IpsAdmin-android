@@ -76,6 +76,7 @@ fun RegisterSubscriptionFormScreen(
     context: Context = LocalContext.current,
     onSubscriptionRegisterSuccess: () -> Unit = {},
     onNavigateToPendingSubscriptions: () -> Unit = {},
+    onCancelRegistration: () -> Unit = {},
     installationOrderId: Int?,
 ) {
     val locationSetup = rememberLocationSetupState()
@@ -135,6 +136,10 @@ fun RegisterSubscriptionFormScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadScreenData(installationOrderId)
+    }
+
+    LaunchedEffect(uiState.registrationCancelled) {
+        if (uiState.registrationCancelled) onCancelRegistration()
     }
 
     if (BuildConfig.DEBUG) {
@@ -262,6 +267,35 @@ fun RegisterSubscriptionFormScreen(
             )
         }
 
+        if (uiState.showCancelConfirmation) {
+            AlertDialog(
+                onDismissRequest = {
+                    viewModel.onIntent(RegisterSubscriptionIntent.DismissCancelOnuRegistration)
+                },
+                title = { Text("Cancelar registro") },
+                text = {
+                    Text("Se eliminará la suscripción y se limpiará la configuración asociada en OLT, ACS y MikroTik. ¿Deseas continuar?")
+                },
+                confirmButton = {
+                    Button(
+                        modifier = Modifier.testTag(RegisterSubscriptionTestTags.REGISTRATION_CANCEL_CONFIRM),
+                        onClick = {
+                            viewModel.onIntent(RegisterSubscriptionIntent.ConfirmCancelOnuRegistration)
+                        },
+                    ) {
+                        Text("Sí, cancelar y limpiar")
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = {
+                        viewModel.onIntent(RegisterSubscriptionIntent.DismissCancelOnuRegistration)
+                    }) {
+                        Text("Seguir registrando")
+                    }
+                },
+            )
+        }
+
         dialogError?.let { error ->
             ErrorDialog(
                 error = error,
@@ -299,9 +333,18 @@ fun RegisterSubscriptionFormScreen(
 
         when (registerScreenBusyMode(uiState.isLoading, uiState.isRegistering)) {
             RegisterScreenBusyMode.REGISTERING -> RegistrationProgressOverlay(
-                progressMessage = uiState.registrationProgressMessage
+                progressMessage = uiState.registrationProgressMessage,
+                progressCheckpoints = uiState.registrationProgressCheckpoints,
+                onCancel = if (uiState.preauthorizationEnabled) {
+                    { viewModel.onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) }
+                } else null,
+                cancelEnabled = !uiState.cancellationInProgress,
             )
-            RegisterScreenBusyMode.CATALOG -> CatalogLoadingOverlay()
+            RegisterScreenBusyMode.CATALOG -> CatalogLoadingOverlay(
+                onCancel = if (uiState.preauthorizationEnabled) {
+                    { viewModel.onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) }
+                } else null,
+            )
             RegisterScreenBusyMode.NONE -> Unit
         }
     }
@@ -328,7 +371,7 @@ private fun InfoRow(label: String, value: String) {
 }
 
 @Composable
-internal fun CatalogLoadingOverlay() {
+internal fun CatalogLoadingOverlay(onCancel: (() -> Unit)? = null) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -359,6 +402,15 @@ internal fun CatalogLoadingOverlay() {
                     textAlign = TextAlign.Center,
                     modifier = Modifier.testTag(RegisterSubscriptionTestTags.CATALOG_LOADING_MESSAGE)
                 )
+                if (onCancel != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onCancel,
+                        modifier = Modifier.testTag(RegisterSubscriptionTestTags.REGISTRATION_CANCEL_ACTION),
+                    ) {
+                        Text("Cancelar registro")
+                    }
+                }
             }
         }
     }
@@ -367,6 +419,9 @@ internal fun CatalogLoadingOverlay() {
 @Composable
 internal fun RegistrationProgressOverlay(
     progressMessage: String? = null,
+    progressCheckpoints: List<com.dscorp.ispadmin.domain.model.RegistrationProgressCheckpoint> = emptyList(),
+    onCancel: (() -> Unit)? = null,
+    cancelEnabled: Boolean = true,
 ) {
     Box(
         modifier = Modifier
@@ -398,6 +453,21 @@ internal fun RegistrationProgressOverlay(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.testTag(RegisterSubscriptionTestTags.PROGRESS_STEP)
                 )
+                progressCheckpoints.forEach { checkpoint ->
+                    Text(
+                        text = "${registrationProgressStageLabel(checkpoint.stage)}: ${registrationProgressStateLabel(checkpoint.state)} · Intento ${checkpoint.attempts}",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                    )
+                    checkpoint.failure?.let { failure ->
+                        Text(
+                            text = "${failure.message}\n${failure.code}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Esto puede tomar hasta 2 minutos",
@@ -406,6 +476,16 @@ internal fun RegistrationProgressOverlay(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.testTag(RegisterSubscriptionTestTags.PROGRESS_HINT)
                 )
+                if (onCancel != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onCancel,
+                        enabled = cancelEnabled,
+                        modifier = Modifier.testTag(RegisterSubscriptionTestTags.REGISTRATION_CANCEL_ACTION),
+                    ) {
+                        Text(if (cancelEnabled) "Cancelar registro" else "Cancelando…")
+                    }
+                }
             }
         }
     }

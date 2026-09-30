@@ -33,4 +33,11 @@ class RegisterSubscriptionProgressStepsTest {
             registerScreenBusyMode(isLoading = false, isRegistering = false)
         )
     }
+
+    @Test
+    fun `registration checkpoints use the same labels as the provisioning screen`() {
+        assertEquals("Limpieza de WAN", registrationProgressStageLabel("WAN_CLEANUP"))
+        assertEquals("Requiere atención", registrationProgressStateLabel("FAILED"))
+        assertEquals("Pendiente", registrationProgressStateLabel("PENDING"))
+    }
 }

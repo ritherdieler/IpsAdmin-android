@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.domain.usecase.subscription
 
 import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
+import com.dscorp.ispadmin.domain.model.OnuRegistrationCleanupReport
 import com.dscorp.ispadmin.domain.repository.OnuRegistrationOperationRepository
 import com.dscorp.ispadmin.domain.repository.StartOnuRegistrationRequest
 import java.io.File
@@ -13,5 +14,6 @@ class OnuRegistrationOperationUseCase(private val repository: OnuRegistrationOpe
     suspend fun uploadPhoto(operationId: String, file: File): String = repository.uploadPhoto(operationId, file)
     suspend fun retry(operationId: String, revision: Long): OnuRegistrationOperation = repository.retry(operationId, revision)
     suspend fun cancel(operationId: String, revision: Long): OnuRegistrationOperation = repository.cancel(operationId, revision)
+    suspend fun cleanupCancelled(operationId: String): OnuRegistrationCleanupReport = repository.cleanupCancelled(operationId)
     suspend fun get(operationId: String): OnuRegistrationOperation = repository.get(operationId)
 }

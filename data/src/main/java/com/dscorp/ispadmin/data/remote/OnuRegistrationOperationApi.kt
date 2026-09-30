@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.data.remote
 
 import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
+import com.dscorp.ispadmin.domain.model.OnuRegistrationCleanupReport
 import com.dscorp.ispadmin.domain.repository.StartOnuRegistrationRequest
 import okhttp3.MultipartBody
 import retrofit2.Response
@@ -28,7 +29,7 @@ interface OnuRegistrationOperationApi {
     @PUT("onu-registration-operations/{operationId}/draft")
     suspend fun saveDraft(
         @Path("operationId") operationId: String,
-        @Body draft: Map<String, Any?>,
+        @Body draft: Map<String, @JvmSuppressWildcards Any?>,
     ): Response<Map<String, Any?>>
 
     @Multipart
@@ -49,6 +50,9 @@ interface OnuRegistrationOperationApi {
         @Path("operationId") operationId: String,
         @Body request: RegistrationOperationRevisionDto,
     ): Response<OnuRegistrationOperation>
+
+    @POST("onu-registration-operations/{operationId}/cleanup")
+    suspend fun cleanupCancelled(@Path("operationId") operationId: String): Response<OnuRegistrationCleanupReport>
 }
 
 data class RegistrationPhotoResponseDto(val url: String)

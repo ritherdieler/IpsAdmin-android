@@ -29,6 +29,9 @@ object RegisterSubscriptionTestTags {
 
     const val WIZARD_CONTINUE = "wizard_continue"
     const val WIZARD_BACK = "wizard_back"
+    const val ONU_REGISTRATION_CANCEL = "onu_registration_cancel"
+    const val REGISTRATION_CANCEL_ACTION = "registration_cancel_action"
+    const val REGISTRATION_CANCEL_CONFIRM = "registration_cancel_confirm"
     const val LOCATION_METHOD_CURRENT = "location_method_current"
     const val LOCATION_METHOD_MANUAL = "location_method_manual"
     const val LOCATION_COORDINATES = "selected_location_coordinates"

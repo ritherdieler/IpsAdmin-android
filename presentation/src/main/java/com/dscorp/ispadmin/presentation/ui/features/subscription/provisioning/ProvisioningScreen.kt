@@ -101,6 +101,7 @@ private fun provisioningLabel(value: String): String = when (value) {
     "ACS_CONTACT" -> "Conexión con ACS"
     "INTERNET" -> "Internet PPPoE"
     "WIFI" -> "WiFi"
+    "WAN_CLEANUP" -> "Limpieza de WAN"
     "VERIFY" -> "Verificación final"
     "PENDING" -> "Pendiente"
     "RUNNING" -> "En curso"

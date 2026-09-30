@@ -9,9 +9,22 @@ data class OnuRegistrationOperation(
     val revision: Long,
     val operatorId: Long? = null,
     val operatorUsername: String? = null,
+    val onuTarget: OnuRegistrationOperationTarget? = null,
+    val oltEvidence: OnuRegistrationOltEvidence? = null,
     val checkpoints: List<OnuRegistrationCheckpoint> = emptyList(),
     val operationFailure: OnuRegistrationFailure? = null,
 )
+
+data class OnuRegistrationOperationTarget(
+    val oltId: String,
+    val ponType: String,
+    val board: String,
+    val port: String,
+    val onuType: String,
+    val vlan: Int,
+)
+
+data class OnuRegistrationOltEvidence(val ontId: Int)
 
 data class OnuRegistrationCheckpoint(
     val stage: String,
@@ -25,6 +38,11 @@ data class OnuRegistrationFailure(
     val message: String,
     val retryable: Boolean,
     val technicalDetails: String? = null,
+)
+
+data class OnuRegistrationCleanupReport(
+    val status: String,
+    val message: String? = null,
 )
 
 fun OnuRegistrationOperation.canOpenRegistrationForm(): Boolean =

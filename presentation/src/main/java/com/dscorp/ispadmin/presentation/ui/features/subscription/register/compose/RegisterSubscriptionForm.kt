@@ -93,6 +93,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.VLAN_OPTIONS
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.canAdvanceWizardStep
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -113,6 +114,7 @@ fun RegisterSubscriptionForm(
 ) {
     val form = formState.registerSubscriptionForm
     val isFormValid = form.isValid()
+    val canAdvanceCurrentStep = canAdvanceWizardStep(formState.wizardStep, form)
 
     Surface(
         modifier = modifier
@@ -215,6 +217,7 @@ fun RegisterSubscriptionForm(
                 step = formState.wizardStep,
                 isLoading = formState.isLoading,
                 isFormValid = isFormValid,
+                canAdvanceCurrentStep = canAdvanceCurrentStep,
                 preauthorizationEnabled = formState.preauthorizationEnabled,
                 selectedOnu = form.selectedOnu != null,
                 onBack = { onIntent(RegisterSubscriptionIntent.WizardBackClicked) },
@@ -232,6 +235,18 @@ fun RegisterSubscriptionForm(
                 },
                 onCancelPreauthorization = { onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) },
             )
+            if (formState.preauthorizationEnabled && formState.wizardStep != RegisterSubscriptionWizardStep.WAITING_FOR_ACS) {
+                OutlinedButton(
+                    onClick = { onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) },
+                    enabled = !formState.isLoading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+                        .testTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL),
+                ) {
+                    Text("Cancelar registro")
+                }
+            }
         }
     }
 }
@@ -757,6 +772,7 @@ private fun WizardNavigationBar(
     step: RegisterSubscriptionWizardStep,
     isLoading: Boolean,
     isFormValid: Boolean,
+    canAdvanceCurrentStep: Boolean,
     preauthorizationEnabled: Boolean,
     selectedOnu: Boolean,
     onBack: () -> Unit,
@@ -774,7 +790,11 @@ private fun WizardNavigationBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (step == RegisterSubscriptionWizardStep.WAITING_FOR_ACS) {
-            OutlinedButton(onClick = onCancelPreauthorization, enabled = !isLoading, modifier = Modifier.weight(1f)) {
+            OutlinedButton(
+                onClick = onCancelPreauthorization,
+                enabled = !isLoading,
+                modifier = Modifier.weight(1f).testTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL),
+            ) {
                 Text("Cancelar")
             }
             MyButton(
@@ -810,7 +830,7 @@ private fun WizardNavigationBar(
                 val label = if (step == RegisterSubscriptionWizardStep.ONU_CONFIRMATION) "Autorizar ONU" else "Continuar"
                 val canContinue = when (step) {
                     RegisterSubscriptionWizardStep.ONU_SELECTION, RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> selectedOnu
-                    else -> isFormValid
+                    else -> canAdvanceCurrentStep
                 }
                 MyButton(
                     modifier = Modifier
@@ -1099,7 +1119,8 @@ fun FiberOpticForm(
 ) {
     val form = formState.registerSubscriptionForm
     val installationType = form.installationType
-    val showOnuSelector = installationType == InstallationType.FIBER
+    val showOnuSelector =
+        installationType == InstallationType.FIBER && !formState.preauthorizationEnabled
 
     Column {
         Spacer(modifier = Modifier.height(16.dp))
@@ -1141,7 +1162,9 @@ fun FiberOpticForm(
                 isItemEnabled = { it.selectable },
                 itemTestTag = { index, _ -> RegisterSubscriptionTestTags.vlanItem(index) },
             )
+        }
 
+        if (installationType == InstallationType.FIBER) {
             Spacer(modifier = Modifier.height(8.dp))
             WifiFields(
                 form = form,

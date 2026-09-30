@@ -4,6 +4,7 @@ import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
+import com.dscorp.ispadmin.domain.model.RegistrationProgressCheckpoint
 
 data class RegisterSubscriptionState(
     val isLoading: Boolean = false,
@@ -24,5 +25,9 @@ data class RegisterSubscriptionState(
     val preauthorizationEnabled: Boolean = false,
     val preauthorizationOperation: OnuRegistrationOperation? = null,
     val preauthorizationError: String? = null,
+    val showCancelConfirmation: Boolean = false,
+    val cancellationInProgress: Boolean = false,
+    val registrationCancelled: Boolean = false,
     val registrationProgressMessage: String = "Registrando…",
+    val registrationProgressCheckpoints: List<RegistrationProgressCheckpoint> = emptyList(),
 )

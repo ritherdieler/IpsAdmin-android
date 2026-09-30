@@ -3,6 +3,7 @@ package com.dscorp.ispadmin.data.repository
 import com.dscorp.ispadmin.data.remote.OnuRegistrationOperationApi
 import com.dscorp.ispadmin.data.remote.RegistrationOperationRevisionDto
 import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
+import com.dscorp.ispadmin.domain.model.OnuRegistrationCleanupReport
 import com.dscorp.ispadmin.domain.repository.OnuRegistrationOperationRepository
 import com.dscorp.ispadmin.domain.repository.StartOnuRegistrationRequest
 import okhttp3.MediaType.Companion.toMediaType
@@ -48,6 +49,12 @@ class OnuRegistrationOperationRepositoryImpl(
     override suspend fun cancel(operationId: String, expectedRevision: Long): OnuRegistrationOperation =
         api.cancel(operationId, RegistrationOperationRevisionDto(expectedRevision))
             .requiredBody("ONU_PREAUTHORIZATION_CANCEL_FAILED")
+
+    override suspend fun cleanupCancelled(operationId: String): OnuRegistrationCleanupReport {
+        val response = api.cleanupCancelled(operationId)
+        if (response.code() == 404) return OnuRegistrationCleanupReport("COMPLETE")
+        return response.requiredBody("ONU_REGISTRATION_CLEANUP_FAILED")
+    }
 
     override suspend fun get(operationId: String): OnuRegistrationOperation =
         api.get(operationId).requiredBody("ONU_REGISTRATION_OPERATION_LOAD_FAILED")

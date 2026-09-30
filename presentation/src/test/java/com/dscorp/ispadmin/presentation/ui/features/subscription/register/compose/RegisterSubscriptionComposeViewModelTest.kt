@@ -11,6 +11,7 @@ import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.NetworkDevice
 import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
+import com.dscorp.ispadmin.domain.model.OnuRegistrationCleanupReport
 import com.dscorp.ispadmin.domain.model.PendingSubscription
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
@@ -42,6 +43,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -270,6 +272,7 @@ class RegisterSubscriptionComposeViewModelTest {
             phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 8,
         )
         coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.get(ready.id) } returns ready
         coEvery { operationUseCase.draft(ready.id) } returns mapOf(
             "firstName" to "CLIENTE RESTAURADO", "dni" to "12345678", "planId" to "p1",
             "facadePhotoUrl" to "https://storage.example/photo.jpg",
@@ -297,6 +300,125 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
+    fun `step 5 keeps the preauthorized ONU when the current installation type is selected`() = runTest(testDispatcher) {
+        val onu = Onu("b", "olt", "1", "t", "VSOLVA74", "pon", "p", "VSOL0031C0B6")
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val ready = OnuRegistrationOperation(
+            id = "preauth-ready-step-5", serial = onu.sn, subscriptionId = null,
+            phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 1,
+        )
+        coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.draft(ready.id) } returns null
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu().copy(sn = onu.sn)))
+        )
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        viewModel.onIntent(RegisterSubscriptionIntent.FirstNameChanged("Juan"))
+        viewModel.onIntent(RegisterSubscriptionIntent.LastNameChanged("Perez"))
+        viewModel.onIntent(RegisterSubscriptionIntent.DniChanged("12345678"))
+        viewModel.onIntent(RegisterSubscriptionIntent.AddressChanged("Calle larga 12345"))
+        viewModel.onIntent(RegisterSubscriptionIntent.PhoneChanged("987654321"))
+        viewModel.onIntent(RegisterSubscriptionIntent.PlaceSelected(Place(id = "1", name = "P1")))
+        viewModel.onLocationChanged(com.google.android.gms.maps.model.LatLng(-12.0, -77.0))
+        viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+
+        assertEquals(
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.INSTALLATION,
+            viewModel.uiState.value.wizardStep,
+        )
+        viewModel.onIntent(RegisterSubscriptionIntent.WifiSsid24Changed("CasaFibra"))
+        viewModel.onIntent(RegisterSubscriptionIntent.WifiPassword24Changed("clave123"))
+        assertTrue(
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.canAdvanceWizardStep(
+                viewModel.uiState.value.wizardStep,
+                viewModel.uiState.value.registerSubscriptionForm,
+            )
+        )
+
+        viewModel.onIntent(RegisterSubscriptionIntent.InstallationTypeSelected(InstallationType.FIBER))
+
+        val state = viewModel.uiState.value
+        assertEquals(onu.sn, state.registerSubscriptionForm.selectedOnu?.sn)
+        assertTrue(
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.canAdvanceWizardStep(
+                state.wizardStep,
+                state.registerSubscriptionForm,
+            )
+        )
+    }
+
+    @Test
+    fun `restoring a preauthorized registration recovers its ONU from the saved draft`() = runTest(testDispatcher) {
+        val onu = Onu("b", "olt", "1", "t", "VSOLVA74", "pon", "p", "VSOL0031C0B6")
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val ready = OnuRegistrationOperation(
+            id = "preauth-ready-onu-draft", serial = onu.sn, subscriptionId = null,
+            phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 2,
+        )
+        coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.get(ready.id) } returns ready
+        coEvery { operationUseCase.draft(ready.id) } returns mapOf(
+            "onu" to mapOf(
+                "olt_id" to onu.olt_id,
+                "pon_type" to onu.pon_type,
+                "board" to onu.board,
+                "port" to onu.port,
+                "onu" to onu.onu,
+                "onu_type_id" to onu.onu_type_id,
+                "onu_type_name" to onu.onu_type_name,
+                "sn" to onu.sn,
+            )
+        )
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(sampleCatalog())
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        val restoredForm = viewModel.uiState.value.registerSubscriptionForm
+        assertEquals(onu, restoredForm.selectedOnu)
+        assertTrue(restoredForm.onuList.contains(onu))
+        assertNull(restoredForm.validate(FormFieldKey.ONU))
+    }
+
+    @Test
+    fun `restoring an authorized ONU uses operation target when catalog and draft are empty`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val ready = com.google.gson.Gson().fromJson(
+            """{"id":"preauth-target","serial":"VSOL0031C0B6","subscriptionId":null,"phase":"READY_FOR_FORM","state":"READY_FOR_FORM","revision":5,"checkpoints":[],"onuTarget":{"oltId":"olt-lab","ponType":"gpon","board":"3","port":"2","onuType":"VSOLVA74","vlan":100},"oltEvidence":{"externalId":"olt-ont","board":3,"port":2,"ontId":12}}""",
+            OnuRegistrationOperation::class.java,
+        )
+        assertEquals("olt-lab", ready.onuTarget?.oltId)
+        assertEquals(12, ready.oltEvidence?.ontId)
+        coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.draft(ready.id) } returns null
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(sampleCatalog(onus = emptyList()))
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        val form = viewModel.uiState.value.registerSubscriptionForm
+        assertNull(viewModel.uiState.value.preauthorizationError)
+        assertEquals(ready.id, viewModel.uiState.value.preauthorizationOperation?.id)
+        assertEquals(ready.serial, form.selectedOnu?.sn)
+        assertEquals("12", form.selectedOnu?.onu)
+        assertNull(form.validate(FormFieldKey.ONU))
+
+        viewModel.refreshOnuList()
+        advanceUntilIdle()
+        assertEquals(ready.serial, viewModel.uiState.value.registerSubscriptionForm.selectedOnu?.sn)
+        assertNull(viewModel.uiState.value.registerSubscriptionForm.validate(FormFieldKey.ONU))
+    }
+
+    @Test
     fun `cancelling ready preauthorization clears sensitive form data and photo references`() = runTest(testDispatcher) {
         val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
         val ready = OnuRegistrationOperation(
@@ -304,6 +426,7 @@ class RegisterSubscriptionComposeViewModelTest {
             phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 4,
         )
         coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.get(ready.id) } returns ready
         coEvery { operationUseCase.draft(ready.id) } returns mapOf(
             "firstName" to "BORRAR", "wifiPassword24" to "secreto123",
             "facadePhotoUrl" to "https://storage.example/photo.jpg",
@@ -320,6 +443,8 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel.loadScreenData(null)
         advanceUntilIdle()
         viewModel.onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
+        coVerify(exactly = 0) { operationUseCase.cancel(any(), any()) }
+        viewModel.onIntent(RegisterSubscriptionIntent.ConfirmCancelOnuRegistration)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -330,6 +455,89 @@ class RegisterSubscriptionComposeViewModelTest {
         assertNull(state.registerSubscriptionForm.facadePhotoUri)
         assertNull(state.registerSubscriptionForm.selectedOnu)
         coVerify(exactly = 1) { operationUseCase.cancel(ready.id, ready.revision) }
+    }
+
+    @Test
+    fun `cancelling linked registration waits for cancellation then cleans subscription`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val linked = OnuRegistrationOperation(
+            id = "linked-cancel-flow",
+            serial = "VSOL0031C0B6",
+            subscriptionId = 84,
+            phase = "PROVISIONING",
+            state = "RUNNING",
+            revision = 5,
+        )
+        val requested = linked.copy(state = "CANCEL_REQUESTED", revision = 6)
+        val cancelled = linked.copy(state = "CANCELLED", revision = 7)
+        coEvery { operationUseCase.active() } returns linked
+        coEvery { operationUseCase.get(linked.id) } returnsMany listOf(linked, cancelled)
+        coEvery { operationUseCase.cancel(linked.id, linked.revision) } returns requested
+        coEvery { operationUseCase.cleanupCancelled(linked.id) } returns OnuRegistrationCleanupReport("COMPLETE")
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(sampleCatalog())
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isRegistering)
+        viewModel.onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
+        viewModel.onIntent(RegisterSubscriptionIntent.ConfirmCancelOnuRegistration)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.registrationCancelled)
+        assertNull(viewModel.uiState.value.preauthorizationOperation)
+        coVerify(exactly = 1) { operationUseCase.cancel(linked.id, linked.revision) }
+        coVerify(exactly = 1) { operationUseCase.cleanupCancelled(linked.id) }
+    }
+
+    @Test
+    fun `cancellation requested during submission waits for response before deleting subscription`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val onu = Onu("b", "olt", "1", "t", "VSOLVA74", "gpon", "p", "VSOL0031C0B6")
+        val preauthorization = OnuRegistrationOperation(
+            id = "cancel-during-submit",
+            serial = onu.sn,
+            subscriptionId = null,
+            phase = "READY_FOR_FORM",
+            state = "READY_FOR_FORM",
+            revision = 4,
+        )
+        val linked = preauthorization.copy(subscriptionId = 84, phase = "PROVISIONING", state = "RUNNING", revision = 5)
+        val requested = linked.copy(state = "CANCEL_REQUESTED", revision = 6)
+        val cancelled = linked.copy(state = "CANCELLED", revision = 7)
+        val submissionStarted = CompletableDeferred<Unit>()
+        val finishSubmission = CompletableDeferred<Result<RegisterSubscriptionResult>>()
+        coEvery { operationUseCase.active() } returns preauthorization
+        coEvery { operationUseCase.draft(preauthorization.id) } returns mapOf("facadePhotoUrl" to "https://storage.example/photo.jpg")
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { operationUseCase.get(preauthorization.id) } returnsMany listOf(linked, cancelled)
+        coEvery { operationUseCase.cancel(linked.id, linked.revision) } returns requested
+        coEvery { operationUseCase.cleanupCancelled(linked.id) } returns OnuRegistrationCleanupReport("COMPLETE")
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu().copy(sn = onu.sn)))
+        )
+        coEvery { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) } coAnswers {
+            submissionStarted.complete(Unit)
+            finishSubmission.await()
+        }
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        fillValidFiberForm(NapBoxResponse(id = "n1", placeName = "P1", placeId = 1), onu)
+        fillWifiFields()
+
+        viewModel.saveSubscription(facadePhotoFile)
+        testScheduler.runCurrent()
+        assertTrue(submissionStarted.isCompleted)
+        viewModel.onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
+        viewModel.onIntent(RegisterSubscriptionIntent.ConfirmCancelOnuRegistration)
+        coVerify(exactly = 0) { operationUseCase.cancel(any(), any()) }
+
+        finishSubmission.complete(Result.success(RegisterSubscriptionResult.Registered(Subscription(subscriptionId = 84))))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.registrationCancelled)
+        coVerify(exactly = 1) { operationUseCase.cancel(linked.id, linked.revision) }
+        coVerify(exactly = 1) { operationUseCase.cleanupCancelled(linked.id) }
     }
 
     @Test

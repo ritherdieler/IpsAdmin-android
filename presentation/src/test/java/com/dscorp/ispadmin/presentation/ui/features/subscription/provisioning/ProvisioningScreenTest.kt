@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.dscorp.ispadmin.domain.model.ProvisioningOperation
+import com.dscorp.ispadmin.domain.model.ProvisioningCheckpoint
 import com.dscorp.ispadmin.domain.model.ProvisioningProgress
 import org.junit.Rule
 import org.junit.Test
@@ -20,10 +21,15 @@ class ProvisioningScreenTest {
     @Test fun `cancel asks for confirmation and shows operation reference`() {
         val intents = mutableListOf<ProvisioningIntent>()
         val state = ProvisioningUiState(progress = ProvisioningProgress(
-            operation = ProvisioningOperation(id = "op-42", subscriptionId = 42, revision = 3, state = "FAILED"),
+            operation = ProvisioningOperation(id = "op-42", subscriptionId = 42, revision = 3, state = "FAILED", checkpoints = listOf(
+                ProvisioningCheckpoint(stage = "INTERNET", state = "FAILED", attempts = 1),
+                ProvisioningCheckpoint(stage = "WAN_CLEANUP", state = "PENDING", attempts = 0),
+            )),
             canRetry = true, canCancel = true))
         compose.setContent { MaterialTheme { ProvisioningContent(state = state, onIntent = { intents += it }, onNavigate = {}) } }
         compose.onNodeWithText("Referencia: op-42").assertIsDisplayed()
+        compose.onNodeWithText("Internet PPPoE: Requiere atención · Intento 1").assertIsDisplayed()
+        compose.onNodeWithText("Limpieza de WAN: Pendiente · Intento 0").assertIsDisplayed()
         compose.onNodeWithTag("provisioning_cancel").performClick()
         assertEquals(listOf(ProvisioningIntent.AskCancel), intents)
         compose.onNodeWithTag("provisioning_new").assertDoesNotExist()
