@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -12,6 +13,9 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -47,7 +52,9 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,8 +64,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -80,6 +87,7 @@ import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.canOpenRegistrationForm
 import com.dscorp.ispadmin.domain.model.subscription.RegisterSubscriptionFormConstraints
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.MyAutoCompleteTextViewCompose
@@ -94,12 +102,12 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.VLAN_OPTIONS
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.canAdvanceWizardStep
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.wizardFieldsFor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -113,8 +121,32 @@ fun RegisterSubscriptionForm(
     onFacadePhotoClick: () -> Unit = {},
 ) {
     val form = formState.registerSubscriptionForm
-    val isFormValid = form.isValid()
-    val canAdvanceCurrentStep = canAdvanceWizardStep(formState.wizardStep, form)
+    val missingFields = when (formState.wizardStep) {
+        RegisterSubscriptionWizardStep.ONU_SELECTION,
+        RegisterSubscriptionWizardStep.ONU_CONFIRMATION ->
+            if (form.selectedOnu == null) 1 else 0
+        RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> 0
+        RegisterSubscriptionWizardStep.CONFIRMATION ->
+            form.blockingFields().count { form.validate(it) != null }
+        else -> wizardFieldsFor(formState.wizardStep, form)
+            .count { form.validate(it) != null }
+    }
+    val navigationHint = when {
+        formState.wizardStep == RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> null
+        missingFields == 0 -> null
+        formState.wizardStep == RegisterSubscriptionWizardStep.ONU_SELECTION ->
+            "Selecciona una ONU para autorizarla en la OLT."
+        formState.wizardStep == RegisterSubscriptionWizardStep.ONU_CONFIRMATION ->
+            "Revisa los datos del equipo antes de autorizarlo."
+        formState.wizardStep == RegisterSubscriptionWizardStep.CONFIRMATION ->
+            "Completa los $missingFields datos pendientes para registrar."
+        else -> "Completa los $missingFields campos obligatorios para continuar."
+    }
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(formState.wizardStep) {
+        scrollState.animateScrollTo(0)
+    }
 
     Surface(
         modifier = modifier
@@ -140,112 +172,188 @@ fun RegisterSubscriptionForm(
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 16.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
             ) {
-                when (formState.wizardStep) {
-                    RegisterSubscriptionWizardStep.ONU_SELECTION -> OnuSelectionBlock(formState, form, onIntent)
-                    RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> OnuConfirmationBlock(form)
-                    RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> AcsWaitingBlock(formState)
-                    RegisterSubscriptionWizardStep.CLIENT_LOCATION -> {
-                        ClientDataFields(
-                            form = form,
-                            isLoading = formState.isLoading,
-                            onFirstNameChanged = {
-                                onIntent(RegisterSubscriptionIntent.FirstNameChanged(it))
-                            },
-                            onLastNameChanged = {
-                                onIntent(RegisterSubscriptionIntent.LastNameChanged(it))
-                            },
-                            onDniChanged = { onIntent(RegisterSubscriptionIntent.DniChanged(it)) },
-                            onPhoneChanged = { onIntent(RegisterSubscriptionIntent.PhoneChanged(it)) }
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        AddressFields(
-                            formState = formState,
-                            form = form,
-                            onPlaceSelected = {
-                                onIntent(RegisterSubscriptionIntent.PlaceSelected(it))
-                            },
-                            onPlaceSelectionCleared = {
-                                onIntent(RegisterSubscriptionIntent.PlaceSelectionCleared)
-                            },
-                            onAddressChanged = {
-                                onIntent(RegisterSubscriptionIntent.AddressChanged(it))
-                            },
-                            onUseCurrentLocation = {
-                                onIntent(RegisterSubscriptionIntent.UseCurrentLocationClicked)
-                            },
-                            onChooseManualLocation = {
-                                onIntent(RegisterSubscriptionIntent.ChooseManualLocationClicked)
-                            },
-                        )
-                    }
+                AnimatedContent(
+                    targetState = formState.wizardStep,
+                    transitionSpec = {
+                        (androidx.compose.animation.fadeIn(tween(180)) + slideInHorizontally { it / 18 }) togetherWith
+                            (androidx.compose.animation.fadeOut(tween(120)) + slideOutHorizontally { -it / 18 })
+                    },
+                    label = "registration_step_content",
+                ) { step ->
+                    Column {
+                        when (step) {
+                            RegisterSubscriptionWizardStep.ONU_SELECTION,
+                            RegisterSubscriptionWizardStep.ONU_CONFIRMATION ->
+                                OnuSelectionBlock(formState, form, onIntent)
+                            RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> AcsWaitingBlock(formState)
+                            RegisterSubscriptionWizardStep.CLIENT_LOCATION -> {
+                                if (formState.preauthorizationEnabled &&
+                                    formState.preauthorizationOperation?.canOpenRegistrationForm() == true
+                                ) {
+                                    EquipmentReadyBanner(formState)
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                }
+                                ClientDataFields(
+                                    form = form,
+                                    isLoading = formState.isLoading,
+                                    onFirstNameChanged = {
+                                        onIntent(RegisterSubscriptionIntent.FirstNameChanged(it))
+                                    },
+                                    onLastNameChanged = {
+                                        onIntent(RegisterSubscriptionIntent.LastNameChanged(it))
+                                    },
+                                    onDniChanged = { onIntent(RegisterSubscriptionIntent.DniChanged(it)) },
+                                    onPhoneChanged = { onIntent(RegisterSubscriptionIntent.PhoneChanged(it)) }
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                AddressFields(
+                                    formState = formState,
+                                    form = form,
+                                    onPlaceSelected = {
+                                        onIntent(RegisterSubscriptionIntent.PlaceSelected(it))
+                                    },
+                                    onPlaceSelectionCleared = {
+                                        onIntent(RegisterSubscriptionIntent.PlaceSelectionCleared)
+                                    },
+                                    onAddressChanged = {
+                                        onIntent(RegisterSubscriptionIntent.AddressChanged(it))
+                                    },
+                                    onUseCurrentLocation = {
+                                        onIntent(RegisterSubscriptionIntent.UseCurrentLocationClicked)
+                                    },
+                                    onChooseManualLocation = {
+                                        onIntent(RegisterSubscriptionIntent.ChooseManualLocationClicked)
+                                    },
+                                )
+                            }
 
-                    RegisterSubscriptionWizardStep.INSTALLATION -> {
-                        InstallationBlock(
-                            formState = formState,
-                            form = form,
-                            onIntent = onIntent
-                        )
-                    }
+                            RegisterSubscriptionWizardStep.INSTALLATION -> {
+                                InstallationBlock(
+                                    formState = formState,
+                                    form = form,
+                                    onIntent = onIntent
+                                )
+                                FacadePhotoSection(
+                                    formState = formState,
+                                    onFacadePhotoClick = onFacadePhotoClick
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                ObservationsField(
+                                    form = form,
+                                    isLoading = formState.isLoading,
+                                    onNoteChanged = { onIntent(RegisterSubscriptionIntent.NoteChanged(it)) }
+                                )
+                            }
 
-                    RegisterSubscriptionWizardStep.CONFIRMATION -> {
-                        FacadePhotoSection(
-                            formState = formState,
-                            onFacadePhotoClick = onFacadePhotoClick
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        ObservationsField(
-                            form = form,
-                            isLoading = formState.isLoading,
-                            onNoteChanged = { onIntent(RegisterSubscriptionIntent.NoteChanged(it)) }
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        SubscriptionSummary(
-                            form = form,
-                            isOfflineMode = formState.isOfflineMode && !formState.preauthorizationEnabled,
-                        )
+                            RegisterSubscriptionWizardStep.CONFIRMATION -> {
+                                SectionTitle("Revisa la suscripción")
+                                Text(
+                                    text = "Verifica los datos antes de registrar. Puedes volver atrás para editarlos.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                SubscriptionSummary(
+                                    form = form,
+                                    isOfflineMode = formState.isOfflineMode && !formState.preauthorizationEnabled,
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
             }
 
-            WizardNavigationBar(
-                step = formState.wizardStep,
-                isLoading = formState.isLoading,
-                isFormValid = isFormValid,
-                canAdvanceCurrentStep = canAdvanceCurrentStep,
-                preauthorizationEnabled = formState.preauthorizationEnabled,
-                selectedOnu = form.selectedOnu != null,
-                onBack = { onIntent(RegisterSubscriptionIntent.WizardBackClicked) },
-                onContinue = { onIntent(RegisterSubscriptionIntent.WizardContinueClicked) },
-                onRegister = { onIntent(RegisterSubscriptionIntent.RegisterClick()) },
-                retryLabel = when (formState.preauthorizationOperation?.state) {
-                    "CANCEL_FAILED" -> "Reintentar limpieza"
-                    "CANCEL_REQUESTED", "CANCELLING" -> "Consultar limpieza"
-                    else -> "Reintentar"
-                },
-                onRetryAcs = {
-                    if (formState.preauthorizationOperation?.state in setOf("CANCEL_FAILED", "CANCEL_REQUESTED", "CANCELLING")) {
-                        onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
-                    } else onIntent(RegisterSubscriptionIntent.RetryOnuRegistration)
-                },
-                onCancelPreauthorization = { onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) },
-            )
-            if (formState.preauthorizationEnabled && formState.wizardStep != RegisterSubscriptionWizardStep.WAITING_FOR_ACS) {
-                OutlinedButton(
-                    onClick = { onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) },
-                    enabled = !formState.isLoading,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
-                        .testTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL),
-                ) {
-                    Text("Cancelar registro")
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .imePadding()
+                    .background(MaterialTheme.colorScheme.surface)
+            ) {
+                navigationHint?.let { hint ->
+                    Text(
+                        text = hint,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp)
+                    )
                 }
+                WizardNavigationBar(
+                    step = formState.wizardStep,
+                    isLoading = formState.isLoading,
+                    canContinue = if (formState.wizardStep == RegisterSubscriptionWizardStep.ONU_SELECTION ||
+                        formState.wizardStep == RegisterSubscriptionWizardStep.ONU_CONFIRMATION
+                    ) form.selectedOnu != null else canAdvanceWizardStep(formState.wizardStep, form),
+                    canRegister = form.isValid() && if (formState.preauthorizationOperation != null) {
+                        !form.facadePhotoUrl.isNullOrBlank()
+                    } else {
+                        form.facadePhotoUri != null || !form.facadePhotoUrl.isNullOrBlank()
+                    },
+                    onBack = { onIntent(RegisterSubscriptionIntent.WizardBackClicked) },
+                    onContinue = { onIntent(RegisterSubscriptionIntent.WizardContinueClicked) },
+                    onRegister = { onIntent(RegisterSubscriptionIntent.RegisterClick()) },
+                    retryLabel = when (formState.preauthorizationOperation?.state) {
+                        "CANCEL_FAILED" -> "Reintentar limpieza"
+                        "CANCEL_REQUESTED", "CANCELLING" -> "Consultar limpieza"
+                        else -> "Reintentar"
+                    },
+                    onRetryAcs = {
+                        if (formState.preauthorizationOperation?.state in setOf("CANCEL_FAILED", "CANCEL_REQUESTED", "CANCELLING")) {
+                            onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
+                        } else onIntent(RegisterSubscriptionIntent.RetryOnuRegistration)
+                    },
+                    onCancelPreauthorization = { onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) },
+                )
+                if (formState.preauthorizationEnabled && formState.wizardStep != RegisterSubscriptionWizardStep.WAITING_FOR_ACS) {
+                    TextButton(
+                        onClick = { onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) },
+                        enabled = !formState.isLoading,
+                        modifier = Modifier
+                            .align(Alignment.End)
+                            .padding(end = 16.dp, bottom = 4.dp)
+                            .testTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL),
+                    ) {
+                        Text("Cancelar registro")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EquipmentReadyBanner(formState: RegisterSubscriptionState) {
+    val operation = formState.preauthorizationOperation ?: return
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+            Spacer(modifier = Modifier.size(10.dp))
+            Column {
+                Text(
+                    text = "Equipo listo",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+                Text(
+                    text = "ONU ${operation.serial} autorizada y conectada con ACS.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
             }
         }
     }
@@ -260,17 +368,22 @@ private fun ClientDataFields(
     onDniChanged: (String) -> Unit,
     onPhoneChanged: (String) -> Unit,
 ) {
-    SectionTitle("Datos del Cliente")
+    SectionTitle("Datos del cliente")
+    Text(
+        text = "Los campos marcados con * son obligatorios.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
     Spacer(modifier = Modifier.height(8.dp))
 
     TwoFieldsRow(
-        label1 = "Nombres (ej: Juan)",
+        label1 = "Nombres *",
         value1 = form.firstName,
         error1 = form.firstNameError,
         onValueChange1 = onFirstNameChanged,
         keyboardType1 = KeyboardType.Text,
         testTag1 = RegisterSubscriptionTestTags.FIRST_NAME,
-        label2 = "Apellidos (ej: Pérez)",
+        label2 = "Apellidos *",
         value2 = form.lastName,
         error2 = form.lastNameError,
         onValueChange2 = onLastNameChanged,
@@ -285,7 +398,7 @@ private fun ClientDataFields(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(RegisterSubscriptionTestTags.DNI),
-        label = "DNI (8 dígitos)",
+        label = "DNI · 8 dígitos *",
         value = form.dni,
         errorMessage = form.dniError,
         onValueChange = onDniChanged,
@@ -302,7 +415,7 @@ private fun ClientDataFields(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(RegisterSubscriptionTestTags.PHONE),
-        label = "Teléfono (9 dígitos)",
+        label = "Teléfono · 9 dígitos *",
         value = form.phone,
         errorMessage = form.phoneError,
         onValueChange = onPhoneChanged,
@@ -324,7 +437,7 @@ private fun AddressFields(
     onUseCurrentLocation: () -> Unit,
     onChooseManualLocation: () -> Unit,
 ) {
-    SectionTitle("Dirección")
+    SectionTitle("Dirección de instalación")
     Spacer(modifier = Modifier.height(8.dp))
 
     MyOutlinedTextField(
@@ -332,7 +445,7 @@ private fun AddressFields(
             .fillMaxWidth()
             .testTag(RegisterSubscriptionTestTags.ADDRESS),
         value = form.address,
-        label = "Dirección completa",
+        label = "Dirección completa *",
         errorMessage = form.addressError,
         onValueChange = onAddressChanged,
         enabled = !formState.isLoading,
@@ -345,6 +458,12 @@ private fun AddressFields(
     )
 
     Spacer(modifier = Modifier.height(16.dp))
+    Text(
+        text = "Indica el punto donde se instalará el servicio.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(bottom = 4.dp),
+    )
     LocationMethodSelector(
         selected = form.locationCaptureMethod,
         location = form.location,
@@ -371,12 +490,18 @@ private fun AddressFields(
         }
     }
 
+    Text(
+        text = "Escribe para filtrar la lista de lugares.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+    )
     MyAutoCompleteTextViewCompose(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(RegisterSubscriptionTestTags.PLACE),
         items = form.placeList,
-        label = "Lugar",
+        label = "Distrito o localidad *",
         selectedItem = form.selectedPlace,
         onItemSelected = onPlaceSelected,
         onSelectionCleared = onPlaceSelectionCleared,
@@ -391,7 +516,7 @@ private fun InstallationBlock(
     form: RegisterSubscriptionFormState,
     onIntent: (RegisterSubscriptionIntent) -> Unit,
 ) {
-    SectionTitle("Servicio")
+    SectionTitle("Servicio y equipo")
     Spacer(modifier = Modifier.height(8.dp))
 
     MyOutLinedDropDown(
@@ -538,7 +663,13 @@ private fun FacadePhotoSection(
     Spacer(modifier = Modifier.height(24.dp))
     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-    SectionTitle("Foto de Fachada")
+    SectionTitle("Foto de fachada")
+    Text(
+        text = "Añade una foto de la fachada para completar el registro.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
 
     val facadePhotoUri = formState.registerSubscriptionForm.facadePhotoUri
     val facadePhotoSource = formState.registerSubscriptionForm.facadePhotoUrl ?: facadePhotoUri?.toString()
@@ -568,8 +699,15 @@ private fun FacadePhotoSection(
                 },
                 shape = photoShape
             )
-            .clickable(enabled = !formState.isLoading) {
+            .clickable(enabled = !formState.isLoading, role = Role.Button) {
                 onFacadePhotoClick()
+            }
+            .semantics {
+                contentDescription = if (hasFacadePhoto) {
+                    "Cambiar foto de fachada"
+                } else {
+                    "Añadir foto de fachada"
+                }
             },
         contentAlignment = Alignment.Center
     ) {
@@ -582,7 +720,7 @@ private fun FacadePhotoSection(
             )
         } else {
             Text(
-                text = "Subir foto fachada",
+                text = "Añadir foto de fachada",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium
@@ -648,8 +786,12 @@ private fun OnuSelectionBlock(
     form: RegisterSubscriptionFormState,
     onIntent: (RegisterSubscriptionIntent) -> Unit,
 ) {
-    SectionTitle("Selecciona la ONU")
-    Text("Confirma primero el equipo que se autorizará en la OLT.", style = MaterialTheme.typography.bodyMedium)
+    SectionTitle("Selecciona y revisa la ONU")
+    Text(
+        "Elige el equipo que se autorizará en la OLT. Sus datos aparecen aquí para que puedas verificarlos antes de autorizarlo.",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
     Spacer(modifier = Modifier.height(12.dp))
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         MyOutLinedDropDown(
@@ -664,33 +806,94 @@ private fun OnuSelectionBlock(
         RefreshIcon(onRefreshOnuList = { onIntent(RegisterSubscriptionIntent.RefreshOnuList) }, formState = formState)
     }
     form.onuError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-}
-
-@Composable
-private fun OnuConfirmationBlock(form: RegisterSubscriptionFormState) {
-    SectionTitle("Confirma la ONU")
-    Text("Se autorizará este equipo en la OLT y se esperará su primer contacto con ACS antes de abrir el formulario.")
-    Spacer(modifier = Modifier.height(12.dp))
-    Text("Serial: ${form.selectedOnu?.sn ?: "—"}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-    Text("OLT: ${form.selectedOnu?.olt_id ?: "—"} · Board ${form.selectedOnu?.board ?: "—"} · Puerto ${form.selectedOnu?.port ?: "—"}")
-    Text("Tipo: ${form.selectedOnu?.onu_type_name ?: "—"} · VLAN cliente: ${form.vlan}")
+    if (form.onuList.isEmpty() && form.onuError == null && !formState.isLoading) {
+        Text(
+            text = "No hay equipos disponibles. Actualiza la lista o comprueba la conexión.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+    }
+    form.selectedOnu?.let { onu ->
+        Spacer(modifier = Modifier.height(16.dp))
+        SectionTitle("Datos del equipo")
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SummaryRow("Serial", onu.sn)
+                SummaryRow("OLT", onu.olt_id)
+                SummaryRow("Placa y puerto", "${onu.board} · ${onu.port}")
+                SummaryRow("Tipo", onu.onu_type_name)
+                SummaryRow("VLAN cliente", form.vlan)
+            }
+        }
+    }
 }
 
 @Composable
 private fun AcsWaitingBlock(formState: RegisterSubscriptionState) {
-    SectionTitle("Esperando respuesta de ACS")
+    SectionTitle("Conectando el equipo")
     val operation = formState.preauthorizationOperation
-    Text(
-        if (operation?.phase == "OLT_AUTHORIZATION") {
-            "La autorización en la OLT todavía no se confirmó. Reintenta la comprobación o cancela para limpiar el intento."
-        } else {
-            "La ONU se autorizó. ACS todavía no ha recibido el primer Inform TR-069; el formulario seguirá bloqueado hasta confirmarlo."
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (operation?.canOpenRegistrationForm() == true) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                } else {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+                Spacer(modifier = Modifier.size(12.dp))
+                Text(
+                    text = when {
+                        operation?.state in setOf("CANCEL_REQUESTED", "CANCELLING") -> "Limpiando la autorización"
+                        operation?.phase == "OLT_AUTHORIZATION" -> "Comprobando autorización en OLT"
+                        operation?.canOpenRegistrationForm() == true -> "Equipo conectado"
+                        else -> "Esperando conexión con ACS"
+                    },
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = when {
+                    operation?.phase == "OLT_AUTHORIZATION" ->
+                        "La autorización todavía no se confirma. Puedes volver a comprobarla o cancelar y limpiar el intento."
+                    operation?.canOpenRegistrationForm() == true ->
+                        "La ONU ya respondió a ACS. Ya puedes completar los datos de la suscripción."
+                    else ->
+                        "La ONU fue autorizada. El formulario estará listo cuando ACS reciba su primer mensaje TR-069."
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Text(
+                text = "Serial: ${operation?.serial ?: formState.registerSubscriptionForm.selectedOnu?.sn.orEmpty()}",
+                modifier = Modifier.padding(top = 8.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
         }
-    )
-    if (operation?.state == "CANCEL_REQUESTED" || operation?.state == "CANCELLING") {
-        Text("Limpiando la autorización de la ONU en la OLT…", modifier = Modifier.padding(top = 8.dp))
     }
-    Text("Serial: ${operation?.serial ?: formState.registerSubscriptionForm.selectedOnu?.sn.orEmpty()}", modifier = Modifier.padding(top = 8.dp))
+    if (operation?.state == "CANCEL_REQUESTED" || operation?.state == "CANCELLING") {
+        Text("Se está limpiando la autorización de la ONU en la OLT…", modifier = Modifier.padding(top = 8.dp))
+    }
     val failure = operation?.operationFailure ?: operation?.checkpoints?.firstOrNull { it.failure != null }?.failure
     failure?.let {
         Text("${it.code}: ${it.message}", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
@@ -701,67 +904,95 @@ private fun AcsWaitingBlock(formState: RegisterSubscriptionState) {
     }
 }
 
+private data class RegistrationProgressPhase(
+    val label: String,
+    val steps: Set<RegisterSubscriptionWizardStep>,
+)
+
+private fun registrationProgressPhases(preauthorizationEnabled: Boolean): List<RegistrationProgressPhase> {
+    val formPhases = listOf(
+        RegistrationProgressPhase("Cliente", setOf(RegisterSubscriptionWizardStep.CLIENT_LOCATION)),
+        RegistrationProgressPhase("Servicio", setOf(RegisterSubscriptionWizardStep.INSTALLATION)),
+        RegistrationProgressPhase("Revisión", setOf(RegisterSubscriptionWizardStep.CONFIRMATION)),
+    )
+    if (!preauthorizationEnabled) return formPhases
+
+    return listOf(
+        RegistrationProgressPhase(
+            "Equipo",
+            setOf(
+                RegisterSubscriptionWizardStep.ONU_SELECTION,
+                RegisterSubscriptionWizardStep.ONU_CONFIRMATION,
+                RegisterSubscriptionWizardStep.WAITING_FOR_ACS,
+            ),
+        ),
+    ) + formPhases
+}
+
 @Composable
 private fun RegisterSubscriptionWizardStepper(
     currentStep: RegisterSubscriptionWizardStep,
     preauthorizationEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val steps = RegisterSubscriptionWizardStep.entries.filter {
-        preauthorizationEnabled || !it.isPreauthorizationStep()
-    }
-    Row(
-        modifier = modifier.testTag("wizard_stepper"),
-        verticalAlignment = Alignment.CenterVertically,
+    val phases = registrationProgressPhases(preauthorizationEnabled)
+    val currentPhaseIndex = phases.indexOfFirst { currentStep in it.steps }.coerceAtLeast(0)
+    val currentPhase = phases[currentPhaseIndex]
+
+    Column(
+        modifier = modifier
+            .testTag("wizard_stepper")
+            .semantics {
+                contentDescription = "Paso ${currentPhaseIndex + 1} de ${phases.size}: ${currentPhase.label}"
+            },
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        steps.forEachIndexed { index, step ->
-            if (index > 0) {
-                HorizontalDivider(
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "PASO ${currentPhaseIndex + 1} DE ${phases.size}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = currentPhase.label,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            phases.forEachIndexed { index, _ ->
+                Box(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(horizontal = 8.dp),
-                    color = if (currentStep.ordinal >= step.ordinal) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.outlineVariant
-                    }
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            if (index <= currentPhaseIndex) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        .testTag("wizard_step_${index + 1}"),
                 )
             }
-            val completed = currentStep.ordinal > step.ordinal
-            val selected = currentStep == step
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(
-                        when {
-                            selected -> MaterialTheme.colorScheme.primary
-                            completed -> MaterialTheme.colorScheme.primaryContainer
-                            else -> MaterialTheme.colorScheme.surfaceVariant
-                        }
-                    )
-                    .testTag("wizard_step_${index + 1}"),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (completed) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Paso ${index + 1} completado",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(16.dp)
-                    )
-                } else {
-                    Text(
-                        text = "${index + 1}",
-                        color = if (selected) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            phases.forEachIndexed { index, phase ->
+                Text(
+                    text = phase.label,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (index == currentPhaseIndex) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    fontWeight = if (index == currentPhaseIndex) FontWeight.SemiBold else FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }
@@ -771,10 +1002,8 @@ private fun RegisterSubscriptionWizardStepper(
 private fun WizardNavigationBar(
     step: RegisterSubscriptionWizardStep,
     isLoading: Boolean,
-    isFormValid: Boolean,
-    canAdvanceCurrentStep: Boolean,
-    preauthorizationEnabled: Boolean,
-    selectedOnu: Boolean,
+    canContinue: Boolean,
+    canRegister: Boolean,
     onBack: () -> Unit,
     onContinue: () -> Unit,
     onRegister: () -> Unit,
@@ -823,14 +1052,14 @@ private fun WizardNavigationBar(
                         .testTag(RegisterSubscriptionTestTags.SUBMIT),
                     text = "Registrar suscripción",
                     onClick = onRegister,
-                    enabled = isFormValid,
+                    enabled = !isLoading && canRegister,
                     isLoading = isLoading
                 )
             } else {
-                val label = if (step == RegisterSubscriptionWizardStep.ONU_CONFIRMATION) "Autorizar ONU" else "Continuar"
-                val canContinue = when (step) {
-                    RegisterSubscriptionWizardStep.ONU_SELECTION, RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> selectedOnu
-                    else -> canAdvanceCurrentStep
+                val label = when (step) {
+                    RegisterSubscriptionWizardStep.ONU_SELECTION,
+                    RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> "Autorizar ONU"
+                    else -> "Continuar"
                 }
                 MyButton(
                     modifier = Modifier
@@ -838,7 +1067,7 @@ private fun WizardNavigationBar(
                         .testTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE),
                     text = label,
                     onClick = onContinue,
-                    enabled = !isLoading && (preauthorizationEnabled.not() || canContinue),
+                    enabled = !isLoading && canContinue,
                     isLoading = isLoading
                 )
             }
@@ -852,50 +1081,61 @@ private fun SubscriptionSummary(
     isOfflineMode: Boolean,
 ) {
     SectionTitle("Resumen de la suscripción")
-    Spacer(modifier = Modifier.height(8.dp))
-    SummaryRow("Cliente", "${form.firstName} ${form.lastName}".trim())
-    SummaryRow("DNI", form.dni)
-    SummaryRow("Teléfono", form.phone)
-    SummaryRow("Dirección", form.address)
-    form.location?.let { latLng ->
-        SummaryRow(
-            "Coordenadas",
-            "${"%.6f".format(latLng.latitude)}, ${"%.6f".format(latLng.longitude)}"
-        )
-    }
-    SummaryRow("Lugar", form.selectedPlace?.name.orEmpty())
-    SummaryRow(
-        "Tipo",
-        when (form.installationType) {
-            InstallationType.FIBER -> FIBER_OPTIC
-            InstallationType.WIRELESS -> WIRELESS
-            InstallationType.ONLY_TV_FIBER -> ONLY_TV
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            SummaryRow("Cliente", "${form.firstName} ${form.lastName}".trim())
+            SummaryRow("DNI", form.dni)
+            SummaryRow("Teléfono", form.phone)
+            SummaryRow("Dirección", form.address)
+            form.location?.let { latLng ->
+                SummaryRow(
+                    "Ubicación",
+                    "${"%.6f".format(latLng.latitude)}, ${"%.6f".format(latLng.longitude)}"
+                )
+            }
+            SummaryRow("Lugar", form.selectedPlace?.name.orEmpty())
+            SummaryRow(
+                "Tipo de instalación",
+                when (form.installationType) {
+                    InstallationType.FIBER -> FIBER_OPTIC
+                    InstallationType.WIRELESS -> WIRELESS
+                    InstallationType.ONLY_TV_FIBER -> ONLY_TV
+                }
+            )
+            SummaryRow("Plan", form.selectedPlan?.name.orEmpty())
+            SummaryRow("Observaciones", form.note)
+            if (form.requiresNapBox()) {
+                SummaryRow("NAP", form.selectedNapBox?.code?.takeIf { it.isNotBlank() }
+                    ?: form.selectedNapBox?.id.orEmpty())
+            }
+            if (form.requiresOnu()) {
+                SummaryRow("ONU", form.selectedOnu?.sn.orEmpty())
+                SummaryRow("VLAN", form.vlan)
+            }
+            if (form.requiresWifiConfig()) {
+                val ssid24Label = if (form.useDifferentWifiNames) "SSID 2.4" else "WiFi"
+                SummaryRow(ssid24Label, form.wifiSsid24)
+                if (form.useDifferentWifiNames) {
+                    SummaryRow("SSID 5", form.wifiSsid5)
+                } else if (form.wifiSsid24.isNotBlank()) {
+                    SummaryRow("SSID 5", form.resolvedWifiSsid5())
+                }
+            }
+            SummaryRow(
+                "Condición del equipo",
+                if (form.equipmentCondition == EquipmentCondition.LOAN) EQUIPMENT_LOAN else EQUIPMENT_SOLD
+            )
+            if (isOfflineMode) {
+                SummaryRow("IP", form.clientIpAddress)
+            }
         }
-    )
-    SummaryRow("Plan", form.selectedPlan?.name.orEmpty())
-    if (form.requiresNapBox()) {
-        SummaryRow("NAP", form.selectedNapBox?.code?.takeIf { it.isNotBlank() }
-            ?: form.selectedNapBox?.id.orEmpty())
-    }
-    if (form.requiresOnu()) {
-        SummaryRow("ONU", form.selectedOnu?.sn.orEmpty())
-        SummaryRow("VLAN", form.vlan)
-    }
-    if (form.requiresWifiConfig()) {
-        val ssid24Label = if (form.useDifferentWifiNames) "SSID 2.4" else "WiFi"
-        SummaryRow(ssid24Label, form.wifiSsid24)
-        if (form.useDifferentWifiNames) {
-            SummaryRow("SSID 5", form.wifiSsid5)
-        } else if (form.wifiSsid24.isNotBlank()) {
-            SummaryRow("SSID 5", form.resolvedWifiSsid5())
-        }
-    }
-    SummaryRow(
-        "Equipo",
-        if (form.equipmentCondition == EquipmentCondition.LOAN) EQUIPMENT_LOAN else EQUIPMENT_SOLD
-    )
-    if (isOfflineMode) {
-        SummaryRow("IP", form.clientIpAddress)
     }
 }
 
@@ -1431,7 +1671,7 @@ private fun LocationMethodSelector(
     onChooseManualLocation: () -> Unit,
 ) {
     Text(
-        text = "Ubicación del cliente",
+        text = "Ubicación del cliente *",
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold
     )
@@ -1445,7 +1685,7 @@ private fun LocationMethodSelector(
             modifier = Modifier
                 .weight(1f)
                 .testTag(RegisterSubscriptionTestTags.LOCATION_METHOD_CURRENT),
-            label = "Ubi. Actual",
+            label = "Usar ubicación actual",
             selected = selected == LocationCaptureMethod.CURRENT,
             onClick = onUseCurrentLocation,
             textStyle = MaterialTheme.typography.bodySmall,
@@ -1455,7 +1695,7 @@ private fun LocationMethodSelector(
             modifier = Modifier
                 .weight(1f)
                 .testTag(RegisterSubscriptionTestTags.LOCATION_METHOD_MANUAL),
-            label = "Ubi. Manualmente",
+            label = "Elegir en el mapa",
             selected = selected == LocationCaptureMethod.MANUAL,
             onClick = onChooseManualLocation,
             textStyle = MaterialTheme.typography.bodySmall,

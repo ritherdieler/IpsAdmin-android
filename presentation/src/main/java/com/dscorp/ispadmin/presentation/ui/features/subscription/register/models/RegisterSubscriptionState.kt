@@ -8,6 +8,7 @@ import com.dscorp.ispadmin.domain.model.RegistrationProgressCheckpoint
 
 data class RegisterSubscriptionState(
     val isLoading: Boolean = false,
+    val isPreauthorizationRequestInProgress: Boolean = false,
     val isRegistering: Boolean = false,
     val isRefreshingOnuList: Boolean = false,
     val isLoadingLocation: Boolean = false,

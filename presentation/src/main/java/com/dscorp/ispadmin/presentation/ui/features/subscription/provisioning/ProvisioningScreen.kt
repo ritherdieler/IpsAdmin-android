@@ -16,6 +16,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import org.koin.androidx.compose.koinViewModel
 
+private val supportedProvisioningStages = setOf(
+    "VALIDATE", "MIKROTIK", "OLT", "ACS_CONTACT", "INTERNET", "WIFI", "WAN_CLEANUP", "VERIFY",
+)
+
 enum class ProvisioningDestination { BACK, NEW_REGISTRATION }
 
 @Composable
@@ -55,7 +59,10 @@ fun ProvisioningContent(
                         onClick = { onIntent(ProvisioningIntent.Load(id)) }) { Text("Actualizar estado") }
                 }
             }
-            items(items = state.progress?.operation?.checkpoints.orEmpty(), key = { it.stage }) { step ->
+            items(
+                items = state.progress?.operation?.checkpoints.orEmpty().filter { it.stage in supportedProvisioningStages },
+                key = { it.stage },
+            ) { step ->
                 Text("${provisioningLabel(step.stage)}: ${provisioningLabel(step.state)} · Intento ${step.attempts}")
                 step.failure?.let { Text("${it.message}\n${it.code}", color = MaterialTheme.colorScheme.error) }
             }
@@ -97,7 +104,6 @@ private fun provisioningLabel(value: String): String = when (value) {
     "VALIDATE" -> "Validación"
     "MIKROTIK" -> "Acceso del cliente"
     "OLT" -> "Autorización de la ONU"
-    "OMCI" -> "WAN de gestión"
     "ACS_CONTACT" -> "Conexión con ACS"
     "INTERNET" -> "Internet PPPoE"
     "WIFI" -> "WiFi"

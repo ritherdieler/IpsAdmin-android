@@ -10,19 +10,22 @@ import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.NetworkDevice
 import com.dscorp.ispadmin.domain.model.Onu
+import com.dscorp.ispadmin.domain.model.OnuRegistrationCancellationIntent
+import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.Subscription
-import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
 import com.dscorp.ispadmin.domain.model.canManuallyRetry
 import com.dscorp.ispadmin.domain.model.canOpenRegistrationForm
-import com.dscorp.ispadmin.domain.repository.OnuRegistrationTarget
-import com.dscorp.ispadmin.domain.repository.StartOnuRegistrationRequest
 import com.dscorp.ispadmin.domain.model.subscription.RegisterSubscriptionFormConstraints
 import com.dscorp.ispadmin.domain.model.subscription.napBoxToPreselectAfterNearbyRefresh
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionFacadePhotoError
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionNapBoxErrorAfterNearbyRefresh
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionOnuErrorAfterListRefresh
+import com.dscorp.ispadmin.domain.repository.OnuRegistrationCancellationIntentStore
+import com.dscorp.ispadmin.domain.repository.OnuRegistrationSelectionStore
+import com.dscorp.ispadmin.domain.repository.OnuRegistrationTarget
+import com.dscorp.ispadmin.domain.repository.StartOnuRegistrationRequest
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.catalog.GetRegistrationCatalogUseCase
 import com.dscorp.ispadmin.domain.usecase.catalog.RefreshRegistrationCatalogUseCase
@@ -30,10 +33,10 @@ import com.dscorp.ispadmin.domain.usecase.subscription.GetAvailableOnuListUseCas
 import com.dscorp.ispadmin.domain.usecase.subscription.GetNearNapBoxesUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetPlaceFromLocationUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetUserSessionUseCase
-import com.dscorp.ispadmin.domain.usecase.subscription.OnuRegistrationOperationUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.ObserveOfflineRegistrationModeUseCase
-import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionResult
+import com.dscorp.ispadmin.domain.usecase.subscription.OnuRegistrationOperationUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.PollRegistrationProgressUseCase
+import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionResult
 import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.RetryTr069ProvisioningUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.toSubscriptionOrNull
@@ -95,6 +98,8 @@ class RegisterSubscriptionComposeViewModel(
     private val observabilityClient: ObservabilityClient,
     private val mainImmediate: CoroutineDispatcher = Dispatchers.Main.immediate,
     private val onuRegistrationOperationUseCase: OnuRegistrationOperationUseCase? = null,
+    private val cancellationIntentStore: OnuRegistrationCancellationIntentStore? = null,
+    private val onuRegistrationSelectionStore: OnuRegistrationSelectionStore? = null,
 ) : ViewModel() {
 
     private companion object {
@@ -168,6 +173,9 @@ class RegisterSubscriptionComposeViewModel(
     private var cancellationJob: Job? = null
     private var cancellationRequested = false
     private var subscriptionSubmissionInFlight = false
+    private var registrationRequestKeyInFlight: String? = null
+    private var registrationSerialInFlight: String? = null
+    private var pendingCancellationIntent: OnuRegistrationCancellationIntent? = null
 
     init {
         onuRegistrationOperationUseCase?.let { operationUseCase ->
@@ -247,6 +255,7 @@ class RegisterSubscriptionComposeViewModel(
                     }
                 }
                 if (onuRegistrationOperationUseCase != null) {
+                    restorePreauthorizationSelection()
                     restoreActivePreauthorization()
                 }
                 _uiState.update { it.copy(isLoading = false) }
@@ -427,10 +436,18 @@ class RegisterSubscriptionComposeViewModel(
             when (current.wizardStep) {
                 RegisterSubscriptionWizardStep.ONU_SELECTION -> {
                     val validated = current.registerSubscriptionForm.validated(FormFieldKey.ONU)
-                    if (validated.validate(FormFieldKey.ONU) == null) {
-                        _uiState.update { it.copy(registerSubscriptionForm = validated, wizardStep = RegisterSubscriptionWizardStep.ONU_CONFIRMATION) }
-                    } else {
+                    val onuError = validated.validate(FormFieldKey.ONU)
+                    if (validated.selectedOnu != null && onuError == null) {
                         _uiState.update { it.copy(registerSubscriptionForm = validated) }
+                        startOnuPreauthorization()
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                registerSubscriptionForm = validated.copy(
+                                    onuError = onuError ?: "Selecciona una ONU para autorizarla."
+                                )
+                            )
+                        }
                     }
                 }
                 RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> startOnuPreauthorization()
@@ -462,13 +479,22 @@ class RegisterSubscriptionComposeViewModel(
         val useCase = onuRegistrationOperationUseCase ?: return
         val selectedOnu = currentUiState().registerSubscriptionForm.selectedOnu ?: return
         val vlan = currentUiState().registerSubscriptionForm.vlan.toIntOrNull() ?: return
+        val requestKey = UUID.randomUUID().toString()
+        registrationRequestKeyInFlight = requestKey
+        registrationSerialInFlight = selectedOnu.sn
         registerSubscriptionJob?.cancel()
         registerSubscriptionJob = viewModelScope.launch(mainImmediate) {
-            _uiState.update { it.copy(isLoading = true, preauthorizationError = null) }
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    isPreauthorizationRequestInProgress = true,
+                    preauthorizationError = null,
+                )
+            }
             try {
                 val operation = useCase.start(
                     StartOnuRegistrationRequest(
-                        requestKey = UUID.randomUUID().toString(),
+                        requestKey = requestKey,
                         serial = selectedOnu.sn,
                         target = OnuRegistrationTarget(
                             oltId = selectedOnu.olt_id,
@@ -482,10 +508,26 @@ class RegisterSubscriptionComposeViewModel(
                 )
                 showPreauthorizationOperation(operation, restoreDraft = false)
             } catch (cancelled: CancellationException) {
+                _uiState.update {
+                    it.copy(isLoading = false, isPreauthorizationRequestInProgress = false)
+                }
                 throw cancelled
             } catch (error: Exception) {
-                _uiState.update { it.copy(isLoading = false, preauthorizationError = error.message ?: "No se pudo autorizar la ONU") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isPreauthorizationRequestInProgress = false,
+                        preauthorizationError = error.message ?: "No se pudo autorizar la ONU",
+                    )
+                }
                 _uiEvent.emit(RegisterSubscriptionUiEvent.Error(error.message ?: "No se pudo autorizar la ONU"))
+            } finally {
+                if (cancellationRequested) {
+                    viewModelScope.launch(mainImmediate) {
+                        yield()
+                        startDeferredCancellation()
+                    }
+                }
             }
         }
     }
@@ -496,48 +538,105 @@ class RegisterSubscriptionComposeViewModel(
         if (!operation.canManuallyRetry() || currentUiState().isLoading) return
         registerSubscriptionJob?.cancel()
         registerSubscriptionJob = viewModelScope.launch(mainImmediate) {
-            _uiState.update { it.copy(isLoading = true, preauthorizationError = null) }
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    isPreauthorizationRequestInProgress = true,
+                    preauthorizationError = null,
+                )
+            }
             try {
                 showPreauthorizationOperation(useCase.retry(operation.id, operation.revision), restoreDraft = true)
             } catch (cancelled: CancellationException) {
+                _uiState.update {
+                    it.copy(isLoading = false, isPreauthorizationRequestInProgress = false)
+                }
                 throw cancelled
             } catch (error: Exception) {
-                _uiState.update { it.copy(isLoading = false, preauthorizationError = error.message ?: "No se pudo consultar ACS") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isPreauthorizationRequestInProgress = false,
+                        preauthorizationError = error.message ?: "No se pudo consultar ACS",
+                    )
+                }
             }
         }
     }
 
     private fun cancelOnuRegistration() {
+        val current = currentUiState()
+        if (current.registrationCancelled || current.cancellationInProgress) return
         _uiState.update { it.copy(showCancelConfirmation = true) }
     }
 
     private fun confirmCancelOnuRegistration() {
+        val current = currentUiState()
+        if (current.registrationCancelled || current.cancellationInProgress) return
         _uiState.update { it.copy(showCancelConfirmation = false, registrationCancelled = false) }
         cancellationRequested = true
         _uiState.update { it.copy(cancellationInProgress = true) }
-        if (subscriptionSubmissionInFlight || photoUploadJob?.isActive == true || loadScreenJob?.isActive == true) return
+        if (subscriptionSubmissionInFlight) {
+            viewModelScope.launch(mainImmediate) {
+                try {
+                    persistCancellationIntent(current.preauthorizationOperation)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    showCancellationError(error.message ?: "No se pudo guardar la cancelación pendiente.")
+                }
+            }
+            return
+        }
         startDeferredCancellation()
     }
 
     private fun startDeferredCancellation() {
-        if (!cancellationRequested || subscriptionSubmissionInFlight || cancellationJob?.isActive == true) return
+        if (!cancellationRequested || cancellationJob?.isActive == true) return
         cancellationJob = viewModelScope.launch(mainImmediate) { performRegistrationCancellation() }
     }
 
     private suspend fun performRegistrationCancellation() {
-        cancellationRequested = false
         val useCase = onuRegistrationOperationUseCase
         if (useCase == null) {
+            cancellationRequested = false
             completeRegistrationCancellation()
             return
         }
         val knownOperation = currentUiState().preauthorizationOperation
-        showCancellationInProgress()
         try {
+            val intent = persistCancellationIntent(knownOperation)
+            cancellationRequested = false
+            showCancellationInProgress()
+            awaitCancellationDependencies()
             val currentOperation = loadCancellationOperation(useCase, knownOperation)
             if (currentOperation == null) {
-                if (!_uiState.value.registrationCancelled) completeRegistrationCancellation()
+                if (intent != null) {
+                    val active = useCase.active()
+                    if (active != null && matchesCancellationIntent(intent, active)) {
+                        _uiState.update { it.copy(preauthorizationOperation = active) }
+                        pollCancellationUntilComplete(useCase, requestOperationCancellation(useCase, active))
+                    } else if (active == null) {
+                        completeRegistrationCancellation()
+                        if (!_uiState.value.registrationCancelled) {
+                            showCancellationError("La operación aún no aparece en el servidor. La intención se conservará para volver a intentarlo.")
+                        }
+                    } else {
+                        showCancellationError("La operación activa no coincide con la ONU seleccionada. La intención se conservará sin cancelar otra operación.")
+                    }
+                } else if (!_uiState.value.registrationCancelled) {
+                    completeRegistrationCancellation()
+                }
                 return
+            }
+            val persistedIntent = pendingCancellationIntent ?: intent
+            if (persistedIntent != null && !matchesCancellationIntent(persistedIntent, currentOperation)) {
+                showCancellationError("La operación activa no coincide con la ONU seleccionada. La intención se conservará sin cancelar otra operación.")
+                return
+            }
+            if (persistedIntent != null && currentOperation.id != persistedIntent.operationId) {
+                pendingCancellationIntent = persistedIntent.copy(operationId = currentOperation.id)
+                cancellationIntentStore?.save(pendingCancellationIntent!!)
             }
             val requested = requestOperationCancellation(useCase, currentOperation)
             _uiState.update { it.copy(preauthorizationOperation = requested) }
@@ -546,6 +645,55 @@ class RegisterSubscriptionComposeViewModel(
             throw cancelled
         } catch (error: Exception) {
             showCancellationError(error.message ?: "No se pudo completar la cancelación. Pulsa cancelar para reintentar.")
+        }
+    }
+
+    private suspend fun awaitCancellationDependencies() {
+        val currentJob = kotlinx.coroutines.currentCoroutineContext()[Job]
+        listOf(loadScreenJob, registerSubscriptionJob, photoUploadJob)
+            .filterNotNull()
+            .distinct()
+            .forEach { job -> if (job !== currentJob) job.join() }
+    }
+
+    private suspend fun persistCancellationIntent(
+        operation: OnuRegistrationOperation?,
+    ): OnuRegistrationCancellationIntent? {
+        val current = currentUiState()
+        val operatorId = current.currentUser?.id?.toLong() ?: operation?.operatorId
+        val serial = operation?.serial ?: registrationSerialInFlight
+            ?: current.registerSubscriptionForm.selectedOnu?.sn
+        val requestKey = operation?.registrationRequestKey
+            ?: registrationRequestKeyInFlight
+            ?: operation?.id?.let { "operation:$it" }
+        if (operatorId == null || serial.isNullOrBlank() || requestKey.isNullOrBlank()) {
+            return pendingCancellationIntent
+        }
+        val existing = pendingCancellationIntent?.takeIf {
+            it.operatorId == operatorId && it.requestKey == requestKey && it.serial.equals(serial, true)
+        } ?: cancellationIntentStore?.get(operatorId)?.takeIf {
+            it.requestKey == requestKey && it.serial.equals(serial, true)
+        }
+        val intent = OnuRegistrationCancellationIntent(
+            operatorId = operatorId,
+            requestKey = requestKey,
+            serial = serial,
+            operationId = operation?.id ?: existing?.operationId,
+        )
+        cancellationIntentStore?.save(intent)
+        pendingCancellationIntent = intent
+        return intent
+    }
+
+    private fun matchesCancellationIntent(
+        intent: OnuRegistrationCancellationIntent,
+        operation: OnuRegistrationOperation,
+    ): Boolean {
+        if (!intent.serial.equals(operation.serial, ignoreCase = true)) return false
+        return when {
+            intent.operationId != null -> intent.operationId == operation.id
+            intent.requestKey.startsWith("operation:") -> intent.requestKey == "operation:${operation.id}"
+            else -> intent.requestKey == operation.registrationRequestKey
         }
     }
 
@@ -576,12 +724,16 @@ class RegisterSubscriptionComposeViewModel(
         useCase: OnuRegistrationOperationUseCase,
         known: OnuRegistrationOperation?,
     ): OnuRegistrationOperation? = try {
-        known?.let { useCase.get(it.id) } ?: useCase.active()
+        known?.let { useCase.get(it.id) }
+            ?: pendingCancellationIntent?.operationId?.let { operationId ->
+                runCatching { useCase.get(operationId) }.getOrNull()
+            }
+            ?: useCase.active()
     } catch (error: Exception) {
         if (known?.state == "CANCELLED" && known.subscriptionId != null) {
             val cleanup = useCase.cleanupCancelled(known.id)
             if (cleanup.status == "COMPLETE") {
-                completeRegistrationCancellation()
+                completeRegistrationCancellation(known)
                 null
             } else {
                 throw IllegalStateException(cleanup.message ?: "La limpieza continúa pendiente", error)
@@ -642,7 +794,7 @@ class RegisterSubscriptionComposeViewModel(
         operation: OnuRegistrationOperation,
     ) {
         if (operation.subscriptionId != null && !hardCleanupCompleted(useCase, operation)) return
-        completeRegistrationCancellation()
+        completeRegistrationCancellation(operation)
     }
 
     private suspend fun hardCleanupCompleted(
@@ -675,17 +827,76 @@ class RegisterSubscriptionComposeViewModel(
         }
     }
 
-    private suspend fun completeRegistrationCancellation() {
-        _uiState.update {
-            it.copy(
+    private suspend fun completeRegistrationCancellation(
+        operation: OnuRegistrationOperation? = currentUiState().preauthorizationOperation,
+    ) {
+        val serial = operation?.serial ?: pendingCancellationIntent?.serial
+            ?: currentUiState().registerSubscriptionForm.selectedOnu?.sn
+        if (serial.isNullOrBlank()) {
+            markRegistrationCancellationComplete()
+            return
+        }
+        val availableOnus = getAvailableOnuListUseCase().getOrElse { error ->
+            showCancellationError(
+                "La limpieza terminó, pero no se pudo actualizar la lista de ONUs. Pulsa actualizar para reintentar. ${error.message.orEmpty()}".trim()
+            )
+            return
+        }
+        completeCancellationWithAvailableOnus(operation, serial, availableOnus)
+    }
+
+    private suspend fun completeCancellationWithAvailableOnus(
+        operation: OnuRegistrationOperation?,
+        serial: String,
+        availableOnus: List<Onu>,
+    ) {
+        val onuIsAvailable = availableOnus.any { it.sn.equals(serial, ignoreCase = true) }
+        if (!onuIsAvailable) {
+            _uiState.update { current ->
+                current.copy(
+                    isLoading = false,
+                    isRegistering = false,
+                    cancellationInProgress = false,
+                    isRefreshingOnuList = false,
+                    registrationCancelled = false,
+                    preauthorizationOperation = operation ?: current.preauthorizationOperation,
+                    preauthorizationError = "La limpieza está confirmada, pero la ONU todavía no aparece disponible. Actualiza la lista para volver a registrarla.",
+                    wizardStep = RegisterSubscriptionWizardStep.ONU_SELECTION,
+                    registerSubscriptionForm = current.registerSubscriptionForm.copy(
+                        onuList = availableOnus,
+                        selectedOnu = null,
+                    ),
+                )
+            }
+            return
+        }
+
+        val intent = pendingCancellationIntent
+        if (intent != null) {
+            cancellationIntentStore?.clear(intent.operatorId, intent.requestKey)
+        }
+        pendingCancellationIntent = null
+        registrationRequestKeyInFlight = null
+        registrationSerialInFlight = null
+        markRegistrationCancellationComplete(availableOnus)
+    }
+
+    private fun markRegistrationCancellationComplete(availableOnus: List<Onu>? = null) {
+        clearStoredOnuSelection()
+        _uiState.update { current ->
+            current.copy(
                 isLoading = false,
                 isRegistering = false,
                 cancellationInProgress = false,
+                isRefreshingOnuList = false,
                 registrationCancelled = true,
                 preauthorizationOperation = null,
                 preauthorizationError = null,
+                registrationProgressMessage = "",
                 wizardStep = RegisterSubscriptionWizardStep.ONU_SELECTION,
-                registerSubscriptionForm = clearRegistrationForm(it.registerSubscriptionForm),
+                registerSubscriptionForm = clearRegistrationForm(current.registerSubscriptionForm).copy(
+                    onuList = availableOnus ?: current.registerSubscriptionForm.onuList,
+                ),
             )
         }
     }
@@ -693,7 +904,46 @@ class RegisterSubscriptionComposeViewModel(
     private suspend fun restoreActivePreauthorization() {
         val useCase = onuRegistrationOperationUseCase ?: return
         try {
-            val operation = useCase.active() ?: return
+            val operatorId = currentUiState().currentUser?.id?.toLong()
+            pendingCancellationIntent = operatorId?.let { cancellationIntentStore?.get(it) }
+            val intent = pendingCancellationIntent
+            val operationById = intent?.operationId?.let { operationId ->
+                runCatching { useCase.get(operationId) }.getOrNull()
+            }
+            val operation = operationById ?: useCase.active()
+            if (operation == null) {
+                if (intent != null) {
+                    completeRegistrationCancellation()
+                    if (_uiState.value.registrationCancelled) return
+                    _uiState.update {
+                        it.copy(
+                            cancellationInProgress = false,
+                            preauthorizationError = "La cancelación sigue pendiente de sincronizar con el servidor. Actualiza la lista o vuelve a intentarlo.",
+                        )
+                    }
+                }
+                return
+            }
+            if (intent != null) {
+                if (!matchesCancellationIntent(intent, operation)) {
+                    showPreauthorizationOperation(operation, restoreDraft = true)
+                    _uiState.update {
+                        it.copy(preauthorizationError = "Hay una cancelación pendiente para ${intent.serial}; no se canceló la operación activa porque su identidad no coincide.")
+                    }
+                    return
+                }
+                _uiState.update {
+                    it.copy(
+                        preauthorizationEnabled = true,
+                        preauthorizationOperation = operation,
+                        isRegistering = true,
+                        cancellationInProgress = true,
+                        registrationProgressMessage = "Retomando la cancelación de ${intent.serial}…",
+                    )
+                }
+                cancellationRequested = true
+                return
+            }
             if (operation.subscriptionId != null) {
                 _uiState.update {
                     it.copy(
@@ -710,6 +960,19 @@ class RegisterSubscriptionComposeViewModel(
                 }
                 return
             }
+            if (operation.state in setOf("CANCEL_REQUESTED", "CANCELLING", "CANCEL_FAILED", "CANCELLED")) {
+                _uiState.update {
+                    it.copy(
+                        preauthorizationEnabled = true,
+                        preauthorizationOperation = operation,
+                        isRegistering = true,
+                        cancellationInProgress = true,
+                        registrationProgressMessage = "Retomando limpieza de la cancelación…",
+                    )
+                }
+                cancellationRequested = true
+                return
+            }
             showPreauthorizationOperation(operation, restoreDraft = true)
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -724,8 +987,12 @@ class RegisterSubscriptionComposeViewModel(
         var form = _uiState.value.registerSubscriptionForm.copy(
             selectedOnu = selectedOnu ?: _uiState.value.registerSubscriptionForm.selectedOnu?.takeIf { it.sn.equals(operation.serial, true) }
         )
+        var restoredWizardStep: RegisterSubscriptionWizardStep? = null
         if (operation.canOpenRegistrationForm() && restoreDraft) {
-            useCase.draft(operation.id)?.let { form = restoreRegistrationDraft(form, it, operation.serial) }
+            useCase.draft(operation.id)?.let { draft ->
+                form = restoreRegistrationDraft(form, draft, operation.serial)
+                restoredWizardStep = draft.registrationWizardStep()
+            }
         }
         val authorizedOnu = form.selectedOnu?.takeIf { it.sn.equals(operation.serial, true) }
             ?: operation.toAuthorizedOnuOrNull()
@@ -738,14 +1005,41 @@ class RegisterSubscriptionComposeViewModel(
         _uiState.update { current ->
             current.copy(
                 isLoading = false,
+                isPreauthorizationRequestInProgress = false,
                 preauthorizationEnabled = true,
                 preauthorizationOperation = operation,
                 preauthorizationError = preauthorizationFailure(operation),
-                wizardStep = if (operation.canOpenRegistrationForm()) RegisterSubscriptionWizardStep.CLIENT_LOCATION
-                    else RegisterSubscriptionWizardStep.WAITING_FOR_ACS,
+                wizardStep = when {
+                    !operation.canOpenRegistrationForm() -> RegisterSubscriptionWizardStep.WAITING_FOR_ACS
+                    else -> restoredWizardStep ?: RegisterSubscriptionWizardStep.CLIENT_LOCATION
+                },
                 registerSubscriptionForm = form,
             )
         }
+        clearStoredOnuSelection()
+    }
+
+    private fun restorePreauthorizationSelection() {
+        val current = currentUiState()
+        val operatorId = current.currentUser?.id?.toLong() ?: return
+        val serial = onuRegistrationSelectionStore?.getSelectedOnuSerial(operatorId) ?: return
+        val selectedOnu = current.registerSubscriptionForm.onuList.firstOrNull {
+            it.sn.equals(serial, ignoreCase = true)
+        } ?: return
+        _uiState.update { state ->
+            if (state.preauthorizationOperation != null) state
+            else state.copy(
+                registerSubscriptionForm = state.registerSubscriptionForm.copy(
+                    selectedOnu = selectedOnu,
+                    onuError = null,
+                )
+            )
+        }
+    }
+
+    private fun clearStoredOnuSelection() {
+        val operatorId = currentUiState().currentUser?.id?.toLong() ?: return
+        onuRegistrationSelectionStore?.clearSelectedOnuSerial(operatorId)
     }
 
     private fun preauthorizationFailure(operation: OnuRegistrationOperation): String? {
@@ -784,14 +1078,22 @@ class RegisterSubscriptionComposeViewModel(
             "facadePhotoUrl" to form.facadePhotoUrl, "vlan" to form.vlan,
             "wifiSsid24" to form.wifiSsid24, "wifiPassword24" to form.wifiPassword24,
             "wifiSsid5" to form.resolvedWifiSsid5(),
-            "wifiPassword5" to form.wifiPassword24,
+            "wifiPassword5" to form.wifiPassword5,
             "equipmentCondition" to form.equipmentCondition.name,
             "useDifferentWifiNames" to form.useDifferentWifiNames,
             "tvCpeKind" to form.tvCpeKind?.name,
             "coupon" to form.coupon,
             "clientIpAddress" to form.clientIpAddress,
-            "accessMode" to form.accessMode.name, "registrationOperationId" to state.preauthorizationOperation?.id,
+            "accessMode" to form.accessMode.name, "wizardStep" to state.wizardStep.name,
+            "registrationOperationId" to state.preauthorizationOperation?.id,
         ).filterValues { it != null }
+    }
+
+    private fun Map<String, Any?>.registrationWizardStep(): RegisterSubscriptionWizardStep? {
+        val restoredStep = this["wizardStep"]?.toString()?.let { value ->
+            runCatching { RegisterSubscriptionWizardStep.valueOf(value) }.getOrNull()
+        }
+        return restoredStep?.takeUnless { it.isPreauthorizationStep() }
     }
 
     private fun restoreRegistrationDraft(
@@ -963,36 +1265,48 @@ class RegisterSubscriptionComposeViewModel(
         refreshOnuJob = viewModelScope.launch(mainImmediate) {
             try {
                 _uiState.update { it.copy(isRefreshingOnuList = true) }
-                getAvailableOnuListUseCase().fold(
-                    onSuccess = { refreshedOnuList ->
-                        _uiState.update { current ->
-                            val currentForm = current.registerSubscriptionForm
-                            val selectedOnu = currentForm.selectedOnu?.takeIf { selected ->
-                                refreshedOnuList.any { it.sn.equals(selected.sn, true) } ||
-                                    (current.preauthorizationOperation?.canOpenRegistrationForm() == true &&
-                                        selected.sn.equals(current.preauthorizationOperation.serial, true))
-                            }
-                            val validOnuList = if (selectedOnu != null &&
-                                refreshedOnuList.none { it.sn.equals(selectedOnu.sn, true) }) {
-                                refreshedOnuList + selectedOnu
-                            } else refreshedOnuList
-                            current.copy(
-                                isRefreshingOnuList = false,
-                                registerSubscriptionForm = currentForm.copy(
-                                    onuList = validOnuList,
-                                    selectedOnu = selectedOnu,
-                                    onuError = subscriptionOnuErrorAfterListRefresh(
-                                        requiresOnu = currentForm.requiresOnu(),
-                                        previousSelected = currentForm.selectedOnu,
-                                        newSelected = selectedOnu,
-                                        newList = validOnuList,
-                                        previousFieldError = currentForm.onuError
-                                    )
+                val refreshedOnuList = getAvailableOnuListUseCase().getOrThrow()
+                val cancellationIntent = pendingCancellationIntent
+                if (cancellationIntent != null && refreshedOnuList.any {
+                        it.sn.equals(cancellationIntent.serial, ignoreCase = true)
+                    }) {
+                    completeCancellationWithAvailableOnus(
+                        operation = currentUiState().preauthorizationOperation,
+                        serial = cancellationIntent.serial,
+                        availableOnus = refreshedOnuList,
+                    )
+                } else {
+                    _uiState.update { current ->
+                        val currentForm = current.registerSubscriptionForm
+                        val preserveWizardSelection = current.wizardStep != RegisterSubscriptionWizardStep.ONU_SELECTION
+                        val selectedOnu = currentForm.selectedOnu?.takeIf { selected ->
+                            refreshedOnuList.any { it.sn.equals(selected.sn, true) } ||
+                                preserveWizardSelection ||
+                                (current.preauthorizationOperation?.canOpenRegistrationForm() == true &&
+                                    selected.sn.equals(current.preauthorizationOperation.serial, true))
+                        }
+                        val validOnuList = if (selectedOnu != null &&
+                            refreshedOnuList.none { it.sn.equals(selectedOnu.sn, true) }) {
+                            refreshedOnuList + selectedOnu
+                        } else refreshedOnuList
+                        current.copy(
+                            isRefreshingOnuList = false,
+                            registerSubscriptionForm = currentForm.copy(
+                                onuList = validOnuList,
+                                selectedOnu = selectedOnu,
+                                onuError = subscriptionOnuErrorAfterListRefresh(
+                                    requiresOnu = currentForm.requiresOnu(),
+                                    previousSelected = currentForm.selectedOnu,
+                                    newSelected = selectedOnu,
+                                    newList = validOnuList,
+                                    previousFieldError = currentForm.onuError
                                 )
                             )
-                        }
-            },
-            onFailure = { error ->
+                        )
+                    }
+                }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
                 _uiState.update { it.copy(isRefreshingOnuList = false) }
                 observabilityClient.reportError(
                     throwable = error,
@@ -1008,15 +1322,13 @@ class RegisterSubscriptionComposeViewModel(
                         error.message ?: "Error al actualizar la lista de ONUs"
                     )
                 )
+            } finally {
+                if (_uiState.value.isRefreshingOnuList) {
+                    _uiState.update { it.copy(isRefreshingOnuList = false) }
+                }
             }
-            )
-        } catch (e: CancellationException) {
-            _uiState.update { it.copy(isRefreshingOnuList = false) }
-            throw e
         }
     }
-}
-
 private fun onFirstNameChanged(value: String) {
     val upperValue = value.uppercase()
     if (upperValue.length > RegisterSubscriptionFormConstraints.MAX_PERSON_NAME_LENGTH) return
@@ -1090,6 +1402,11 @@ private fun onPlaceSelected(value: Place) {
 private fun onOnuSelected(value: Onu) {
     updateValidatedForm(FormFieldKey.ONU) { form ->
         form.copy(selectedOnu = value)
+    }
+    val state = currentUiState()
+    val operatorId = state.currentUser?.id?.toLong()
+    if (state.preauthorizationEnabled && operatorId != null) {
+        onuRegistrationSelectionStore?.saveSelectedOnuSerial(operatorId, value.sn)
     }
 }
 
@@ -1217,14 +1534,18 @@ private fun onAccessModeSelected(mode: AccessMode) {
 }
 
 private fun onInstallationTypeSelected(type: InstallationType) {
-    if (currentUiState().registerSubscriptionForm.installationType == type) return
+    val current = currentUiState()
+    val currentForm = current.registerSubscriptionForm
+    if (currentForm.installationType == type) return
 
     val filteredPlans = getFilteredPlansForInstallationType(type)
 
     if (filteredPlans.isEmpty()) return
 
-    val currentSelectedPlan = currentUiState().registerSubscriptionForm.selectedPlan
+    val currentSelectedPlan = currentForm.selectedPlan
     val selectedPlan = getAutoSelectedPlan(filteredPlans, currentSelectedPlan)
+    val preauthorizedOnu = current.preauthorizationOperation?.serial
+        ?.let { serial -> currentForm.onuList.firstOrNull { it.sn.equals(serial, ignoreCase = true) } }
 
     _uiState.update {
         it.copy(
@@ -1232,7 +1553,7 @@ private fun onInstallationTypeSelected(type: InstallationType) {
                 installationType = type,
                 planList = filteredPlans,
                 selectedPlan = selectedPlan,
-                selectedOnu = null,
+                selectedOnu = preauthorizedOnu,
                 selectedNapBox = null,
                 tvCpeKind = null,
                 tvCpeKindError = null,

@@ -61,10 +61,7 @@ fun wizardFieldsFor(
         }
         if (form.requiresClientIpAddress) add(FormFieldKey.CLIENT_IP_ADDRESS)
     }
-    RegisterSubscriptionWizardStep.CONFIRMATION -> listOf(
-        FormFieldKey.FACADE_PHOTO,
-        FormFieldKey.NOTE,
-    )
+    RegisterSubscriptionWizardStep.CONFIRMATION -> emptyList()
 }
 
 fun canAdvanceWizardStep(

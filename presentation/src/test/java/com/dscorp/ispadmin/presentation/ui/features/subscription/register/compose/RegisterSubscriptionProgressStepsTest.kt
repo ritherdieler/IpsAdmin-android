@@ -2,6 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compo
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import com.dscorp.ispadmin.domain.model.RegistrationProgressCheckpoint
 
 class RegisterSubscriptionProgressStepsTest {
 
@@ -39,5 +40,19 @@ class RegisterSubscriptionProgressStepsTest {
         assertEquals("Limpieza de WAN", registrationProgressStageLabel("WAN_CLEANUP"))
         assertEquals("Requiere atención", registrationProgressStateLabel("FAILED"))
         assertEquals("Pendiente", registrationProgressStateLabel("PENDING"))
+    }
+
+    @Test
+    fun `obsolete management checkpoint is not presented as a registration stage`() {
+        assertEquals("Etapa desconocida", registrationProgressStageLabel("LEGACY_MANAGEMENT"))
+        assertEquals("Aprovisionando registro…", registrationProgressStepMessage(null, listOf(
+            RegistrationProgressCheckpoint(stage = "LEGACY_MANAGEMENT", state = "RUNNING", attempts = 1)
+        )))
+    }
+
+    @Test
+    fun `operation cancellation states are not presented as checkpoint states`() {
+        assertEquals("Estado desconocido", registrationProgressStateLabel("CANCEL_REQUESTED"))
+        assertEquals("Estado desconocido", registrationProgressStateLabel("CANCELLED"))
     }
 }

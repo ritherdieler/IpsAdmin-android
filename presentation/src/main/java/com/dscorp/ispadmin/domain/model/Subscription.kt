@@ -57,6 +57,7 @@ data class Subscription(
     var accessMode: String? = null,
     var pppoeUsername: String? = null,
     var accessMigrationStage: String? = null,
+    var pppoePassword: String? = null,
 
     ) : java.io.Serializable {
     fun resolvedSubscriptionId(): Int? = subscriptionId

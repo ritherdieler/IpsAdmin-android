@@ -14,6 +14,8 @@ import com.dscorp.ispadmin.data.remote.RegistrationCatalogRemoteDataSourceImpl
 import com.dscorp.ispadmin.data.remote.SubscriptionSyncRemoteImpl
 import com.dscorp.ispadmin.data.repository.PendingSubscriptionRepositoryImpl
 import com.dscorp.ispadmin.data.repository.RegistrationCatalogRepositoryImpl
+import com.dscorp.ispadmin.data.repository.SharedPreferencesOnuRegistrationCancellationIntentStore
+import com.dscorp.ispadmin.data.repository.SharedPreferencesOnuRegistrationSelectionStore
 import com.dscorp.ispadmin.domain.connectivity.MikrotikReachabilityMonitor
 import com.dscorp.ispadmin.domain.connectivity.NetworkConnectivityMonitor
 import com.dscorp.ispadmin.domain.repository.PendingSubscriptionRepository
@@ -26,6 +28,16 @@ import org.koin.dsl.module
 import retrofit2.Retrofit
 
 val dataModule = module {
+    single<com.dscorp.ispadmin.domain.repository.OnuRegistrationCancellationIntentStore> {
+        SharedPreferencesOnuRegistrationCancellationIntentStore(
+            androidContext().getSharedPreferences("my_prefs", Context.MODE_PRIVATE)
+        )
+    }
+    single<com.dscorp.ispadmin.domain.repository.OnuRegistrationSelectionStore> {
+        SharedPreferencesOnuRegistrationSelectionStore(
+            androidContext().getSharedPreferences("my_prefs", Context.MODE_PRIVATE)
+        )
+    }
     single { get<Retrofit>().create(com.dscorp.ispadmin.data.remote.OnuRegistrationOperationApi::class.java) }
     single<com.dscorp.ispadmin.domain.repository.OnuRegistrationOperationRepository> {
         com.dscorp.ispadmin.data.repository.OnuRegistrationOperationRepositoryImpl(get())

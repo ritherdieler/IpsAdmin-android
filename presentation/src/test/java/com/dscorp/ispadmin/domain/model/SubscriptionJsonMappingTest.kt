@@ -19,6 +19,18 @@ class SubscriptionJsonMappingTest {
     }
 
     @Test
+    fun `deserializes pppoe password from registration response`() {
+        val json = """{"pppoePassword":"demo-pppoe-password"}"""
+
+        val subscription = gson.fromJson(json, Subscription::class.java)
+
+        assertEquals(
+            "demo-pppoe-password",
+            gson.toJsonTree(subscription).asJsonObject.get("pppoePassword").asString,
+        )
+    }
+
+    @Test
     fun `serializes subscriptionId as id for backend requests`() {
         val subscription = Subscription(subscriptionId = 99, firstName = "Ana")
 

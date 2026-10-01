@@ -17,23 +17,27 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -57,8 +61,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.dscorp.ispadmin.BuildConfig
 import com.dscorp.ispadmin.data.media.prepareFacadePhotoFile
+import com.dscorp.ispadmin.domain.model.AccessMode
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.InstallationType
+import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
@@ -67,7 +73,9 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.Regist
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionTestTags
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
 import java.io.File
+import java.util.Locale
 
 @Composable
 fun RegisterSubscriptionFormScreen(
@@ -239,10 +247,8 @@ fun RegisterSubscriptionFormScreen(
         successSubscription?.let { subscription ->
             RegisterSuccessFullScreen(
                 subscription = subscription,
+                plan = uiState.registerSubscriptionForm.selectedPlan,
                 tr069RetryLoading = uiState.tr069RetryLoading,
-                tr069RetryMessage = uiState.registrationProgressMessage.takeIf {
-                    uiState.tr069RetryLoading
-                },
                 onRetryTr069 = subscription.resolvedSubscriptionId()?.let {
                     {
                         dialogError = null
@@ -282,12 +288,16 @@ fun RegisterSubscriptionFormScreen(
                         onClick = {
                             viewModel.onIntent(RegisterSubscriptionIntent.ConfirmCancelOnuRegistration)
                         },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                        ),
                     ) {
                         Text("Sí, cancelar y limpiar")
                     }
                 },
                 dismissButton = {
-                    Button(onClick = {
+                    TextButton(onClick = {
                         viewModel.onIntent(RegisterSubscriptionIntent.DismissCancelOnuRegistration)
                     }) {
                         Text("Seguir registrando")
@@ -341,9 +351,32 @@ fun RegisterSubscriptionFormScreen(
                 cancelEnabled = !uiState.cancellationInProgress,
             )
             RegisterScreenBusyMode.CATALOG -> CatalogLoadingOverlay(
-                onCancel = if (uiState.preauthorizationEnabled) {
+                onCancel = if (
+                    uiState.preauthorizationEnabled &&
+                    uiState.isPreauthorizationRequestInProgress
+                ) {
                     { viewModel.onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) }
                 } else null,
+                message = when {
+                    uiState.isPreauthorizationRequestInProgress && uiState.wizardStep in setOf(
+                        RegisterSubscriptionWizardStep.ONU_SELECTION,
+                        RegisterSubscriptionWizardStep.ONU_CONFIRMATION,
+                    ) ->
+                        "Autorizando el equipo en la OLT…"
+                    uiState.isPreauthorizationRequestInProgress && uiState.wizardStep == RegisterSubscriptionWizardStep.WAITING_FOR_ACS ->
+                        "Esperando conexión con ACS…"
+                    else -> "Preparando el registro…"
+                },
+                description = when {
+                    uiState.isPreauthorizationRequestInProgress && uiState.wizardStep in setOf(
+                        RegisterSubscriptionWizardStep.ONU_SELECTION,
+                        RegisterSubscriptionWizardStep.ONU_CONFIRMATION,
+                    ) ->
+                        "Estamos comprobando que la ONU pueda conectarse."
+                    uiState.isPreauthorizationRequestInProgress && uiState.wizardStep == RegisterSubscriptionWizardStep.WAITING_FOR_ACS ->
+                        "El formulario aparecerá cuando la ONU envíe su primer mensaje a ACS."
+                    else -> "Cargando equipos, planes y lugares disponibles."
+                },
             )
             RegisterScreenBusyMode.NONE -> Unit
         }
@@ -356,22 +389,29 @@ private fun InfoRow(label: String, value: String) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        verticalAlignment = Alignment.Top,
     ) {
         Text(
             text = "$label:",
+            modifier = Modifier.weight(0.45f),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium
+            modifier = Modifier.weight(0.55f),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.End,
         )
     }
 }
 
 @Composable
-internal fun CatalogLoadingOverlay(onCancel: (() -> Unit)? = null) {
+internal fun CatalogLoadingOverlay(
+    onCancel: (() -> Unit)? = null,
+    message: String = "Preparando el registro…",
+    description: String = "Cargando equipos, planes y lugares disponibles.",
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -396,15 +436,22 @@ internal fun CatalogLoadingOverlay(onCancel: (() -> Unit)? = null) {
                 CircularProgressIndicator()
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Cargando…",
+                    text = message,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.testTag(RegisterSubscriptionTestTags.CATALOG_LOADING_MESSAGE)
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
                 if (onCancel != null) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(
+                    TextButton(
                         onClick = onCancel,
                         modifier = Modifier.testTag(RegisterSubscriptionTestTags.REGISTRATION_CANCEL_ACTION),
                     ) {
@@ -433,7 +480,8 @@ internal fun RegistrationProgressOverlay(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(24.dp)
+                .heightIn(max = 600.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             )
@@ -441,32 +489,69 @@ internal fun RegistrationProgressOverlay(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 CircularProgressIndicator()
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = registrationProgressStepMessage(progressMessage),
+                    text = registrationProgressStepMessage(progressMessage, progressCheckpoints),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.testTag(RegisterSubscriptionTestTags.PROGRESS_STEP)
                 )
                 progressCheckpoints.forEach { checkpoint ->
-                    Text(
-                        text = "${registrationProgressStageLabel(checkpoint.stage)}: ${registrationProgressStateLabel(checkpoint.state)} · Intento ${checkpoint.attempts}",
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                    )
-                    checkpoint.failure?.let { failure ->
-                        Text(
-                            text = "${failure.message}\n${failure.code}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
-                            textAlign = TextAlign.Center,
-                        )
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                        color = if (checkpoint.failure != null) {
+                            MaterialTheme.colorScheme.errorContainer
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
+                    ) {
+                        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = registrationProgressStageLabel(checkpoint.stage),
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (checkpoint.failure != null) {
+                                        MaterialTheme.colorScheme.onErrorContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                )
+                                Text(
+                                    text = registrationProgressStateLabel(checkpoint.state),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (checkpoint.failure != null) {
+                                        MaterialTheme.colorScheme.onErrorContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                )
+                            }
+                            if (checkpoint.attempts > 1) {
+                                Text(
+                                    text = "Intento ${checkpoint.attempts}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            checkpoint.failure?.let { failure ->
+                                Text(
+                                    text = "${failure.message} (${failure.code})",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                )
+                            }
+                        }
                     }
+                    Spacer(modifier = Modifier.height(6.dp))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -478,7 +563,7 @@ internal fun RegistrationProgressOverlay(
                 )
                 if (onCancel != null) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(
+                    TextButton(
                         onClick = onCancel,
                         enabled = cancelEnabled,
                         modifier = Modifier.testTag(RegisterSubscriptionTestTags.REGISTRATION_CANCEL_ACTION),
@@ -494,8 +579,8 @@ internal fun RegistrationProgressOverlay(
 @Composable
 internal fun RegisterSuccessFullScreen(
     subscription: Subscription,
+    plan: PlanResponse? = null,
     tr069RetryLoading: Boolean = false,
-    tr069RetryMessage: String? = null,
     onRetryTr069: (() -> Unit)? = null,
     onDismiss: () -> Unit,
     onContinue: () -> Unit
@@ -504,13 +589,9 @@ internal fun RegisterSuccessFullScreen(
     val requiresManualTr069 = tr069Status == "MANUAL_REQUIRED" || subscription.tr069RequiresManualConfig
     val isPendingTr069 = tr069Status == "PENDING"
     val isFailedTr069 = tr069Status == "FAILED"
-    val showTr069Section = tr069Status == "COMPLETE" || requiresManualTr069 || isPendingTr069 || isFailedTr069
     val showRetryTr069 = (requiresManualTr069 || isPendingTr069 || isFailedTr069) && onRetryTr069 != null
-    val oltStatus = subscription.oltProvisionStatus
-    val showOltSection = (subscription.installationType == InstallationType.FIBER ||
-        subscription.installationType == InstallationType.ONLY_TV_FIBER) &&
-        !oltStatus.isNullOrBlank() &&
-        oltStatus != "NA"
+    val usesPppoe = AccessMode.parse(subscription.accessMode)?.usesPppoe() == true
+    val monthlyPrice = subscription.price ?: plan?.price
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -564,7 +645,7 @@ internal fun RegisterSuccessFullScreen(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .testTag("tr069_retry_feedback"),
+                                .testTag("wifi_retry_feedback"),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer
                             )
@@ -579,12 +660,10 @@ internal fun RegisterSuccessFullScreen(
                                     strokeWidth = 2.dp
                                 )
                                 Text(
-                                    text = tr069RetryMessage
-                                        ?.takeIf { it.isNotBlank() }
-                                        ?: "Reintentando aprovisionamiento TR-069…",
+                                    text = "Actualizando redes Wi-Fi…",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    modifier = Modifier.testTag("tr069_retry_feedback_message")
+                                    modifier = Modifier.testTag("wifi_retry_feedback_message")
                                 )
                             }
                         }
@@ -597,59 +676,67 @@ internal fun RegisterSuccessFullScreen(
                         testTag = "register_success_section_subscriber"
                     ) {
                         Text(
-                            text = "${subscription.firstName} ${subscription.lastName}",
+                            text = listOfNotNull(
+                                subscription.firstName?.takeIf(String::isNotBlank),
+                                subscription.lastName?.takeIf(String::isNotBlank),
+                            ).joinToString(" ").ifBlank { "Suscriptor" },
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        InfoRow("DNI", subscription.dni ?: "")
-                        InfoRow("Teléfono", subscription.phone ?: "")
-                        InfoRow("Dirección", subscription.address ?: "")
+                        subscription.dni?.takeIf(String::isNotBlank)?.let { InfoRow("DNI", it) }
+                        subscription.phone?.takeIf(String::isNotBlank)?.let { InfoRow("Teléfono", it) }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
                     RegisterSuccessSectionCard(
-                        title = "Red",
-                        testTag = "register_success_section_network"
+                        title = "Plan contratado",
+                        testTag = "register_success_section_plan"
                     ) {
-                        InfoRow(subscription.networkAccessLabel(), subscription.networkAccessValue())
-
-                        if (subscription.installationType == InstallationType.FIBER ||
-                            subscription.installationType == InstallationType.ONLY_TV_FIBER
-                        ) {
-                            InfoRow("Borne", subscription.borneNumber ?: "No asignado")
+                        Text(
+                            text = plan?.name?.takeIf(String::isNotBlank) ?: "Plan de internet",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                        monthlyPrice?.let { price ->
+                            InfoRow("Mensualidad", "S/ ${"%.2f".format(Locale.US, price)} / mes")
                         }
-
-                        InfoRow(
-                            "Tipo",
-                            subscription.installationType?.toString() ?: "No especificado"
-                        )
+                        plan?.downloadSpeed?.takeIf(String::isNotBlank)?.let { speed ->
+                            InfoRow("Bajada", "$speed Mbps")
+                        }
+                        plan?.uploadSpeed?.takeIf(String::isNotBlank)?.let { speed ->
+                            InfoRow("Subida", "$speed Mbps")
+                        }
                     }
 
-                    if (showOltSection) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Autorización OLT",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.testTag("register_success_section_olt")
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OltStatusCard(subscription = subscription)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    RegisterSuccessSectionCard(
+                        title = "Acceso a internet",
+                        testTag = "register_success_section_access"
+                    ) {
+                        if (usesPppoe) {
+                            InfoRow("Usuario PPPoE", subscription.pppoeUsername?.takeIf(String::isNotBlank) ?: "No disponible")
+                            InfoRow("Contraseña PPPoE", subscription.pppoePassword?.takeIf(String::isNotBlank) ?: "No disponible")
+                        } else {
+                            InfoRow("IP", subscription.ip?.takeIf(String::isNotBlank) ?: "No disponible")
+                        }
                     }
 
-                    if (showTr069Section) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "ONU / TR-069",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.testTag("register_success_section_tr069")
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Tr069StatusCard(subscription = subscription)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    RegisterSuccessSectionCard(
+                        title = "Redes Wi-Fi",
+                        testTag = "register_success_section_wifi"
+                    ) {
+                        InfoRow("SSID 2.4 GHz", subscription.wifiSsid24?.takeIf(String::isNotBlank) ?: "No disponible")
+                        InfoRow("Contraseña 2.4 GHz", subscription.wifiPassword24?.takeIf(String::isNotBlank) ?: "No disponible")
+                        Spacer(modifier = Modifier.height(4.dp))
+                        InfoRow("SSID 5 GHz", subscription.wifiSsid5?.takeIf(String::isNotBlank) ?: "No disponible")
+                        InfoRow("Contraseña 5 GHz", subscription.wifiPassword5?.takeIf(String::isNotBlank) ?: "No disponible")
                     }
                 }
 
@@ -662,7 +749,7 @@ internal fun RegisterSuccessFullScreen(
                         Button(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .testTag("btn_retry_tr069"),
+                                .testTag("btn_retry_wifi"),
                             enabled = !tr069RetryLoading,
                             onClick = onRetryTr069,
                         ) {
@@ -675,10 +762,10 @@ internal fun RegisterSuccessFullScreen(
                                         modifier = Modifier.size(18.dp),
                                         strokeWidth = 2.dp
                                     )
-                                    Text("Reintentando…")
+                                    Text("Reintentando Wi-Fi…")
                                 }
                             } else {
-                                Text("Reintentar TR-069")
+                                Text("Reintentar Wi-Fi")
                             }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
@@ -693,7 +780,7 @@ internal fun RegisterSuccessFullScreen(
                             onContinue()
                         }
                     ) {
-                        Text("Continuar")
+                        Text("Finalizar instalación")
                     }
                 }
             }
@@ -711,6 +798,7 @@ private fun RegisterSuccessSectionCard(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(testTag),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
@@ -732,137 +820,20 @@ private fun RegisterSuccessSectionCard(
 @Composable
 internal fun SuccessDialog(
     subscription: Subscription,
+    plan: PlanResponse? = null,
     tr069RetryLoading: Boolean = false,
-    tr069RetryMessage: String? = null,
     onRetryTr069: (() -> Unit)? = null,
     onDismiss: () -> Unit,
     onContinue: () -> Unit
 ) {
     RegisterSuccessFullScreen(
         subscription = subscription,
+        plan = plan,
         tr069RetryLoading = tr069RetryLoading,
-        tr069RetryMessage = tr069RetryMessage,
         onRetryTr069 = onRetryTr069,
         onDismiss = onDismiss,
         onContinue = onContinue
     )
-}
-
-@Composable
-internal fun OltStatusCard(subscription: Subscription) {
-    val status = subscription.oltProvisionStatus.orEmpty()
-    val isComplete = status == "COMPLETE"
-    val isPending = status == "PENDING"
-    val containerColor = when {
-        isComplete -> MaterialTheme.colorScheme.tertiaryContainer
-        isPending -> MaterialTheme.colorScheme.secondaryContainer
-        else -> MaterialTheme.colorScheme.errorContainer
-    }
-    val contentColor = when {
-        isComplete -> MaterialTheme.colorScheme.onTertiaryContainer
-        isPending -> MaterialTheme.colorScheme.onSecondaryContainer
-        else -> MaterialTheme.colorScheme.onErrorContainer
-    }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(RegisterSubscriptionTestTags.oltProvisionStatus(status))
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(RegisterSubscriptionTestTags.OLT_STATUS_CARD),
-            colors = CardDefaults.cardColors(containerColor = containerColor)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = when {
-                        isComplete -> "ONU autorizada en la OLT."
-                        isPending -> "Autorizando ONU en la OLT…"
-                        else -> "Falló la autorización de la ONU en la OLT."
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = contentColor,
-                    modifier = Modifier.testTag(RegisterSubscriptionTestTags.OLT_STATUS_MESSAGE)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-internal fun Tr069StatusCard(subscription: Subscription) {
-    val status = subscription.tr069ProvisionStatus.orEmpty()
-    val isComplete = status == "COMPLETE"
-    val isPending = status == "PENDING"
-    val containerColor = when {
-        isComplete -> MaterialTheme.colorScheme.tertiaryContainer
-        isPending -> MaterialTheme.colorScheme.secondaryContainer
-        else -> MaterialTheme.colorScheme.errorContainer
-    }
-    val contentColor = when {
-        isComplete -> MaterialTheme.colorScheme.onTertiaryContainer
-        isPending -> MaterialTheme.colorScheme.onSecondaryContainer
-        else -> MaterialTheme.colorScheme.onErrorContainer
-    }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (status.isNotBlank()) {
-                    Modifier.testTag(RegisterSubscriptionTestTags.tr069ProvisionStatus(status))
-                } else {
-                    Modifier
-                }
-            )
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("tr069_status_card"),
-            colors = CardDefaults.cardColors(containerColor = containerColor)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = when {
-                        isComplete ->
-                            "ONU configurada automáticamente por TR-069. No requiere configuración manual."
-                        isPending ->
-                            "Aplicando configuración WiFi en la ONU. Espere o reintente."
-                        else ->
-                            "No se pudo configurar la ONU por TR-069. Configure la ONU manualmente."
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = contentColor,
-                    modifier = Modifier.testTag("tr069_status_message")
-                )
-
-                if (!isComplete) {
-                    subscription.tr069Message?.takeIf { it.isNotBlank() }?.let { reason ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = reason,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = contentColor,
-                            modifier = Modifier.testTag("tr069_status_reason")
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                InfoRow("SSID 2.4 GHz", subscription.wifiSsid24 ?: "—")
-                if (!isComplete) {
-                    InfoRow("Clave 2.4 GHz", subscription.wifiPassword24 ?: "—")
-                }
-                InfoRow("SSID 5 GHz", subscription.wifiSsid5 ?: "—")
-                if (!isComplete) {
-                    InfoRow("Clave 5 GHz", subscription.wifiPassword5 ?: "—")
-                }
-            }
-        }
-    }
 }
 
 @Composable

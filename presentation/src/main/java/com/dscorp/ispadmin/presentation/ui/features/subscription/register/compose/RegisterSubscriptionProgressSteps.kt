@@ -1,5 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
+import com.dscorp.ispadmin.domain.model.RegistrationProgressCheckpoint
+
 enum class RegisterScreenBusyMode {
     NONE,
     CATALOG,
@@ -13,20 +15,40 @@ fun registerScreenBusyMode(isLoading: Boolean, isRegistering: Boolean): Register
         else -> RegisterScreenBusyMode.NONE
     }
 
-fun registrationProgressStepMessage(progressMessage: String?): String =
-    progressMessage?.takeIf { it.isNotBlank() } ?: "Registrando…"
+fun registrationProgressStepMessage(
+    progressMessage: String?,
+    checkpoints: List<RegistrationProgressCheckpoint> = emptyList(),
+): String {
+    val active = checkpoints.firstOrNull { it.state == "RUNNING" || it.state == "WAITING" }
+        ?: return progressMessage?.takeIf { it.isNotBlank() } ?: "Registrando…"
+    val stageLabel = registrationProgressStageLabel(active.stage)
+    return when (active.state) {
+        "RUNNING" -> when (active.stage) {
+            "VALIDATE" -> "Validando registro…"
+            "MIKROTIK" -> "Configurando acceso del cliente…"
+            "OLT" -> "Autorizando la ONU…"
+            "ACS_CONTACT" -> "Conectando con ACS…"
+            "INTERNET" -> "Configurando Internet PPPoE…"
+            "WIFI" -> "Aplicando WiFi…"
+            "WAN_CLEANUP" -> "Limpiando WAN…"
+            "VERIFY" -> "Verificando aprovisionamiento…"
+            else -> "Aprovisionando registro…"
+        }
+        "WAITING" -> "Esperando respuesta: $stageLabel…"
+        else -> "Aprovisionando registro…"
+    }
+}
 
 fun registrationProgressStageLabel(value: String): String = when (value) {
     "VALIDATE" -> "Validación"
     "MIKROTIK" -> "Acceso del cliente"
     "OLT" -> "Autorización de la ONU"
-    "OMCI" -> "WAN de gestión"
     "ACS_CONTACT" -> "Conexión con ACS"
     "INTERNET" -> "Internet PPPoE"
     "WIFI" -> "WiFi"
     "WAN_CLEANUP" -> "Limpieza de WAN"
     "VERIFY" -> "Verificación final"
-    else -> value
+    else -> "Etapa desconocida"
 }
 
 fun registrationProgressStateLabel(value: String): String = when (value) {
@@ -36,9 +58,5 @@ fun registrationProgressStateLabel(value: String): String = when (value) {
     "SUCCEEDED" -> "Completado"
     "FAILED" -> "Requiere atención"
     "COMPENSATED" -> "Revertido"
-    "CANCEL_REQUESTED" -> "Cancelación solicitada"
-    "CANCELLING" -> "Revirtiendo el registro"
-    "CANCEL_FAILED" -> "Limpieza pendiente"
-    "CANCELLED" -> "Registro cancelado"
-    else -> value
+    else -> "Estado desconocido"
 }

@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -253,7 +254,20 @@ class FiberRegisterFirstOnuE2ETest {
                 composeRule.onNodeWithTag("location_setup_continue").performClick()
             }
         }
-        waitUntilTag(RegisterSubscriptionTestTags.FIRST_NAME, timeoutMs = 90_000)
+        waitUntilTag(RegisterSubscriptionTestTags.FORM_READY, timeoutMs = 120_000)
+        val clientFormAlreadyOpen = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.FIRST_NAME)
+            .fetchSemanticsNodes()
+            .isNotEmpty()
+        if (clientFormAlreadyOpen) return
+
+        // Preauthorization is part of the wizard. The client form is not exposed
+        // until the selected ONU reaches READY_FOR_FORM through ACS.
+        waitUntilTag(RegisterSubscriptionTestTags.ONU, timeoutMs = 30_000)
+        selectOnu()
+        clickWizardContinue()
+        waitUntilText("Serial:", timeoutMs = 15_000, substring = true)
+        clickWizardContinue()
+        waitUntilTag(RegisterSubscriptionTestTags.FIRST_NAME, timeoutMs = 360_000)
     }
 
     private fun fillClientFields() {
@@ -344,12 +358,45 @@ class FiberRegisterFirstOnuE2ETest {
     }
 
     private fun clickWizardContinue() {
-        waitUntilTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE, timeoutMs = 15_000)
-        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE)
-            .assertIsEnabled()
-            .performClick()
-        composeRule.waitForIdle()
-        Thread.sleep(500)
+        val tag = RegisterSubscriptionTestTags.WIZARD_CONTINUE
+        waitUntilTag(tag, timeoutMs = 15_000)
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(30_000)
+        while (System.nanoTime() < deadline) {
+            val enabled = runCatching {
+                composeRule.onNodeWithTag(tag).assertIsEnabled()
+                true
+            }.getOrDefault(false)
+            if (enabled) {
+                composeRule.onNodeWithTag(tag).performClick()
+                composeRule.waitForIdle()
+                Thread.sleep(500)
+                return
+            }
+            Thread.sleep(400)
+            composeRule.waitForIdle()
+        }
+        val formReady = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.FORM_READY)
+            .fetchSemanticsNodes()
+            .isNotEmpty()
+        val catalogBusy = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.CATALOG_LOADING_OVERLAY)
+            .fetchSemanticsNodes()
+            .isNotEmpty()
+        val registrationBusy = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.PROGRESS_OVERLAY)
+            .fetchSemanticsNodes()
+            .isNotEmpty()
+        val serialNode = composeRule.onAllNodesWithText("Serial:", substring = true)
+            .fetchSemanticsNodes()
+            .firstOrNull()
+            ?.config
+            ?.toString()
+        val cancelAction = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL)
+            .fetchSemanticsNodes()
+            .isNotEmpty()
+        throw AssertionError(
+            "Timeout waiting for enabled wizard continue after 30000ms " +
+                "formReady=$formReady catalogBusy=$catalogBusy registrationBusy=$registrationBusy " +
+                "cancelAction=$cancelAction serialNode=$serialNode"
+        )
     }
 
     private fun selectPlaceAndAddress() {
@@ -490,7 +537,9 @@ class FiberRegisterFirstOnuE2ETest {
         ensureFiberPlanSelected()
         selectAccessMode()
         selectNapIfNeeded()
-        selectOnu()
+        if (composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.ONU).fetchSemanticsNodes().isNotEmpty()) {
+            selectOnu()
+        }
         fillWifi()
         closeSoftKeyboard()
         composeRule.waitForIdle()
@@ -648,6 +697,21 @@ class FiberRegisterFirstOnuE2ETest {
             runCatching { composeRule.waitForIdle() }
         }
         throw AssertionError("Timeout waiting for testTag=$tag after ${timeoutMs}ms")
+    }
+
+    private fun waitUntilText(text: String, timeoutMs: Long, substring: Boolean = false) {
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs)
+        while (System.nanoTime() < deadline) {
+            val found = runCatching {
+                composeRule.onAllNodesWithText(text, substring = substring)
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
+            }.getOrDefault(false)
+            if (found) return
+            Thread.sleep(400)
+            runCatching { composeRule.waitForIdle() }
+        }
+        throw AssertionError("Timeout waiting for text=$text after ${timeoutMs}ms")
     }
 
     private fun waitUntilAnyTag(tags: List<String>, timeoutMs: Long) {

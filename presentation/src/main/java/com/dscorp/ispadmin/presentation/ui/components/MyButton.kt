@@ -27,7 +27,7 @@ fun MyButton(
     onClick: () -> Unit
 ) {
     // Estado para controlar el período de enfriamiento del botón
-    var isClickable by remember { mutableStateOf(true) }
+    var isClickable by remember(text) { mutableStateOf(true) }
     
     Button(
         onClick = {

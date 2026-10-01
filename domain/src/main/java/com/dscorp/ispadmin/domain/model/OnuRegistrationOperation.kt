@@ -13,6 +13,7 @@ data class OnuRegistrationOperation(
     val oltEvidence: OnuRegistrationOltEvidence? = null,
     val checkpoints: List<OnuRegistrationCheckpoint> = emptyList(),
     val operationFailure: OnuRegistrationFailure? = null,
+    val registrationRequestKey: String? = null,
 )
 
 data class OnuRegistrationOperationTarget(

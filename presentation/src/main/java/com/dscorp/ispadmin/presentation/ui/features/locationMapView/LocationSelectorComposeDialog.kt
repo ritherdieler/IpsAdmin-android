@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.BuildConfig
 import com.dscorp.ispadmin.domain.model.GeoLocation
@@ -104,7 +105,7 @@ fun LocationSelectorComposeDialog(
                             )
                         }
                         Text(
-                            text = "Seleccionar ubicación",
+                            text = "Ubicación de instalación",
                             modifier = Modifier
                                 .align(Alignment.Center)
                                 .padding(vertical = 16.dp),
@@ -128,11 +129,14 @@ fun LocationSelectorComposeDialog(
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("map_coordinate_search"),
-                            label = { Text("Latitud, longitud") },
+                            label = { Text("Buscar por coordenadas") },
                             placeholder = { Text("-11.23416, -77.37872") },
                             isError = coordinateError != null,
                             supportingText = coordinateError?.let { { Text(it) } },
-                            singleLine = true
+                            singleLine = true,
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = KeyboardType.Decimal,
+                            ),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
@@ -200,7 +204,7 @@ fun LocationSelectorComposeDialog(
                             .padding(16.dp)
                     ) {
                         Text(
-                            text = "Mueve el mapa y confirma la ubicación central",
+                            text = "Mueve el mapa para colocar el pin en el punto de instalación.",
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
@@ -220,7 +224,7 @@ fun LocationSelectorComposeDialog(
                                 .padding(bottom = 8.dp)
                                 .testTag("map_select_location_button")
                         ) {
-                            Text("Seleccionar ubicación")
+                            Text("Usar esta ubicación")
                         }
                         OutlinedButton(
                             onClick = onDismiss,

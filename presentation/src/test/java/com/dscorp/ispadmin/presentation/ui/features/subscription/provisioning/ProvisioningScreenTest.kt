@@ -23,12 +23,14 @@ class ProvisioningScreenTest {
         val state = ProvisioningUiState(progress = ProvisioningProgress(
             operation = ProvisioningOperation(id = "op-42", subscriptionId = 42, revision = 3, state = "FAILED", checkpoints = listOf(
                 ProvisioningCheckpoint(stage = "INTERNET", state = "FAILED", attempts = 1),
+                ProvisioningCheckpoint(stage = "LEGACY_MANAGEMENT", state = "SUCCEEDED", attempts = 1),
                 ProvisioningCheckpoint(stage = "WAN_CLEANUP", state = "PENDING", attempts = 0),
             )),
             canRetry = true, canCancel = true))
         compose.setContent { MaterialTheme { ProvisioningContent(state = state, onIntent = { intents += it }, onNavigate = {}) } }
         compose.onNodeWithText("Referencia: op-42").assertIsDisplayed()
         compose.onNodeWithText("Internet PPPoE: Requiere atención · Intento 1").assertIsDisplayed()
+        compose.onNodeWithText("LEGACY_MANAGEMENT: Completado · Intento 1").assertDoesNotExist()
         compose.onNodeWithText("Limpieza de WAN: Pendiente · Intento 0").assertIsDisplayed()
         compose.onNodeWithTag("provisioning_cancel").performClick()
         assertEquals(listOf(ProvisioningIntent.AskCancel), intents)
