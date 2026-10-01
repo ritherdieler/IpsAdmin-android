@@ -21,6 +21,14 @@ class ApiErrorBodyParserTest {
     }
 
     @Test
+    fun `extracts errorCode from conflict envelopes`() {
+        val body = """{"status":409,"error":"La solicitud ya fue procesada","errorCode":"REGISTRATION_ALREADY_EXISTS"}"""
+        assertEquals("REGISTRATION_ALREADY_EXISTS", ApiErrorBodyParser.errorCode(body))
+        assertEquals(null, ApiErrorBodyParser.errorCode("""{"status":500}"""))
+        assertEquals(null, ApiErrorBodyParser.errorCode("not-json"))
+    }
+
+    @Test
     fun `falls back when body empty or invalid`() {
         assertEquals("fallback", ApiErrorBodyParser.parse(null, "fallback"))
         assertEquals("fallback", ApiErrorBodyParser.parse(" ", "fallback"))

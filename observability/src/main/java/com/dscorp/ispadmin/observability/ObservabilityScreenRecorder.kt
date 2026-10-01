@@ -68,6 +68,7 @@ class ObservabilityScreenRecorder(
     }
 
     fun snapshot(): ObsReplaySnapshot? {
+        if (ObsReplayPrivacy.isSuppressed()) return null
         val frames = synchronized(bufferLock) { buffer.toList() }
         if (frames.isEmpty()) return null
         val start = frames.first().timestamp
@@ -105,6 +106,10 @@ class ObservabilityScreenRecorder(
     }
 
     private fun captureFrame() {
+        if (ObsReplayPrivacy.isSuppressed()) {
+            clear()
+            return
+        }
         val activity = activityRef?.get() ?: return
         if (activity.isFinishing || activity.isDestroyed) return
         val window = activity.window ?: return

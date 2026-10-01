@@ -6,6 +6,7 @@ import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionClientIpAddressError
 import com.dscorp.ispadmin.domain.repository.SubscriptionWriteRepository
 import com.google.gson.Gson
+import kotlinx.coroutines.CancellationException
 import java.io.File
 import java.util.UUID
 
@@ -21,14 +22,20 @@ class RegisterSubscriptionUseCase(
         subscription: Subscription,
         orderId: Int?,
         facadePhotoFile: File? = null
-    ): Result<RegisterSubscriptionResult> = runCatching {
-        if (!subscription.registrationOperationId.isNullOrBlank()) {
-            registerOnline(subscription, orderId, null)
-        } else if (canRegisterOnline()) {
-            registerOnline(subscription, orderId, facadePhotoFile)
-        } else {
-            enqueueOffline(subscription, orderId, facadePhotoFile)
-        }
+    ): Result<RegisterSubscriptionResult> = try {
+        Result.success(
+            if (!subscription.registrationOperationId.isNullOrBlank()) {
+                registerOnline(subscription, orderId, null)
+            } else if (canRegisterOnline()) {
+                registerOnline(subscription, orderId, facadePhotoFile)
+            } else {
+                enqueueOffline(subscription, orderId, facadePhotoFile)
+            }
+        )
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (error: Exception) {
+        Result.failure(error)
     }
 
     private suspend fun canRegisterOnline(): Boolean {

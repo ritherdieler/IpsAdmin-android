@@ -12,6 +12,7 @@ import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.SubmissionState
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.R
@@ -52,11 +53,10 @@ class RegisterSubscriptionSuccessDialogTest {
             }""",
             Subscription::class.java,
         )
-        val events = MutableSharedFlow<RegisterSubscriptionUiEvent>(replay = 1).apply {
-            tryEmit(RegisterSubscriptionUiEvent.Success(subscription))
-        }
+        val events = MutableSharedFlow<RegisterSubscriptionUiEvent>(replay = 1)
         val state = MutableStateFlow(
             RegisterSubscriptionState(
+                submission = SubmissionState.Completed(subscription),
                 registerSubscriptionForm = RegisterSubscriptionFormState(
                     selectedPlan = PlanResponse(
                         id = "1",

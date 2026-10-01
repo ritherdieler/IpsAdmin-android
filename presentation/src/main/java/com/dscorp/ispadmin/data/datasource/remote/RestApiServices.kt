@@ -373,6 +373,9 @@ interface RestApiServices {
         @Header("Idempotency-Key") idempotencyKey: String,
     ): Response<Subscription>
 
+    @GET("subscription/dni-check")
+    suspend fun checkDni(@Query("dni") dni: String): Response<com.dscorp.ispadmin.domain.model.DniCheck>
+
     @GET("subscription/{subscriptionId}/registration-progress")
     suspend fun getRegistrationProgress(
         @Path("subscriptionId") subscriptionId: Int

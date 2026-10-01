@@ -65,6 +65,30 @@ class ObservabilityHttpInterceptorTest {
             )
         }
         assertThat(proceeded.captured.header("X-Obs-Session-Id")).isEqualTo("session-1")
+        assertThat(proceeded.captured.header("X-Operation-Id")).isNull()
+    }
+
+    @Test
+    fun `propaga X-Operation-Id del workflow activo`() {
+        val client = mockk<ObservabilityClient>(relaxed = true)
+        every { client.currentSessionId() } returns "session-1"
+        every { client.currentWorkflowId() } returns "op-123"
+        val tracer = mockk<ObservabilityTracer>(relaxed = true)
+        every { tracer.newTraceId() } returns "trace"
+        every { tracer.newSpanId() } returns "span"
+        every { tracer.traceparent(any(), any()) } returns "00-trace-span-01"
+        val interceptor = ObservabilityHttpInterceptor(lazyOf(client), lazyOf(tracer))
+        val proceeded = slot<Request>()
+        val chain = mockk<Interceptor.Chain>()
+        every { chain.request() } returns Request.Builder().url("http://localhost/subscription").get().build()
+        every { chain.proceed(capture(proceeded)) } answers {
+            Response.Builder().request(firstArg()).protocol(Protocol.HTTP_1_1).code(200).message("OK")
+                .body(ByteArray(0).toResponseBody("application/json".toMediaTypeOrNull())).build()
+        }
+
+        interceptor.intercept(chain)
+
+        assertThat(proceeded.captured.header("X-Operation-Id")).isEqualTo("op-123")
     }
 }
 

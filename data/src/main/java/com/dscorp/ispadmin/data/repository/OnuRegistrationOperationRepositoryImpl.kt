@@ -4,6 +4,7 @@ import com.dscorp.ispadmin.data.remote.OnuRegistrationOperationApi
 import com.dscorp.ispadmin.data.remote.RegistrationOperationRevisionDto
 import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
 import com.dscorp.ispadmin.domain.model.OnuRegistrationCleanupReport
+import com.dscorp.ispadmin.domain.model.OnuRegistrationOutcome
 import com.dscorp.ispadmin.domain.repository.OnuRegistrationOperationRepository
 import com.dscorp.ispadmin.domain.repository.StartOnuRegistrationRequest
 import okhttp3.MediaType.Companion.toMediaType
@@ -58,6 +59,12 @@ class OnuRegistrationOperationRepositoryImpl(
 
     override suspend fun get(operationId: String): OnuRegistrationOperation =
         api.get(operationId).requiredBody("ONU_REGISTRATION_OPERATION_LOAD_FAILED")
+
+    override suspend fun outcome(operationId: String): OnuRegistrationOutcome? {
+        val response = api.outcome(operationId)
+        if (response.code() == 404) return null
+        return response.requiredBody("ONU_REGISTRATION_OUTCOME_LOAD_FAILED")
+    }
 
     private fun <T : Any> Response<T>.requiredBody(code: String): T {
         if (!isSuccessful) throw IllegalStateException("$code (HTTP ${this.code()})")

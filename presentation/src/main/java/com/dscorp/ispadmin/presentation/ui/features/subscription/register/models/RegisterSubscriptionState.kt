@@ -31,4 +31,6 @@ data class RegisterSubscriptionState(
     val registrationCancelled: Boolean = false,
     val registrationProgressMessage: String = "Registrando…",
     val registrationProgressCheckpoints: List<RegistrationProgressCheckpoint> = emptyList(),
+    val submission: SubmissionState = SubmissionState.Idle,
+    val dniWarning: String? = null,
 )

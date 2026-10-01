@@ -123,6 +123,14 @@ class ObservabilityClientWorkflowTest {
     }
 
     @Test
+    fun `startWorkflow reuses a business operation id when given`() {
+        val id = client.startWorkflow("registro_suscripcion", "registration", workflowId = "op-123")
+
+        assertThat(id).isEqualTo("op-123")
+        assertThat(client.currentWorkflowId()).isEqualTo("op-123")
+    }
+
+    @Test
     fun `endWorkflow without active workflow is a no-op`() {
         client.endWorkflow(WorkflowStatus.FAILED)
         assertThat(parseEvents()).isEmpty()

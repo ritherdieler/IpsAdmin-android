@@ -57,7 +57,7 @@ val observabilityModule = module {
                 buildConfigKey = BuildConfig.OBS_API_KEY,
                 buildConfigAndroidKey = BuildConfig.OBS_API_KEY_ANDROID
             ),
-            sanitizePayloads = !BuildConfig.DEBUG
+            sanitizePayloads = BuildConfig.FLAVOR != "dev"
         )
     }
 

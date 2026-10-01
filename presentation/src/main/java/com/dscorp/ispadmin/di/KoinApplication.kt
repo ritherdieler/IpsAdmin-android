@@ -29,7 +29,11 @@ class KoinApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        Stetho.initializeWithDefaults(this)
+        if (BuildConfig.FLAVOR == DEV_FLAVOR) {
+            Stetho.initializeWithDefaults(this)
+        } else {
+            deleteDatabase(LEGACY_CHUCKER_DATABASE)
+        }
         firebaseAnalytics = Firebase.analytics
 
         startKoin {
@@ -86,5 +90,10 @@ class KoinApplication : Application() {
         getKoin().get<ObservabilityTracer>().flush()
         getKoin().get<ObservabilityConnectivityMonitor>().register()
         registerActivityLifecycleCallbacks(getKoin().get<ObservabilityActivityTracker>())
+    }
+
+    private companion object {
+        const val DEV_FLAVOR = "dev"
+        const val LEGACY_CHUCKER_DATABASE = "chucker.db"
     }
 }

@@ -62,13 +62,14 @@ class ObservabilityClient(
     fun startWorkflow(
         name: String,
         category: String,
-        context: Map<String, Any?> = emptyMap()
+        context: Map<String, Any?> = emptyMap(),
+        workflowId: String? = null,
     ): String = synchronized(workflowLock) {
         if (activeWorkflow.get() != null) {
             endWorkflowLocked(WorkflowStatus.INTERRUPTED, reason = "replaced_by_new_workflow")
         }
         val workflow = ObsWorkflow(
-            id = UUID.randomUUID().toString(),
+            id = workflowId?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString(),
             name = name,
             category = category,
             context = ObsSanitize.sanitizeMap(context, config.sanitizePayloads) ?: emptyMap(),
@@ -158,7 +159,7 @@ class ObservabilityClient(
     }
 
     fun addBreadcrumb(category: String, message: String, data: Map<String, Any?>? = null) {
-        val mergedData = mergeWorkflowIntoData(data)
+        val mergedData = ObsSanitize.sanitizeMap(mergeWorkflowIntoData(data), config.sanitizePayloads)
         synchronized(breadcrumbLock) {
             breadcrumbs.addLast(
                 mapOf(
@@ -314,10 +315,10 @@ class ObservabilityClient(
             httpStatus = httpStatus,
             durationMs = durationMs,
             userAgent = contextProvider.userAgent(),
-            user = contextProvider.user(),
+            user = ObsSanitize.sanitizeMap(contextProvider.user(), config.sanitizePayloads),
             device = contextProvider.device(),
             breadcrumbs = currentBreadcrumbs(),
-            tags = mergedTags,
+            tags = ObsSanitize.sanitizeMap(mergedTags, config.sanitizePayloads),
             context = context,
             replayId = replayId,
             timestamp = System.currentTimeMillis()

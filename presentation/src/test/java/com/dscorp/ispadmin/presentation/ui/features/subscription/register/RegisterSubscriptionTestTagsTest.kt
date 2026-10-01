@@ -63,8 +63,7 @@ class RegisterSubscriptionTestTagsTest {
         val e2eSource = File(
             "src/androidTest/java/com/dscorp/ispadmin/presentation/ui/features/subscription/register/FiberRegisterFirstOnuE2ETest.kt"
         ).readText()
-        assertThat(e2eSource).contains("oltProvisionStatus(\"COMPLETE\")")
-        assertThat(e2eSource).contains("tr069ProvisionStatus(\"COMPLETE\")")
+        assertThat(e2eSource).contains("RegisterSubscriptionTestTags.SUCCESS_SECTION_WIFI")
         assertThat(e2eSource).contains("selectAccessMode()")
         assertThat(e2eSource).contains("ACCESS_MODE_STATIC_IP")
         assertThat(e2eSource).contains("ACCESS_MODE_PPPOE")
@@ -72,9 +71,8 @@ class RegisterSubscriptionTestTagsTest {
             "src/main/java/com/dscorp/ispadmin/presentation/ui/features/subscription/register/compose/RegisterSubscriptionScreen.kt"
         ).readText()
         assertThat(screenSource).contains("RegisterSubscriptionDebugActions.SET_FACADE_PHOTO")
-        assertThat(screenSource).contains("OltStatusCard")
-        assertThat(screenSource).contains("oltProvisionStatus(")
-        assertThat(screenSource).contains("tr069ProvisionStatus(")
+        assertThat(screenSource).contains("RegisterSubscriptionTestTags.SUCCESS_SECTION_WIFI")
+        assertThat(RegisterSubscriptionTestTags.SUCCESS_SECTION_WIFI).isEqualTo("register_success_section_wifi")
     }
 
     @Test

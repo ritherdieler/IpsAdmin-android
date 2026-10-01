@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.domain.model.AccessMode
@@ -14,6 +15,7 @@ import com.dscorp.ispadmin.domain.model.OnuRegistrationCancellationIntent
 import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
+import com.dscorp.ispadmin.domain.model.RegistrationProgress
 import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.domain.model.canManuallyRetry
 import com.dscorp.ispadmin.domain.model.canOpenRegistrationForm
@@ -26,6 +28,7 @@ import com.dscorp.ispadmin.domain.repository.OnuRegistrationCancellationIntentSt
 import com.dscorp.ispadmin.domain.repository.OnuRegistrationSelectionStore
 import com.dscorp.ispadmin.domain.repository.OnuRegistrationTarget
 import com.dscorp.ispadmin.domain.repository.StartOnuRegistrationRequest
+import com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.catalog.GetRegistrationCatalogUseCase
 import com.dscorp.ispadmin.domain.usecase.catalog.RefreshRegistrationCatalogUseCase
@@ -36,12 +39,14 @@ import com.dscorp.ispadmin.domain.usecase.subscription.GetUserSessionUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.ObserveOfflineRegistrationModeUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.OnuRegistrationOperationUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.PollRegistrationProgressUseCase
-import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionResult
 import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionUseCase
+import com.dscorp.ispadmin.domain.usecase.subscription.RegistrationSubmission
 import com.dscorp.ispadmin.domain.usecase.subscription.RetryTr069ProvisioningUseCase
+import com.dscorp.ispadmin.domain.usecase.subscription.SubmitAndTrackRegistrationUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.toSubscriptionOrNull
 import com.dscorp.ispadmin.observability.ObsBreadcrumbCategory
 import com.dscorp.ispadmin.observability.ObservabilityClient
+import com.dscorp.ispadmin.observability.WorkflowStatus
 import com.dscorp.ispadmin.presentation.extension.removeSpecialCharacters
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.E2eAccessModeResolver
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.mapper.toNapBoxResponse
@@ -56,6 +61,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.SubmissionState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.TvCpeKind
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.canAdvanceWizardStep
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.isRegistrationVlanSelectable
@@ -100,11 +106,23 @@ class RegisterSubscriptionComposeViewModel(
     private val onuRegistrationOperationUseCase: OnuRegistrationOperationUseCase? = null,
     private val cancellationIntentStore: OnuRegistrationCancellationIntentStore? = null,
     private val onuRegistrationSelectionStore: OnuRegistrationSelectionStore? = null,
+    private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
+    private val subscriptionActionsRepository: SubscriptionActionsRepository? = null,
+    private val submitAndTrackRegistrationUseCase: SubmitAndTrackRegistrationUseCase =
+        SubmitAndTrackRegistrationUseCase(registerSubscriptionUseCase, onuRegistrationOperationUseCase),
 ) : ViewModel() {
 
     private companion object {
         const val OBS_FEATURE = "subscription"
         const val OBS_SCREEN = "register_subscription"
+        const val CLIENT_REQUEST_ID_KEY = "register_subscription_client_request_id"
+        const val DNI_CHECK_MIN_LENGTH = 8
+        const val DNI_CHECK_DEBOUNCE_MS = 600L
+        const val DRAFT_SAVE_DEBOUNCE_MS = 2_000L
+        const val PREAUTH_POLL_INTERVAL_MS = 3_000L
+        const val PREAUTH_MAX_POLLS = 100
+        const val OBS_WORKFLOW_NAME = "registro_suscripcion"
+        const val OBS_WORKFLOW_CATEGORY = "registration"
     }
 
     private val _uiState = MutableStateFlow(
@@ -171,6 +189,9 @@ class RegisterSubscriptionComposeViewModel(
     private var offlineModeJob: Job? = null
     private var photoUploadJob: Job? = null
     private var cancellationJob: Job? = null
+    private var resumeProvisioningJob: Job? = null
+    private var registrationWorkflowId: String? = null
+    private var dniCheckJob: Job? = null
     private var cancellationRequested = false
     private var subscriptionSubmissionInFlight = false
     private var registrationRequestKeyInFlight: String? = null
@@ -187,7 +208,7 @@ class RegisterSubscriptionComposeViewModel(
                     } else null
                 }.distinctUntilChanged().collectLatest { snapshot ->
                     if (snapshot != null) {
-                        delay(500)
+                        delay(DRAFT_SAVE_DEBOUNCE_MS)
                         try {
                             operationUseCase.saveDraft(snapshot.first, snapshot.second)
                         } catch (cancelled: CancellationException) {
@@ -387,6 +408,9 @@ class RegisterSubscriptionComposeViewModel(
             RegisterSubscriptionIntent.ConfirmCancelOnuRegistration -> confirmCancelOnuRegistration()
             RegisterSubscriptionIntent.DismissCancelOnuRegistration ->
                 _uiState.update { it.copy(showCancelConfirmation = false) }
+            RegisterSubscriptionIntent.DismissRegistrationResult ->
+                _uiState.update { it.copy(submission = SubmissionState.Idle) }
+            RegisterSubscriptionIntent.LeaveDuringRegistration -> onLeaveDuringRegistration()
             RegisterSubscriptionIntent.UseCurrentLocationClicked -> onUseCurrentLocationClicked()
             RegisterSubscriptionIntent.ChooseManualLocationClicked -> onChooseManualLocationClicked()
             RegisterSubscriptionIntent.DismissManualLocationMap -> onDismissManualLocationMap()
@@ -506,7 +530,7 @@ class RegisterSubscriptionComposeViewModel(
                         ),
                     ),
                 )
-                showPreauthorizationOperation(operation, restoreDraft = false)
+                showPreauthorizationOperation(awaitPreauthorizationSettled(useCase, operation), restoreDraft = false)
             } catch (cancelled: CancellationException) {
                 _uiState.update {
                     it.copy(isLoading = false, isPreauthorizationRequestInProgress = false)
@@ -531,6 +555,23 @@ class RegisterSubscriptionComposeViewModel(
             }
         }
     }
+
+    private suspend fun awaitPreauthorizationSettled(
+        useCase: OnuRegistrationOperationUseCase,
+        initial: OnuRegistrationOperation,
+    ): OnuRegistrationOperation {
+        var latest = initial
+        repeat(PREAUTH_MAX_POLLS) {
+            if (!latest.isAuthorizationInFlight()) return latest
+            _uiState.update { it.copy(preauthorizationOperation = latest) }
+            delay(PREAUTH_POLL_INTERVAL_MS)
+            latest = useCase.get(latest.id)
+        }
+        return latest
+    }
+
+    private fun OnuRegistrationOperation.isAuthorizationInFlight(): Boolean =
+        phase == "OLT_AUTHORIZATION" && state in setOf("PENDING", "RUNNING")
 
     private fun retryOnuRegistration() {
         val useCase = onuRegistrationOperationUseCase ?: return
@@ -564,6 +605,20 @@ class RegisterSubscriptionComposeViewModel(
         }
     }
 
+    private fun onLeaveDuringRegistration() {
+        val current = currentUiState()
+        observabilityClient.reportLog(
+            message = "$OBS_FEATURE.register_abandoned_during_submit",
+            severity = "warning",
+            tags = mapOf(
+                "feature" to OBS_FEATURE,
+                "screen" to OBS_SCREEN,
+                "operationId" to current.preauthorizationOperation?.id,
+                "submission" to current.submission::class.simpleName,
+            ),
+        )
+    }
+
     private fun cancelOnuRegistration() {
         val current = currentUiState()
         if (current.registrationCancelled || current.cancellationInProgress) return
@@ -574,6 +629,7 @@ class RegisterSubscriptionComposeViewModel(
         val current = currentUiState()
         if (current.registrationCancelled || current.cancellationInProgress) return
         _uiState.update { it.copy(showCancelConfirmation = false, registrationCancelled = false) }
+        resumeProvisioningJob?.cancel()
         cancellationRequested = true
         _uiState.update { it.copy(cancellationInProgress = true) }
         if (subscriptionSubmissionInFlight) {
@@ -883,6 +939,11 @@ class RegisterSubscriptionComposeViewModel(
 
     private fun markRegistrationCancellationComplete(availableOnus: List<Onu>? = null) {
         clearStoredOnuSelection()
+        finishRegistrationWorkflow(
+            status = WorkflowStatus.INTERRUPTED,
+            subscriptionId = currentUiState().preauthorizationOperation?.subscriptionId,
+            reason = "cancelled",
+        )
         _uiState.update { current ->
             current.copy(
                 isLoading = false,
@@ -944,19 +1005,25 @@ class RegisterSubscriptionComposeViewModel(
                 cancellationRequested = true
                 return
             }
-            if (operation.subscriptionId != null) {
+            val linkedSubscriptionId = operation.subscriptionId
+            if (linkedSubscriptionId != null) {
+                val cancelling = operation.state in setOf("CANCEL_REQUESTED", "CANCELLING", "CANCEL_FAILED", "CANCELLED")
                 _uiState.update {
                     it.copy(
                         preauthorizationEnabled = true,
                         preauthorizationOperation = operation,
                         isRegistering = true,
-                        registrationProgressMessage = if (operation.state in setOf("CANCEL_REQUESTED", "CANCELLING", "CANCEL_FAILED", "CANCELLED")) {
+                        submission = if (cancelling) it.submission else SubmissionState.Provisioning(linkedSubscriptionId),
+                        registrationProgressMessage = if (cancelling) {
                             "Retomando limpieza de la cancelación…"
-                        } else "Retomando provisión de la suscripción…",
+                        } else "Retomando provisión de la suscripción #$linkedSubscriptionId…",
                     )
                 }
-                if (operation.state in setOf("CANCEL_REQUESTED", "CANCELLING", "CANCEL_FAILED", "CANCELLED")) {
+                ensureRegistrationWorkflow(operation.id)
+                if (cancelling) {
                     cancellationRequested = true
+                } else {
+                    resumeProvisioning(linkedSubscriptionId)
                 }
                 return
             }
@@ -983,6 +1050,7 @@ class RegisterSubscriptionComposeViewModel(
 
     private suspend fun showPreauthorizationOperation(operation: OnuRegistrationOperation, restoreDraft: Boolean) {
         val useCase = onuRegistrationOperationUseCase ?: return
+        ensureRegistrationWorkflow(operation.id)
         val selectedOnu = _uiState.value.registerSubscriptionForm.onuList.firstOrNull { it.sn.equals(operation.serial, true) }
         var form = _uiState.value.registerSubscriptionForm.copy(
             selectedOnu = selectedOnu ?: _uiState.value.registerSubscriptionForm.selectedOnu?.takeIf { it.sn.equals(operation.serial, true) }
@@ -1078,7 +1146,7 @@ class RegisterSubscriptionComposeViewModel(
             "facadePhotoUrl" to form.facadePhotoUrl, "vlan" to form.vlan,
             "wifiSsid24" to form.wifiSsid24, "wifiPassword24" to form.wifiPassword24,
             "wifiSsid5" to form.resolvedWifiSsid5(),
-            "wifiPassword5" to form.wifiPassword5,
+            "wifiPassword5" to form.resolvedWifiPassword5(),
             "equipmentCondition" to form.equipmentCondition.name,
             "useDifferentWifiNames" to form.useDifferentWifiNames,
             "tvCpeKind" to form.tvCpeKind?.name,
@@ -1217,11 +1285,21 @@ class RegisterSubscriptionComposeViewModel(
                         )
                         when (merged.tr069ProvisionStatus) {
                             "COMPLETE" -> {
-                                _uiState.update { it.copy(tr069RetryLoading = false) }
+                                _uiState.update {
+                                    it.copy(tr069RetryLoading = false, submission = SubmissionState.Completed(merged))
+                                }
                                 _uiEvent.emit(RegisterSubscriptionUiEvent.Success(merged))
                             }
                             "MANUAL_REQUIRED", "FAILED" -> {
-                                _uiState.update { it.copy(tr069RetryLoading = false) }
+                                _uiState.update {
+                                    it.copy(
+                                        tr069RetryLoading = false,
+                                        submission = SubmissionState.NeedsAttention(
+                                            merged,
+                                            merged.tr069Message ?: "No se pudo completar el aprovisionamiento TR-069",
+                                        ),
+                                    )
+                                }
                                 _uiEvent.emit(RegisterSubscriptionUiEvent.Success(merged))
                                 _uiEvent.emit(
                                     RegisterSubscriptionUiEvent.Error(
@@ -1352,6 +1430,30 @@ private fun onDniChanged(value: String) {
 
     updateValidatedForm(FormFieldKey.DNI) { form ->
         form.copy(dni = value)
+    }
+    scheduleDniCheck(value.trim())
+}
+
+private fun scheduleDniCheck(dni: String) {
+    dniCheckJob?.cancel()
+    val repository = subscriptionActionsRepository
+    if (repository == null || dni.length < DNI_CHECK_MIN_LENGTH) {
+        _uiState.update { it.copy(dniWarning = null) }
+        return
+    }
+    dniCheckJob = viewModelScope.launch(mainImmediate) {
+        delay(DNI_CHECK_DEBOUNCE_MS)
+        val check = try {
+            repository.checkDni(dni)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            return@launch
+        }
+        val warning = check.activeSubscriptions.takeIf { it > 0 }?.let { active ->
+            "Este DNI ya tiene $active suscripción(es) activa(s). Verifica que no sea un alta duplicada."
+        }
+        _uiState.update { it.copy(dniWarning = warning) }
     }
 }
 
@@ -1782,17 +1884,21 @@ fun saveSubscription(facadePhotoFile: File? = null) {
                 it.copy(
                     isLoading = true,
                     isRegistering = true,
+                    submission = SubmissionState.Submitting,
                     registrationProgressMessage = "Registrando y autorizando…"
                 )
             }
 
             subscriptionSubmissionInFlight = true
-            val registrationResult = try {
-                registerSubscriptionUseCase(
-                    subscription,
-                    orderIdSnapshot,
-                    facadePhotoFile = facadePhotoFile
-                )
+            val submission = try {
+                submitAndTrackRegistrationUseCase.submit(subscription, orderIdSnapshot, facadePhotoFile) {
+                    _uiState.update {
+                        it.copy(
+                            submission = SubmissionState.Reconciling,
+                            registrationProgressMessage = "Verificando si el registro quedó guardado…",
+                        )
+                    }
+                }
             } finally {
                 subscriptionSubmissionInFlight = false
             }
@@ -1801,60 +1907,65 @@ fun saveSubscription(facadePhotoFile: File? = null) {
                 return@launch
             }
 
-            registrationResult.fold(
-                onSuccess = { outcome ->
-                    when (outcome) {
-                        is RegisterSubscriptionResult.Registered -> {
-                            observabilityClient.addBreadcrumb(
-                                category = ObsBreadcrumbCategory.STATE,
-                                message = "$OBS_FEATURE.register_success",
-                                data = mapOf("feature" to OBS_FEATURE, "orderId" to orderIdSnapshot)
+            when (submission) {
+                is RegistrationSubmission.Accepted -> {
+                    observabilityClient.addBreadcrumb(
+                        category = ObsBreadcrumbCategory.STATE,
+                        message = if (submission.reconciled) "$OBS_FEATURE.register_reconciled" else "$OBS_FEATURE.register_success",
+                        data = mapOf(
+                            "feature" to OBS_FEATURE,
+                            "orderId" to orderIdSnapshot,
+                            "subscriptionId" to submission.subscription.resolvedSubscriptionId(),
+                            "operationId" to subscription.registrationOperationId,
+                        )
+                    )
+                    val enriched = submission.subscription.copy(
+                        wifiSsid24 = submission.subscription.wifiSsid24 ?: subscription.wifiSsid24,
+                        wifiSsid5 = submission.subscription.wifiSsid5 ?: subscription.wifiSsid5,
+                        wifiPassword24 = subscription.wifiPassword24,
+                        wifiPassword5 = subscription.wifiPassword5
+                    )
+                    val subscriptionId = enriched.resolvedSubscriptionId()
+                    if (subscriptionId != null &&
+                        (enriched.provisioningPending || enriched.tr069ProvisionStatus == "PENDING")
+                    ) {
+                        pollRegistrationProgress(subscriptionId, enriched)
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isRegistering = false,
+                                orderId = null,
+                                submission = SubmissionState.Completed(enriched),
+                                registrationProgressMessage = "Registrando…"
                             )
-                            val enriched = outcome.subscription.copy(
-                                wifiSsid24 = outcome.subscription.wifiSsid24
-                                    ?: subscription.wifiSsid24,
-                                wifiSsid5 = outcome.subscription.wifiSsid5
-                                    ?: subscription.wifiSsid5,
-                                wifiPassword24 = subscription.wifiPassword24,
-                                wifiPassword5 = subscription.wifiPassword5
-                            )
-                            val subscriptionId = enriched.resolvedSubscriptionId()
-                            if (subscriptionId != null &&
-                                (enriched.provisioningPending || enriched.tr069ProvisionStatus == "PENDING")
-                            ) {
-                                pollRegistrationProgress(subscriptionId, enriched)
-                            } else {
-                                _uiState.update {
-                                    it.copy(
-                                        isLoading = false,
-                                        isRegistering = false,
-                                        orderId = null,
-                                        registrationProgressMessage = "Registrando…"
-                                    )
-                                }
-                                _uiEvent.emit(RegisterSubscriptionUiEvent.Success(enriched))
-                            }
                         }
-                        is RegisterSubscriptionResult.QueuedOffline -> {
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    isRegistering = false,
-                                    orderId = null
-                                )
-                            }
-                            observabilityClient.addBreadcrumb(
-                                category = ObsBreadcrumbCategory.STATE,
-                                message = "$OBS_FEATURE.register_queued_offline",
-                                data = mapOf("feature" to OBS_FEATURE, "orderId" to orderIdSnapshot)
-                            )
-                            _uiEvent.emit(RegisterSubscriptionUiEvent.QueuedOffline)
-                        }
+                        resetFormClientRequestId()
+                        _uiEvent.emit(RegisterSubscriptionUiEvent.Success(enriched))
                     }
-                },
-                onFailure = { error ->
+                }
+                is RegistrationSubmission.Queued -> {
                     _uiState.update {
-                        it.copy(isLoading = false, isRegistering = false)
+                        it.copy(
+                            isLoading = false,
+                            isRegistering = false,
+                            submission = SubmissionState.Idle,
+                            orderId = null
+                        )
+                    }
+                    resetFormClientRequestId()
+                    observabilityClient.addBreadcrumb(
+                        category = ObsBreadcrumbCategory.STATE,
+                        message = "$OBS_FEATURE.register_queued_offline",
+                        data = mapOf("feature" to OBS_FEATURE, "orderId" to orderIdSnapshot)
+                    )
+                    _uiEvent.emit(RegisterSubscriptionUiEvent.QueuedOffline)
+                }
+                is RegistrationSubmission.Uncertain -> markRegistrationUncertain(subscription.registrationOperationId)
+                is RegistrationSubmission.Rejected -> {
+                    val error = submission.error
+                    _uiState.update {
+                        it.copy(isLoading = false, isRegistering = false, submission = SubmissionState.Idle)
                     }
                     observabilityClient.reportError(
                         throwable = error,
@@ -1864,6 +1975,7 @@ fun saveSubscription(facadePhotoFile: File? = null) {
                             "screen" to OBS_SCREEN,
                             "action" to "save_subscription",
                             "entityId" to orderIdSnapshot,
+                            "operationId" to subscription.registrationOperationId,
                             "orderId" to orderIdSnapshot,
                             "installationType" to subscription.installationType?.name,
                             "hasFacadePhoto" to (facadePhotoFile != null),
@@ -1879,7 +1991,7 @@ fun saveSubscription(facadePhotoFile: File? = null) {
                         )
                     )
                 }
-            )
+            }
         } catch (e: CancellationException) {
             _uiState.update { it.copy(isLoading = false, isRegistering = false) }
             throw e
@@ -1903,6 +2015,7 @@ private suspend fun pollRegistrationProgress(
         it.copy(
             isLoading = !fromRetry,
             isRegistering = !fromRetry,
+            submission = if (fromRetry) it.submission else SubmissionState.Provisioning(subscriptionId),
             tr069RetryLoading = fromRetry || it.tr069RetryLoading,
             registrationProgressMessage = when {
                 fromRetry -> "Reintentando aprovisionamiento TR-069…"
@@ -1922,7 +2035,7 @@ private suspend fun pollRegistrationProgress(
     if (_uiState.value.cancellationInProgress) return
     result.fold(
         onSuccess = { progress ->
-            val finalSubscription = progress.toSubscriptionOrNull(wifiFallback = initial) ?: initial.copy(
+            val finalSubscription = progress.toSubscriptionOrNull(registration = initial) ?: initial.copy(
                 tr069ProvisionStatus = progress.tr069ProvisionStatus ?: initial.tr069ProvisionStatus,
                 tr069Message = progress.tr069Message ?: initial.tr069Message,
                 mikrotikProvisionStatus = progress.mikrotikProvisionStatus
@@ -1930,43 +2043,99 @@ private suspend fun pollRegistrationProgress(
                 oltProvisionStatus = progress.oltProvisionStatus ?: initial.oltProvisionStatus,
                 provisioningPending = !progress.done,
             )
+            val attention = provisioningAttentionMessage(progress, finalSubscription)
             _uiState.update {
                 it.copy(
                     isLoading = false,
                     isRegistering = false,
                     tr069RetryLoading = false,
                     orderId = null,
+                    submission = if (attention != null) {
+                        SubmissionState.NeedsAttention(finalSubscription, attention)
+                    } else SubmissionState.Completed(finalSubscription),
                     registrationProgressMessage = "Registrando…"
                 )
             }
+            resetFormClientRequestId()
+            finishRegistrationWorkflow(
+                status = if (attention != null) WorkflowStatus.FAILED else WorkflowStatus.SUCCESS,
+                subscriptionId = subscriptionId,
+                reason = progress.outcome,
+            )
             _uiEvent.emit(RegisterSubscriptionUiEvent.Success(finalSubscription))
-            if (finalSubscription.tr069ProvisionStatus == "MANUAL_REQUIRED") {
-                _uiEvent.emit(
-                    RegisterSubscriptionUiEvent.Error(
-                        finalSubscription.tr069Message
-                            ?: "No se pudo completar el aprovisionamiento TR-069"
-                    )
-                )
+            if (attention != null) {
+                _uiEvent.emit(RegisterSubscriptionUiEvent.Error(attention))
             }
         },
-        onFailure = { error ->
+        onFailure = {
             _uiState.update {
                 it.copy(
                     isLoading = false,
                     isRegistering = false,
                     tr069RetryLoading = false,
                     orderId = null,
+                    submission = SubmissionState.ProvisioningUnknown(
+                        initial,
+                        "La suscripción #$subscriptionId quedó registrada, pero no pudimos confirmar el final del aprovisionamiento. Revisa el progreso.",
+                    ),
                     registrationProgressMessage = "Registrando…"
                 )
             }
+            resetFormClientRequestId()
             _uiEvent.emit(RegisterSubscriptionUiEvent.Success(initial))
-            _uiEvent.emit(
-                RegisterSubscriptionUiEvent.Error(
-                    error.message ?: "No se pudo obtener el progreso del aprovisionamiento"
-                )
-            )
         }
     )
+}
+
+private fun provisioningAttentionMessage(progress: RegistrationProgress, subscription: Subscription): String? = when {
+    progress.outcome == "FAILED" -> progress.message.ifBlank { "El aprovisionamiento falló." }
+    subscription.tr069ProvisionStatus == "MANUAL_REQUIRED" || subscription.tr069ProvisionStatus == "FAILED" ->
+        subscription.tr069Message ?: "No se pudo completar el aprovisionamiento TR-069"
+    else -> null
+}
+
+private suspend fun markRegistrationUncertain(operationId: String?) {
+    val message = "No se pudo confirmar si el registro quedó guardado. Puedes reintentar: no se duplicará."
+    _uiState.update {
+        it.copy(isLoading = false, isRegistering = false, submission = SubmissionState.Uncertain(message))
+    }
+    observabilityClient.reportLog(
+        message = "$OBS_FEATURE.register_result_uncertain",
+        severity = "warning",
+        tags = mapOf("feature" to OBS_FEATURE, "screen" to OBS_SCREEN, "operationId" to operationId),
+    )
+    _uiEvent.emit(RegisterSubscriptionUiEvent.Error(message))
+}
+
+private fun ensureRegistrationWorkflow(operationId: String?) {
+    if (operationId.isNullOrBlank() || registrationWorkflowId == operationId) return
+    registrationWorkflowId = observabilityClient.startWorkflow(
+        name = OBS_WORKFLOW_NAME,
+        category = OBS_WORKFLOW_CATEGORY,
+        context = mapOf("feature" to OBS_FEATURE),
+        workflowId = operationId,
+    )
+}
+
+private fun finishRegistrationWorkflow(status: WorkflowStatus, subscriptionId: Int?, reason: String? = null) {
+    if (registrationWorkflowId == null) return
+    registrationWorkflowId = null
+    observabilityClient.endWorkflow(status, reason, mapOf("subscriptionId" to subscriptionId))
+}
+
+private fun formClientRequestId(): String =
+    savedStateHandle.get<String>(CLIENT_REQUEST_ID_KEY)
+        ?: UUID.randomUUID().toString().also { savedStateHandle[CLIENT_REQUEST_ID_KEY] = it }
+
+private fun resetFormClientRequestId() {
+    savedStateHandle.remove<String>(CLIENT_REQUEST_ID_KEY)
+}
+
+private fun resumeProvisioning(subscriptionId: Int) {
+    resumeProvisioningJob?.cancel()
+    resumeProvisioningJob = viewModelScope.launch(mainImmediate) {
+        pollRegistrationProgress(subscriptionId, Subscription(subscriptionId = subscriptionId))
+    }
 }
 
 private fun buildSubscriptionFromForm(
@@ -2002,10 +2171,10 @@ private fun buildSubscriptionFromForm(
         wifiSsid24 = form.wifiSsid24.trim().takeIf { form.requiresWifiConfig() },
         wifiPassword24 = form.wifiPassword24.takeIf { form.requiresWifiConfig() },
         wifiSsid5 = form.resolvedWifiSsid5().takeIf { form.requiresWifiConfig() },
-        wifiPassword5 = form.wifiPassword24.takeIf { form.requiresWifiConfig() },
+        wifiPassword5 = form.resolvedWifiPassword5().takeIf { form.requiresWifiConfig() },
         accessMode = form.accessMode.name,
         registrationOperationId = currentUiState().preauthorizationOperation?.id,
-        clientRequestId = currentUiState().preauthorizationOperation?.id,
+        clientRequestId = currentUiState().preauthorizationOperation?.id ?: formClientRequestId(),
     )
 }
 

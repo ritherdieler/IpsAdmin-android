@@ -43,6 +43,8 @@ sealed interface RegisterSubscriptionIntent {
     data object CancelOnuRegistration : RegisterSubscriptionIntent
     data object ConfirmCancelOnuRegistration : RegisterSubscriptionIntent
     data object DismissCancelOnuRegistration : RegisterSubscriptionIntent
+    data object DismissRegistrationResult : RegisterSubscriptionIntent
+    data object LeaveDuringRegistration : RegisterSubscriptionIntent
     data object UseCurrentLocationClicked : RegisterSubscriptionIntent
     data object ChooseManualLocationClicked : RegisterSubscriptionIntent
     data object DismissManualLocationMap : RegisterSubscriptionIntent

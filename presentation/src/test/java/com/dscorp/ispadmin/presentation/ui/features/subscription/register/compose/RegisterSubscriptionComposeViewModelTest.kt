@@ -41,6 +41,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.TvCpeKind
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.SubmissionState
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -183,6 +184,7 @@ class RegisterSubscriptionComposeViewModelTest {
         observeOfflineRegistrationModeUseCase = mockk()
         retryTr069ProvisioningUseCase = mockk()
         pollRegistrationProgressUseCase = mockk()
+        coEvery { pollRegistrationProgressUseCase(any(), any()) } coAnswers { kotlinx.coroutines.awaitCancellation() }
         every { observeOfflineRegistrationModeUseCase() } returns Result.success(offlineModeFlow)
 
         coEvery { getAvailableOnuListUseCase() } returns Result.success(emptyList())
@@ -211,6 +213,8 @@ class RegisterSubscriptionComposeViewModelTest {
         useCase: OnuRegistrationOperationUseCase,
         cancellationIntentStore: OnuRegistrationCancellationIntentStore? = null,
         onuRegistrationSelectionStore: OnuRegistrationSelectionStore? = null,
+        savedStateHandle: androidx.lifecycle.SavedStateHandle = androidx.lifecycle.SavedStateHandle(),
+        observabilityClient: com.dscorp.ispadmin.observability.ObservabilityClient = mockk(relaxed = true),
     ) = RegisterSubscriptionComposeViewModel(
         getAvailableOnuListUseCase = getAvailableOnuListUseCase,
         getRegistrationCatalogUseCase = getRegistrationCatalogUseCase,
@@ -223,11 +227,12 @@ class RegisterSubscriptionComposeViewModelTest {
         observeOfflineRegistrationModeUseCase = observeOfflineRegistrationModeUseCase,
         retryTr069ProvisioningUseCase = retryTr069ProvisioningUseCase,
         pollRegistrationProgressUseCase = pollRegistrationProgressUseCase,
-        observabilityClient = mockk(relaxed = true),
+        observabilityClient = observabilityClient,
         mainImmediate = testDispatcher,
         onuRegistrationOperationUseCase = useCase,
         cancellationIntentStore = cancellationIntentStore,
         onuRegistrationSelectionStore = onuRegistrationSelectionStore,
+        savedStateHandle = savedStateHandle,
     )
 
     @After
@@ -511,7 +516,7 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel.onIntent(RegisterSubscriptionIntent.WifiPassword24Changed("clave-24"))
         viewModel.onIntent(RegisterSubscriptionIntent.WifiPassword5Changed("clave-5"))
 
-        advanceTimeBy(501)
+        advanceTimeBy(2_001)
         advanceUntilIdle()
 
         coVerify(exactly = 1) {
@@ -2127,7 +2132,7 @@ class RegisterSubscriptionComposeViewModelTest {
         }
 
     @Test
-    fun `saveSubscription poll timeout emits Success with PENDING and Error`() = runTest(testDispatcher) {
+    fun `saveSubscription poll timeout keeps the registered subscription as provisioning unknown`() = runTest(testDispatcher) {
         val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
         val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
         coEvery { getRegistrationCatalogUseCase() } returns Result.success(
@@ -2164,11 +2169,10 @@ class RegisterSubscriptionComposeViewModelTest {
         coVerify(exactly = 1) { pollRegistrationProgressUseCase(1, any()) }
         coVerify(exactly = 0) { retryTr069ProvisioningUseCase(any()) }
         assertTrue(events.any { it is RegisterSubscriptionUiEvent.Success })
-        assertTrue(
-            events.filterIsInstance<RegisterSubscriptionUiEvent.Error>().any {
-                it.message.contains("Timeout")
-            }
-        )
+        assertTrue(events.none { it is RegisterSubscriptionUiEvent.Error })
+        val submission = viewModel.uiState.value.submission
+        assertTrue(submission is SubmissionState.ProvisioningUnknown)
+        assertTrue((submission as SubmissionState.ProvisioningUnknown).message.contains("#1"))
         assertEquals(false, viewModel.uiState.value.isLoading)
         job.cancel()
     }
@@ -2471,4 +2475,303 @@ class RegisterSubscriptionComposeViewModelTest {
         napBoxes = listOf(fiberNap()),
         onus = listOf(fiberOnu())
     )
+
+    @Test
+    fun `reopening a linked registration resumes progress polling and shows the result`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val linked = OnuRegistrationOperation(
+            id = "linked-resume", serial = "VSOL0031C0B6", subscriptionId = 84,
+            phase = "PROVISIONING", state = "RUNNING", revision = 5,
+        )
+        coEvery { operationUseCase.active() } returns linked
+        coEvery { operationUseCase.get(linked.id) } returns linked
+        val done = Subscription(subscriptionId = 84, tr069ProvisionStatus = "COMPLETE", provisioningPending = false)
+        coEvery { pollRegistrationProgressUseCase(84, any()) } returns Result.success(
+            RegistrationProgress(
+                subscriptionId = 84, step = "DONE", message = "Listo", done = true,
+                tr069ProvisionStatus = "COMPLETE", subscription = done, outcome = "SUCCEEDED",
+            )
+        )
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { pollRegistrationProgressUseCase(84, any()) }
+        val submission = viewModel.uiState.value.submission
+        assertTrue(submission is SubmissionState.Completed)
+        assertEquals(84, (submission as SubmissionState.Completed).subscription.resolvedSubscriptionId())
+        assertFalse(viewModel.uiState.value.isRegistering)
+    }
+
+    @Test
+    fun `registration result lives in ui state even without an event collector`() = runTest(testDispatcher) {
+        val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
+        val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu()))
+        )
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        val done = Subscription(subscriptionId = 1, firstName = "A", lastName = "B", tr069ProvisionStatus = "COMPLETE")
+        coEvery { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) } returns
+            Result.success(RegisterSubscriptionResult.Registered(done))
+        fillValidFiberForm(nap, onu)
+        fillWifiFields()
+        selectValidLocation()
+
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        val submission = viewModel.uiState.value.submission
+        assertTrue(submission is SubmissionState.Completed)
+        viewModel.onIntent(RegisterSubscriptionIntent.DismissRegistrationResult)
+        assertEquals(SubmissionState.Idle, viewModel.uiState.value.submission)
+    }
+
+    @Test
+    fun `failed provisioning outcome needs attention and reports the reason`() = runTest(testDispatcher) {
+        val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
+        val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu()))
+        )
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        val pending = Subscription(subscriptionId = 1, firstName = "A", lastName = "B", tr069ProvisionStatus = "PENDING", provisioningPending = true)
+        coEvery { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) } returns
+            Result.success(RegisterSubscriptionResult.Registered(pending))
+        coEvery { pollRegistrationProgressUseCase(1, any()) } returns Result.success(
+            RegistrationProgress(
+                subscriptionId = 1, step = "FAILED", message = "El ACS no confirmó los SSID.", done = true,
+                tr069ProvisionStatus = "FAILED", outcome = "FAILED",
+                subscription = pending.copy(tr069ProvisionStatus = "FAILED", provisioningPending = false),
+            )
+        )
+        fillValidFiberForm(nap, onu)
+        fillWifiFields()
+        selectValidLocation()
+        val events = mutableListOf<RegisterSubscriptionUiEvent>()
+        val job = launch { viewModel.uiEvent.collect { events.add(it) } }
+
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        val submission = viewModel.uiState.value.submission
+        assertTrue(submission is SubmissionState.NeedsAttention)
+        assertEquals("El ACS no confirmó los SSID.", (submission as SubmissionState.NeedsAttention).message)
+        assertTrue(events.any { it is RegisterSubscriptionUiEvent.Error })
+        job.cancel()
+    }
+
+    @Test
+    fun `network failure after submit reconciles with the server outcome instead of failing`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val onu = Onu("b", "olt", "1", "t", "VSOLVA74", "gpon", "p", "VSOL0031C0B6")
+        val ready = OnuRegistrationOperation(
+            id = "op-lost-response", serial = onu.sn, subscriptionId = null,
+            phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 4,
+        )
+        coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.draft(ready.id) } returns mapOf("facadePhotoUrl" to "https://storage.example/photo.jpg")
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { operationUseCase.outcome(ready.id) } returns com.dscorp.ispadmin.domain.model.OnuRegistrationOutcome(
+            operationId = ready.id, subscriptionId = 90, phase = "PROVISIONING", state = "RUNNING", outcome = "RUNNING",
+        )
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu().copy(sn = onu.sn)))
+        )
+        coEvery { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) } returns
+            Result.failure(java.net.SocketTimeoutException("timeout"))
+        val done = Subscription(subscriptionId = 90, tr069ProvisionStatus = "COMPLETE")
+        coEvery { pollRegistrationProgressUseCase(90, any()) } returns Result.success(
+            RegistrationProgress(90, "DONE", "Listo", true, tr069ProvisionStatus = "COMPLETE", subscription = done, outcome = "SUCCEEDED")
+        )
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        fillValidFiberForm(NapBoxResponse(id = "n1", placeName = "P1", placeId = 1), onu)
+        fillWifiFields()
+        val events = mutableListOf<RegisterSubscriptionUiEvent>()
+        val job = launch { viewModel.uiEvent.collect { events.add(it) } }
+
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { operationUseCase.outcome(ready.id) }
+        coVerify(exactly = 1) { pollRegistrationProgressUseCase(90, any()) }
+        assertTrue(viewModel.uiState.value.submission is SubmissionState.Completed)
+        assertTrue(events.none { it is RegisterSubscriptionUiEvent.Error })
+        job.cancel()
+    }
+
+    @Test
+    fun `typing a dni that already has active subscriptions shows a non blocking warning`() = runTest(testDispatcher) {
+        val actions = mockk<com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository>()
+        coEvery { actions.checkDni("12345678") } returns com.dscorp.ispadmin.domain.model.DniCheck(
+            totalSubscriptions = 3, activeSubscriptions = 2,
+        )
+        viewModel = RegisterSubscriptionComposeViewModel(
+            getAvailableOnuListUseCase = getAvailableOnuListUseCase,
+            getRegistrationCatalogUseCase = getRegistrationCatalogUseCase,
+            refreshRegistrationCatalogUseCase = refreshRegistrationCatalogUseCase,
+            getPlaceFromLocationUseCase = getPlaceFromLocationUseCase,
+            registerSubscriptionUseCase = registerSubscriptionUseCase,
+            getUserSessionUseCase = getUserSessionUseCase,
+            getNearNapBoxesUseCase = getNearNapBoxesUseCase,
+            installationOrderUseCase = installationOrderUseCase,
+            observeOfflineRegistrationModeUseCase = observeOfflineRegistrationModeUseCase,
+            retryTr069ProvisioningUseCase = retryTr069ProvisioningUseCase,
+            pollRegistrationProgressUseCase = pollRegistrationProgressUseCase,
+            observabilityClient = mockk(relaxed = true),
+            mainImmediate = testDispatcher,
+            subscriptionActionsRepository = actions,
+        )
+
+        viewModel.onIntent(RegisterSubscriptionIntent.DniChanged("1234567"))
+        viewModel.onIntent(RegisterSubscriptionIntent.DniChanged("12345678"))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.dniWarning?.contains("2") == true)
+        coVerify(exactly = 1) { actions.checkDni("12345678") }
+        viewModel.onIntent(RegisterSubscriptionIntent.DniChanged("1234567"))
+        advanceUntilIdle()
+        assertNull(viewModel.uiState.value.dniWarning)
+    }
+
+    @Test
+    fun `registration already exists conflict is reconciled as an accepted registration`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val onu = Onu("b", "olt", "1", "t", "VSOLVA74", "gpon", "p", "VSOL0031C0B6")
+        val ready = OnuRegistrationOperation(
+            id = "op-conflict", serial = onu.sn, subscriptionId = null,
+            phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 4,
+        )
+        coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.draft(ready.id) } returns mapOf("facadePhotoUrl" to "https://storage.example/photo.jpg")
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { operationUseCase.outcome(ready.id) } returns com.dscorp.ispadmin.domain.model.OnuRegistrationOutcome(
+            operationId = ready.id, subscriptionId = 91, phase = "PROVISIONING", state = "SUCCEEDED", outcome = "SUCCEEDED",
+        )
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu().copy(sn = onu.sn)))
+        )
+        coEvery { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) } returns Result.failure(
+            com.dscorp.ispadmin.domain.model.RegistrationConflictException("REGISTRATION_ALREADY_EXISTS", "ya procesada")
+        )
+        coEvery { pollRegistrationProgressUseCase(91, any()) } returns Result.success(
+            RegistrationProgress(91, "DONE", "Listo", true, tr069ProvisionStatus = "COMPLETE",
+                subscription = Subscription(subscriptionId = 91, tr069ProvisionStatus = "COMPLETE"), outcome = "SUCCEEDED")
+        )
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        fillValidFiberForm(NapBoxResponse(id = "n1", placeName = "P1", placeId = 1), onu)
+        fillWifiFields()
+
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.submission is SubmissionState.Completed)
+    }
+
+    @Test
+    fun `wireless retries after an uncertain failure reuse the same clientRequestId`() = runTest(testDispatcher) {
+        val handle = androidx.lifecycle.SavedStateHandle()
+        viewModel = RegisterSubscriptionComposeViewModel(
+            getAvailableOnuListUseCase = getAvailableOnuListUseCase,
+            getRegistrationCatalogUseCase = getRegistrationCatalogUseCase,
+            refreshRegistrationCatalogUseCase = refreshRegistrationCatalogUseCase,
+            getPlaceFromLocationUseCase = getPlaceFromLocationUseCase,
+            registerSubscriptionUseCase = registerSubscriptionUseCase,
+            getUserSessionUseCase = getUserSessionUseCase,
+            getNearNapBoxesUseCase = getNearNapBoxesUseCase,
+            installationOrderUseCase = installationOrderUseCase,
+            observeOfflineRegistrationModeUseCase = observeOfflineRegistrationModeUseCase,
+            retryTr069ProvisioningUseCase = retryTr069ProvisioningUseCase,
+            pollRegistrationProgressUseCase = pollRegistrationProgressUseCase,
+            observabilityClient = mockk(relaxed = true),
+            mainImmediate = testDispatcher,
+            savedStateHandle = handle,
+        )
+        val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
+        val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu()))
+        )
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        val sent = mutableListOf<Subscription>()
+        coEvery { registerSubscriptionUseCase(capture(sent), any(), facadePhotoFile = any()) } returns
+            Result.failure(java.net.SocketTimeoutException("timeout"))
+        fillValidFiberForm(nap, onu)
+        fillWifiFields()
+        selectValidLocation()
+
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        assertEquals(2, sent.size)
+        assertNotNull(sent[0].clientRequestId)
+        assertEquals(sent[0].clientRequestId, sent[1].clientRequestId)
+        assertTrue(viewModel.uiState.value.submission is SubmissionState.Uncertain)
+    }
+
+    @Test
+    fun `registration workflow is keyed by the operation id and closed with the outcome`() = runTest(testDispatcher) {
+        val obs = mockk<com.dscorp.ispadmin.observability.ObservabilityClient>(relaxed = true)
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val linked = OnuRegistrationOperation(
+            id = "op-workflow", serial = "VSOL0031C0B6", subscriptionId = 85,
+            phase = "PROVISIONING", state = "RUNNING", revision = 5,
+        )
+        coEvery { operationUseCase.active() } returns linked
+        coEvery { pollRegistrationProgressUseCase(85, any()) } returns Result.success(
+            RegistrationProgress(85, "DONE", "Listo", true, tr069ProvisionStatus = "COMPLETE",
+                subscription = Subscription(subscriptionId = 85, tr069ProvisionStatus = "COMPLETE"), outcome = "SUCCEEDED")
+        )
+        viewModel = viewModelWithPreauthorization(operationUseCase, observabilityClient = obs)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        io.mockk.verify { obs.startWorkflow(any(), "registration", any(), "op-workflow") }
+        io.mockk.verify { obs.endWorkflow(com.dscorp.ispadmin.observability.WorkflowStatus.SUCCESS, any(), any()) }
+    }
+
+    @Test
+    fun `async preauthorization is followed until the form is ready`() = runTest(testDispatcher) {
+        val onu = Onu("1", "olt-lab", "3", "type-1", "VSOLVA74", "gpon", "2", "VSOL0031C0B6")
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val pending = OnuRegistrationOperation(
+            id = "preauth-async", serial = onu.sn, subscriptionId = null,
+            phase = "OLT_AUTHORIZATION", state = "PENDING", revision = 1,
+        )
+        val running = pending.copy(state = "RUNNING", revision = 2)
+        val ready = pending.copy(phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 5)
+        coEvery { operationUseCase.active() } returns null
+        coEvery { operationUseCase.start(any()) } returns pending
+        coEvery { operationUseCase.get(pending.id) } returnsMany listOf(running, ready)
+        coEvery { operationUseCase.draft(any()) } returns null
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(onus = listOf(fiberOnu().copy(sn = onu.sn, oltId = onu.olt_id, board = onu.board, port = onu.port, ponType = onu.pon_type, onuTypeName = onu.onu_type_name)))
+        )
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
+        viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { operationUseCase.get(pending.id) }
+        assertEquals(ready, viewModel.uiState.value.preauthorizationOperation)
+        assertEquals(
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.CLIENT_LOCATION,
+            viewModel.uiState.value.wizardStep,
+        )
+    }
 }

@@ -13,6 +13,7 @@ class ObservabilityHttpInterceptor(
         private const val CORRELATION_HEADER = "X-Correlation-Id"
         private const val TRACEPARENT_HEADER = "traceparent"
         private const val SESSION_HEADER = "X-Obs-Session-Id"
+        private const val OPERATION_HEADER = "X-Operation-Id"
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -29,6 +30,7 @@ class ObservabilityHttpInterceptor(
             .header(CORRELATION_HEADER, traceId)
             .header(TRACEPARENT_HEADER, tracer.traceparent(traceId, spanId))
             .header(SESSION_HEADER, sessionId)
+            .apply { client.currentWorkflowId()?.takeIf { it.isNotBlank() }?.let { header(OPERATION_HEADER, it) } }
             .build()
 
         val startedAt = System.currentTimeMillis()

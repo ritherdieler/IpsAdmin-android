@@ -10,4 +10,6 @@ interface SubscriptionActionsRepository {
     suspend fun getRegistrationProgress(subscriptionId: Int): com.dscorp.ispadmin.domain.model.RegistrationProgress
 
     suspend fun restoreInternetConnection(subscriptionId: Int, notes: String?)
+
+    suspend fun checkDni(dni: String): com.dscorp.ispadmin.domain.model.DniCheck
 }

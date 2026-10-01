@@ -41,6 +41,39 @@ class PollRegistrationProgressUseCaseTest {
     }
 
     @Test
+    fun `tolerates transient network errors and keeps polling`() = runTest {
+        val tolerant = PollRegistrationProgressUseCase(repository, delayMs = 1L, timeoutMs = 60_000L)
+        val done = RegistrationProgress(subscriptionId = 1, step = "DONE", message = "Listo", done = true)
+        coEvery { repository.getRegistrationProgress(1) } throws java.io.IOException("reset") andThenThrows
+            java.io.IOException("reset") andThen done
+
+        val result = tolerant(1)
+
+        assertTrue(result.isSuccess)
+        coVerify(exactly = 3) { repository.getRegistrationProgress(1) }
+    }
+
+    @Test
+    fun `fails after too many consecutive errors`() = runTest {
+        val tolerant = PollRegistrationProgressUseCase(repository, delayMs = 1L, timeoutMs = 60_000L)
+        coEvery { repository.getRegistrationProgress(1) } throws java.io.IOException("offline")
+
+        val result = tolerant(1)
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = PollRegistrationProgressUseCase.MAX_CONSECUTIVE_ERRORS + 1) {
+            repository.getRegistrationProgress(1)
+        }
+    }
+
+    @Test(expected = kotlinx.coroutines.CancellationException::class)
+    fun `cancellation stops polling and is propagated`() = runTest {
+        coEvery { repository.getRegistrationProgress(1) } throws kotlinx.coroutines.CancellationException("left")
+
+        useCase(1)
+    }
+
+    @Test
     fun `polls until done`() = runTest {
         val pending = RegistrationProgress(
             subscriptionId = 1,
@@ -59,5 +92,21 @@ class PollRegistrationProgressUseCaseTest {
         assertTrue(result.isSuccess)
         assertEquals("DONE", result.getOrThrow().step)
         coVerify(exactly = 2) { repository.getRegistrationProgress(1) }
+    }
+
+    @Test
+    fun `progress subscription keeps the pppoe password returned by the registration`() {
+        val progress = RegistrationProgress(
+            subscriptionId = 114,
+            step = "DONE",
+            message = "Listo",
+            done = true,
+            subscription = Subscription(subscriptionId = 114, pppoeUsername = "gf114", pppoePassword = null),
+        )
+        val registered = Subscription(subscriptionId = 114, pppoeUsername = "gf114", pppoePassword = "s3cret-pass")
+
+        val merged = progress.toSubscriptionOrNull(registration = registered)
+
+        assertEquals("s3cret-pass", merged?.pppoePassword)
     }
 }

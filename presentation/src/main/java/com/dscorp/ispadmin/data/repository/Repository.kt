@@ -16,6 +16,7 @@ import com.dscorp.ispadmin.data.response.AdministrativeOnuResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.dscorp.ispadmin.data.utils.ApiErrorBodyParser
+import com.dscorp.ispadmin.domain.model.RegistrationConflictException
 import com.dscorp.ispadmin.data.utils.HttpCodes
 import com.dscorp.ispadmin.data.utils.REMEMBER_CHECKBOX_STATUS
 import com.dscorp.ispadmin.data.utils.BIOMETRIC_SESSION_ACCESS_TOKEN
@@ -259,7 +260,11 @@ class Repository : IRepository, KoinComponent {
         return try {
             val response = restApiServices.registerSubscription(subscription)
             when (response.status) {
-                in 200..299 -> response.data!!
+                in 200..299 -> response.data ?: throw IllegalStateException("Respuesta de registro vacía")
+                409 -> throw RegistrationConflictException(
+                    errorCode = response.errorCode,
+                    message = response.error ?: response.message ?: "Este usuario ya se encuentra registrado",
+                )
                 else -> throw Exception(
                     response.error
                         ?: response.message
@@ -267,13 +272,16 @@ class Repository : IRepository, KoinComponent {
                 )
             }
         } catch (e: HttpException) {
-            throw Exception(
-                ApiErrorBodyParser.parse(
-                    e.response()?.errorBody()?.string(),
-                    e.message() ?: "No se puede registrar la suscripcion"
-                )
-            )
+            throw registrationHttpFailure(e)
         }
+    }
+
+    private fun registrationHttpFailure(e: HttpException): Exception {
+        val body = e.response()?.errorBody()?.string()
+        val message = ApiErrorBodyParser.parse(body, e.message() ?: "No se puede registrar la suscripcion")
+        return if (e.code() == 409) {
+            RegistrationConflictException(ApiErrorBodyParser.errorCode(body), message)
+        } else Exception(message)
     }
 
     override  suspend fun registerSubscriptionWithFacadePhoto(
@@ -301,17 +309,15 @@ class Repository : IRepository, KoinComponent {
             )
 
             when (response.status){
-                200 -> response.data!!
-                409 -> throw Exception(response.error?: "Este usuario ya se encuentra registrado")
+                200 -> response.data ?: throw IllegalStateException("Respuesta de registro vacía")
+                409 -> throw RegistrationConflictException(
+                    errorCode = response.errorCode,
+                    message = response.error ?: "Este usuario ya se encuentra registrado",
+                )
                 else -> throw Exception(response.error?: "No se puede registrar la suscripcion")
             }
         } catch (e: HttpException) {
-            throw Exception(
-                ApiErrorBodyParser.parse(
-                    e.response()?.errorBody()?.string(),
-                    e.message() ?: "No se puede registrar la suscripcion"
-                )
-            )
+            throw registrationHttpFailure(e)
         }
     }
 

@@ -75,8 +75,8 @@ class RegistrationCatalogRemoteDataSourceImpl(
             CatalogCoreDevice(
                 id = id,
                 name = dto.name,
-                password = dto.password,
-                username = dto.username,
+                password = "",
+                username = "",
                 ipAddress = dto.ipAddress,
                 networkDeviceType = dto.networkDeviceType,
                 disabled = dto.disabled

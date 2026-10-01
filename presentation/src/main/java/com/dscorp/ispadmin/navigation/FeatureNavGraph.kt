@@ -328,6 +328,9 @@ private fun NavGraphContent(
                         onCancelRegistration = {
                             navController.popBackStack()
                         },
+                        onViewProvisioning = { subscriptionId ->
+                            navController.navigate(Subscription.Provisioning(subscriptionId))
+                        },
                         onNavigateToPendingSubscriptions = {
                             navController.navigate(Subscription.PendingSubscriptions)
                         }

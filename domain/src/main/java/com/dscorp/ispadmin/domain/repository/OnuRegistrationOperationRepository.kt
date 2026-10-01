@@ -2,6 +2,7 @@ package com.dscorp.ispadmin.domain.repository
 
 import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
 import com.dscorp.ispadmin.domain.model.OnuRegistrationCleanupReport
+import com.dscorp.ispadmin.domain.model.OnuRegistrationOutcome
 import java.io.File
 
 data class OnuRegistrationTarget(
@@ -32,4 +33,5 @@ interface OnuRegistrationOperationRepository {
     suspend fun cancel(operationId: String, expectedRevision: Long): OnuRegistrationOperation
     suspend fun cleanupCancelled(operationId: String): OnuRegistrationCleanupReport
     suspend fun get(operationId: String): OnuRegistrationOperation
+    suspend fun outcome(operationId: String): OnuRegistrationOutcome?
 }

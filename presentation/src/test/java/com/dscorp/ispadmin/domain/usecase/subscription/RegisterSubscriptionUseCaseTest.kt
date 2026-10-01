@@ -60,6 +60,14 @@ class RegisterSubscriptionUseCaseTest {
         coVerify(exactly = 0) { enqueuePendingSubscriptionUseCase(any(), any(), any()) }
     }
 
+    @Test(expected = kotlinx.coroutines.CancellationException::class)
+    fun `cancellation is propagated instead of becoming a failure result`() = runTest {
+        coEvery { subscriptionWriteRepository.registerSubscription(any()) } throws
+            kotlinx.coroutines.CancellationException("screen left")
+
+        useCase(Subscription(firstName = "Ana", registrationOperationId = "op-1"), orderId = null)
+    }
+
     @Test
     fun `preauthorized registration is always online and reuses operation idempotency key`() = runTest {
         every { connectivityMonitor.isConnected() } returns false

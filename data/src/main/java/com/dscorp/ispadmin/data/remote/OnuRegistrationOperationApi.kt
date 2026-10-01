@@ -2,6 +2,7 @@ package com.dscorp.ispadmin.data.remote
 
 import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
 import com.dscorp.ispadmin.domain.model.OnuRegistrationCleanupReport
+import com.dscorp.ispadmin.domain.model.OnuRegistrationOutcome
 import com.dscorp.ispadmin.domain.repository.StartOnuRegistrationRequest
 import okhttp3.MultipartBody
 import retrofit2.Response
@@ -22,6 +23,9 @@ interface OnuRegistrationOperationApi {
 
     @GET("onu-registration-operations/{operationId}")
     suspend fun get(@Path("operationId") operationId: String): Response<OnuRegistrationOperation>
+
+    @GET("onu-registration-operations/{operationId}/outcome")
+    suspend fun outcome(@Path("operationId") operationId: String): Response<OnuRegistrationOutcome>
 
     @GET("onu-registration-operations/{operationId}/draft")
     suspend fun draft(@Path("operationId") operationId: String): Response<Map<String, Any?>>

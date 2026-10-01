@@ -4,5 +4,6 @@ data class BaseResponse<T>(
     var status: Int,
     var data: T? = null,
     var message: String? = null,
-    var error: String? = null
+    var error: String? = null,
+    var errorCode: String? = null,
 )

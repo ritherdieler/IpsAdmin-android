@@ -11,6 +11,8 @@ data class RegistrationProgress(
     val tr069Message: String? = null,
     val provisioningCheckpoints: List<RegistrationProgressCheckpoint> = emptyList(),
     val subscription: Subscription? = null,
+    val outcome: String? = null,
+    val operationId: String? = null,
 )
 
 data class RegistrationProgressCheckpoint(

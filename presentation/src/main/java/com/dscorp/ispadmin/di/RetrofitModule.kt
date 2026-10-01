@@ -2,6 +2,7 @@ package com.dscorp.ispadmin.di
 
 import android.content.Context
 import com.chuckerteam.chucker.api.ChuckerInterceptor
+import com.dscorp.ispadmin.BuildConfig
 import com.dscorp.ispadmin.data.datasource.remote.auth.AuthApiService
 import com.dscorp.ispadmin.data.datasource.remote.auth.AuthInterceptor
 import com.dscorp.ispadmin.data.datasource.remote.auth.SessionEventBus
@@ -19,6 +20,7 @@ import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 const val BASE_URL = "BASE_URL"
+private const val DEV_FLAVOR = "dev"
 
 val retrofitModule = module {
     single { SessionEventBus() }
@@ -66,11 +68,14 @@ fun provideHttpClient(
         .connectTimeout(1, TimeUnit.MINUTES)
         .writeTimeout(2, TimeUnit.MINUTES)
         .readTimeout(4, TimeUnit.MINUTES)
-    val logging = HttpLoggingInterceptor()
-    logging.level = HttpLoggingInterceptor.Level.BODY
     httpClient.addInterceptor(authInterceptor)
     httpClient.addInterceptor(observabilityHttpInterceptor)
-    httpClient.addInterceptor(logging)
+    if (BuildConfig.FLAVOR == DEV_FLAVOR) {
+        val logging = HttpLoggingInterceptor()
+        logging.level = HttpLoggingInterceptor.Level.BODY
+        logging.redactHeader("Authorization")
+        httpClient.addInterceptor(logging)
+    }
     httpClient.addInterceptor(ChuckerInterceptor.Builder(context).build())
     httpClient.authenticator(tokenAuthenticator)
 

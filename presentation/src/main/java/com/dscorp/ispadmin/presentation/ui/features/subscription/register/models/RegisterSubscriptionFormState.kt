@@ -108,6 +108,8 @@ data class RegisterSubscriptionFormState(
     fun resolvedWifiSsid5(): String =
         if (useDifferentWifiNames) wifiSsid5.trim() else derivedWifiSsid5(wifiSsid24)
 
+    fun resolvedWifiPassword5(): String = wifiPassword5.ifBlank { wifiPassword24 }
+
     fun activeCoreDevices(): List<NetworkDevice> = coreDeviceList.filter { !it.disabled }
 
     fun shouldShowHostDeviceSelector(): Boolean = activeCoreDevices().size > 1

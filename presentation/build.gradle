@@ -209,8 +209,9 @@ dependencies {
     implementation "com.google.android.gms:play-services-maps:${rootProject.ext.playServicesMapsVersion}"
     implementation "com.google.android.gms:play-services-location:${rootProject.ext.playServicesLocationVersion}"
  // Debugging de red con Chucker
-     debugImplementation "com.github.chuckerteam.chucker:library:4.1.0"
-     releaseImplementation "com.github.chuckerteam.chucker:library-no-op:4.1.0"
+     devImplementation "com.github.chuckerteam.chucker:library:4.1.0"
+     stagingImplementation "com.github.chuckerteam.chucker:library-no-op:4.1.0"
+     prodImplementation "com.github.chuckerteam.chucker:library-no-op:4.1.0"
     // Retrofit y networking
     implementation "com.squareup.retrofit2:retrofit:${rootProject.ext.retrofitVersion}"
     implementation "com.squareup.okhttp3:logging-interceptor:${rootProject.ext.okhttpVersion}"

@@ -205,7 +205,8 @@ fun RegisterSubscriptionForm(
                                         onIntent(RegisterSubscriptionIntent.LastNameChanged(it))
                                     },
                                     onDniChanged = { onIntent(RegisterSubscriptionIntent.DniChanged(it)) },
-                                    onPhoneChanged = { onIntent(RegisterSubscriptionIntent.PhoneChanged(it)) }
+                                    onPhoneChanged = { onIntent(RegisterSubscriptionIntent.PhoneChanged(it)) },
+                                    dniWarning = formState.dniWarning,
                                 )
                                 Spacer(modifier = Modifier.height(24.dp))
                                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -367,6 +368,7 @@ private fun ClientDataFields(
     onLastNameChanged: (String) -> Unit,
     onDniChanged: (String) -> Unit,
     onPhoneChanged: (String) -> Unit,
+    dniWarning: String? = null,
 ) {
     SectionTitle("Datos del cliente")
     Text(
@@ -408,6 +410,17 @@ private fun ClientDataFields(
             imeAction = ImeAction.Next
         )
     )
+
+    if (dniWarning != null) {
+        Text(
+            text = dniWarning,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.tertiary,
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .testTag(RegisterSubscriptionTestTags.DNI_WARNING),
+        )
+    }
 
     Spacer(modifier = Modifier.height(8.dp))
 

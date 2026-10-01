@@ -5,8 +5,10 @@ import android.content.Intent
 import android.view.View
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -50,6 +52,8 @@ import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import com.google.android.material.R as MaterialR
+
+private const val PLACE_FIELD_HINT = "Distrito o localidad *"
 
 /** TextInputLayout whose floating hint equals [hint]. */
 private fun textInputLayoutWithHint(hint: String): Matcher<View> = object : TypeSafeMatcher<View>() {
@@ -175,33 +179,16 @@ class FiberRegisterFirstOnuE2ETest {
 
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SUCCESS_FULLSCREEN)
             .assertIsDisplayed()
-        waitUntilTag(
-            RegisterSubscriptionTestTags.oltProvisionStatus("COMPLETE"),
-            timeoutMs = 180_000,
-        )
-        waitUntilTag(
-            RegisterSubscriptionTestTags.tr069ProvisionStatus("COMPLETE"),
-            timeoutMs = 300_000,
-        )
-        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.oltProvisionStatus("COMPLETE"))
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SUCCESS_SECTION_WIFI)
+            .performScrollTo()
             .assertIsDisplayed()
-        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.OLT_STATUS_MESSAGE)
-            .assertIsDisplayed()
-        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.tr069ProvisionStatus("COMPLETE"))
-            .assertIsDisplayed()
-        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.TR069_STATUS_MESSAGE)
-            .assertIsDisplayed()
-        val tr069Text = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.TR069_STATUS_MESSAGE)
-            .fetchSemanticsNodes()
-            .first()
-            .config
-            .toString()
-        assertThat(tr069Text).contains("TR-069")
-        val tr069Upper = tr069Text.uppercase()
-        assertThat(tr069Upper).doesNotContain("PENDIENTE")
-        assertThat(tr069Upper).doesNotContain("ESPERE")
-        assertThat(tr069Upper.contains("MANUAL_REQUIRED") ||
-            (tr069Upper.contains("MANUAL") && !tr069Upper.contains("NO REQUIERE"))).isFalse()
+        listOf(wifiSsid, wifiPass).forEach { expected ->
+            val shown = composeRule.onAllNodes(
+                hasText(expected) and hasAnyAncestor(hasTestTag(RegisterSubscriptionTestTags.SUCCESS_SECTION_WIFI)),
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes()
+            assertThat(shown).isNotEmpty()
+        }
         holdAppOpen()
     }
 
@@ -264,8 +251,6 @@ class FiberRegisterFirstOnuE2ETest {
         // until the selected ONU reaches READY_FOR_FORM through ACS.
         waitUntilTag(RegisterSubscriptionTestTags.ONU, timeoutMs = 30_000)
         selectOnu()
-        clickWizardContinue()
-        waitUntilText("Serial:", timeoutMs = 15_000, substring = true)
         clickWizardContinue()
         waitUntilTag(RegisterSubscriptionTestTags.FIRST_NAME, timeoutMs = 360_000)
     }
@@ -406,7 +391,7 @@ class FiberRegisterFirstOnuE2ETest {
         onView(
             allOf(
                 withId(MaterialR.id.text_input_end_icon),
-                isDescendantOfA(textInputLayoutWithHint("Lugar")),
+                isDescendantOfA(textInputLayoutWithHint(PLACE_FIELD_HINT)),
                 isDisplayed(),
             )
         ).perform(click())
@@ -419,7 +404,7 @@ class FiberRegisterFirstOnuE2ETest {
             true
         }.getOrDefault(false)
         if (!matched) {
-            onView(editTextUnderHint("Lugar")).perform(click(), replaceText(placeHint))
+            onView(editTextUnderHint(PLACE_FIELD_HINT)).perform(click(), replaceText(placeHint))
             Thread.sleep(800)
             onData(anything())
                 .inRoot(RootMatchers.isPlatformPopup())

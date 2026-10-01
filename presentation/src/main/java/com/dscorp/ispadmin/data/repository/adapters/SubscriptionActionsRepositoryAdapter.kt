@@ -1,10 +1,13 @@
 package com.dscorp.ispadmin.data.repository.adapters
 
+import com.dscorp.ispadmin.data.datasource.remote.RestApiServices
 import com.dscorp.ispadmin.data.repository.IRepository
+import com.dscorp.ispadmin.domain.model.DniCheck
 import com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository
 
 class SubscriptionActionsRepositoryAdapter(
-    private val repository: IRepository
+    private val repository: IRepository,
+    private val restApiServices: RestApiServices? = null,
 ) : SubscriptionActionsRepository {
 
     override suspend fun reactivateService(subscriptionId: Int, notes: String?) {
@@ -27,5 +30,12 @@ class SubscriptionActionsRepositoryAdapter(
         val user = repository.getUserSession()
         val responsibleId = user?.id ?: throw IllegalStateException("Usuario no encontrado")
         repository.restoreInternetConnection(subscriptionId, responsibleId, notes)
+    }
+
+    override suspend fun checkDni(dni: String): DniCheck {
+        val api = requireNotNull(restApiServices) { "DNI_CHECK_UNAVAILABLE" }
+        val response = api.checkDni(dni)
+        check(response.isSuccessful) { "DNI_CHECK_FAILED (HTTP ${response.code()})" }
+        return response.body() ?: DniCheck()
     }
 }

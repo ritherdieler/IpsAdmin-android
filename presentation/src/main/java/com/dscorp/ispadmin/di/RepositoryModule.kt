@@ -34,7 +34,7 @@ val repositoryModule = module {
     single<OutlayRepository> { OutlayRepositoryImpl(get()) }
     single<OutlayReceiptPreparer> { OutlayReceiptPreparerImpl(get()) }
     single<PlanRepository> { PlanRepositoryAdapter(get()) }
-    single<SubscriptionActionsRepository> { SubscriptionActionsRepositoryAdapter(get()) }
+    single<SubscriptionActionsRepository> { SubscriptionActionsRepositoryAdapter(get(), get()) }
     single<AccessMigrationRepository> { AccessMigrationRepositoryImpl(get()) }
     single<SubscriptionRegistrationQueryRepository> { SubscriptionRegistrationQueryRepositoryAdapter(get()) }
     single<UserSessionReader> { UserSessionReaderAdapter(get()) }

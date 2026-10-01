@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -66,6 +67,7 @@ import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.Subscription
+import com.dscorp.ispadmin.observability.ObsReplayPrivacy
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.LocationSelectorComposeDialog
@@ -74,6 +76,9 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.Regist
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.SubmissionState
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.resultNotice
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.resultSubscription
 import java.io.File
 import java.util.Locale
 
@@ -85,6 +90,7 @@ fun RegisterSubscriptionFormScreen(
     onSubscriptionRegisterSuccess: () -> Unit = {},
     onNavigateToPendingSubscriptions: () -> Unit = {},
     onCancelRegistration: () -> Unit = {},
+    onViewProvisioning: (Int) -> Unit = {},
     installationOrderId: Int?,
 ) {
     val locationSetup = rememberLocationSetupState()
@@ -93,8 +99,12 @@ fun RegisterSubscriptionFormScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var dialogError by remember { mutableStateOf<String?>(null) }
-    var successSubscription by remember { mutableStateOf<Subscription?>(null) }
+    var showLeaveDialog by remember { mutableStateOf(false) }
     var showQueuedOfflineDialog by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = uiState.isRegistering && !uiState.cancellationInProgress) {
+        showLeaveDialog = true
+    }
     var showFacadePhotoOptionsDialog by remember { mutableStateOf(false) }
     var showCurrentLocationGate by remember { mutableStateOf(false) }
 
@@ -103,13 +113,18 @@ fun RegisterSubscriptionFormScreen(
         viewModel.onFacadePhotoSelected(uri, file)
     }
 
+    DisposableEffect(Unit) {
+        val replayHold = ObsReplayPrivacy.hold()
+        onDispose { replayHold.release() }
+    }
+
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.uiEvent.collect { event ->
                 when (event) {
                     is RegisterSubscriptionUiEvent.Error -> dialogError = event.message
-                    is RegisterSubscriptionUiEvent.Success -> successSubscription = event.subscription
+                    is RegisterSubscriptionUiEvent.Success -> Unit
                     RegisterSubscriptionUiEvent.QueuedOffline -> showQueuedOfflineDialog = true
                     RegisterSubscriptionUiEvent.RequestCurrentLocation -> {
                         val setup = locationSetupLatest.value
@@ -244,19 +259,46 @@ fun RegisterSubscriptionFormScreen(
             )
         }
 
-        successSubscription?.let { subscription ->
+        uiState.submission.resultSubscription()?.let { subscription ->
             RegisterSuccessFullScreen(
                 subscription = subscription,
                 plan = uiState.registerSubscriptionForm.selectedPlan,
                 tr069RetryLoading = uiState.tr069RetryLoading,
+                notice = uiState.submission.resultNotice(),
                 onRetryTr069 = subscription.resolvedSubscriptionId()?.let {
                     {
                         dialogError = null
                         viewModel.onIntent(RegisterSubscriptionIntent.RetryTr069(subscription))
                     }
                 },
-                onDismiss = { successSubscription = null },
+                onViewProgress = subscription.resolvedSubscriptionId()
+                    ?.takeIf { uiState.submission is SubmissionState.ProvisioningUnknown }
+                    ?.let { id -> { onViewProvisioning(id) } },
+                onDismiss = { viewModel.onIntent(RegisterSubscriptionIntent.DismissRegistrationResult) },
                 onContinue = onSubscriptionRegisterSuccess
+            )
+        }
+
+        if (showLeaveDialog) {
+            AlertDialog(
+                onDismissRequest = { showLeaveDialog = false },
+                title = { Text("El registro sigue en curso") },
+                text = {
+                    Text("Si sales, el servidor continuará el proceso. Al volver a registrar se retomará su estado.")
+                },
+                confirmButton = {
+                    TextButton(
+                        modifier = Modifier.testTag(RegisterSubscriptionTestTags.REGISTRATION_LEAVE_CONFIRM),
+                        onClick = {
+                            showLeaveDialog = false
+                            viewModel.onIntent(RegisterSubscriptionIntent.LeaveDuringRegistration)
+                            onCancelRegistration()
+                        },
+                    ) { Text("Salir") }
+                },
+                dismissButton = {
+                    Button(onClick = { showLeaveDialog = false }) { Text("Quedarme") }
+                },
             )
         }
 
@@ -280,7 +322,14 @@ fun RegisterSubscriptionFormScreen(
                 },
                 title = { Text("Cancelar registro") },
                 text = {
-                    Text("Se eliminará la suscripción y se limpiará la configuración asociada en OLT, ACS y MikroTik. ¿Deseas continuar?")
+                    val linkedSubscriptionId = uiState.preauthorizationOperation?.subscriptionId
+                    Text(
+                        if (linkedSubscriptionId != null) {
+                            "La suscripción #$linkedSubscriptionId ya quedó registrada. Si cancelas se dará de baja y se limpiará su configuración en OLT, ACS y MikroTik. ¿Deseas darla de baja?"
+                        } else {
+                            "Se eliminará la suscripción y se limpiará la configuración asociada en OLT, ACS y MikroTik. ¿Deseas continuar?"
+                        }
+                    )
                 },
                 confirmButton = {
                     Button(
@@ -349,6 +398,9 @@ fun RegisterSubscriptionFormScreen(
                     { viewModel.onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) }
                 } else null,
                 cancelEnabled = !uiState.cancellationInProgress,
+                onViewProgress = (uiState.submission as? SubmissionState.Provisioning)
+                    ?.takeIf { !uiState.cancellationInProgress }
+                    ?.let { provisioning -> { onViewProvisioning(provisioning.subscriptionId) } },
             )
             RegisterScreenBusyMode.CATALOG -> CatalogLoadingOverlay(
                 onCancel = if (
@@ -469,6 +521,7 @@ internal fun RegistrationProgressOverlay(
     progressCheckpoints: List<com.dscorp.ispadmin.domain.model.RegistrationProgressCheckpoint> = emptyList(),
     onCancel: (() -> Unit)? = null,
     cancelEnabled: Boolean = true,
+    onViewProgress: (() -> Unit)? = null,
 ) {
     Box(
         modifier = Modifier
@@ -561,6 +614,15 @@ internal fun RegistrationProgressOverlay(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.testTag(RegisterSubscriptionTestTags.PROGRESS_HINT)
                 )
+                if (onViewProgress != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onViewProgress,
+                        modifier = Modifier.testTag(RegisterSubscriptionTestTags.REGISTRATION_VIEW_PROGRESS),
+                    ) {
+                        Text("Ver progreso")
+                    }
+                }
                 if (onCancel != null) {
                     Spacer(modifier = Modifier.height(16.dp))
                     TextButton(
@@ -581,7 +643,9 @@ internal fun RegisterSuccessFullScreen(
     subscription: Subscription,
     plan: PlanResponse? = null,
     tr069RetryLoading: Boolean = false,
+    notice: String? = null,
     onRetryTr069: (() -> Unit)? = null,
+    onViewProgress: (() -> Unit)? = null,
     onDismiss: () -> Unit,
     onContinue: () -> Unit
 ) {
@@ -640,6 +704,29 @@ internal fun RegisterSuccessFullScreen(
                         modifier = Modifier.testTag("register_success_message")
                     )
 
+                    if (notice != null) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("register_result_notice"),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            )
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = notice,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                )
+                                if (onViewProgress != null) {
+                                    TextButton(onClick = onViewProgress) { Text("Ver progreso") }
+                                }
+                            }
+                        }
+                    }
+
                     if (tr069RetryLoading) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Card(
@@ -682,7 +769,7 @@ internal fun RegisterSuccessFullScreen(
                             ).joinToString(" ").ifBlank { "Suscriptor" },
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         subscription.dni?.takeIf(String::isNotBlank)?.let { InfoRow("DNI", it) }
@@ -699,7 +786,7 @@ internal fun RegisterSuccessFullScreen(
                             text = plan?.name?.takeIf(String::isNotBlank) ?: "Plan de internet",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            color = MaterialTheme.colorScheme.primary,
                         )
                         monthlyPrice?.let { price ->
                             InfoRow("Mensualidad", "S/ ${"%.2f".format(Locale.US, price)} / mes")
@@ -730,7 +817,7 @@ internal fun RegisterSuccessFullScreen(
 
                     RegisterSuccessSectionCard(
                         title = "Redes Wi-Fi",
-                        testTag = "register_success_section_wifi"
+                        testTag = RegisterSubscriptionTestTags.SUCCESS_SECTION_WIFI
                     ) {
                         InfoRow("SSID 2.4 GHz", subscription.wifiSsid24?.takeIf(String::isNotBlank) ?: "No disponible")
                         InfoRow("Contraseña 2.4 GHz", subscription.wifiPassword24?.takeIf(String::isNotBlank) ?: "No disponible")
