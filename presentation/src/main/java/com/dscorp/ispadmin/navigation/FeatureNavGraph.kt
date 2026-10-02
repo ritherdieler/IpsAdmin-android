@@ -254,11 +254,13 @@ fun FeatureNavGraph(
                     .padding(innerPadding),
                 color = MaterialTheme.colorScheme.background
             ) {
+                val drawerStart = uiState.getDrawerGroups()
+                    .firstOrNull()?.items?.firstOrNull()?.route
                 NavGraphContent(
-                    navController, onLoggedOut = onLoggedOut,
+                    navController,
+                    onLoggedOut = onLoggedOut,
                     currentUser = uiState.currentUser,
-                    startDestination = uiState.getDrawerGroups()
-                        .firstOrNull()?.items?.firstOrNull()?.route
+                    startDestination = drawerStart,
                 )
             }
         }

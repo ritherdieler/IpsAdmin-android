@@ -99,7 +99,6 @@ class SubscriptionSearchStagingE2ETest {
             }.getOrDefault(false)
             if (found) return
             Thread.sleep(400)
-            composeRule.waitForIdle()
         }
         throw AssertionError("Timeout waiting for tag $tag")
     }
@@ -114,7 +113,6 @@ class SubscriptionSearchStagingE2ETest {
             }
             if (found) return
             Thread.sleep(400)
-            composeRule.waitForIdle()
         }
         throw AssertionError("Timeout waiting for any of $tags")
     }
