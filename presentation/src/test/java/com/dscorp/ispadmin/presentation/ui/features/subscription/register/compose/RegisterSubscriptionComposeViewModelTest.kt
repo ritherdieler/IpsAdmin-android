@@ -449,6 +449,33 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
+    fun `ONU removed from catalog before authorization cannot be submitted`() = runTest(testDispatcher) {
+        val onu = Onu("b", "olt", "1", "t", "VSOLVA74", "pon", "p", "VSOL0031C0B6")
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        coEvery { operationUseCase.active() } returns null
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(onus = listOf(fiberOnu().copy(sn = onu.sn)))
+        )
+        coEvery { getAvailableOnuListUseCase() } returns Result.success(emptyList())
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
+        viewModel.refreshOnuList()
+        advanceUntilIdle()
+        viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.registerSubscriptionForm.selectedOnu)
+        assertEquals(
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.ONU_SELECTION,
+            viewModel.uiState.value.wizardStep,
+        )
+        coVerify(exactly = 0) { operationUseCase.start(any()) }
+    }
+
+    @Test
     fun `opening registration restores ready preauthorization and encrypted form draft`() = runTest(testDispatcher) {
         val serial = "VSOL0031C0B6"
         val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
@@ -645,6 +672,39 @@ class RegisterSubscriptionComposeViewModelTest {
         advanceUntilIdle()
         assertEquals(ready.serial, viewModel.uiState.value.registerSubscriptionForm.selectedOnu?.sn)
         assertNull(viewModel.uiState.value.registerSubscriptionForm.validate(FormFieldKey.ONU))
+    }
+
+    @Test
+    fun `OLT catalog refresh failure keeps ready preauthorized ONU from operation evidence`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val ready = com.google.gson.Gson().fromJson(
+            """{"id":"preauth-olt-catalog-error","serial":"ZTEGDC47BFFD","subscriptionId":null,"phase":"READY_FOR_FORM","state":"READY_FOR_FORM","revision":7,"checkpoints":[],"onuTarget":{"oltId":"2","ponType":"gpon","board":"1","port":"6","onuType":"F6600RV9.0.21","vlan":100},"oltEvidence":{"externalId":"gigafiber-ma5608t_1_6_122","board":1,"port":6,"ontId":122}}""",
+            com.dscorp.ispadmin.domain.model.OnuRegistrationOperation::class.java,
+        )
+        coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.draft(ready.id) } returns null
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { refreshRegistrationCatalogUseCase() } returns Result.failure(
+            java.net.ConnectException("OLT catalog unavailable")
+        )
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(onus = emptyList(), coreDevices = emptyList())
+        )
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(ready.id, state.preauthorizationOperation?.id)
+        assertEquals(
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.CLIENT_LOCATION,
+            state.wizardStep,
+        )
+        assertEquals("ZTEGDC47BFFD", state.registerSubscriptionForm.selectedOnu?.sn)
+        assertTrue(state.registerSubscriptionForm.onuList.any { it.sn == ready.serial })
+        assertNull(state.preauthorizationError)
+        coVerify(exactly = 1) { refreshRegistrationCatalogUseCase() }
     }
 
     @Test

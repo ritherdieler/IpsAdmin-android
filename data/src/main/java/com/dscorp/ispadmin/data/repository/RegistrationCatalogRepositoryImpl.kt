@@ -8,6 +8,7 @@ import com.dscorp.ispadmin.data.remote.RegistrationCatalogRemoteDataSource
 import com.dscorp.ispadmin.domain.exception.CatalogNotAvailableOffline
 import com.dscorp.ispadmin.domain.model.RegistrationCatalog
 import com.dscorp.ispadmin.domain.repository.RegistrationCatalogRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 
 class RegistrationCatalogRepositoryImpl(
@@ -26,29 +27,49 @@ class RegistrationCatalogRepositoryImpl(
         )
     }
 
-    override suspend fun refreshFromRemote(): Result<Unit> = runCatching {
-        val plans = remote.fetchPlans()
-        val places = remote.fetchPlaces()
-        val napBoxes = remote.fetchNapBoxes()
-        val onus = remote.fetchOnus()
-        val coreDevices = remote.fetchCoreDevices()
+    override suspend fun refreshFromRemote(): Result<Unit> {
+        return try {
+            val plans = remote.fetchPlans()
+            val places = remote.fetchPlaces()
+            val napBoxes = remote.fetchNapBoxes()
+            val onusResult = fetchOptionalCatalog { remote.fetchOnus() }
+            val coreDevicesResult = fetchOptionalCatalog { remote.fetchCoreDevices() }
+            val onus = onusResult.getOrElse { emptyList() }
+            val coreDevices = coreDevicesResult.getOrElse { emptyList() }
 
-        catalogDao.clearPlans()
-        catalogDao.upsertPlans(plans.map { it.toEntity() })
-        catalogDao.clearPlaces()
-        catalogDao.upsertPlaces(places.map { it.toEntity() })
-        catalogDao.clearNapBoxes()
-        catalogDao.upsertNapBoxes(napBoxes.map { it.toEntity() })
-        catalogDao.clearOnus()
-        catalogDao.upsertOnus(onus.map { it.toEntity() })
-        catalogDao.clearCoreDevices()
-        catalogDao.upsertCoreDevices(coreDevices.map { it.toEntity() })
-        catalogDao.upsertMetadata(
-            CatalogMetadataEntity(
-                catalogKey = REGISTRATION_CATALOG_KEY,
-                lastSyncedAt = System.currentTimeMillis()
+            catalogDao.clearPlans()
+            catalogDao.upsertPlans(plans.map { it.toEntity() })
+            catalogDao.clearPlaces()
+            catalogDao.upsertPlaces(places.map { it.toEntity() })
+            catalogDao.clearNapBoxes()
+            catalogDao.upsertNapBoxes(napBoxes.map { it.toEntity() })
+            catalogDao.clearOnus()
+            catalogDao.upsertOnus(onus.map { it.toEntity() })
+            catalogDao.clearCoreDevices()
+            catalogDao.upsertCoreDevices(coreDevices.map { it.toEntity() })
+            catalogDao.upsertMetadata(
+                CatalogMetadataEntity(
+                    catalogKey = REGISTRATION_CATALOG_KEY,
+                    lastSyncedAt = System.currentTimeMillis()
+                )
             )
-        )
+            val partialFailure = onusResult.exceptionOrNull() ?: coreDevicesResult.exceptionOrNull()
+            if (partialFailure == null) Result.success(Unit) else Result.failure(partialFailure)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Result.failure(error)
+        }
+    }
+
+    private suspend fun <T> fetchOptionalCatalog(fetch: suspend () -> List<T>): Result<List<T>> {
+        return try {
+            Result.success(fetch())
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Result.failure(error)
+        }
     }
 
     override fun observeLastSync(): Flow<Long?> {

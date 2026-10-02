@@ -16,6 +16,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import java.io.IOException
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -76,6 +77,46 @@ class RegistrationCatalogRepositoryTest {
         assertEquals(listOf("ONU123"), cached.onus.map { it.sn })
         assertEquals(listOf(10), cached.coreDevices.map { it.id })
         assertEquals("Core-Huacho", cached.coreDevices.first().name)
+    }
+
+    @Test
+    fun `OLT ONU outage still persists independent catalogs and no stale ONU candidates`() = runTest {
+        coEvery { remote.fetchPlans() } returns listOf(
+            CatalogPlan(id = "plan-1", name = "100 Mbps", type = "FIBER")
+        )
+        coEvery { remote.fetchPlaces() } returns listOf(CatalogPlace(id = "place-1", name = "Huacho"))
+        coEvery { remote.fetchNapBoxes() } returns listOf(
+            CatalogNapBox(id = "nap-1", code = "NAP-01", placeName = "Huacho", placeId = 1)
+        )
+        coEvery { remote.fetchOnus() } throws IOException("OLT list unavailable")
+        coEvery { remote.fetchCoreDevices() } returns listOf(
+            CatalogCoreDevice(id = 10, name = "Core-Huacho", disabled = false)
+        )
+
+        val refresh = repository.refreshFromRemote()
+
+        assertTrue(refresh.isFailure)
+        val cached = repository.getCachedCatalog().getOrThrow()
+        assertEquals(listOf("plan-1"), cached.plans.map { it.id })
+        assertEquals(listOf("place-1"), cached.places.map { it.id })
+        assertEquals(listOf("nap-1"), cached.napBoxes.map { it.id })
+        assertTrue(cached.onus.isEmpty())
+        assertEquals(listOf(10), cached.coreDevices.map { it.id })
+    }
+
+    @Test
+    fun `OLT ONU outage clears a previously cached serial from available candidates`() = runTest {
+        stubRemoteCatalog()
+        repository.refreshFromRemote()
+        coEvery { remote.fetchOnus() } throws IOException("OLT list unavailable")
+
+        val refresh = repository.refreshFromRemote()
+
+        assertTrue(refresh.isFailure)
+        val cached = repository.getCachedCatalog().getOrThrow()
+        assertTrue(cached.onus.isEmpty())
+        assertEquals(listOf("plan-1"), cached.plans.map { it.id })
+        assertEquals(listOf(10), cached.coreDevices.map { it.id })
     }
 
     @Test

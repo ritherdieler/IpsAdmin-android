@@ -6,6 +6,7 @@ import android.view.View
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -142,27 +143,58 @@ class FiberRegisterFirstOnuE2ETest {
                 composeRule.onAllNodes(androidx.compose.ui.test.isRoot()).fetchSemanticsNodes().isNotEmpty()
             }.getOrDefault(false)
         }
-        composeRule.waitForIdle()
 
         loginIfNeeded()
         openRegisterSubscription()
         ensureLocationReady()
         // Wait until catalog load finishes; fields stay disabled while isLoading.
         waitUntilTag(RegisterSubscriptionTestTags.FORM_READY, timeoutMs = 120_000)
-        waitUntilEnabled(RegisterSubscriptionTestTags.FIRST_NAME, timeoutMs = 30_000, requireFormReady = true)
+
+        // A resumed installation or confirmation draft may have an obsolete place.
+        if (isTagVisible(RegisterSubscriptionTestTags.SUBMIT)) {
+            composeRule.onNodeWithTag(RegisterSubscriptionTestTags.WIZARD_BACK).performClick()
+            waitUntilTag(RegisterSubscriptionTestTags.INSTALLATION_TYPE, timeoutMs = 15_000)
+        }
+        if (!isTagVisible(RegisterSubscriptionTestTags.FIRST_NAME) &&
+            isTagVisible(RegisterSubscriptionTestTags.INSTALLATION_TYPE)
+        ) {
+            composeRule.onNodeWithTag(RegisterSubscriptionTestTags.WIZARD_BACK).performClick()
+            waitUntilTag(RegisterSubscriptionTestTags.FIRST_NAME, timeoutMs = 15_000)
+        }
+
+        if (onuSn != null && isTagVisible(RegisterSubscriptionTestTags.FIRST_NAME)) {
+            waitUntilText("ONU $onuSn autorizada", timeoutMs = 15_000, substring = true)
+        }
 
         // Step 1: Cliente + ubicación
-        fillClientFields()
-        selectPlaceAndAddress()
-        selectCurrentLocation()
-        clickWizardContinue()
-        waitUntilTag(RegisterSubscriptionTestTags.INSTALLATION_TYPE, timeoutMs = 30_000)
+        if (isTagVisible(RegisterSubscriptionTestTags.FIRST_NAME)) {
+            waitUntilEnabled(RegisterSubscriptionTestTags.FIRST_NAME, timeoutMs = 30_000, requireFormReady = true)
+            fillClientFields()
+            selectPlaceAndAddress()
+            selectCurrentLocation()
+            if (args.getString("e2e.stopAfterClientForm") == "true") {
+                composeRule.onNodeWithTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE)
+                    .assertIsEnabled()
+                assertThat(
+                    composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.PROGRESS_OVERLAY)
+                        .fetchSemanticsNodes(),
+                ).isEmpty()
+                assertThat(
+                    composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.SUCCESS_FULLSCREEN)
+                        .fetchSemanticsNodes(),
+                ).isEmpty()
+                return
+            }
+            clickWizardContinue()
+        }
 
-        // Step 2: Instalación FIBER
-        completeInstallationStepAndAdvance()
+        // Step 2: Instalación. La foto de fachada vive en este paso; al continuar pasa a revisión.
+        waitUntilTag(RegisterSubscriptionTestTags.INSTALLATION_TYPE, timeoutMs = 30_000)
+        completeInstallationStep()
+        injectFacadePhoto()
+        clickWizardContinue()
 
         // Step 3: Confirmación
-        injectFacadePhoto()
         waitUntilEnabledSubmit(timeoutMs = 60_000)
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SUBMIT)
             .assertIsEnabled()
@@ -199,8 +231,6 @@ class FiberRegisterFirstOnuE2ETest {
     }
 
     private fun loginIfNeeded() {
-        composeRule.waitForIdle()
-        // After pm clear, splash/nav can lag — wait for login OR already-authenticated drawer.
         waitUntilAnyTag(
             tags = listOf(E2eLoginTags.USERNAME, MainNavTestTags.OPEN_DRAWER),
             timeoutMs = 90_000,
@@ -218,7 +248,14 @@ class FiberRegisterFirstOnuE2ETest {
         composeRule.onNodeWithTag(E2eLoginTags.PASSWORD).performTextInput(password)
         closeSoftKeyboard()
         composeRule.onNodeWithTag(E2eLoginTags.SUBMIT).performClick()
-        waitUntilTag(MainNavTestTags.OPEN_DRAWER, timeoutMs = 90_000)
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(90)
+        while (System.nanoTime() < deadline) {
+            val loginStillVisible = composeRule.onAllNodesWithTag(E2eLoginTags.USERNAME)
+                .fetchSemanticsNodes().isNotEmpty()
+            if (!loginStillVisible) return
+            Thread.sleep(500)
+        }
+        throw AssertionError("Login form remained visible after submitting credentials")
     }
 
     private fun openRegisterSubscription() {
@@ -229,7 +266,6 @@ class FiberRegisterFirstOnuE2ETest {
     }
 
     private fun ensureLocationReady() {
-        composeRule.waitForIdle()
         val continueGate = composeRule.onAllNodesWithTag("location_setup_continue")
             .fetchSemanticsNodes()
         if (continueGate.isNotEmpty()) {
@@ -242,17 +278,55 @@ class FiberRegisterFirstOnuE2ETest {
             }
         }
         waitUntilTag(RegisterSubscriptionTestTags.FORM_READY, timeoutMs = 120_000)
-        val clientFormAlreadyOpen = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.FIRST_NAME)
-            .fetchSemanticsNodes()
-            .isNotEmpty()
-        if (clientFormAlreadyOpen) return
+        val entryDeadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(120_000)
+        var onuSelectorVisibleSince: Long? = null
+        while (System.nanoTime() < entryDeadline) {
+            if (isTagVisible(RegisterSubscriptionTestTags.FIRST_NAME) ||
+                isTagVisible(RegisterSubscriptionTestTags.INSTALLATION_TYPE) ||
+                isTagVisible(RegisterSubscriptionTestTags.SUBMIT)) return
+            val onuSelectorVisible = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.ONU)
+                .fetchSemanticsNodes().isNotEmpty()
+            if (onuSelectorVisible) {
+                val visibleSince = onuSelectorVisibleSince ?: System.nanoTime().also { onuSelectorVisibleSince = it }
+                if (System.nanoTime() - visibleSince >= TimeUnit.SECONDS.toNanos(5)) break
+            } else {
+                onuSelectorVisibleSince = null
+            }
+            Thread.sleep(500)
+        }
+        if (isTagVisible(RegisterSubscriptionTestTags.INSTALLATION_TYPE) ||
+            isTagVisible(RegisterSubscriptionTestTags.SUBMIT)) return
+        if (composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.ONU)
+                .fetchSemanticsNodes().isEmpty()) {
+            throw AssertionError("Registration did not expose a client form or an ONU selector")
+        }
 
         // Preauthorization is part of the wizard. The client form is not exposed
         // until the selected ONU reaches READY_FOR_FORM through ACS.
         waitUntilTag(RegisterSubscriptionTestTags.ONU, timeoutMs = 30_000)
         selectOnu()
         clickWizardContinue()
-        waitUntilTag(RegisterSubscriptionTestTags.FIRST_NAME, timeoutMs = 360_000)
+        waitForClientFormAfterAcsContact()
+    }
+
+    private fun isTagVisible(tag: String): Boolean = composeRule.onAllNodesWithTag(tag)
+        .fetchSemanticsNodes().isNotEmpty()
+
+    private fun waitForClientFormAfterAcsContact() {
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(360_000)
+        while (System.nanoTime() < deadline) {
+            if (composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.FIRST_NAME)
+                    .fetchSemanticsNodes().isNotEmpty()) return
+            val retry = composeRule.onAllNodes(
+                hasText("Reintentar") and androidx.compose.ui.test.isEnabled(),
+            ).fetchSemanticsNodes()
+            if (retry.isNotEmpty()) {
+                composeRule.onNode(hasText("Reintentar") and androidx.compose.ui.test.isEnabled())
+                    .performClick()
+            }
+            Thread.sleep(15_000)
+        }
+        throw AssertionError("ONU did not reach READY_FOR_FORM after ACS retries")
     }
 
     private fun fillClientFields() {
@@ -292,7 +366,6 @@ class FiberRegisterFirstOnuE2ETest {
                     .isNotEmpty()
                 if (!formReady) {
                     Thread.sleep(500)
-                    composeRule.waitForIdle()
                     continue
                 }
             }
@@ -307,7 +380,6 @@ class FiberRegisterFirstOnuE2ETest {
             }.getOrDefault(false)
             if (mergedOk) return
             Thread.sleep(500)
-            composeRule.waitForIdle()
         }
         throw AssertionError("Timeout waiting for enabled editable testTag=$tag after ${timeoutMs}ms")
     }
@@ -353,12 +425,10 @@ class FiberRegisterFirstOnuE2ETest {
             }.getOrDefault(false)
             if (enabled) {
                 composeRule.onNodeWithTag(tag).performClick()
-                composeRule.waitForIdle()
                 Thread.sleep(500)
                 return
             }
             Thread.sleep(400)
-            composeRule.waitForIdle()
         }
         val formReady = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.FORM_READY)
             .fetchSemanticsNodes()
@@ -387,30 +457,23 @@ class FiberRegisterFirstOnuE2ETest {
     private fun selectPlaceAndAddress() {
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.PLACE)
             .performScrollTo()
-        // Open Lugar dropdown and pick first match for the lab place hint.
-        onView(
-            allOf(
-                withId(MaterialR.id.text_input_end_icon),
-                isDescendantOfA(textInputLayoutWithHint(PLACE_FIELD_HINT)),
-                isDisplayed(),
-            )
-        ).perform(click())
-        Thread.sleep(800)
-        val matched = runCatching {
-            onData(org.hamcrest.Matchers.hasToString(org.hamcrest.Matchers.containsString(placeHint)))
-                .inRoot(RootMatchers.isPlatformPopup())
-                .atPosition(0)
-                .perform(click())
-            true
-        }.getOrDefault(false)
-        if (!matched) {
-            onView(editTextUnderHint(PLACE_FIELD_HINT)).perform(click(), replaceText(placeHint))
-            Thread.sleep(800)
-            onData(anything())
-                .inRoot(RootMatchers.isPlatformPopup())
-                .atPosition(0)
-                .perform(click())
+        onView(editTextUnderHint(PLACE_FIELD_HINT)).perform(click(), replaceText(placeHint))
+        val exactPlace = object : TypeSafeMatcher<Any>() {
+            override fun describeTo(description: Description) {
+                description.appendText("place containing $placeHint, ignoring case")
+            }
+
+            override fun matchesSafely(item: Any): Boolean =
+                item.toString().contains(placeHint, ignoreCase = true)
         }
+        onData(exactPlace)
+            .inRoot(RootMatchers.isPlatformPopup())
+            .perform(click())
+        var selectedPlace = ""
+        onView(editTextUnderHint(PLACE_FIELD_HINT)).check { view, _ ->
+            selectedPlace = (view as android.widget.EditText).text?.toString().orEmpty()
+        }
+        assertThat(selectedPlace.lowercase()).contains(placeHint.lowercase())
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ADDRESS)
             .performScrollTo()
             .performTextInput("Jr EEE Lab ciento veintitres")
@@ -448,7 +511,6 @@ class FiberRegisterFirstOnuE2ETest {
             composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ONU)
                 .performScrollTo()
                 .performClick()
-            composeRule.waitForIdle()
             listReady = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.onuItem(0))
                 .fetchSemanticsNodes()
                 .isNotEmpty()
@@ -475,7 +537,6 @@ class FiberRegisterFirstOnuE2ETest {
                 index++
             }
             Thread.sleep(800)
-            composeRule.waitForIdle()
             composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ONU).performClick()
         }
         throw AssertionError("ONU lab $sn no en unconfigured_onus")
@@ -518,18 +579,20 @@ class FiberRegisterFirstOnuE2ETest {
             .performClick()
     }
 
-    private fun completeInstallationStepAndAdvance() {
+    private fun completeInstallationStep() {
         ensureFiberPlanSelected()
         selectAccessMode()
         selectNapIfNeeded()
-        if (composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.ONU).fetchSemanticsNodes().isNotEmpty()) {
+        if (!isTagVisible(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL) &&
+            composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.ONU).fetchSemanticsNodes().isNotEmpty()
+        ) {
             selectOnu()
         }
         fillWifi()
         closeSoftKeyboard()
-        composeRule.waitForIdle()
-        clickWizardContinue()
         waitUntilTag(RegisterSubscriptionTestTags.FACADE_PHOTO, timeoutMs = 30_000)
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.FACADE_PHOTO)
+            .performScrollTo()
     }
 
     private fun selectNapIfNeeded() {
@@ -559,7 +622,6 @@ class FiberRegisterFirstOnuE2ETest {
             if (napFieldMatchesWanted()) return
             if (napCode == null && napFieldHasAnySelection()) return
             Thread.sleep(400)
-            composeRule.waitForIdle()
         }
     }
 
@@ -571,7 +633,6 @@ class FiberRegisterFirstOnuE2ETest {
                 .isNotEmpty()
             if (!loading) return
             Thread.sleep(400)
-            composeRule.waitForIdle()
         }
     }
 
@@ -631,7 +692,6 @@ class FiberRegisterFirstOnuE2ETest {
             }
             if (!selected) {
                 Thread.sleep(800)
-                composeRule.waitForIdle()
             }
         }
     }
@@ -649,8 +709,16 @@ class FiberRegisterFirstOnuE2ETest {
             putExtra(RegisterSubscriptionDebugActions.EXTRA_PATH, out.absolutePath)
         }
         target.sendBroadcast(intent)
-        Thread.sleep(1_500)
-        composeRule.waitForIdle()
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+        while (System.nanoTime() < deadline) {
+            val photoSelected = composeRule.onAllNodes(
+                hasContentDescription("Cambiar foto de fachada"),
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes().isNotEmpty()
+            if (photoSelected) return
+            Thread.sleep(250)
+        }
+        throw AssertionError("Debug photo injection did not select a facade photo")
     }
 
     private fun waitUntilEnabledSubmit(timeoutMs: Long) {
@@ -662,7 +730,6 @@ class FiberRegisterFirstOnuE2ETest {
             }.getOrDefault(false)
             if (ok) return
             Thread.sleep(500)
-            composeRule.waitForIdle()
         }
         throw AssertionError(
             "Timeout waiting for enabled Submit (wizard step 3: facade photo still missing?)"
@@ -679,7 +746,6 @@ class FiberRegisterFirstOnuE2ETest {
                 return
             }
             Thread.sleep(400)
-            runCatching { composeRule.waitForIdle() }
         }
         throw AssertionError("Timeout waiting for testTag=$tag after ${timeoutMs}ms")
     }
@@ -694,7 +760,6 @@ class FiberRegisterFirstOnuE2ETest {
             }.getOrDefault(false)
             if (found) return
             Thread.sleep(400)
-            runCatching { composeRule.waitForIdle() }
         }
         throw AssertionError("Timeout waiting for text=$text after ${timeoutMs}ms")
     }
@@ -709,7 +774,6 @@ class FiberRegisterFirstOnuE2ETest {
                 return
             }
             Thread.sleep(400)
-            runCatching { composeRule.waitForIdle() }
         }
         throw AssertionError("Timeout waiting for any of $tags after ${timeoutMs}ms")
     }

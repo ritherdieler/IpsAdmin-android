@@ -119,6 +119,7 @@ class RegisterSubscriptionComposeViewModel(
         const val DNI_CHECK_MIN_LENGTH = 8
         const val DNI_CHECK_DEBOUNCE_MS = 600L
         const val DRAFT_SAVE_DEBOUNCE_MS = 2_000L
+        const val NO_ACTIVE_CORE_DEVICES_ERROR = "No hay routers core disponibles"
         const val PREAUTH_POLL_INTERVAL_MS = 3_000L
         const val PREAUTH_MAX_POLLS = 100
         const val OBS_WORKFLOW_NAME = "registro_suscripcion"
@@ -233,23 +234,12 @@ class RegisterSubscriptionComposeViewModel(
             try {
                 _uiState.update { it.copy(isLoading = true) }
                 observeOfflineMode()
-                applyInitialCatalogData().exceptionOrNull()?.let { throwable ->
-                    _uiState.update { it.copy(isLoading = false) }
-                    observabilityClient.reportError(
-                        throwable = throwable,
-                        message = "Fallo al cargar catálogos iniciales",
-                        tags = mapOf(
-                            "feature" to OBS_FEATURE,
-                            "screen" to OBS_SCREEN,
-                            "action" to "load_initial_catalog",
-                            "orderId" to installationOrderId
-                        )
-                    )
-                    _uiEvent.emit(
-                        RegisterSubscriptionUiEvent.Error(
-                            throwable.message ?: "Unknown error"
-                        )
-                    )
+                val catalogFailure = applyInitialCatalogData().exceptionOrNull()
+                val missingCoreCatalog = catalogFailure?.message == NO_ACTIVE_CORE_DEVICES_ERROR
+                if (catalogFailure != null &&
+                    !(missingCoreCatalog && onuRegistrationOperationUseCase != null)
+                ) {
+                    emitInitialCatalogError(catalogFailure, installationOrderId)
                     return@launch
                 }
                 if (installationOrderId != null) {
@@ -279,6 +269,13 @@ class RegisterSubscriptionComposeViewModel(
                     restorePreauthorizationSelection()
                     restoreActivePreauthorization()
                 }
+                if (missingCoreCatalog && _uiState.value.preauthorizationOperation == null) {
+                    emitInitialCatalogError(
+                        requireNotNull(catalogFailure) { NO_ACTIVE_CORE_DEVICES_ERROR },
+                        installationOrderId,
+                    )
+                    return@launch
+                }
                 _uiState.update { it.copy(isLoading = false) }
             } catch (e: CancellationException) {
                 _uiState.update { it.copy(isLoading = false) }
@@ -287,6 +284,21 @@ class RegisterSubscriptionComposeViewModel(
                 if (cancellationRequested) startDeferredCancellation()
             }
         }
+    }
+
+    private suspend fun emitInitialCatalogError(error: Throwable, installationOrderId: Int?) {
+        _uiState.update { it.copy(isLoading = false) }
+        observabilityClient.reportError(
+            throwable = error,
+            message = "Fallo al cargar catálogos iniciales",
+            tags = mapOf(
+                "feature" to OBS_FEATURE,
+                "screen" to OBS_SCREEN,
+                "action" to "load_initial_catalog",
+                "orderId" to installationOrderId
+            )
+        )
+        _uiEvent.emit(RegisterSubscriptionUiEvent.Error(error.message ?: "Unknown error"))
     }
 
     private suspend fun applyInitialCatalogData(): Result<Unit> = coroutineScope {
@@ -307,11 +319,6 @@ class RegisterSubscriptionComposeViewModel(
 
         val coreList = catalog.coreDevices.map { it.toNetworkDevice() }
         val activeCores = coreList.filter { !it.disabled }
-        if (activeCores.isEmpty()) {
-            return@coroutineScope Result.failure(
-                IllegalStateException("No hay routers core disponibles")
-            )
-        }
         val autoSelected = if (activeCores.size == 1) activeCores.first() else null
 
         val cachedNapBoxes = catalog.napBoxes.map { it.toNapBoxResponse() }
@@ -335,6 +342,9 @@ class RegisterSubscriptionComposeViewModel(
                     selectedPlan = selectedPlan
                 )
             )
+        }
+        if (activeCores.isEmpty()) {
+            return@coroutineScope Result.failure(IllegalStateException(NO_ACTIVE_CORE_DEVICES_ERROR))
         }
         Result.success(Unit)
     }
