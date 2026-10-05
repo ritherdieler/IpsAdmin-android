@@ -394,6 +394,7 @@ fun RegisterSubscriptionFormScreen(
             RegisterScreenBusyMode.REGISTERING -> RegistrationProgressOverlay(
                 progressMessage = uiState.registrationProgressMessage,
                 progressCheckpoints = uiState.registrationProgressCheckpoints,
+                accessMode = uiState.registerSubscriptionForm.accessMode,
                 onCancel = if (uiState.preauthorizationEnabled) {
                     { viewModel.onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) }
                 } else null,
@@ -519,6 +520,7 @@ internal fun CatalogLoadingOverlay(
 internal fun RegistrationProgressOverlay(
     progressMessage: String? = null,
     progressCheckpoints: List<com.dscorp.ispadmin.domain.model.RegistrationProgressCheckpoint> = emptyList(),
+    accessMode: AccessMode = AccessMode.PPPOE_DYNAMIC,
     onCancel: (() -> Unit)? = null,
     cancelEnabled: Boolean = true,
     onViewProgress: (() -> Unit)? = null,
@@ -549,7 +551,7 @@ internal fun RegistrationProgressOverlay(
                 CircularProgressIndicator()
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = registrationProgressStepMessage(progressMessage, progressCheckpoints),
+                    text = registrationProgressStepMessage(progressMessage, progressCheckpoints, accessMode),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
@@ -568,7 +570,7 @@ internal fun RegistrationProgressOverlay(
                         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = registrationProgressStageLabel(checkpoint.stage),
+                                    text = registrationProgressStageLabel(checkpoint.stage, accessMode),
                                     modifier = Modifier.weight(1f),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Medium,

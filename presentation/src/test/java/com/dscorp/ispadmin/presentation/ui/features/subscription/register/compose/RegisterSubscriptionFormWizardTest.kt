@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.dscorp.ispadmin.R
+import com.dscorp.ispadmin.domain.model.AccessMode
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.NetworkDevice
@@ -25,6 +26,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.SubmissionState
 import com.google.android.gms.maps.model.LatLng
 import io.mockk.every
 import io.mockk.mockk
@@ -285,6 +287,40 @@ class RegisterSubscriptionFormWizardTest {
 
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.PROGRESS_STEP)
             .assertTextEquals("Aplicando WiFi…")
+    }
+
+    @Test
+    fun `static IP registration progress uses the selected access mode`() {
+        val state = MutableStateFlow(
+            RegisterSubscriptionState(
+                isRegistering = true,
+                submission = SubmissionState.Provisioning(subscriptionId = 123),
+                registerSubscriptionForm = RegisterSubscriptionFormState(
+                    accessMode = AccessMode.STATIC_IP,
+                ),
+                registrationProgressCheckpoints = listOf(
+                    RegistrationProgressCheckpoint(stage = "INTERNET", state = "RUNNING", attempts = 1),
+                ),
+            ),
+        )
+        val viewModel = mockk<RegisterSubscriptionComposeViewModel>(relaxed = true)
+        every { viewModel.uiState } returns state
+        every { viewModel.uiEvent } returns MutableSharedFlow<RegisterSubscriptionUiEvent>()
+
+        composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        composeRule.setContent {
+            MaterialTheme {
+                RegisterSubscriptionFormScreen(
+                    viewModel = viewModel,
+                    installationOrderId = null,
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.PROGRESS_STEP)
+            .assertTextEquals("Configurando Internet IP estática…")
+        composeRule.onNodeWithText("Internet IP estática").assertExists()
+        composeRule.onNodeWithText("Internet PPPoE").assertDoesNotExist()
     }
 
     @Test

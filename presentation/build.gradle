@@ -40,8 +40,8 @@ android {
         applicationId "com.dscorp.ispadmin"
         minSdk rootProject.ext.minSdk
         targetSdk rootProject.ext.targetSdk
-        versionCode 65
-        versionName "2.6.13"
+        versionCode 66
+        versionName "2.6.14"
         testInstrumentationRunner "com.dscorp.ispadmin.test.InstrumentationTestRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -70,8 +70,8 @@ android {
             buildConfigField "boolean", "HAS_MAPS_API_KEY", (!mapsApiKeyProd.isEmpty()).toString()
             buildConfigField 'boolean', 'SKIP_VERSION_CHECK', 'false'
             buildConfigField 'String', "FIRE_BASE_URL", '"https://fcm.googleapis.com"'
-            buildConfigField 'String', "BASE_URL", '"https://api.gigafiberperu.cloud/ispadmin/"'
-            buildConfigField 'String', "OBS_BASE_URL", '"https://api.gigafiberperu.cloud/ispadmin/"'
+            buildConfigField 'String', "BASE_URL", '"https://api.gigafiberperu.tech/ispadmin/"'
+            buildConfigField 'String', "OBS_BASE_URL", '"https://api.gigafiberperu.tech/ispadmin/"'
             buildConfigField 'String', "OBS_API_KEY", "\"${obsApiKeyProd}\""
             buildConfigField 'String', "OBS_API_KEY_ANDROID", "\"${obsApiKeyProd}\""
             buildConfigField 'String', "SEND_CLOUD_MESSAGING_API_KEY", "\"${sendCloudMessagingApiKey}\""
@@ -209,9 +209,8 @@ dependencies {
     implementation "com.google.android.gms:play-services-maps:${rootProject.ext.playServicesMapsVersion}"
     implementation "com.google.android.gms:play-services-location:${rootProject.ext.playServicesLocationVersion}"
  // Debugging de red con Chucker
-     devImplementation "com.github.chuckerteam.chucker:library:4.1.0"
-     stagingImplementation "com.github.chuckerteam.chucker:library-no-op:4.1.0"
-     prodImplementation "com.github.chuckerteam.chucker:library-no-op:4.1.0"
+     debugImplementation "com.github.chuckerteam.chucker:library:4.1.0"
+     releaseImplementation "com.github.chuckerteam.chucker:library-no-op:4.1.0"
     // Retrofit y networking
     implementation "com.squareup.retrofit2:retrofit:${rootProject.ext.retrofitVersion}"
     implementation "com.squareup.okhttp3:logging-interceptor:${rootProject.ext.okhttpVersion}"
