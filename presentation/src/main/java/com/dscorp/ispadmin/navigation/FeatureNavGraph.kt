@@ -164,7 +164,9 @@ fun FeatureNavGraph(
             null
         }
         if (pending?.subscriptionId == null) {
-            navController.navigate(Subscription.Register()) { launchSingleTop = true }
+            runNavigationOnMainThread {
+                navController.navigate(Subscription.Register()) { launchSingleTop = true }
+            }
         }
     }
     val title = when (currentRoute) {

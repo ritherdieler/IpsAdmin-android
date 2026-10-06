@@ -8,11 +8,11 @@ import com.dscorp.ispadmin.data.datasource.remote.auth.AuthInterceptor
 import com.dscorp.ispadmin.data.datasource.remote.auth.SessionEventBus
 import com.dscorp.ispadmin.data.datasource.remote.auth.TokenAuthenticator
 import com.dscorp.ispadmin.data.datasource.remote.auth.TokenStore
+import com.dscorp.ispadmin.data.datasource.remote.logging.HttpRequestTimingInterceptor
 import com.dscorp.ispadmin.data.utils.LocalDateTimeAdapter
 import com.dscorp.ispadmin.observability.ObservabilityHttpInterceptor
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -20,7 +20,6 @@ import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 const val BASE_URL = "BASE_URL"
-private const val DEV_FLAVOR = "dev"
 
 val retrofitModule = module {
     single { SessionEventBus() }
@@ -70,11 +69,8 @@ fun provideHttpClient(
         .readTimeout(4, TimeUnit.MINUTES)
     httpClient.addInterceptor(authInterceptor)
     httpClient.addInterceptor(observabilityHttpInterceptor)
-    if (BuildConfig.FLAVOR == DEV_FLAVOR) {
-        val logging = HttpLoggingInterceptor()
-        logging.level = HttpLoggingInterceptor.Level.BODY
-        logging.redactHeader("Authorization")
-        httpClient.addInterceptor(logging)
+    if (BuildConfig.DEBUG) {
+        httpClient.addInterceptor(HttpRequestTimingInterceptor())
     }
     httpClient.addInterceptor(ChuckerInterceptor.Builder(context).build())
     httpClient.authenticator(tokenAuthenticator)

@@ -138,6 +138,7 @@ class FiberRegisterFirstOnuE2ETest {
 
     @Test
     fun registerFiber_withFirstOnu_reachesSuccess() {
+        try {
         composeRule.waitUntil(timeoutMillis = 30_000) {
             runCatching {
                 composeRule.onAllNodes(androidx.compose.ui.test.isRoot()).fetchSemanticsNodes().isNotEmpty()
@@ -163,7 +164,7 @@ class FiberRegisterFirstOnuE2ETest {
         }
 
         if (onuSn != null && isTagVisible(RegisterSubscriptionTestTags.FIRST_NAME)) {
-            waitUntilText("ONU $onuSn autorizada", timeoutMs = 15_000, substring = true)
+            waitUntilOnuAuthorized(onuSn, timeoutMs = 15_000)
         }
 
         // Step 1: Cliente + ubicación
@@ -222,6 +223,10 @@ class FiberRegisterFirstOnuE2ETest {
             assertThat(shown).isNotEmpty()
         }
         holdAppOpen()
+        } catch (failure: Throwable) {
+            android.util.Log.e("FiberRegisterFirstOnuE2E", "E2E failed before activity teardown", failure)
+            throw failure
+        }
     }
 
     private fun holdAppOpen() {
@@ -762,6 +767,20 @@ class FiberRegisterFirstOnuE2ETest {
             Thread.sleep(400)
         }
         throw AssertionError("Timeout waiting for text=$text after ${timeoutMs}ms")
+    }
+
+    private fun waitUntilOnuAuthorized(wantedSn: String, timeoutMs: Long) {
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs)
+        while (System.nanoTime() < deadline) {
+            val confirmed = composeRule.onAllNodesWithText("autorizada", substring = true)
+                .fetchSemanticsNodes()
+                .any { node ->
+                    E2eOnuSnResolver.matchesAuthorizedOnuText(node.config.toString(), wantedSn)
+                }
+            if (confirmed) return
+            Thread.sleep(400)
+        }
+        throw AssertionError("Timeout waiting for authorization confirmation for the requested ONU")
     }
 
     private fun waitUntilAnyTag(tags: List<String>, timeoutMs: Long) {

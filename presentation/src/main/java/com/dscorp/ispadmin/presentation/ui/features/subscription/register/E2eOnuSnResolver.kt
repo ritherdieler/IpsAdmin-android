@@ -6,6 +6,9 @@ object E2eOnuSnResolver {
 
     fun shouldSelectFirstOnu(onuSnArg: String?): Boolean = resolve(onuSnArg) == null
 
+    fun matchesAuthorizedOnuText(displayedText: String, wanted: String): Boolean =
+        displayedText.contains("autorizada", ignoreCase = true) && matches(displayedText, wanted)
+
     fun matches(displayedSn: String, wanted: String): Boolean {
         val wantedCompact = compact(wanted)
         if (wantedCompact.isEmpty()) return false

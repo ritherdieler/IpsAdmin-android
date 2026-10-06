@@ -40,4 +40,20 @@ class E2eOnuSnResolverTest {
         assertThat(E2eOnuSnResolver.matches(displayed, "5A544547DC47BFFD")).isTrue()
         assertThat(E2eOnuSnResolver.matches(displayed, "HWTCDEADBEEF")).isFalse()
     }
+
+    @Test
+    fun `matches authorization confirmation when manufacturer serial represents requested hex serial`() {
+        assertThat(
+            E2eOnuSnResolver.matchesAuthorizedOnuText(
+                "ONU HWTC9F4BF950 autorizada y conectada con ACS.",
+                "485754439F4BF950",
+            ),
+        ).isTrue()
+        assertThat(
+            E2eOnuSnResolver.matchesAuthorizedOnuText(
+                "ONU HWTC9F4BF950 autorizada y conectada con ACS.",
+                "48575443AABBCCDD",
+            ),
+        ).isFalse()
+    }
 }

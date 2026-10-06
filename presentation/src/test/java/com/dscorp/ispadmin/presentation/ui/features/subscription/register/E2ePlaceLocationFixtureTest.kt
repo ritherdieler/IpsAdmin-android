@@ -115,7 +115,7 @@ class E2ePlaceLocationFixtureTest {
     fun `prod espresso script matches staging preflight and instrumentation contract`() {
         val prod = File("../scripts/e2e_register_fiber_espresso.sh").readText()
         val staging = File("../scripts/e2e_register_fiber_staging_espresso.sh").readText()
-        assertThat(prod).contains("API_BASE=\"\${API_BASE:-https://api.gigafiberperu.cloud/ispadmin}\"")
+        assertThat(prod).contains("API_BASE=\"\${API_BASE:-https://api.gigafiberperu.tech/ispadmin}\"")
         assertThat(prod).doesNotContain("ispadmin-staging")
         assertThat(prod).contains("connectedProdDebugAndroidTest")
         assertThat(prod).contains("installProdDebugAndroidTest")
@@ -147,6 +147,37 @@ class E2ePlaceLocationFixtureTest {
         assertThat(normalizeEspressoEnv(prod)).isEqualTo(normalizeEspressoEnv(staging))
     }
 
+    @Test
+    fun `prod and staging espresso scripts fail and hide wifi credentials when TR069 is pending`() {
+        val scripts = listOf(
+            File("../scripts/e2e_register_fiber_espresso.sh"),
+            File("../scripts/e2e_register_fiber_staging_espresso.sh"),
+        )
+
+        scripts.forEach { file ->
+            val script = file.readText()
+            val pollAt = script.indexOf("e2e_poll_tr069 \"\$API_BASE\"")
+            val failGateAt = script.indexOf("if [[ \"\$TR069_EXIT\" -ne 0 ]]; then", pollAt)
+            val wifiCredentialsAt = script.indexOf("echo \"== WiFi credentials (before cleanup) ==\"")
+
+            assertThat(pollAt).isGreaterThan(-1)
+            assertThat(failGateAt).isGreaterThan(pollAt)
+            assertThat(wifiCredentialsAt).isGreaterThan(failGateAt)
+            assertThat(script.substring(failGateAt, wifiCredentialsAt)).contains("TEST_EXIT=1")
+            assertThat(script).doesNotContain("TR-069 poll exit=\$TR069_EXIT (non-fatal)")
+        }
+    }
+
+    @Test
+    fun `prod and staging espresso scripts let instrumentation finish after UI assertions`() {
+        listOf(
+            File("../scripts/e2e_register_fiber_espresso.sh"),
+            File("../scripts/e2e_register_fiber_staging_espresso.sh"),
+        ).forEach { file ->
+            assertThat(file.readText()).contains("-Pandroid.testInstrumentationRunnerArguments.e2e.keepOpen=false")
+        }
+    }
+
     private fun normalizeEspressoEnv(raw: String): String =
         raw
             .replace("e2e_register_fiber_staging_espresso.sh", "SCRIPT")
@@ -154,7 +185,7 @@ class E2ePlaceLocationFixtureTest {
             .replace("e2e_point_device_at_kvm4 \"\$ADB\" \"\$DEVICE\"", "POINT_KVM4")
             .replace("e2e_doing \"adb reverse tcp:8080 tcp:8080\"\n\$ADB -s \"\$DEVICE\" reverse tcp:8080 tcp:8080", "POINT_KVM4")
             .replace("https://api.gigafiberperu.tech/ispadmin-staging", "API_BASE")
-            .replace("https://api.gigafiberperu.cloud/ispadmin", "API_BASE")
+            .replace("https://api.gigafiberperu.tech/ispadmin", "API_BASE")
             .replace("connectedStagingDebugAndroidTest", "connectedFlavorAndroidTest")
             .replace("connectedProdDebugAndroidTest", "connectedFlavorAndroidTest")
             .replace("installStagingDebug", "installFlavor")

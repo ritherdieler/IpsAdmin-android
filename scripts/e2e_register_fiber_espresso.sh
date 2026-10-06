@@ -96,7 +96,7 @@ BACKEND="${BACKEND_ROOT:-$(cd "$ROOT/../ispadmin-backend" && pwd)}"
 CLEANUP="$BACKEND/scripts/tr069-e2e-hard-cleanup.sh"
 ADB="${ADB:-$HOME/Library/Android/sdk/platform-tools/adb}"
 PACKAGE="${PACKAGE:-com.dscorp.ispadmin}"
-API_BASE="${API_BASE:-https://api.gigafiberperu.cloud/ispadmin}"
+API_BASE="${API_BASE:-https://api.gigafiberperu.tech/ispadmin}"
 E2E_DNI="${E2E_DNI:-$(python3 -c 'import time; print("9"+("%07d"%(time.time()%10000000)))')}"
 E2E_USER="${E2E_USER:-dscorp}"
 E2E_PASSWORD="${E2E_PASSWORD:-nohacker}"
@@ -338,7 +338,7 @@ set +e
   -Pandroid.testInstrumentationRunnerArguments.e2e.napCode="$E2E_NAP_CODE" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.lat="$GEO_LAT" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.lon="$GEO_LON" \
-  -Pandroid.testInstrumentationRunnerArguments.e2e.keepOpen=true &
+  -Pandroid.testInstrumentationRunnerArguments.e2e.keepOpen=false &
 GRADLE_PID=$!
 APP_HELD=0
 if e2e_wait_app_hold "$ADB" "$DEVICE" "$PACKAGE" "$GRADLE_PID"; then
@@ -359,9 +359,6 @@ else
 fi
 
 if [[ "$TEST_EXIT" -eq 0 ]]; then
-  echo "== WiFi credentials (before cleanup) =="
-  echo "wifi_24 ssid=$E2E_WIFI_SSID password=$E2E_WIFI_PASS"
-  echo "wifi_5 ssid=$E2E_WIFI_SSID_5 password=$E2E_WIFI_PASS"
   echo "== service-health collection =="
   E2E_PHASE=acs
   e2e_doing "GET $API_BASE/subscription/all then service-health + TR-069 poll"
@@ -409,8 +406,16 @@ print("service-health id=%s evaluated_at=%s" % (os.environ["SUB_ID"], health.get
     e2e_poll_tr069 "$API_BASE" "$TOKEN" "$SUB_ID" 12 5
     TR069_EXIT=$?
     set -e
-    e2e_hit acs wait "TR-069 poll exit=$TR069_EXIT (non-fatal)" subscription="$SUB_ID"
+    if [[ "$TR069_EXIT" -ne 0 ]]; then
+      TEST_EXIT=1
+      e2e_hit acs fail "TR-069 provisioning did not reach COMPLETE" subscription="$SUB_ID" status="not_complete"
+    else
+      echo "== WiFi credentials (before cleanup) =="
+      echo "wifi_24 ssid=$E2E_WIFI_SSID password=$E2E_WIFI_PASS"
+      echo "wifi_5 ssid=$E2E_WIFI_SSID_5 password=$E2E_WIFI_PASS"
+    fi
   else
+    TEST_EXIT=1
     e2e_hit acs fail "subscription not found" dni="$E2E_DNI" sn="$E2E_ONU_SN"
   fi
 fi
