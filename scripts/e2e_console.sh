@@ -192,7 +192,7 @@ e2e_kvm4_host() {
 e2e_enable_kvm4() {
   local host
   host="$(e2e_kvm4_host)"
-  export E2E_CURL_RESOLVE="${E2E_CURL_RESOLVE:-api.gigafiberperu.cloud:443:${host}}"
+  export E2E_CURL_RESOLVE="${E2E_CURL_RESOLVE:-api.gigafiberperu.tech:443:${host}}"
   export E2E_VPS_HOST="${E2E_VPS_HOST:-$host}"
 }
 
@@ -203,7 +203,7 @@ e2e_point_device_at_kvm4() {
   host="$(e2e_kvm4_host)"
   "$adb" -s "$device" root >/dev/null 2>&1 || true
   "$adb" -s "$device" wait-for-device
-  "$adb" -s "$device" shell "grep -q 'api.gigafiberperu.cloud' /etc/hosts || printf '%s api.gigafiberperu.cloud\n' '$host' >> /etc/hosts" \
+  "$adb" -s "$device" shell "grep -q 'api.gigafiberperu.tech' /etc/hosts || printf '%s api.gigafiberperu.tech\n' '$host' >> /etc/hosts" \
     || { echo "No se pudo apuntar el emulador a KVM4" >&2; exit 1; }
 }
 

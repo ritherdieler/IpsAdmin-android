@@ -78,7 +78,7 @@ val viewModelModule = module {
     viewModel { DashBoardViewModel() }
     viewModel { MufaViewModel(get(), get()) }
     viewModel { EditSubscriptionViewModel(get(), get()) }
-    viewModel { SubscriptionDetailViewModel(get(), get()) }
+    viewModel { SubscriptionDetailViewModel(get(), get(), get()) }
     viewModel {
         AccessMigrationViewModel(
             get(),
@@ -91,7 +91,7 @@ val viewModelModule = module {
     viewModel { MigrationViewModel(get(), get()) }
     viewModel { OltAdministrationViewModel(get(), get()) }
     viewModel { OutLayViewModel(get(), get()) }
-    viewModel { SubscriptionFinderViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { SubscriptionFinderViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { FixedCostViewModel(get(), get()) }
     viewModel { CreateInstallationOrderViewModel(get(), get(), get(), get()) }
     viewModel { SupportTicketListViewModel(get(), get(), get()) }

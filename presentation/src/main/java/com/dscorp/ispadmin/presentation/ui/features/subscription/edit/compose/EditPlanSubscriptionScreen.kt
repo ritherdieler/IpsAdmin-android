@@ -140,6 +140,15 @@ fun EditPlanSubscriptionScreen(
                                 singleLine = true,
                                 readOnly = true
                             )
+
+                            if ((subscription.customerSubscriptionCount ?: 0) > 1) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "Se aplica a los ${subscription.customerSubscriptionCount} servicios del cliente",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
                         }
                     }
 

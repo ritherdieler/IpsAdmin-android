@@ -55,7 +55,7 @@ sealed class NavRoutes {
         sealed class Subscription : FeatureRoutes() {
 
             @Serializable
-            data class Register(val installationOrderId: Int?=null) : Subscription()
+            data class Register(val installationOrderId: Int? = null, val customerId: Int? = null) : Subscription()
 
             @Serializable
             object Find : Subscription()

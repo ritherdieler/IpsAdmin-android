@@ -338,6 +338,8 @@ set +e
   -Pandroid.testInstrumentationRunnerArguments.e2e.napCode="$E2E_NAP_CODE" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.lat="$GEO_LAT" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.lon="$GEO_LON" \
+  -Pandroid.testInstrumentationRunnerArguments.e2e.existingCustomer="${E2E_EXISTING_CUSTOMER:-false}" \
+  -Pandroid.testInstrumentationRunnerArguments.e2e.subscriptionId="${E2E_SUBSCRIPTION_ID:-}" \
   -Pandroid.testInstrumentationRunnerArguments.e2e.keepOpen=false &
 GRADLE_PID=$!
 APP_HELD=0
@@ -367,15 +369,13 @@ if [[ "$TEST_EXIT" -eq 0 ]]; then
   SUB_META="$(E2E_DNI="$E2E_DNI" python3 -c '
 import json, os, sys
 dni=os.environ["E2E_DNI"]
+keep=os.environ.get("E2E_KEEP_SUBSCRIPTION_ID") or ""
 items=json.load(sys.stdin)
 subs=items if isinstance(items, list) else []
-match=None
-for s in subs:
-    if str(s.get("dni") or "")==dni:
-        match=s
-        break
-if match is None:
+matches=[s for s in subs if str(s.get("dni") or "")==dni and str(s.get("id") or "")!=keep]
+if not matches:
     sys.exit(1)
+match=max(matches, key=lambda s: int(s.get("id") or 0))
 print("%s\t%s\t%s\t%s" % (
     match.get("id") or "",
     match.get("ip") or "",

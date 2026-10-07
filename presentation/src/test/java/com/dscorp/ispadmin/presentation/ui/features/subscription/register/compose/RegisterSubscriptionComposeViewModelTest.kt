@@ -305,6 +305,7 @@ class RegisterSubscriptionComposeViewModelTest {
         )
         coEvery { operationUseCase.active() } returns null
         coEvery { operationUseCase.start(any()) } returns waiting
+        coEvery { operationUseCase.retry(waiting.id, waiting.revision) } returns waiting
         coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
         coEvery { getRegistrationCatalogUseCase() } returns Result.success(
             sampleCatalog(onus = listOf(fiberOnu().copy(sn = onu.sn, oltId = onu.olt_id, board = onu.board, port = onu.port, ponType = onu.pon_type, onuTypeName = onu.onu_type_name)))
@@ -333,6 +334,95 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
+    fun `waiting for ACS keeps asking until the ONU appears and then opens the client form`() = runTest(testDispatcher) {
+        val onu = Onu("1", "olt-lab", "3", "type-1", "VSOLVA74", "gpon", "2", "VSOL0031C0B6")
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val waiting = OnuRegistrationOperation(
+            id = "preauth-watch", serial = onu.sn, subscriptionId = null,
+            phase = "WAITING_FOR_ACS", state = "WAITING", revision = 2,
+        )
+        val ready = waiting.copy(phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 3)
+        coEvery { operationUseCase.active() } returns null
+        coEvery { operationUseCase.start(any()) } returns waiting
+        coEvery { operationUseCase.draft(any()) } returns null
+        coEvery { operationUseCase.retry(waiting.id, waiting.revision) } returns ready
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(onus = listOf(fiberOnu().copy(sn = onu.sn, oltId = onu.olt_id, board = onu.board, port = onu.port, ponType = onu.pon_type, onuTypeName = onu.onu_type_name)))
+        )
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
+        viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { operationUseCase.retry(waiting.id, waiting.revision) }
+        assertEquals(
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.CLIENT_LOCATION,
+            viewModel.uiState.value.wizardStep,
+        )
+        assertEquals(ready, viewModel.uiState.value.preauthorizationOperation)
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertFalse(viewModel.uiState.value.isPreauthorizationRequestInProgress)
+    }
+
+    @Test
+    fun `ACS watch leaves the waiting screen visible while the check is in flight`() = runTest(testDispatcher) {
+        val onu = Onu("1", "olt-lab", "3", "type-1", "VSOLVA74", "gpon", "2", "VSOL0031C0B6")
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val waiting = OnuRegistrationOperation(
+            id = "preauth-watch-quiet", serial = onu.sn, subscriptionId = null,
+            phase = "WAITING_FOR_ACS", state = "WAITING", revision = 2,
+        )
+        val stillWaiting = waiting.copy(revision = 3)
+        val requestStarted = CompletableDeferred<Unit>()
+        val finishRequest = CompletableDeferred<OnuRegistrationOperation>()
+        coEvery { operationUseCase.active() } returns null
+        coEvery { operationUseCase.start(any()) } returns waiting
+        coEvery { operationUseCase.retry(waiting.id, waiting.revision) } coAnswers {
+            requestStarted.complete(Unit)
+            finishRequest.await()
+        }
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(onus = listOf(fiberOnu().copy(sn = onu.sn)))
+        )
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
+        viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        testScheduler.runCurrent()
+        testScheduler.advanceTimeBy(4_999)
+        testScheduler.runCurrent()
+
+        assertFalse(requestStarted.isCompleted)
+        assertEquals(
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.WAITING_FOR_ACS,
+            viewModel.uiState.value.wizardStep,
+        )
+
+        testScheduler.advanceTimeBy(1)
+        testScheduler.runCurrent()
+
+        assertTrue(requestStarted.isCompleted)
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertFalse(viewModel.uiState.value.isPreauthorizationRequestInProgress)
+        assertEquals(
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.WAITING_FOR_ACS,
+            viewModel.uiState.value.wizardStep,
+        )
+
+        finishRequest.complete(stillWaiting)
+        testScheduler.runCurrent()
+
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertFalse(viewModel.uiState.value.isPreauthorizationRequestInProgress)
+        assertEquals(stillWaiting, viewModel.uiState.value.preauthorizationOperation)
+    }
+
+    @Test
     fun `preauthorization loading is set only while the ONU request is in flight`() = runTest(testDispatcher) {
         val onu = Onu("1", "olt-lab", "3", "type-1", "VSOLVA74", "gpon", "2", "VSOL0031C0B6")
         val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
@@ -351,6 +441,7 @@ class RegisterSubscriptionComposeViewModelTest {
             requestStarted.complete(Unit)
             finishRequest.await()
         }
+        coEvery { operationUseCase.retry(waiting.id, any()) } returns waiting
         coEvery { getRegistrationCatalogUseCase() } returns Result.success(
             sampleCatalog(onus = listOf(fiberOnu().copy(sn = onu.sn)))
         )
@@ -394,6 +485,7 @@ class RegisterSubscriptionComposeViewModelTest {
             requestStarted.complete(Unit)
             finishRequest.await()
         }
+        coEvery { operationUseCase.retry(retriedOperation.id, retriedOperation.revision) } returns retriedOperation
         viewModel = viewModelWithPreauthorization(operationUseCase)
 
         viewModel.loadScreenData(null)
@@ -420,10 +512,12 @@ class RegisterSubscriptionComposeViewModelTest {
     fun `refreshing ONU list does not clear selection after preauthorization wizard advances`() = runTest(testDispatcher) {
         val onu = Onu("b", "olt", "1", "t", "VSOLVA74", "pon", "p", "VSOL0031C0B6")
         val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
-        coEvery { operationUseCase.start(any()) } returns OnuRegistrationOperation(
+        val waiting = OnuRegistrationOperation(
             id = "preauth-refresh", serial = onu.sn, subscriptionId = null,
             phase = "WAITING_FOR_ACS", state = "WAITING", revision = 1,
         )
+        coEvery { operationUseCase.start(any()) } returns waiting
+        coEvery { operationUseCase.retry(waiting.id, waiting.revision) } returns waiting
         coEvery { operationUseCase.active() } returns null
         coEvery { getRegistrationCatalogUseCase() } returns Result.success(
             sampleCatalog(onus = listOf(fiberOnu().copy(sn = onu.sn, onuTypeName = onu.onu_type_name)))

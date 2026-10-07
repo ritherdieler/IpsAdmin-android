@@ -12,4 +12,6 @@ interface SubscriptionActionsRepository {
     suspend fun restoreInternetConnection(subscriptionId: Int, notes: String?)
 
     suspend fun checkDni(dni: String): com.dscorp.ispadmin.domain.model.DniCheck
+
+    suspend fun getCustomer(customerId: Int): com.dscorp.ispadmin.domain.model.CustomerDetail
 }

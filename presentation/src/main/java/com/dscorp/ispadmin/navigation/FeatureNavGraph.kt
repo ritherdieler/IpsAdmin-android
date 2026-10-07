@@ -313,7 +313,9 @@ private fun NavGraphContent(
         }
         // SUBSCRIPTION MODULE
         composable<Subscription.Register> {
-            val installationOrder = it.toRoute<Subscription.Register>().installationOrderId
+            val route = it.toRoute<Subscription.Register>()
+            val installationOrder = route.installationOrderId
+            val customerId = route.customerId
             val canRegisterSubscription = currentUser?.type in listOf(
                 User.UserType.ADMIN,
                 User.UserType.ACCOUNTANT,
@@ -326,6 +328,7 @@ private fun NavGraphContent(
                     RegisterSubscriptionFormScreen(
                         viewModel = koinViewModel(),
                         installationOrderId = installationOrder,
+                        customerId = customerId,
                         onSubscriptionRegisterSuccess = {
                             navController.popBackStack()
                         },

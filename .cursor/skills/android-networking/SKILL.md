@@ -26,4 +26,4 @@ Retry solo idempotente (GET, sync diseñado para ello). Cancelación = coroutine
 
 ## Flavors
 
-`dev` → `http://127.0.0.1:8080/ispadmin/`. `prod` → `https://api.gigafiberperu.cloud/ispadmin/`. No hardcodear otras bases.
+`dev` → `http://127.0.0.1:8080/ispadmin/`. `prod` → `https://api.gigafiberperu.tech/ispadmin/`. No hardcodear otras bases.

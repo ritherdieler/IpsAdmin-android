@@ -14,6 +14,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
@@ -36,6 +37,7 @@ import androidx.test.uiautomator.UiDevice
 import com.dscorp.ispadmin.domain.model.AccessMode
 import com.dscorp.ispadmin.presentation.ui.features.main.MainActivity
 import com.dscorp.ispadmin.presentation.ui.features.main.MainNavTestTags
+import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderTestTags
 import com.google.android.material.textfield.TextInputLayout
 import com.google.common.truth.Truth.assertThat
 import org.hamcrest.Description
@@ -123,6 +125,8 @@ class FiberRegisterFirstOnuE2ETest {
     private val napCode = E2eNapCodeResolver.resolve(args.getString("e2e.napCode"))
     private val geoLat = args.getString("e2e.lat") ?: E2ePlaceLocationFixture.LATITUDE
     private val geoLon = args.getString("e2e.lon") ?: E2ePlaceLocationFixture.LONGITUDE
+    private val existingCustomer = args.getString("e2e.existingCustomer") == "true"
+    private val existingSubscriptionId = args.getString("e2e.subscriptionId")?.toIntOrNull()
     private val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
     @Before
@@ -146,7 +150,7 @@ class FiberRegisterFirstOnuE2ETest {
         }
 
         loginIfNeeded()
-        openRegisterSubscription()
+        if (existingCustomer) openNewServiceForExistingCustomer() else openRegisterSubscription()
         ensureLocationReady()
         // Wait until catalog load finishes; fields stay disabled while isLoading.
         waitUntilTag(RegisterSubscriptionTestTags.FORM_READY, timeoutMs = 120_000)
@@ -169,8 +173,18 @@ class FiberRegisterFirstOnuE2ETest {
 
         // Step 1: Cliente + ubicación
         if (isTagVisible(RegisterSubscriptionTestTags.FIRST_NAME)) {
-            waitUntilEnabled(RegisterSubscriptionTestTags.FIRST_NAME, timeoutMs = 30_000, requireFormReady = true)
-            fillClientFields()
+            if (existingCustomer) {
+                assertThat(
+                    composeRule.onAllNodesWithText(firstName, substring = true).fetchSemanticsNodes(),
+                ).isNotEmpty()
+                assertThat(
+                    composeRule.onAllNodesWithText("servicio", substring = true).fetchSemanticsNodes(),
+                ).isNotEmpty()
+                typeInto(RegisterSubscriptionTestTags.PHONE, "999888777")
+            } else {
+                waitUntilEnabled(RegisterSubscriptionTestTags.FIRST_NAME, timeoutMs = 30_000, requireFormReady = true)
+                fillClientFields()
+            }
             selectPlaceAndAddress()
             selectCurrentLocation()
             if (args.getString("e2e.stopAfterClientForm") == "true") {
@@ -261,6 +275,30 @@ class FiberRegisterFirstOnuE2ETest {
             Thread.sleep(500)
         }
         throw AssertionError("Login form remained visible after submitting credentials")
+    }
+
+    private fun openNewServiceForExistingCustomer() {
+        val subscriptionId = requireNotNull(existingSubscriptionId) { "e2e.subscriptionId is required" }
+        waitUntilTag(MainNavTestTags.OPEN_DRAWER, timeoutMs = 60_000)
+        composeRule.onNodeWithTag(MainNavTestTags.OPEN_DRAWER).performClick()
+        waitUntilTag("drawer_nav_subscription_finder", timeoutMs = 15_000)
+        composeRule.onNodeWithTag("drawer_nav_subscription_finder").performClick()
+        waitUntilTag(SubscriptionFinderTestTags.FILTER_DOCUMENT, timeoutMs = 30_000)
+        composeRule.onNodeWithTag(SubscriptionFinderTestTags.FILTER_DOCUMENT).performClick()
+        waitUntilTag(SubscriptionFinderTestTags.QUERY_DOCUMENT, timeoutMs = 15_000)
+        val editable = hasTestTag(SubscriptionFinderTestTags.QUERY_DOCUMENT).and(hasSetTextAction())
+        composeRule.onNode(editable).performClick()
+        composeRule.onNode(editable).performTextClearance()
+        composeRule.onNode(editable).performTextInput(dni)
+        closeSoftKeyboard()
+        waitUntilTag(SubscriptionFinderTestTags.resultMenu(subscriptionId), timeoutMs = 30_000)
+        composeRule.onNodeWithTag(SubscriptionFinderTestTags.resultMenu(subscriptionId)).performClick()
+        val newService = SubscriptionFinderTestTags.resultMenuItem(
+            subscriptionId,
+            SubscriptionFinderTestTags.MENU_NEW_SERVICE,
+        )
+        waitUntilTag(newService, timeoutMs = 15_000)
+        composeRule.onNodeWithTag(newService).performClick()
     }
 
     private fun openRegisterSubscription() {

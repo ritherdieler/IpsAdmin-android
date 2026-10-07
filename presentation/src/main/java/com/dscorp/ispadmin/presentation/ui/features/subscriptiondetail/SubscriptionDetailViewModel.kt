@@ -13,6 +13,7 @@ import java.io.File
 class SubscriptionDetailViewModel(
     val repository: IRepository,
     private val observabilityClient: ObservabilityClient,
+    private val subscriptionActionsRepository: com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository? = null,
 ) : ViewModel() {
 
     private companion object {
@@ -31,8 +32,14 @@ class SubscriptionDetailViewModel(
         try {
             uiState.value = uiState.value.copy(isLoading = true)
             val subscriptionResponse = repository.subscriptionById(subscriptionId)
+            val otherServices = subscriptionResponse.customerId
+                ?.let { customerId -> subscriptionActionsRepository?.getCustomer(customerId) }
+                ?.subscriptions
+                .orEmpty()
+                .filter { it.id != subscriptionId }
             uiState.value = uiState.value.copy(
                 subscription = subscriptionResponse,
+                otherServices = otherServices,
                 isLoading = false
             )
         } catch (e: Exception) {
@@ -98,6 +105,7 @@ class SubscriptionDetailViewModel(
 
     data class SubscriptionDetailUiState(
         val subscription: SubscriptionResponse? = null,
+        val otherServices: List<com.dscorp.ispadmin.domain.model.CustomerServiceSummary> = emptyList(),
         val isLoading: Boolean = false,
         val error: String? = null
     )

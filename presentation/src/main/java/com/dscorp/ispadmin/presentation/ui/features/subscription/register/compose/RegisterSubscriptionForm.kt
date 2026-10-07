@@ -198,6 +198,10 @@ fun RegisterSubscriptionForm(
                                 ClientDataFields(
                                     form = form,
                                     isLoading = formState.isLoading,
+                                    identityLocked = formState.identityLocked,
+                                    customerBanner = formState.customerServiceNumber?.let { number ->
+                                        "Cliente: ${form.firstName} ${form.lastName} · servicio $number"
+                                    },
                                     onFirstNameChanged = {
                                         onIntent(RegisterSubscriptionIntent.FirstNameChanged(it))
                                     },
@@ -369,8 +373,19 @@ private fun ClientDataFields(
     onDniChanged: (String) -> Unit,
     onPhoneChanged: (String) -> Unit,
     dniWarning: String? = null,
+    identityLocked: Boolean = false,
+    customerBanner: String? = null,
 ) {
     SectionTitle("Datos del cliente")
+    if (customerBanner != null) {
+        Text(
+            text = customerBanner,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+    }
     Text(
         text = "Los campos marcados con * son obligatorios.",
         style = MaterialTheme.typography.bodySmall,
@@ -391,7 +406,7 @@ private fun ClientDataFields(
         onValueChange2 = onLastNameChanged,
         keyboardType2 = KeyboardType.Text,
         testTag2 = RegisterSubscriptionTestTags.LAST_NAME,
-        enabled = !isLoading
+        enabled = !isLoading && !identityLocked
     )
 
     Spacer(modifier = Modifier.height(8.dp))
@@ -404,7 +419,7 @@ private fun ClientDataFields(
         value = form.dni,
         errorMessage = form.dniError,
         onValueChange = onDniChanged,
-        enabled = !isLoading,
+        enabled = !isLoading && !identityLocked,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,
             imeAction = ImeAction.Next

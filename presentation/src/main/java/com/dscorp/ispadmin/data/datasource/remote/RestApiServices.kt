@@ -376,6 +376,9 @@ interface RestApiServices {
     @GET("subscription/dni-check")
     suspend fun checkDni(@Query("dni") dni: String): Response<com.dscorp.ispadmin.domain.model.DniCheck>
 
+    @GET("customer/{customerId}")
+    suspend fun getCustomer(@Path("customerId") customerId: Int): Response<com.dscorp.ispadmin.domain.model.CustomerDetail>
+
     @GET("subscription/{subscriptionId}/registration-progress")
     suspend fun getRegistrationProgress(
         @Path("subscriptionId") subscriptionId: Int

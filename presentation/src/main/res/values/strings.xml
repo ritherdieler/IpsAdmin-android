@@ -161,6 +161,7 @@
     <string name="edit">Editar</string>
     <string name="must_select_plan">Debe seleccionar un plan</string>
     <string name="see_details">Ver detalles</string>
+    <string name="new_service_for_customer">Nuevo servicio para este cliente</string>
     <string name="name1">Nombre</string>
     <string name="id">ID</string>
     <string name="clickForOpenMap">click aqui para abrir el mapa</string>

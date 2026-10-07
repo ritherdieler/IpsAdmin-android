@@ -50,7 +50,8 @@ enum class SubscriptionMenu(val menuId: Int) {
     CHANGE_NAP_BOX(R.string.change_nap_box),
     UPDATE_LOCATION(R.string.update_location),
     REBOOT_FIBER_ONU(R.string.reboot_fiber_onu),
-    RETRY_TR069(R.string.retry_tr069);
+    RETRY_TR069(R.string.retry_tr069),
+    NEW_SERVICE_FOR_CUSTOMER(R.string.new_service_for_customer);
 
     fun getTitle(context: Context): String {
         return context.getString(menuId)
@@ -155,6 +156,9 @@ private fun SubscriptionDropdownMenu(
                     subscription.hasFiberOnu
 
             menuItem == SubscriptionMenu.RETRY_TR069 -> subscription.needsTr069Retry()
+
+            menuItem == SubscriptionMenu.NEW_SERVICE_FOR_CUSTOMER ->
+                subscription.customerId != null
             
             else -> true
         }

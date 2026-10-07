@@ -29,7 +29,7 @@ Fuente de verdad auditada. No inventar stack ni arquitectura.
 
 `dev` → `applicationIdSuffix ".dev"`, `BASE_URL = http://127.0.0.1:8080/ispadmin/`  
 `staging` → `BASE_URL = https://api.gigafiberperu.tech/ispadmin-staging/` (KVM4; mismo `applicationId` que prod)  
-`prod` → `BASE_URL = https://api.gigafiberperu.cloud/ispadmin/`
+`prod` → `BASE_URL = https://api.gigafiberperu.tech/ispadmin/`
 
 ### Arquitectura REAL
 
@@ -352,7 +352,7 @@ class FooViewModel : ViewModel() {
 ### Red
 
 - Manifest tiene `usesCleartextTraffic="true"` y `network_security_config` con cleartext a localhost/LAN (dev).
-- No ampliar cleartext a dominios públicos. Prod habla HTTPS (`api.gigafiberperu.cloud`).
+- No ampliar cleartext a dominios públicos. Prod habla HTTPS (`api.gigafiberperu.tech`).
 - Cert pinning: no existe; no inventarlo en una feature.
 
 ### Componentes

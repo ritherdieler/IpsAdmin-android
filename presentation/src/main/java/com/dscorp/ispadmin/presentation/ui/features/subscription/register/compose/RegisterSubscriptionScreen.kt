@@ -92,6 +92,7 @@ fun RegisterSubscriptionFormScreen(
     onCancelRegistration: () -> Unit = {},
     onViewProvisioning: (Int) -> Unit = {},
     installationOrderId: Int?,
+    customerId: Int? = null,
 ) {
     val locationSetup = rememberLocationSetupState()
     val locationSetupLatest = rememberUpdatedState(locationSetup)
@@ -158,7 +159,7 @@ fun RegisterSubscriptionFormScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.loadScreenData(installationOrderId)
+        viewModel.loadScreenData(installationOrderId, customerId)
     }
 
     LaunchedEffect(uiState.registrationCancelled) {

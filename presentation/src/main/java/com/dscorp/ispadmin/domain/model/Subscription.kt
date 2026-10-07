@@ -42,6 +42,7 @@ data class Subscription(
     var clientRequestId: String? = null,
     var registrationOperationId: String? = null,
     var installationOrderId: Int? = null,
+    var customerId: Int? = null,
     var clientIpAddress: String? = null,
     var provisioningPending: Boolean = false,
     var mikrotikProvisionStatus: String? = null,

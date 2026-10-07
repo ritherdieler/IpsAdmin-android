@@ -217,6 +217,14 @@ fun CustomerDataForm(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            if (formData.sharedServiceCount > 1) {
+                Text(
+                    text = "Se aplica a los ${formData.sharedServiceCount} servicios del cliente",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                )
+            }
             CustomerFormFields(
                 formData = formData,
                 placesState = placesState,

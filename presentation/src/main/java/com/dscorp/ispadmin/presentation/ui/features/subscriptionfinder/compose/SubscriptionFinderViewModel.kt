@@ -77,6 +77,7 @@ data class CustomerFormData(
     val placeError: String? = null,
     val placeId: Int = 0,
     val subscriptionId: Int = 0,
+    val sharedServiceCount: Int = 0,
 ) {
 
     private fun isValidEmail() = email.isEmpty() || email.isValidEmail()
@@ -104,6 +105,7 @@ class SubscriptionFinderViewModel(
     private val searchSubscriptionsUseCase: SearchSubscriptionsUseCase,
     private val observabilityClient: ObservabilityClient,
     private val retryTr069ProvisioningUseCase: RetryTr069ProvisioningUseCase,
+    private val subscriptionActionsRepository: com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository? = null,
 ) : ViewModel() {
 
     private companion object {
@@ -611,6 +613,16 @@ class SubscriptionFinderViewModel(
                     subscriptionId = subscription.id,
                 )
             )
+        }
+        subscription.customerId?.let { customerId ->
+            viewModelScope.launch {
+                val count = runCatching { subscriptionActionsRepository?.getCustomer(customerId) }
+                    .getOrNull()?.subscriptions?.size ?: return@launch
+                _uiState.update { current ->
+                    val form = current.customerFormData ?: return@update current
+                    current.copy(customerFormData = form.copy(sharedServiceCount = count))
+                }
+            }
         }
     }
 

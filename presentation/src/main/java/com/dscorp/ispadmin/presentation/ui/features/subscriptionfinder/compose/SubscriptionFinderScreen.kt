@@ -71,6 +71,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.S
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.REACTIVATE_SERVICE
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.REBOOT_FIBER_ONU
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.RETRY_TR069
+import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.NEW_SERVICE_FOR_CUSTOMER
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SEE_DETAILS
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.SHOW_PAYMENT_HISTORY
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.UPDATE_LOCATION
@@ -724,6 +725,12 @@ private fun handleMenuAction(
             navController.navigate(
                 Subscription.Details(subscription.id)
             )
+        }
+
+        NEW_SERVICE_FOR_CUSTOMER -> {
+            subscription.customerId?.let { customerId ->
+                navController.navigate(Subscription.Register(customerId = customerId))
+            }
         }
 
         MIGRATE_TO_FIBER -> {

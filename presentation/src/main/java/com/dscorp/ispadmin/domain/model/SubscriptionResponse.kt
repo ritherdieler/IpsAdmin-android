@@ -49,6 +49,8 @@ data class SubscriptionResponse(
     val accessMigrationQuarantineUntil: String? = null,
     val accessMigration: AccessMigrationEmbedded? = null,
     val tr069ProvisionStatus: String? = null,
+    val customerId: Int? = null,
+    val customerSubscriptionCount: Int? = null,
 ) : java.io.Serializable {
     fun getFullName() = "$firstName $lastName"
 
@@ -86,6 +88,7 @@ data class SubscriptionResponse(
         ),
         installationType = installationType,
         napBox = napBox?.toDomain(),
+        customerId = customerId,
         location = location!!,
         hasFiberOnu = hasFiberOnu,
         tr069ProvisionStatus = tr069ProvisionStatus,

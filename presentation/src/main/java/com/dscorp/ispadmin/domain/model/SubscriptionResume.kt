@@ -20,6 +20,7 @@ data class SubscriptionResume(
     val location: GeoLocation,
     val hasFiberOnu: Boolean = false,
     val tr069ProvisionStatus: String? = null,
+    val customerId: Int? = null,
 )
 
 private val INCOMPLETE_TR069_STATUSES = setOf("PENDING", "MANUAL_REQUIRED", "FAILED")

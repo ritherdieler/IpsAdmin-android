@@ -73,6 +73,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -122,6 +123,8 @@ class RegisterSubscriptionComposeViewModel(
         const val NO_ACTIVE_CORE_DEVICES_ERROR = "No hay routers core disponibles"
         const val PREAUTH_POLL_INTERVAL_MS = 3_000L
         const val PREAUTH_MAX_POLLS = 100
+        const val ACS_WATCH_INTERVAL_MS = 5_000L
+        const val ACS_WATCH_MAX_POLLS = 72
         const val OBS_WORKFLOW_NAME = "registro_suscripcion"
         const val OBS_WORKFLOW_CATEGORY = "registration"
     }
@@ -186,6 +189,7 @@ class RegisterSubscriptionComposeViewModel(
     private var loadScreenJob: Job? = null
     private var refreshOnuJob: Job? = null
     private var registerSubscriptionJob: Job? = null
+    private var acsWatchJob: Job? = null
     private var retryTr069Job: Job? = null
     private var offlineModeJob: Job? = null
     private var photoUploadJob: Job? = null
@@ -223,7 +227,7 @@ class RegisterSubscriptionComposeViewModel(
         }
     }
 
-    fun loadScreenData(installationOrderId: Int?) {
+    fun loadScreenData(installationOrderId: Int?, customerId: Int? = null) {
         loadScreenJob?.cancel()
         observabilityClient.addBreadcrumb(
             category = ObsBreadcrumbCategory.NAVIGATION,
@@ -263,6 +267,17 @@ class RegisterSubscriptionComposeViewModel(
                                 )
                             )
                             return@launch
+                    }
+                }
+                if (customerId != null) {
+                    mergeExistingCustomer(customerId).exceptionOrNull()?.let { throwable ->
+                        _uiState.update { it.copy(isLoading = false) }
+                        _uiEvent.emit(
+                            RegisterSubscriptionUiEvent.Error(
+                                throwable.message ?: "No se pudo cargar el cliente"
+                            )
+                        )
+                        return@launch
                     }
                 }
                 if (onuRegistrationOperationUseCase != null) {
@@ -347,6 +362,27 @@ class RegisterSubscriptionComposeViewModel(
             return@coroutineScope Result.failure(IllegalStateException(NO_ACTIVE_CORE_DEVICES_ERROR))
         }
         Result.success(Unit)
+    }
+
+    private suspend fun mergeExistingCustomer(customerId: Int): Result<Unit> {
+        val repository = subscriptionActionsRepository
+            ?: return Result.failure(IllegalStateException("No se pudo cargar el cliente"))
+        return runCatching { repository.getCustomer(customerId) }.map { customer ->
+            _uiState.update { current ->
+                current.copy(
+                    customerId = customer.id,
+                    identityLocked = true,
+                    customerServiceNumber = customer.subscriptions.size + 1,
+                    registerSubscriptionForm = current.registerSubscriptionForm.copy(
+                        firstName = customer.firstName.orEmpty().uppercase(),
+                        lastName = customer.lastName.orEmpty().uppercase(),
+                        dni = customer.dni.orEmpty(),
+                        address = "",
+                        phone = "",
+                    ),
+                )
+            }
+        }
     }
 
     private suspend fun mergeInstallationOrderData(orderId: Int): Result<Unit> {
@@ -587,6 +623,7 @@ class RegisterSubscriptionComposeViewModel(
         val useCase = onuRegistrationOperationUseCase ?: return
         val operation = currentUiState().preauthorizationOperation ?: return
         if (!operation.canManuallyRetry() || currentUiState().isLoading) return
+        stopAcsWatch()
         registerSubscriptionJob?.cancel()
         registerSubscriptionJob = viewModelScope.launch(mainImmediate) {
             _uiState.update {
@@ -640,6 +677,7 @@ class RegisterSubscriptionComposeViewModel(
         if (current.registrationCancelled || current.cancellationInProgress) return
         _uiState.update { it.copy(showCancelConfirmation = false, registrationCancelled = false) }
         resumeProvisioningJob?.cancel()
+        stopAcsWatch()
         cancellationRequested = true
         _uiState.update { it.copy(cancellationInProgress = true) }
         if (subscriptionSubmissionInFlight) {
@@ -1095,7 +1133,46 @@ class RegisterSubscriptionComposeViewModel(
             )
         }
         clearStoredOnuSelection()
+        ensureAcsWatch(operation)
     }
+
+    private fun ensureAcsWatch(operation: OnuRegistrationOperation) {
+        if (acsWatchJob?.isActive == true) return
+        if (!operation.isAwaitingAcsContact()) return
+        val useCase = onuRegistrationOperationUseCase ?: return
+        acsWatchJob = viewModelScope.launch(mainImmediate) {
+            var latest = operation
+            repeat(ACS_WATCH_MAX_POLLS) {
+                delay(ACS_WATCH_INTERVAL_MS)
+                if (!isActive || !latest.isAwaitingAcsContact()) return@launch
+                try {
+                    latest = useCase.retry(latest.id, latest.revision)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    _uiState.update {
+                        it.copy(preauthorizationError = error.message ?: "No se pudo consultar ACS")
+                    }
+                    return@launch
+                }
+                if (!isActive) return@launch
+                showPreauthorizationOperation(latest, restoreDraft = latest.canOpenRegistrationForm())
+                if (!latest.isAwaitingAcsContact()) return@launch
+            }
+        }
+    }
+
+    private fun stopAcsWatch() {
+        acsWatchJob?.cancel()
+        acsWatchJob = null
+    }
+
+    private fun OnuRegistrationOperation.isAwaitingAcsContact(): Boolean =
+        phase == "WAITING_FOR_ACS" &&
+            state == "WAITING" &&
+            !cancellationRequested &&
+            !currentUiState().cancellationInProgress &&
+            !currentUiState().registrationCancelled
 
     private fun restorePreauthorizationSelection() {
         val current = currentUiState()
@@ -1137,7 +1214,7 @@ class RegisterSubscriptionComposeViewModel(
             onuList = form.onuList,
         )
 
-    private fun buildRegistrationDraft(state: RegisterSubscriptionState): Map<String, Any?> {
+    internal fun buildRegistrationDraft(state: RegisterSubscriptionState): Map<String, Any?> {
         val form = state.registerSubscriptionForm
         val onu = form.selectedOnu
         val location = form.location
@@ -1164,6 +1241,7 @@ class RegisterSubscriptionComposeViewModel(
             "clientIpAddress" to form.clientIpAddress,
             "accessMode" to form.accessMode.name, "wizardStep" to state.wizardStep.name,
             "registrationOperationId" to state.preauthorizationOperation?.id,
+            "customerId" to state.customerId,
         ).filterValues { it != null }
     }
 
@@ -1418,6 +1496,7 @@ class RegisterSubscriptionComposeViewModel(
         }
     }
 private fun onFirstNameChanged(value: String) {
+    if (_uiState.value.identityLocked) return
     val upperValue = value.uppercase()
     if (upperValue.length > RegisterSubscriptionFormConstraints.MAX_PERSON_NAME_LENGTH) return
 
@@ -1427,6 +1506,7 @@ private fun onFirstNameChanged(value: String) {
 }
 
 private fun onLastNameChanged(value: String) {
+    if (_uiState.value.identityLocked) return
     val upperValue = value.uppercase()
         if (upperValue.length > RegisterSubscriptionFormConstraints.MAX_PERSON_NAME_LENGTH) return
 
@@ -1436,6 +1516,7 @@ private fun onLastNameChanged(value: String) {
 }
 
 private fun onDniChanged(value: String) {
+    if (_uiState.value.identityLocked) return
     if (value.length > RegisterSubscriptionFormConstraints.MAX_DNI_INPUT_LENGTH) return
 
     updateValidatedForm(FormFieldKey.DNI) { form ->
@@ -2185,6 +2266,7 @@ private fun buildSubscriptionFromForm(
         accessMode = form.accessMode.name,
         registrationOperationId = currentUiState().preauthorizationOperation?.id,
         clientRequestId = currentUiState().preauthorizationOperation?.id ?: formClientRequestId(),
+        customerId = currentUiState().customerId,
     )
 }
 

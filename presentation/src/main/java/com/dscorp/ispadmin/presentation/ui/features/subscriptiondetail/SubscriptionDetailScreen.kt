@@ -200,6 +200,10 @@ fun SubscriptionDetailScreen(
 
             loadedSubscription != null -> SubscriptionDetailForm(
                 subscription = loadedSubscription,
+                otherServices = uiState.otherServices,
+                onOpenService = { serviceId ->
+                    navController.navigate(com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription.Details(serviceId))
+                },
                 onFacadePhotoClick = {
                     showFacadePhotoOptionsDialog = true
                 },
@@ -214,6 +218,8 @@ fun SubscriptionDetailScreen(
 @Composable
 fun SubscriptionDetailForm(
     subscription: SubscriptionResponse,
+    otherServices: List<com.dscorp.ispadmin.domain.model.CustomerServiceSummary> = emptyList(),
+    onOpenService: (Int) -> Unit = {},
     onFacadePhotoClick: () -> Unit = {},
     accessMigrationState: AccessMigrationUiState = AccessMigrationUiState(),
     onAccessMigrationIntent: (AccessMigrationIntent) -> Unit = {},
@@ -336,6 +342,26 @@ fun SubscriptionDetailForm(
                     label = "Dirección",
                     value = it
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            if (otherServices.isNotEmpty()) {
+                Text(
+                    text = "Otros servicios del cliente",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+                otherServices.forEach { service ->
+                    Text(
+                        text = listOfNotNull(service.planName, service.address, service.phone).joinToString(" · "),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenService(service.id) }
+                            .padding(vertical = 8.dp),
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
             }
             FacadePhotoBox(
