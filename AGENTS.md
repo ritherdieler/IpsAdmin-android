@@ -31,6 +31,8 @@ Fuente de verdad auditada. No inventar stack ni arquitectura.
 `staging` → `BASE_URL = https://api.gigafiberperu.tech/ispadmin-staging/` (KVM4; mismo `applicationId` que prod)  
 `prod` → `BASE_URL = https://api.gigafiberperu.tech/ispadmin/`
 
+OLT Gateway es un sistema externo y privado. La app Android solo consume la fachada Core indicada en `BASE_URL`; no llamar directamente al contexto Gateway `/ispadmin-oltgateway`.
+
 ### Arquitectura REAL
 
 Híbrido en migración, no Clean Architecture completa.
