@@ -44,6 +44,7 @@ import org.koin.dsl.module
 val viewModelModule = module {
     viewModel { com.dscorp.ispadmin.presentation.ui.features.financial.FinancialViewModel(get(), get<CoroutineDispatcher>(named("mainImmediate"))) }
     viewModel { com.dscorp.ispadmin.presentation.ui.features.dashboard.clients.ClientsViewModel(get(), get<CoroutineDispatcher>(named("mainImmediate"))) }
+    viewModel { com.dscorp.ispadmin.presentation.ui.features.dashboard.CollectionsViewModel(get(), get<CoroutineDispatcher>(named("mainImmediate"))) }
     viewModel { com.dscorp.ispadmin.presentation.ui.features.subscription.provisioning.ProvisioningViewModel(get()) }
     viewModel { LoginViewModel(get(), get()) }
     viewModel { RegisterViewModel(get(), get(), get()) }

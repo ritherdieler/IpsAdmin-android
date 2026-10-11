@@ -35,9 +35,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dscorp.ispadmin.R
+import com.dscorp.ispadmin.data.repository.TICKET_HISTORY_MONTHS
 import com.dscorp.ispadmin.domain.model.dashboard.ClientLifecycle
 import com.dscorp.ispadmin.domain.model.dashboard.ClientQuality
 import com.dscorp.ispadmin.domain.model.dashboard.ClientsDashboard
+import com.dscorp.ispadmin.domain.model.dashboard.CollectionSummary
 import com.dscorp.ispadmin.domain.model.dashboard.PlanAnalysis
 import com.dscorp.ispadmin.domain.model.dashboard.PlanStats
 import com.dscorp.ispadmin.domain.model.dashboard.TicketSummary
@@ -78,16 +80,21 @@ import kotlin.math.roundToInt
 private const val PLAN_SLOTS = 4
 
 @Composable
-fun ClientsScreen(header: @Composable () -> Unit, viewModel: ClientsViewModel = koinViewModel()) {
+fun ClientsScreen(header: @Composable () -> Unit, collections: CollectionSummary? = null, viewModel: ClientsViewModel = koinViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.onIntent(ClientsIntent.Load) }
-    ClientsContent(state, viewModel::onIntent, header)
+    ClientsContent(state, viewModel::onIntent, header, collections)
 }
 
 /** Clients tab: plans, support tickets, zones and customer lifecycle. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClientsContent(state: ClientsUiState, onIntent: (ClientsIntent) -> Unit, header: @Composable () -> Unit) {
+fun ClientsContent(
+    state: ClientsUiState,
+    onIntent: (ClientsIntent) -> Unit,
+    header: @Composable () -> Unit,
+    collections: CollectionSummary? = null,
+) {
     val dashboard = state.dashboard
     Column(Modifier.fillMaxSize()) {
         ClientsHeroTop(state, onIntent, header)
@@ -99,7 +106,7 @@ fun ClientsContent(state: ClientsUiState, onIntent: (ClientsIntent) -> Unit, hea
                 verticalArrangement = Arrangement.spacedBy(IspSpacing.md),
             ) {
                 item("hero") { ClientsHeroBody(dashboard) }
-                if (dashboard != null) item("kpis") { ClientKpis(dashboard.tickets, dashboard.quality) }
+                if (dashboard != null) item("kpis") { ClientKpis(dashboard.tickets, dashboard.quality, collections) }
                 item("status") { ClientsStatus(state, onIntent) }
                 if (dashboard != null) clientItems(dashboard)
             }
@@ -128,7 +135,7 @@ private fun ClientsHeroBody(dashboard: ClientsDashboard?) {
                 HeroBadge(stringResource(R.string.clients_high_priority, formatCount(it)), DeltaTone.Negative)
             }
             HeroFigure(HeroFigureModel(stringResource(R.string.clients_open_tickets), formatCount(tickets.open), "clients_open_tickets",
-                badge = badge, supporting = stringResource(R.string.clients_tickets_caption, formatCount(tickets.total))))
+                badge = badge, supporting = stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), TICKET_HISTORY_MONTHS)))
         }
     }
 }
@@ -158,7 +165,7 @@ private fun LazyListScope.clientItems(dashboard: ClientsDashboard) {
     }
     dashboard.tickets?.let { tickets ->
         item("tickets_header") { SectionHeader(stringResource(R.string.clients_tickets), Modifier.padding(horizontal = IspSpacing.lg),
-            stringResource(R.string.clients_tickets_caption, formatCount(tickets.total))) }
+            stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), TICKET_HISTORY_MONTHS)) }
         item("tickets_status") { Padded { TicketStatusCard(tickets) } }
         item("tickets_category") { Padded { CountBarsCard(stringResource(R.string.clients_tickets_by_category), tickets.byCategory, "clients_tickets_category") } }
     }
@@ -174,7 +181,7 @@ private fun LazyListScope.clientItems(dashboard: ClientsDashboard) {
 }
 
 @Composable
-private fun ClientKpis(tickets: TicketSummary?, quality: ClientQuality?) {
+private fun ClientKpis(tickets: TicketSummary?, quality: ClientQuality?, collections: CollectionSummary?) {
     val unavailable = stringResource(R.string.dashboard_unavailable)
     KpiGrid(listOf(
         KpiModel(stringResource(R.string.clients_resolution_time),
@@ -183,8 +190,9 @@ private fun ClientKpis(tickets: TicketSummary?, quality: ClientQuality?) {
         KpiModel(stringResource(R.string.clients_antiquity),
             quality?.averageAntiquityMonths?.let { stringResource(R.string.clients_months, it.roundToInt()) } ?: unavailable, "clients_antiquity",
             supporting = stringResource(R.string.clients_active_clients)),
-        // Not computed by the Core yet: overdue debt ÷ delinquent subscriptions.
-        KpiModel(stringResource(R.string.clients_debt_per_delinquent), unavailable, "clients_debt_per_delinquent",
+        KpiModel(stringResource(R.string.clients_debt_per_delinquent),
+            collections?.overduePerDelinquent?.let { formatSoles(it.toDouble()) } ?: unavailable, "clients_debt_per_delinquent",
+            supporting = collections?.let { stringResource(R.string.clients_delinquents, formatCount(it.delinquentSubscriptions)) },
             info = stringResource(R.string.clients_debt_per_delinquent_info)),
     ), overlapHero = true)
 }

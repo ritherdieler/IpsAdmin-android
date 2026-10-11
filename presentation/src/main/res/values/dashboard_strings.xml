@@ -14,6 +14,19 @@
     <string name="dashboard_unavailable">No disponible</string>
     <string name="dashboard_vs_previous">vs %1$s</string>
 
+    <!-- Collections -->
+    <string name="collections_title">Cobranza operativa</string>
+    <string name="collections_caption">Facturas de servicio, prórrogas y cortes</string>
+    <string name="collections_due_soon">Por vencer en %1$d días</string>
+    <string name="collections_invoices">%1$s facturas</string>
+    <string name="collections_due_badge">Por vencer</string>
+    <string name="collections_active_deferrals">Prórrogas de corte activas</string>
+    <string name="collections_expiring_today">%1$s vencen hoy</string>
+    <string name="collections_kept">%1$s cumplidas · últimos %2$d días</string>
+    <string name="collections_cuts_vs_restored">Cortes por deuda vs restablecidos tras pago · este mes</string>
+    <string name="collections_cut">Cortados</string>
+    <string name="collections_restored">Restablecidos</string>
+
     <!-- Commercial -->
     <string name="commercial_active_subscriptions">Suscriptores activos</string>
     <string name="commercial_new">Altas</string>
@@ -52,7 +65,8 @@
     <string name="clients_months">%1$s meses</string>
     <string name="clients_active_clients">clientes activos</string>
     <string name="clients_debt_per_delinquent">Deuda por moroso</string>
-    <string name="clients_debt_per_delinquent_info">Deuda vencida promedio de los clientes con al menos una factura vencida: total vencido ÷ clientes morosos. Aún no lo calcula el servidor.</string>
+    <string name="clients_debt_per_delinquent_info">Deuda vencida promedio de los clientes con al menos una factura de servicio vencida: total vencido ÷ clientes morosos. No cuenta clientes al día ni facturas por vencer.</string>
+    <string name="clients_delinquents">%1$s clientes morosos</string>
     <string name="clients_plans">Planes</string>
     <string name="clients_plans_caption">%1$s suscripciones activas · velocidad media %2$s Mbps</string>
     <string name="clients_plan_mix">Mezcla de planes</string>
@@ -61,7 +75,7 @@
     <string name="clients_arpu_header">ARPU</string>
     <string name="clients_top_plan">Top</string>
     <string name="clients_tickets">Tickets de asistencia</string>
-    <string name="clients_tickets_caption">%1$s tickets en total</string>
+    <string name="clients_tickets_caption">%1$s tickets en los últimos %2$d meses</string>
     <string name="clients_tickets_by_status">Abiertos por estado</string>
     <string name="clients_ticket_pending">Pendiente</string>
     <string name="clients_ticket_assigned">Asignado</string>

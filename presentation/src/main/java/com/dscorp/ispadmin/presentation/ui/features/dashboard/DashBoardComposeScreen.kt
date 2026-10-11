@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -25,6 +26,12 @@ private enum class DashboardTab(val title: Int) {
     CLIENTS(R.string.dashboard_tab_clients),
 }
 
+/** Data that the host loads once and shares with the tabs. */
+data class DashboardTabData(
+    val legacy: com.dscorp.ispadmin.domain.model.DashBoardDataResponse? = null,
+    val collections: com.dscorp.ispadmin.domain.model.dashboard.CollectionSummary? = null,
+)
+
 /** Dashboard host: one hero band per tab, with the tab selector drawn inside it. */
 @Suppress("UNUSED_PARAMETER")
 @Composable
@@ -34,13 +41,16 @@ fun DashBoardComposeScreen(navController: NavHostController) {
         // The legacy endpoint feeds the commercial tab and the financial history charts.
         val commercialViewModel: DashBoardViewModel = koinViewModel()
         val commercial by commercialViewModel.state.collectAsStateWithLifecycle()
+        val collectionsViewModel: CollectionsViewModel = koinViewModel()
+        val collections by collectionsViewModel.uiState.collectAsStateWithLifecycle()
+        LaunchedEffect(collectionsViewModel) { collectionsViewModel.onIntent(CollectionsIntent.Load) }
         val titles = DashboardTab.entries.map { stringResource(it.title) }
         val header: @Composable () -> Unit = { HeroTabs(titles, selected, { selected = it }) }
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             when (DashboardTab.entries[selected]) {
-                DashboardTab.FINANCIAL -> FinancialScreen(header = header, legacy = commercial.dashboardData)
+                DashboardTab.FINANCIAL -> FinancialScreen(header = header, data = DashboardTabData(commercial.dashboardData, collections.summary))
                 DashboardTab.COMMERCIAL -> CommercialContent(commercial, commercialViewModel::getDashBoardData, header)
-                DashboardTab.CLIENTS -> ClientsScreen(header)
+                DashboardTab.CLIENTS -> ClientsScreen(header, collections.summary)
             }
         }
     }

@@ -26,6 +26,9 @@ import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
 import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
 import com.dscorp.ispadmin.domain.model.financial.*
+import com.dscorp.ispadmin.domain.model.dashboard.CollectionSummary
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.CollectionsSection
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashboardTabData
 import com.dscorp.ispadmin.presentation.designsystem.charts.ChartData
 import com.dscorp.ispadmin.presentation.designsystem.charts.ChartSeries
 import com.dscorp.ispadmin.presentation.designsystem.charts.IspColumnChart
@@ -53,12 +56,12 @@ private const val HISTORY_MONTHS = 12
 
 /**
  * Financial tab of the dashboard. [header] draws inside the hero band (dashboard tabs);
- * [legacy] feeds the gross revenue / monthly collects history that still comes from the commercial endpoint.
+ * [data] carries what other endpoints add: legacy history charts and the collection follow-up.
  */
 @Composable
 fun FinancialScreen(
     header: @Composable () -> Unit = {},
-    legacy: DashBoardDataResponse? = null,
+    data: DashboardTabData = DashboardTabData(),
     viewModel: FinancialViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -88,7 +91,7 @@ fun FinancialScreen(
         }
     }
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
-        Box(Modifier.padding(padding)) { FinancialContent(state, viewModel::onIntent, header, legacy) }
+        Box(Modifier.padding(padding)) { FinancialContent(state, viewModel::onIntent, header, data.legacy, data.collections) }
     }
 }
 
@@ -100,6 +103,7 @@ fun FinancialContent(
     onIntent: (FinancialIntent) -> Unit,
     header: @Composable () -> Unit,
     legacy: DashBoardDataResponse? = null,
+    collections: CollectionSummary? = null,
 ) {
     var detail by remember(uiState.report?.id) { mutableStateOf<Detail?>(null) }
     val listState = rememberLazyListState()
@@ -121,7 +125,7 @@ fun FinancialContent(
                 if (report != null) item("tiles") { if (billingView) BillingTiles(report, uiState, openDetail) else MovementTiles(report, openDetail) }
                 item("status") { StatusArea(uiState, report) }
                 if (report != null) {
-                    if (billingView) billingItems(report, openDetail) else movementItems(report, uiState, openDetail, legacy)
+                    if (billingView) billingItems(report, openDetail) else movementItems(report, uiState, openDetail, MovementExtras(legacy, collections))
                     closingItems(report, uiState, onIntent, openDetail)
                 }
             }
@@ -250,17 +254,22 @@ private fun MovementTiles(report: FinancialReport, openDetail: (Detail) -> Unit)
     }, openDetail)
 }
 
+/** Data from other endpoints shown in the movements view. */
+private data class MovementExtras(val legacy: DashBoardDataResponse?, val collections: CollectionSummary?)
+
 private fun LazyListScope.movementItems(
     report: FinancialReport,
     uiState: FinancialUiState,
     openDetail: (Detail) -> Unit,
-    legacy: DashBoardDataResponse?,
+    extras: MovementExtras,
 ) {
+    val legacy = extras.legacy
     val managementAccess = report.access == "FULL"
     item("scope") {
         Text(stringResource(if (managementAccess) R.string.financial_cash_scope else R.string.financial_operational_scope),
             Modifier.padding(horizontal = IspSpacing.lg), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
+    extras.collections?.let { summary -> item("collections") { CollectionsSection(summary) } }
     if (legacy != null) {
         item("history_header") { SectionHeader(stringResource(R.string.dashboard_history), Modifier.padding(horizontal = IspSpacing.lg), stringResource(R.string.dashboard_last_12_months)) }
         item("gross_revenue") { Padded { GrossRevenueCard(legacy) } }
