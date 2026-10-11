@@ -1,27 +1,39 @@
 package com.dscorp.ispadmin.presentation.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.dscorp.ispadmin.R
 
-val fontStyle = FontStyle(R.font.robotoflex)
+@OptIn(ExperimentalTextApi::class)
+private fun robotoFlex(weight: Int) = Font(
+    resId = R.font.robotoflex,
+    weight = FontWeight(weight),
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight))
+)
+
+/** Roboto Flex is a variable font; each weight maps to its own variation instance. */
+val RobotoFlex = FontFamily(robotoFlex(400), robotoFlex(500), robotoFlex(600), robotoFlex(700))
+
 val myTypography = Typography(
     displayLarge = TextStyle(
         fontWeight = FontWeight.W400,
         fontSize = 57.sp,
         letterSpacing = (-0.25).sp,
         lineHeight = 64.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
     ),
     displayMedium = TextStyle(
         fontWeight = FontWeight.W400,
         fontSize = 45.sp,
         letterSpacing = 0.sp,
         lineHeight = 52.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     displaySmall = TextStyle(
@@ -29,7 +41,7 @@ val myTypography = Typography(
         fontSize = 36.sp,
         letterSpacing = 0.sp,
         lineHeight = 44.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     headlineLarge = TextStyle(
@@ -37,7 +49,7 @@ val myTypography = Typography(
         fontSize = 32.sp,
         letterSpacing = 0.sp,
         lineHeight = 40.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     headlineMedium = TextStyle(
@@ -45,7 +57,7 @@ val myTypography = Typography(
         fontSize = 28.sp,
         letterSpacing = 0.sp,
         lineHeight = 36.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     headlineSmall = TextStyle(
@@ -53,7 +65,7 @@ val myTypography = Typography(
         fontSize = 24.sp,
         letterSpacing = 0.sp,
         lineHeight = 32.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     titleLarge = TextStyle(
@@ -61,7 +73,7 @@ val myTypography = Typography(
         fontSize = 22.sp,
         letterSpacing = 0.sp,
         lineHeight = 28.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     titleMedium = TextStyle(
@@ -69,7 +81,7 @@ val myTypography = Typography(
         fontSize = 16.sp,
         letterSpacing = 0.15.sp,
         lineHeight = 24.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     titleSmall = TextStyle(
@@ -77,7 +89,7 @@ val myTypography = Typography(
         fontSize = 14.sp,
         letterSpacing = 0.1.sp,
         lineHeight = 20.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     labelLarge = TextStyle(
@@ -85,7 +97,7 @@ val myTypography = Typography(
         fontSize = 14.sp,
         letterSpacing = 0.1.sp,
         lineHeight = 20.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     labelMedium = TextStyle(
@@ -93,7 +105,7 @@ val myTypography = Typography(
         fontSize = 12.sp,
         letterSpacing = 0.5.sp,
         lineHeight = 16.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     labelSmall = TextStyle(
@@ -101,7 +113,7 @@ val myTypography = Typography(
         fontSize = 11.sp,
         letterSpacing = 0.5.sp,
         lineHeight = 16.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     bodyLarge = TextStyle(
@@ -109,7 +121,7 @@ val myTypography = Typography(
         fontSize = 16.sp,
         letterSpacing = 0.5.sp,
         lineHeight = 24.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     bodyMedium = TextStyle(
@@ -117,7 +129,7 @@ val myTypography = Typography(
         fontSize = 14.sp,
         letterSpacing = 0.25.sp,
         lineHeight = 20.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     ),
     bodySmall = TextStyle(
@@ -125,7 +137,7 @@ val myTypography = Typography(
         fontSize = 12.sp,
         letterSpacing = 0.4.sp,
         lineHeight = 16.sp,
-        fontStyle = fontStyle
+        fontFamily = RobotoFlex
 
     )
 )

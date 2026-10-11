@@ -1,5 +1,4 @@
 <resources>
-    <string name="financial_title">Reportes financieros</string>
     <string name="financial_movements">Cobros y egresos</string>
     <string name="financial_billing">Facturación y cartera</string>
     <string name="financial_service_month">Mes de servicio</string>
@@ -73,8 +72,6 @@
     <string name="financial_export">Exportar este corte a XLSX</string>
     <string name="financial_export_failed">No se pudo exportar el corte. Intenta nuevamente.</string>
     <string name="financial_export_saved">Reporte guardado</string>
-    <string name="financial_commercial">Indicadores comerciales</string>
-    <string name="financial_return">Volver a reportes financieros</string>
     <string name="financial_records">Registros del corte</string>
     <string name="financial_close_details">Cerrar detalle</string>
     <string name="financial_receipt_detail">Cobro #%1$d · %2$s

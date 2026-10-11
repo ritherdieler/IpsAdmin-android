@@ -249,7 +249,7 @@
     <string name="raised">Recaudado</string>
     <string name="pending">Pendiente</string>
     <string name="monthly_receipts_resume">Resumen de ingresos</string>
-    <string name="monthly_collects_history">Recaudacion por mes</string>
+    <string name="monthly_collects_history">Recaudación por mes</string>
     <string name="migrate_to_fiber">Migrar a fibra óptica</string>
     <string name="title_activity_migration">MigrationActivity</string>
     <string name="title_activity_migration_acitivty">MigrationAcitivty</string>

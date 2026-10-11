@@ -27,6 +27,7 @@ ext {
     accompanistVersion = '0.37.3'
     composeIconsVersion = '1.7.8'
     composeMapVersion = '6.6.0'
+    vicoVersion = '2.1.2'
     
     // ViewModel y Lifecycle
     lifecycleVersion = '2.9.0'
