@@ -27,6 +27,7 @@ import com.dscorp.ispadmin.domain.repository.UserSessionReader
 import org.koin.dsl.module
 
 val repositoryModule = module {
+    single<com.dscorp.ispadmin.domain.repository.FinancialRepository> { com.dscorp.ispadmin.data.repository.FinancialRepositoryImpl(get()) }
     single<IRepository> { Repository() }
     single<InstallationOrderRepository> { InstallationOrderRepositoryImpl(get(), get()) }
     single<UserRepository> { UserRepositoryImpl(get(), get()) }

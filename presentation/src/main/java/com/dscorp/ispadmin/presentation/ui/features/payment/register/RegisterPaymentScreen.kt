@@ -84,6 +84,7 @@ fun RegisterPaymentScreen(
         onElectronicPayerNameChanged = { payer ->
             viewModel.onEvent(RegisterPaymentEvent.ElectronicPayerNameChanged(payer))
         },
+        onAmountReceivedChanged = { amount -> viewModel.onEvent(RegisterPaymentEvent.AmountReceivedChanged(amount)) },
         onElectronicPayerNameCleared = {
             viewModel.onEvent(RegisterPaymentEvent.ElectronicPayerNameChanged(null))
         },
@@ -131,6 +132,7 @@ fun RegisterPaymentScreen(
         onElectronicPayerNameChanged = { payer ->
             viewModel.onEvent(RegisterPaymentEvent.ElectronicPayerNameChanged(payer))
         },
+        onAmountReceivedChanged = { amount -> viewModel.onEvent(RegisterPaymentEvent.AmountReceivedChanged(amount)) },
         onElectronicPayerNameCleared = {
             viewModel.onEvent(RegisterPaymentEvent.ElectronicPayerNameChanged(null))
         },
@@ -157,6 +159,7 @@ private fun RegisterPaymentScreenContent(
     onPaymentMethodSelected: (String) -> Unit,
     onElectronicPayerNameChanged: (String) -> Unit,
     onElectronicPayerNameCleared: () -> Unit,
+    onAmountReceivedChanged: (String) -> Unit = {},
     onToggleDiscountFields: () -> Unit,
     onDiscountAmountChanged: (String) -> Unit,
     onDiscountReasonChanged: (String) -> Unit,
@@ -196,6 +199,7 @@ private fun RegisterPaymentScreenContent(
                     onPaymentMethodSelected = onPaymentMethodSelected,
                     onElectronicPayerNameChanged = onElectronicPayerNameChanged,
                     onElectronicPayerNameCleared = onElectronicPayerNameCleared,
+                    onAmountReceivedChanged = onAmountReceivedChanged,
                     onToggleDiscountFields = onToggleDiscountFields,
                     onDiscountAmountChanged = onDiscountAmountChanged,
                     onDiscountReasonChanged = onDiscountReasonChanged,
@@ -213,6 +217,7 @@ fun RegisterPaymentForm(
     onPaymentMethodSelected: (String) -> Unit,
     onElectronicPayerNameChanged: (String) -> Unit,
     onElectronicPayerNameCleared: () -> Unit,
+    onAmountReceivedChanged: (String) -> Unit = {},
     onToggleDiscountFields: () -> Unit,
     onDiscountAmountChanged: (String) -> Unit,
     onDiscountReasonChanged: (String) -> Unit,
@@ -276,7 +281,7 @@ fun RegisterPaymentForm(
         )
         
         // Payment Method Dropdown
-        val paymentMethods = listOf("Efectivo", "Tarjeta", "Yape", "Plin", "Transferencia", "Depósito")
+        val paymentMethods = state.paymentMethods.map { it.name }
         MyOutLinedDropDown(
             modifier = Modifier
                 .fillMaxWidth()
@@ -296,8 +301,23 @@ fun RegisterPaymentForm(
             )
         }
         
+        Spacer(modifier = Modifier.height(16.dp))
+        MyOutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = state.amountReceived,
+            label = "Monto recibido (opcional)",
+            errorMessage = state.errorMessages["amountReceived"],
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            onValueChange = onAmountReceivedChanged,
+        )
+        Text(
+            text = "Sin pagos parciales. Lo que exceda el total queda como saldo a favor.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
         // Show Electronic Payer Name field only if payment method is Yape or Plin
-        AnimatedVisibility(visible = state.paymentMethod.isNotEmpty() && (state.paymentMethod == "Yape" || state.paymentMethod == "Plin")) {
+        AnimatedVisibility(visible = state.requiresPayerName()) {
             Column {
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -592,6 +612,7 @@ fun RegisterPaymentFormPreview() {
                 state = mockState,
                 onPaymentMethodSelected = {},
                 onElectronicPayerNameChanged = {},
+                onAmountReceivedChanged = {},
                 onElectronicPayerNameCleared = {},
                 onToggleDiscountFields = {},
                 onDiscountAmountChanged = {},

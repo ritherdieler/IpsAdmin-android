@@ -1643,7 +1643,6 @@ private fun RegisterSubscriptionPreview() {
                     location = null,
                     cpeDevice = null,
                     selectedNapBox = null,
-                    coupon = "mazim",
                     note = "persequeris"
                 )
             )

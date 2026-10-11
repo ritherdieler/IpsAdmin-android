@@ -121,6 +121,23 @@ class SubscriptionFinderViewModelTest {
     }
 
     @Test
+    fun `search keeps the real status of cut off subscriptions inside the active group`() = runTest(testDispatcher) {
+        advanceUntilIdle()
+        coEvery { searchSubscriptionsUseCase.invoke("JUAN", null, 0, 20) } returns Result.success(
+            PagedResult(
+                items = listOf(resume(1).copy(serviceStatus = ServiceStatus.CUT_OFF), resume(2)),
+                page = 0, size = 20, total = 2, totalPages = 1,
+            )
+        )
+
+        viewModel.documentNumberFlow.emit(SubscriptionFilter.BY_NAME(name = "JUAN", lastName = ""))
+        advanceUntilIdle()
+
+        val active = viewModel.uiState.value.subscriptions[ServiceStatus.ACTIVE].orEmpty()
+        assertEquals(listOf(ServiceStatus.CUT_OFF, ServiceStatus.ACTIVE), active.map { it.serviceStatus })
+    }
+
+    @Test
     fun `search by name sets error message when use case fails`() = runTest(testDispatcher) {
         advanceUntilIdle()
         coEvery { searchSubscriptionsUseCase.invoke(any(), any(), any(), any()) } returns
@@ -270,5 +287,53 @@ class SubscriptionFinderViewModelTest {
         val feedback = viewModel.uiState.value.retryTr069State
         assertTrue(feedback is RetryTr069State.Error)
         assertEquals("OLT no está COMPLETE", (feedback as RetryTr069State.Error).message)
+    }
+
+    @Test
+    fun `deferCut reports the agreed date or the Core error`() = runTest(testDispatcher) {
+        val actions = mockk<com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository>(relaxed = true)
+        val finder = SubscriptionFinderViewModel(
+            repository = repository,
+            reactivateServiceUseCase = reactivateServiceUseCase,
+            rebootFiberOnuUseCase = rebootFiberOnuUseCase,
+            searchSubscriptionsUseCase = searchSubscriptionsUseCase,
+            observabilityClient = observabilityClient,
+            retryTr069ProvisioningUseCase = retryTr069ProvisioningUseCase,
+            subscriptionActionsRepository = actions,
+        )
+
+        finder.deferCut(9, "2026-10-25", "Paga el 25")
+        advanceUntilIdle()
+        coVerify { actions.deferCut(9, "2026-10-25", "Paga el 25") }
+        assertEquals("Corte postergado hasta 2026-10-25", finder.uiState.value.deferCutMessage)
+
+        coEvery { actions.deferCut(9, "2026-11-02", "Paga") } throws IllegalStateException("La fecha debe ser posterior a hoy y dentro del mes en curso")
+        finder.deferCut(9, "2026-11-02", "Paga")
+        advanceUntilIdle()
+        assertEquals("La fecha debe ser posterior a hoy y dentro del mes en curso", finder.uiState.value.deferCutMessage)
+    }
+
+    @Test
+    fun `saving customer data renames every listed service of the same customer`() = runTest(testDispatcher) {
+        advanceUntilIdle()
+        val edited = resume(1).copy(customerId = 40)
+        val sibling = resume(2).copy(customerId = 40, customer = resume(2).customer.copy(subscriptionId = 2, phone = "988888888", address = "Tienda"))
+        val other = resume(3).copy(customerId = 41)
+        coEvery { searchSubscriptionsUseCase.invoke("JUAN", null, 0, 20) } returns Result.success(
+            PagedResult(items = listOf(edited, sibling, other), page = 0, size = 20, total = 3, totalPages = 1)
+        )
+        coEvery { repository.updateCustomerData(any()) } returns Unit
+        viewModel.documentNumberFlow.emit(SubscriptionFilter.BY_NAME(name = "JUAN", lastName = ""))
+        advanceUntilIdle()
+
+        viewModel.initCustomerFormData(edited)
+        viewModel.updateCustomerFormField("name", "JUANA")
+        viewModel.saveCustomerData()
+        advanceUntilIdle()
+
+        val byId = viewModel.uiState.value.subscriptions.values.flatten().associateBy { it.id }
+        assertEquals("JUANA", byId.getValue(2).customer.name)
+        assertEquals("Tienda", byId.getValue(2).customer.address)
+        assertEquals("JUAN", byId.getValue(3).customer.name)
     }
 }

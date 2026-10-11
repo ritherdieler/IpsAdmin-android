@@ -100,6 +100,7 @@ fun SubscriptionFinderScreen(
     var showChangeNapBoxDialog by remember { mutableStateOf(false) }
     var showRebootOnuDialog by remember { mutableStateOf(false) }
     var showRetryTr069Dialog by remember { mutableStateOf(false) }
+    var deferCutTarget by remember { mutableStateOf<SubscriptionResume?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
@@ -528,7 +529,8 @@ fun SubscriptionFinderScreen(
                             onShowChangeNapBoxDialog = { showChangeNapBoxDialog = true },
                             onShowReactivateDialog = { showReactivateServiceDialog = true },
                             onShowRebootOnuDialog = { showRebootOnuDialog = true },
-                            onShowRetryTr069Dialog = { showRetryTr069Dialog = true }
+                            onShowRetryTr069Dialog = { showRetryTr069Dialog = true },
+                            onShowDeferCutDialog = { deferCutTarget = subscription },
                         )
                     },
                     onSubscriptionExpanded = { subscription, expanded ->
@@ -608,6 +610,23 @@ fun SubscriptionFinderScreen(
                 uiState.selectedSubscription?.id?.let { viewModel.rebootFiberOnu(it) }
             },
             isLoading = uiState.rebootOnuState == RebootOnuState.Loading
+        )
+    }
+
+    LaunchedEffect(uiState.deferCutMessage) {
+        uiState.deferCutMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            viewModel.clearDeferCutMessage()
+        }
+    }
+
+    deferCutTarget?.let { target ->
+        DeferCutDialog(
+            onDismiss = { deferCutTarget = null },
+            onConfirm = { untilDate, reason ->
+                viewModel.deferCut(target.id, untilDate, reason)
+                deferCutTarget = null
+            },
         )
     }
 
@@ -704,6 +723,7 @@ private fun handleMenuAction(
     onShowReactivateDialog: () -> Unit,
     onShowRebootOnuDialog: () -> Unit,
     onShowRetryTr069Dialog: () -> Unit,
+    onShowDeferCutDialog: () -> Unit = {},
 ) {
     when (menuItem) {
         SHOW_PAYMENT_HISTORY -> {
@@ -768,6 +788,8 @@ private fun handleMenuAction(
             viewModel.setSelectedSubscription(subscription)
             onShowRetryTr069Dialog()
         }
+
+        SubscriptionMenu.DEFER_CUT -> onShowDeferCutDialog()
     }
 }
 
@@ -1165,5 +1187,39 @@ private fun ReactivateServiceDialog(
         containerColor = MaterialTheme.colorScheme.surface,
         titleContentColor = MaterialTheme.colorScheme.onSurface,
         textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+/** Asks for the date (within the current month) and the reason to defer the cut for debt. */
+@Composable
+private fun DeferCutDialog(onDismiss: () -> Unit, onConfirm: (untilDate: String, reason: String) -> Unit) {
+    var untilDate by remember { mutableStateOf("") }
+    var reason by remember { mutableStateOf("") }
+    val validDate = Regex("\\d{4}-\\d{2}-\\d{2}").matches(untilDate.trim())
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Postergar corte") },
+        text = {
+            Column {
+                Text("No se corta hasta la fecha indicada, dentro del mes en curso. El cierre de mes cancela igual con 2 facturas impagas.")
+                OutlinedTextField(
+                    value = untilDate,
+                    onValueChange = { untilDate = it },
+                    label = { Text("No cortar hasta (AAAA-MM-DD)") },
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = { reason = it },
+                    label = { Text("Motivo") },
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = validDate && reason.isNotBlank(), onClick = { onConfirm(untilDate.trim(), reason.trim()) }) {
+                Text("Postergar corte")
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
     )
 }

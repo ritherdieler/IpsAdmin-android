@@ -55,6 +55,20 @@ class SubscriptionDetailViewModelTest {
         assertEquals("Tienda", others.single().address)
     }
 
+    @Test
+    fun `shows the customer credit balance`() = runTest(dispatcher) {
+        val repository = mockk<IRepository>()
+        val actions = mockk<SubscriptionActionsRepository>()
+        coEvery { repository.subscriptionById(10) } returns subscription(id = 10, customerId = 40)
+        coEvery { actions.getCustomer(40) } returns CustomerDetail(id = 40, creditBalance = 20.1)
+        val viewModel = SubscriptionDetailViewModel(repository, mockk(relaxed = true), actions)
+
+        viewModel.getSubscription(10)
+        advanceUntilIdle()
+
+        assertEquals(20.1, viewModel.uiState.value.customerCredit, 0.0)
+    }
+
     private fun subscription(id: Int, customerId: Int) = SubscriptionResponse(
         id = id,
         serviceStatus = ServiceStatus.ACTIVE,

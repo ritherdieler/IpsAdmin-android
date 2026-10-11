@@ -166,8 +166,8 @@ fun PaymentDetailScreen(
                                         value = payment.method ?: ""
                                     )
                                     
-                                    // Show electronic payer for YAPE payments
-                                    if (payment.method.equals("YAPE", ignoreCase = true) && !payment.electronicPayerName.isNullOrEmpty()) {
+                                    // Show the electronic payer whenever the Core recorded one
+                                    if (!payment.electronicPayerName.isNullOrEmpty()) {
                                         Spacer(modifier = Modifier.height(16.dp))
                                         
                                         // Electronic Payer

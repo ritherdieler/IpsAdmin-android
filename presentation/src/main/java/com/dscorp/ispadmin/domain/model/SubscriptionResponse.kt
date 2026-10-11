@@ -25,8 +25,6 @@ data class SubscriptionResponse(
     var subscriptionDate: Long? = null,
     var isMigration: Boolean,
     var price: Double? = null,
-    var paymentCommitmentDate: Long? = null,
-    var isPaymentCommitment: Boolean = false,
     var lastCutOffDate: Date? = null,
     var isReactivation: Boolean = false,
     var reactivationDate: Long? = null,

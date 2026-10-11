@@ -1,35 +1,33 @@
 package com.dscorp.ispadmin.presentation.ui.features.dashboard
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
+import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.theme.MyTheme
+import com.dscorp.ispadmin.presentation.ui.features.financial.FinancialScreen
 import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.koinInject
 
-/**
- * Pantalla del Dashboard en Compose, siguiendo el patrón de UI establecido.
- * 
- * @param navController Controlador de navegación
- */
 @Composable
-fun DashBoardComposeScreen(
-    navController: NavHostController
-) {
-    // Obtenemos las dependencias
-    val viewModel: DashBoardViewModel = koinViewModel()
-    
-    // Observamos el estado
-    val uiState by viewModel.state.collectAsState()
-    
-    // Renderizamos la UI con el tema de la aplicación
+fun DashBoardComposeScreen(navController: NavHostController) {
+    var commercial by remember { mutableStateOf(false) }
     MyTheme {
-        DashboardScreen(
-            uiState = uiState,
-            onRefresh = {
-                viewModel.getDashBoardData()
+        if (commercial) {
+            val viewModel: DashBoardViewModel = koinViewModel()
+            val state by viewModel.state.collectAsState()
+            Column {
+                TextButton(onClick = { commercial = false }, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.financial_return))
+                }
+                DashboardScreen(state, { viewModel.getDashBoardData() }, showFinancials = false)
             }
-        )
+        } else {
+            FinancialScreen(onOperational = { commercial = true })
+        }
     }
-} 
+}

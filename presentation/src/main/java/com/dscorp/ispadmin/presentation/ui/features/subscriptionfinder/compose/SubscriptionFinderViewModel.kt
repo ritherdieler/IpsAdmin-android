@@ -53,6 +53,8 @@ data class SubscriptionFinderUiState(
     val lastUsedFilter: SubscriptionFilter? = null,
     val rebootOnuState: RebootOnuState = RebootOnuState.Empty,
     val retryTr069State: RetryTr069State = RetryTr069State.Empty,
+    /** Result of the last cut deferral, shown once to the operator. */
+    val deferCutMessage: String? = null,
     val isSearching: Boolean = false,
     val searchError: String? = null,
     val searchPerformed: Boolean = false,
@@ -137,10 +139,10 @@ class SubscriptionFinderViewModel(
 
     fun observeSubscriptions() = viewModelScope.launch {
         subscriptionsFlow.map { list ->
-            list.map {
-                if (it.serviceStatus != ServiceStatus.CANCELLED) it.copy(serviceStatus = ServiceStatus.ACTIVE)
-                else it.copy(serviceStatus = ServiceStatus.CANCELLED)
-            }.groupBy { it.serviceStatus }
+            // Sections: cancelled vs everything else; each card keeps its real status.
+            list.groupBy {
+                if (it.serviceStatus == ServiceStatus.CANCELLED) ServiceStatus.CANCELLED else ServiceStatus.ACTIVE
+            }
         }.collect { groupedSubscriptions ->
             _uiState.update { it.copy(subscriptions = groupedSubscriptions) }
         }
@@ -416,6 +418,29 @@ class SubscriptionFinderViewModel(
 
     fun clearReactivateServiceState() {
         _uiState.update { it.copy(reactivateServiceState = ReactivateServiceState.Empty) }
+    }
+
+    /** Agrees not to cut [subscriptionId] for debt until [untilDate] (yyyy-MM-dd) of the current month. */
+    fun deferCut(subscriptionId: Int, untilDate: String, reason: String) = viewModelScope.launch {
+        val actions = subscriptionActionsRepository ?: return@launch
+        com.dscorp.ispadmin.domain.usecase.service.DeferCutUseCase(actions)(subscriptionId, untilDate, reason).fold(
+            onSuccess = {
+                _uiState.update { it.copy(deferCutMessage = "Corte postergado hasta $untilDate") }
+                reloadLastSearch()
+            },
+            onFailure = { error ->
+                observabilityClient.reportError(
+                    throwable = error,
+                    message = "Fallo al postergar el corte",
+                    tags = mapOf("feature" to OBS_FEATURE, "screen" to OBS_SCREEN, "action" to "defer_cut", "entityId" to subscriptionId)
+                )
+                _uiState.update { it.copy(deferCutMessage = error.message ?: "No se pudo postergar el corte") }
+            },
+        )
+    }
+
+    fun clearDeferCutMessage() {
+        _uiState.update { it.copy(deferCutMessage = null) }
     }
 
     fun rebootFiberOnu(subscriptionId: Int) = viewModelScope.launch {
@@ -722,15 +747,23 @@ class SubscriptionFinderViewModel(
 
             repository.updateCustomerData(customerData)
             _uiState.update {
-
+                // Identity belongs to the customer: other services of the same customer show it too.
+                val customerId = subscriptionsFlow.value.firstOrNull { s -> s.id == formData.subscriptionId }?.customerId
                 subscriptionsFlow.value = subscriptionsFlow.value.map { subscription ->
-                    if (subscription.id == formData.subscriptionId) {
-                        subscription.copy(
+                    when {
+                        subscription.id == formData.subscriptionId -> subscription.copy(
                             customer = customerData,
                             placeId = formData.placeId.toString()
                         )
-                    } else {
-                        subscription
+                        customerId != null && subscription.customerId == customerId -> subscription.copy(
+                            customer = subscription.customer.copy(
+                                name = customerData.name,
+                                lastName = customerData.lastName,
+                                dni = customerData.dni,
+                                email = customerData.email,
+                            )
+                        )
+                        else -> subscription
                     }
                 }
 
@@ -749,7 +782,7 @@ class SubscriptionFinderViewModel(
             _uiState.update { it.copy(saveSubscriptionState = SaveSubscriptionState.Error) }
 
             // Informa a la pantalla cuando el backend no pudo guardar los cambios.
-            _customerSaveMessages.emit("No se pudieron actualizar los datos del cliente")
+            _customerSaveMessages.emit(e.message ?: "No se pudieron actualizar los datos del cliente")
         }
     }
 

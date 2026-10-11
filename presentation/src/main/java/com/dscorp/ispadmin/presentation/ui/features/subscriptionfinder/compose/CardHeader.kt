@@ -51,7 +51,8 @@ enum class SubscriptionMenu(val menuId: Int) {
     UPDATE_LOCATION(R.string.update_location),
     REBOOT_FIBER_ONU(R.string.reboot_fiber_onu),
     RETRY_TR069(R.string.retry_tr069),
-    NEW_SERVICE_FOR_CUSTOMER(R.string.new_service_for_customer);
+    NEW_SERVICE_FOR_CUSTOMER(R.string.new_service_for_customer),
+    DEFER_CUT(R.string.defer_cut);
 
     fun getTitle(context: Context): String {
         return context.getString(menuId)
@@ -159,6 +160,9 @@ private fun SubscriptionDropdownMenu(
 
             menuItem == SubscriptionMenu.NEW_SERVICE_FOR_CUSTOMER ->
                 subscription.customerId != null
+
+            menuItem == SubscriptionMenu.DEFER_CUT ->
+                subscription.serviceStatus != ServiceStatus.CANCELLED
             
             else -> true
         }

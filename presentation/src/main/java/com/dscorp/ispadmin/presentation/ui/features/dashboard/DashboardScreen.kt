@@ -17,11 +17,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.CancellationResumeDto
 import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
@@ -57,12 +62,15 @@ import com.dscorp.ispadmin.presentation.ui.features.dashboard.components.Reconne
 import kotlinx.coroutines.delay
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.unit.sp
+import java.text.DateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun DashboardScreen(
     uiState: DashboardState,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    showFinancials: Boolean = true
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -74,7 +82,14 @@ fun DashboardScreen(
             } else {
                 when {
                     uiState.dashboardData != null -> {
-                        DashboardContent(uiState.dashboardData, onRefresh)
+                        DashboardContent(
+                            data = uiState.dashboardData,
+                            onRefresh = onRefresh,
+                            isRefreshing = uiState.isLoading,
+                            refreshFailed = uiState.event is DashboardEvent.ShowError,
+                            lastUpdatedAtMillis = uiState.lastUpdatedAtMillis,
+                            showFinancials = showFinancials
+                        )
                     }
 
                     uiState.event is DashboardEvent.ShowError -> {
@@ -117,8 +132,20 @@ private fun DashboardErrorContent(onRefresh: () -> Unit) {
 }
 
 @Composable
-fun DashboardContent(data: DashBoardDataResponse, onRefresh: () -> Unit) {
+fun DashboardContent(
+    data: DashBoardDataResponse,
+    onRefresh: () -> Unit,
+    isRefreshing: Boolean = false,
+    refreshFailed: Boolean = false,
+    lastUpdatedAtMillis: Long? = null,
+    showFinancials: Boolean = true
+) {
     val scrollState = rememberScrollState()
+    val formattedUpdateTime = remember(lastUpdatedAtMillis) {
+        lastUpdatedAtMillis?.let {
+            DateFormat.getTimeInstance(DateFormat.SHORT, Locale.getDefault()).format(Date(it))
+        }
+    }
     
     // Animación secuencial para los elementos
     var visibleSections by remember { mutableStateOf(0) }
@@ -143,22 +170,78 @@ fun DashboardContent(data: DashBoardDataResponse, onRefresh: () -> Unit) {
             visible = visibleSections >= 1,
             enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 }
         ) {
-            Text(
-                text = "Panel de Control",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.onBackground,
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                textAlign = TextAlign.Center
-            )
+                    .padding(bottom = 16.dp)
+                    .height(56.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Spacer(modifier = Modifier.size(48.dp))
+                Text(
+                    text = stringResource(R.string.dashboard_title),
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center
+                )
+                IconButton(
+                    onClick = onRefresh,
+                    enabled = !isRefreshing,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = stringResource(R.string.dashboard_refresh)
+                    )
+                }
+            }
+
+            if (isRefreshing) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            if (refreshFailed) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = stringResource(R.string.dashboard_refresh_failed),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        formattedUpdateTime?.let { time ->
+                            Text(
+                                text = stringResource(R.string.dashboard_last_updated, time),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                        Button(
+                            onClick = onRefresh,
+                            enabled = !isRefreshing,
+                            modifier = Modifier.padding(top = 8.dp)
+                        ) {
+                            Text(text = stringResource(R.string.retry))
+                        }
+                    }
+                }
+            }
         }
         
         // Resumen monetario mensual
         AnimatedVisibility(
-            visible = visibleSections >= 2,
+            visible = showFinancials && visibleSections >= 2,
             enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 }
         ) {
             Column {
@@ -176,7 +259,7 @@ fun DashboardContent(data: DashBoardDataResponse, onRefresh: () -> Unit) {
         
         // Tabla de resumen económico
         AnimatedVisibility(
-            visible = visibleSections >= 3,
+            visible = showFinancials && visibleSections >= 3,
             enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 }
         ) {
             Column {
@@ -205,7 +288,7 @@ fun DashboardContent(data: DashBoardDataResponse, onRefresh: () -> Unit) {
         
         // Ingresos brutos por mes
         AnimatedVisibility(
-            visible = visibleSections >= 5,
+            visible = showFinancials && visibleSections >= 5,
             enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 }
         ) {
             Column {
@@ -268,7 +351,7 @@ fun DashboardContent(data: DashBoardDataResponse, onRefresh: () -> Unit) {
         
         // Historial de cobros mensuales
         AnimatedVisibility(
-            visible = visibleSections >= 8,
+            visible = showFinancials && visibleSections >= 8,
             enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 }
         ) {
             Column {

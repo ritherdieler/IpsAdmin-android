@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -98,7 +99,8 @@ fun PieChartContainer(data: DashBoardDataResponse) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Gráfico circular
-            AndroidView(
+            key(data) {
+                AndroidView(
                 factory = { context ->
                     PieChart(context).apply {
                         setUsePercentValues(true)
@@ -177,7 +179,8 @@ fun PieChartContainer(data: DashBoardDataResponse) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(250.dp)
-            )
+                )
+            }
             
             // Mostrar leyenda personalizada debajo del gráfico con valores
             Spacer(modifier = Modifier.height(16.dp))
@@ -268,7 +271,8 @@ fun LineChartContainer(title: String, data: List<Any>) {
     val tertiaryColor = MaterialTheme.colorScheme.tertiary.toArgb()
     
     ChartCard {
-        AndroidView(
+        key(title, data) {
+            AndroidView(
             factory = { context ->
                 LineChart(context).apply {
                     description.isEnabled = false
@@ -409,7 +413,8 @@ fun LineChartContainer(title: String, data: List<Any>) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(280.dp)
-        )
+            )
+        }
     }
 }
 
@@ -428,7 +433,8 @@ fun BarChartContainer(
     val tertiaryColor = MaterialTheme.colorScheme.tertiary.toArgb()
     
     ChartCard {
-        AndroidView(
+        key(title, data, stacked) {
+            AndroidView(
             factory = { context ->
                 BarChart(context).apply     {
                     description.isEnabled = false
@@ -546,7 +552,8 @@ fun BarChartContainer(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(280.dp)
-        )
+            )
+        }
     }
 }
 
@@ -592,7 +599,8 @@ fun CancellationChartContainer(data: Map<String, SubscriptionLogSummary>) {
     val errorColor = MaterialTheme.colorScheme.error.toArgb()
     
     ChartCard {
-        AndroidView(
+        key(data) {
+            AndroidView(
             factory = { context ->
                 LineChart(context).apply {
                     description.isEnabled = false
@@ -714,7 +722,8 @@ fun CancellationChartContainer(data: Map<String, SubscriptionLogSummary>) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(280.dp)
-        )
+            )
+        }
     }
 }
 
@@ -734,7 +743,8 @@ fun ReconnectionChartContainer(data: Map<String, SubscriptionLogSummary>) {
     val tertiaryColor = MaterialTheme.colorScheme.tertiary.toArgb()
     
     ChartCard {
-        AndroidView(
+        key(data) {
+            AndroidView(
             factory = { context ->
                 LineChart(context).apply {
                     description.isEnabled = false
@@ -856,7 +866,8 @@ fun ReconnectionChartContainer(data: Map<String, SubscriptionLogSummary>) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(280.dp)
-        )
+            )
+        }
     }
 }
 
@@ -876,7 +887,8 @@ fun MigrationChartContainer(data: Map<String, SubscriptionLogSummary>) {
     val secondaryColor = MaterialTheme.colorScheme.secondary.toArgb()
     
     ChartCard {
-        AndroidView(
+        key(data) {
+            AndroidView(
             factory = { context ->
                 LineChart(context).apply {
                     description.isEnabled = false
@@ -998,7 +1010,8 @@ fun MigrationChartContainer(data: Map<String, SubscriptionLogSummary>) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(280.dp)
-        )
+            )
+        }
     }
 }
 

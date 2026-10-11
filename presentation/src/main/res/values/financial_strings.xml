@@ -1,0 +1,99 @@
+<resources>
+    <string name="financial_title">Reportes financieros</string>
+    <string name="financial_movements">Cobros y egresos</string>
+    <string name="financial_billing">Facturación y cartera</string>
+    <string name="financial_service_month">Mes de servicio</string>
+    <string name="financial_movements_month">Mes de movimientos</string>
+    <string name="financial_previous_month">Mes anterior</string>
+    <string name="financial_next_month">Mes siguiente</string>
+    <string name="financial_cut">Corte: %1$s · revisión %2$d</string>
+    <string name="financial_cut_id">Referencia: %1$s</string>
+    <string name="financial_status_complete">Completo</string>
+    <string name="financial_status_observed">Observado · revisar cobertura y diferencias</string>
+    <string name="financial_reconstructed">Reconstrucción histórica con el estado actual de los registros</string>
+    <string name="financial_monthly_cut">Cierre mensual guardado</string>
+    <string name="financial_received">Cobros recibidos</string>
+    <string name="financial_received_dated">Cobros con fecha en el mes</string>
+    <string name="financial_receipts_missing_date_warning">Cobros históricos sin fecha efectiva excluidos del cálculo mensual: %1$d</string>
+    <string name="financial_expenses">Egresos registrados</string>
+    <string name="financial_overdue">Cartera vencida confirmada</string>
+    <string name="financial_differences">Diferencias por conciliar</string>
+    <string name="financial_differences_service">Diferencias del mes de servicio</string>
+    <string name="financial_difference_scope">Diferencias por período</string>
+    <string name="financial_difference_summary">Del servicio: %1$d · Otros períodos: %2$d · Sin período: %3$d</string>
+    <string name="financial_difference_filter_service">Servicio %1$s · %2$d</string>
+    <string name="financial_difference_filter_all">Todos · %1$d</string>
+    <string name="financial_difference_service">Servicio: %1$s</string>
+    <string name="financial_difference_related_receipts">Cobros relacionados: %1$s</string>
+    <string name="financial_no_related_receipts">Sin cobros relacionados</string>
+    <string name="financial_partial_balance">Saldo parcial de movimientos registrados</string>
+    <string name="financial_cash_scope">Incluye cobros de suscripciones y egresos registrados. Cobros corporativos no incluidos.</string>
+    <string name="financial_operational_scope">Acceso operativo a cobros y cartera. Los egresos y el presupuesto requieren acceso de gerencia o contabilidad.</string>
+    <string name="financial_gross">Facturado bruto</string>
+    <string name="financial_adjustments">Ajustes y descuentos</string>
+    <string name="financial_net">Facturado neto</string>
+    <string name="financial_collected">Cobrado aplicado a facturas del mes de servicio hasta el corte</string>
+    <string name="financial_pending">Pendiente de cobro del mes de servicio</string>
+    <string name="financial_effectiveness">Efectividad de cobranza</string>
+    <string name="financial_budget">Presupuesto fijo mensual</string>
+    <string name="financial_budget_scope">Importes previstos para %1$s, mostrados por separado de los pagos efectivos.</string>
+    <string name="financial_recovery">Recuperación de servicios anteriores</string>
+    <string name="financial_by_service">Cobros recibidos en %1$s por mes de servicio</string>
+    <string name="financial_by_method">Cobros por método</string>
+    <string name="financial_by_collector">Cobros por usuario registrador</string>
+    <string name="financial_by_category">Egresos por categoría</string>
+    <string name="financial_by_cost_center">Egresos por centro de costo</string>
+    <string name="financial_by_reason">Ajustes por motivo</string>
+    <string name="financial_aging">Antigüedad de cartera</string>
+    <string name="financial_aging_current">Por vencer</string>
+    <string name="financial_aging_1_30">1–30 días</string>
+    <string name="financial_aging_31_60">31–60 días</string>
+    <string name="financial_aging_61_90">61–90 días</string>
+    <string name="financial_aging_over_90">Más de 90 días</string>
+    <string name="financial_aging_unconfirmed">Vencimiento sin confirmar</string>
+    <string name="financial_zones">Zonas con mayor deuda</string>
+    <string name="financial_zone_detail">Suscripciones identificadas: %1$s · Facturas sin relación: %2$s · vencido %3$s</string>
+    <string name="financial_history">Comparación de los últimos doce meses</string>
+    <string name="financial_history_detail">Neto %1$s · cobrado %2$s · pendiente %3$s</string>
+    <string name="financial_chart_net">Neto</string>
+    <string name="financial_chart_collected">Cobrado</string>
+    <string name="financial_chart_pending">Pendiente</string>
+    <string name="financial_chart_title">Tendencia por mes de servicio</string>
+    <string name="financial_chart_accessibility">Gráfica mensual de facturado neto, cobrado y pendiente</string>
+    <string name="financial_chart_point">%1$s: neto %2$s, cobrado %3$s, pendiente %4$s</string>
+    <string name="financial_group_count">%1$s registros</string>
+    <string name="financial_corporate">Importes corporativos registrados</string>
+    <string name="financial_corporate_scope">Catálogo actual separado por moneda. Estos importes no representan cobros ni facturación mensual verificada.</string>
+    <string name="financial_coverage">Cobertura de datos</string>
+    <string name="financial_coverage_counts">%1$s períodos inferidos · %2$s sin período · %3$s vencimientos sin confirmar · %4$s cobros sin fecha</string>
+    <string name="financial_unavailable">No disponible</string>
+    <string name="financial_empty">Sin registros en este corte</string>
+    <string name="financial_refresh_failed">No se pudo actualizar. Se conserva el último corte mostrado.</string>
+    <string name="financial_initial_failed">No se pudo obtener el reporte financiero.</string>
+    <string name="financial_export">Exportar este corte a XLSX</string>
+    <string name="financial_export_failed">No se pudo exportar el corte. Intenta nuevamente.</string>
+    <string name="financial_export_saved">Reporte guardado</string>
+    <string name="financial_commercial">Indicadores comerciales</string>
+    <string name="financial_return">Volver a reportes financieros</string>
+    <string name="financial_records">Registros del corte</string>
+    <string name="financial_close_details">Cerrar detalle</string>
+    <string name="financial_receipt_detail">Cobro #%1$d · %2$s
+%3$s · %4$s
+%5$s</string>
+    <string name="financial_allocation">Factura #%1$d · aplicado %2$s</string>
+    <string name="financial_expense_detail">Egreso #%1$d · %2$s
+%3$s · %4$s</string>
+    <string name="financial_invoice_detail">Factura #%1$d · suscripción %2$s
+%3$s · %4$s
+Servicio %5$s · %6$s
+Neto %7$s · cobrado %8$s · pendiente %9$s</string>
+    <string name="financial_invoice_due">Vence %1$s</string>
+    <string name="financial_reference">%1$s #%2$s</string>
+    <string name="financial_percent">%1$s %%</string>
+    <string name="financial_aging_count">Suscripciones identificadas: %1$s · Facturas sin relación: %2$s</string>
+    <string name="financial_invoice_amounts">Bruto %1$s · ajuste %2$s
+%3$s</string>
+    <string name="financial_record_invoice">Factura</string>
+    <string name="financial_record_receipt">Cobro</string>
+    <string name="financial_record_expense">Egreso</string>
+</resources>

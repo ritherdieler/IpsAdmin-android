@@ -113,7 +113,6 @@
     <string name="mustSelectLocation">Seleccione una ubicación</string>
     <string name="phoneNumer">Teléfono</string>
     <string name="price">Precio</string>
-    <string name="coupon">Cupón</string>
     <string name="invalidPhoneNumber">Número de teléfono no valido</string>
     <string name="invalidPrice">Precio no valido</string>
     <string name="place">Lugar</string>
@@ -161,6 +160,7 @@
     <string name="edit">Editar</string>
     <string name="must_select_plan">Debe seleccionar un plan</string>
     <string name="see_details">Ver detalles</string>
+    <string name="defer_cut">Postergar corte</string>
     <string name="new_service_for_customer">Nuevo servicio para este cliente</string>
     <string name="name1">Nombre</string>
     <string name="id">ID</string>
@@ -196,19 +196,13 @@
     <string name="user_register_success">El usuario fué registrado con éxito.</string>
     <string name="phone">Teléfono</string>
     <string name="plans">Planes</string>
-    <string name="register_payment_commitment">Registrar compromiso de pago</string>
-    <string name="register_payment_commitment_message">Esta seguro que quiere registrar un compromiso de pago? El servicio se reactivara y se habilitara al usuario para la siguiente facturacion.</string>
     <string name="yes">Si</string>
     <string name="cancel">Cancelar</string>
-    <string name="payment_commitment_cant_create_at_last_day_of_month">El compromiso de pago no puede ser creado el uiltimo dia del mes</string>
     <string name="subscription_has_not_service_cut_off">El cliente no tiene el servicio cortado.</string>
-    <string name="payment_commitment_cant_be_registered_in_different_month_tan_cut_off_date">El compromiso de pago no puede ser registrado en un mes diferente al del corte.</string>
-    <string name="payment_commitment_save_success">Se registro el compromiso de pago correctamente.</string>
     <string name="reactivate_service">Reactivar servicio</string>
     <string name="service_reactivated_successfully">El servicio fue reactivado con exito</string>
     <string name="reactivate_service_message">Se reactivara la facturacion para este cliente. Solo se facturara  los dias restantes.</string>
     <string name="select">Seleccionar\n</string>
-    <string name="with_payment_commitment">Con compromiso de pago</string>
     <string name="cutt_off">Cortados</string>
     <string name="last_month_debt">Por cobrar del mes anterior</string>
     <string name="Suspendeds">Suspendidos</string>
@@ -349,4 +343,9 @@
     <string name="download_speed">Velocidad de descarga (Mbps)</string>
     <string name="upload_speed">Velocidad de subida (Mbps)</string>
     <string name="reconnections">Reconexiones</string>
+    <string name="dashboard_title">Panel de Control</string>
+    <string name="dashboard_refresh">Actualizar panel</string>
+    <string name="dashboard_refresh_failed">No se pudo actualizar. Se muestran los últimos datos cargados.</string>
+    <string name="dashboard_last_updated">Última actualización: %1$s</string>
+    <string name="retry">Reintentar</string>
 </resources>

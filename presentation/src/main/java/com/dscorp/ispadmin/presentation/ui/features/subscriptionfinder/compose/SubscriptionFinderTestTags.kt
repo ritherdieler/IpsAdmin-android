@@ -31,6 +31,7 @@ object SubscriptionFinderTestTags {
     const val MENU_REBOOT_ONU = "reboot_onu"
     const val MENU_RETRY_TR069 = "retry_tr069"
     const val MENU_NEW_SERVICE = "new_service_for_customer"
+    const val MENU_DEFER_CUT = "subscription_menu_defer_cut"
 
     const val RETRY_TR069_DIALOG_DISMISS = "subscription_retry_tr069_dialog_dismiss"
     const val RETRY_TR069_DIALOG_CONFIRM = "subscription_retry_tr069_dialog_confirm"
@@ -84,6 +85,7 @@ object SubscriptionFinderTestTags {
         SubscriptionMenu.REBOOT_FIBER_ONU -> MENU_REBOOT_ONU
         SubscriptionMenu.RETRY_TR069 -> MENU_RETRY_TR069
         SubscriptionMenu.NEW_SERVICE_FOR_CUSTOMER -> MENU_NEW_SERVICE
+        SubscriptionMenu.DEFER_CUT -> MENU_DEFER_CUT
     }
 
     val searchInteractive = listOf(

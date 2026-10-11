@@ -201,6 +201,7 @@ fun SubscriptionDetailScreen(
             loadedSubscription != null -> SubscriptionDetailForm(
                 subscription = loadedSubscription,
                 otherServices = uiState.otherServices,
+                customerCredit = uiState.customerCredit,
                 onOpenService = { serviceId ->
                     navController.navigate(com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription.Details(serviceId))
                 },
@@ -219,6 +220,7 @@ fun SubscriptionDetailScreen(
 fun SubscriptionDetailForm(
     subscription: SubscriptionResponse,
     otherServices: List<com.dscorp.ispadmin.domain.model.CustomerServiceSummary> = emptyList(),
+    customerCredit: Double = 0.0,
     onOpenService: (Int) -> Unit = {},
     onFacadePhotoClick: () -> Unit = {},
     accessMigrationState: AccessMigrationUiState = AccessMigrationUiState(),
@@ -343,6 +345,14 @@ fun SubscriptionDetailForm(
                     value = it
                 )
                 Spacer(modifier = Modifier.height(16.dp))
+            }
+            if (customerCredit > 0.0) {
+                Text(
+                    text = "Saldo a favor: S/ %.2f".format(java.util.Locale.US, customerCredit),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
             }
             if (otherServices.isNotEmpty()) {
                 Text(
@@ -961,10 +971,8 @@ fun SubscriptionDetailFormPreview() {
         lastPaymentDate = "15/10/2024",
         note = "Cliente preferencial. Solicita factura electrónica mensualmente.",
         new = false,
-        isPaymentCommitment = false,
         isMigration = false,
         isReactivation = false,
-        paymentCommitmentDate = null,
         lastCutOffDate = null,
         reactivationDate = null,
         cpeDeviceId = null,
@@ -1019,10 +1027,8 @@ fun SubscriptionDetailFormSuspendedPreview() {
         lastPaymentDate = "20/08/2024",
         note = null,
         new = false,
-        isPaymentCommitment = true,
         isMigration = false,
         isReactivation = false,
-        paymentCommitmentDate = System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000),
         lastCutOffDate = null,
         reactivationDate = null,
         cpeDeviceId = null,

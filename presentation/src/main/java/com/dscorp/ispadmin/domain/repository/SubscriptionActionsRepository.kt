@@ -14,4 +14,7 @@ interface SubscriptionActionsRepository {
     suspend fun checkDni(dni: String): com.dscorp.ispadmin.domain.model.DniCheck
 
     suspend fun getCustomer(customerId: Int): com.dscorp.ispadmin.domain.model.CustomerDetail
+
+    /** Agrees not to cut the subscription for debt until [untilDate] (yyyy-MM-dd) of the current month. */
+    suspend fun deferCut(subscriptionId: Int, untilDate: String, reason: String)
 }

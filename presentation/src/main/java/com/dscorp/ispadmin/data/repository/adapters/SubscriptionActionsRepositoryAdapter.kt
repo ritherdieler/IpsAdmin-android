@@ -1,7 +1,9 @@
 package com.dscorp.ispadmin.data.repository.adapters
 
+import com.dscorp.ispadmin.data.datasource.remote.CutDeferralBody
 import com.dscorp.ispadmin.data.datasource.remote.RestApiServices
 import com.dscorp.ispadmin.data.repository.IRepository
+import com.dscorp.ispadmin.data.utils.ApiErrorBodyParser
 import com.dscorp.ispadmin.domain.model.CustomerDetail
 import com.dscorp.ispadmin.domain.model.DniCheck
 import com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository
@@ -38,6 +40,14 @@ class SubscriptionActionsRepositoryAdapter(
         val response = api.checkDni(dni)
         check(response.isSuccessful) { "DNI_CHECK_FAILED (HTTP ${response.code()})" }
         return response.body() ?: DniCheck()
+    }
+
+    override suspend fun deferCut(subscriptionId: Int, untilDate: String, reason: String) {
+        val api = requireNotNull(restApiServices) { "CUT_DEFERRAL_UNAVAILABLE" }
+        val response = api.deferCut(subscriptionId, CutDeferralBody(untilDate = untilDate, reason = reason))
+        if (!response.isSuccessful) {
+            throw IllegalStateException(ApiErrorBodyParser.parse(response.errorBody()?.string(), "No se pudo postergar el corte"))
+        }
     }
 
     override suspend fun getCustomer(customerId: Int): CustomerDetail {

@@ -10,7 +10,10 @@ import com.dscorp.ispadmin.data.datasource.remote.auth.TokenAuthenticator
 import com.dscorp.ispadmin.data.datasource.remote.auth.TokenStore
 import com.dscorp.ispadmin.data.datasource.remote.logging.HttpRequestTimingInterceptor
 import com.dscorp.ispadmin.data.utils.LocalDateTimeAdapter
+import com.dscorp.ispadmin.domain.model.ServiceStatus
+import com.dscorp.ispadmin.domain.model.ServiceStatusAdapter
 import com.dscorp.ispadmin.observability.ObservabilityHttpInterceptor
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import org.koin.dsl.module
@@ -31,14 +34,15 @@ val retrofitModule = module {
     single { provideRetrofit(getProperty(BASE_URL), get()) }
 }
 
-fun provideRetrofit(url: String, okHttpClient: OkHttpClient): Retrofit {
-    val gson = GsonBuilder()
-        .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
-        .create()
+fun buildApiGson(): Gson = GsonBuilder()
+    .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
+    .registerTypeAdapter(ServiceStatus::class.java, ServiceStatusAdapter())
+    .create()
 
+fun provideRetrofit(url: String, okHttpClient: OkHttpClient): Retrofit {
     return Retrofit.Builder()
         .baseUrl(url)
-        .addConverterFactory(GsonConverterFactory.create(gson))
+        .addConverterFactory(GsonConverterFactory.create(buildApiGson()))
         .client(okHttpClient)
         .build()
 }

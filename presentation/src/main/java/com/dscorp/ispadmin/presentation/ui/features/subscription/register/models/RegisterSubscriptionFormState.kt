@@ -62,7 +62,6 @@ data class RegisterSubscriptionFormState(
     val onuList: List<Onu> = emptyList(),
     val selectedOnu: Onu? = null,
     val onuError: String? = null,
-    val coupon: String = "",
     val note: String = "",
     val noteError: String? = null,
     val facadePhotoUri: Uri? = null,

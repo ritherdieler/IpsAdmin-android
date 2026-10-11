@@ -10,6 +10,7 @@ import org.koin.dsl.module
 import retrofit2.Retrofit
 
 val apiModule = module {
+    single { get<Retrofit>().create(com.dscorp.ispadmin.data.datasource.remote.financial.FinancialApi::class.java) }
     single { providesApi(get()) }
     single { provideFirebaseCloudMessagingApi(provideRetrofit(BuildConfig.FIRE_BASE_URL, get())) }
     single { provideInstallationOrderApi(get()) }

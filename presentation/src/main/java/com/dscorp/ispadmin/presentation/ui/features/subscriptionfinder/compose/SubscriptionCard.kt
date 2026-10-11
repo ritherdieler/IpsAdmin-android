@@ -680,11 +680,7 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                 contentColor = statusContentColor
             ) {
                 Text(
-                    text = when (subscriptionResume.serviceStatus) {
-                        ServiceStatus.ACTIVE -> "Activo"
-                        ServiceStatus.CANCELLED -> "Cancelado"
-                        else -> "Desconocido"
-                    },
+                    text = subscriptionResume.serviceStatus.getFormattedStatus(),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                 )
