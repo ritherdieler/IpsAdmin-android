@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Dashboard A · Clientes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;display=swap">
+<style>
+body{margin:0;font-family:"Roboto Flex",Roboto,system-ui,sans-serif}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+.num{font-variant-numeric:tabular-nums}
+.ov{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+.icon-btn{width:44px;height:44px;border-radius:999px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.chip{font:600 12px/16px "Roboto Flex",Roboto,sans-serif;letter-spacing:.3px;border-radius:999px;padding:0 14px;min-height:36px;cursor:pointer}
+</style>
+</helmet>
+<div style="width:390px;min-height:2900px;background:#f6f7fb;color:#10142b;display:flex;flex-direction:column">
+
+<div style="background:#141d48;color:#ffffff;border-radius:0 0 28px 28px;padding:8px 16px 56px;display:flex;flex-direction:column;gap:12px">
+ <div style="display:flex;align-items:center;gap:4px">
+  <button class="icon-btn" aria-label="Abrir menú"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+  <div style="flex-grow:1;display:flex;flex-direction:column">
+   <span style="font-size:22px;line-height:28px;font-weight:600">Dashboard</span>
+   <span style="font-size:12px;line-height:16px;color:#b6bfe8">Actualizado hace 3 min</span>
+  </div>
+  <button class="icon-btn" aria-label="Actualizar panel"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"></path></svg></button>
+ </div>
+ <div role="tablist" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:rgba(255,255,255,0.08);border-radius:999px;padding:4px">
+  <button role="tab" aria-selected="false" class="chip" style="background:transparent;color:#ffffff;border:0">Financiero</button>
+  <button role="tab" aria-selected="false" class="chip" style="background:transparent;color:#ffffff;border:0">Comercial</button>
+  <button role="tab" aria-selected="true" class="chip" style="background:#ffffff;color:#141d48;border:0">Clientes</button>
+ </div>
+ <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px">
+  <span class="ov" style="color:#b6bfe8">Tickets abiertos</span>
+  <span class="num" style="font-size:36px;line-height:42px;font-weight:700;letter-spacing:-0.5px">23</span>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+   <span class="num" style="font-size:13px;font-weight:600;color:#7fe0a6">▼ 5 vs semana pasada</span>
+   <span style="font-size:12px;font-weight:600;background:rgba(255,180,171,0.16);color:#ffb4ab;border-radius:8px;padding:3px 8px">! 5 de prioridad alta</span>
+  </div>
+ </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 16px;margin-top:-36px">
+ <div style="background:#ffffff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 2px rgba(16,20,43,0.06),0 1px 3px rgba(16,20,43,0.08)">
+  <span class="ov" style="color:#4a5068">Resolución media</span>
+  <span class="num" style="font-size:22px;line-height:28px;font-weight:650">18.4 h</span>
+  <span class="num" style="font-size:12px;font-weight:600;color:#17663d">▼ 2.1 h <span style="color:#4a5068;font-weight:400">vs sep</span></span>
+ </div>
+ <div style="background:#ffffff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 2px rgba(16,20,43,0.06),0 1px 3px rgba(16,20,43,0.08)">
+  <span class="ov" style="color:#4a5068">Reapertura</span>
+  <span class="num" style="font-size:22px;line-height:28px;font-weight:650">6.2%</span>
+  <span class="num" style="font-size:12px;font-weight:600;color:#ba1a1a">▲ 0.8 pp <span style="color:#4a5068;font-weight:400">vs sep</span></span>
+ </div>
+ <div style="background:#ffffff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 2px rgba(16,20,43,0.06),0 1px 3px rgba(16,20,43,0.08)">
+  <span class="ov" style="color:#4a5068">Antigüedad media</span>
+  <span class="num" style="font-size:22px;line-height:28px;font-weight:650">26 meses</span>
+  <span style="font-size:12px;color:#4a5068">clientes activos</span>
+ </div>
+ <div style="background:#ffffff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 2px rgba(16,20,43,0.06),0 1px 3px rgba(16,20,43,0.08)">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:4px"><span class="ov" style="color:#4a5068">Deuda por moroso</span><button onClick="{{ toggleDeuda }}" aria-label="Qué es deuda por moroso" aria-expanded="{{ openDeuda }}" style="width:28px;height:28px;margin:-6px -8px -6px 0;border:0;border-radius:999px;background:{{ bgDeuda }};display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4a5068" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg></button></div>
+  <span class="num" style="font-size:22px;line-height:28px;font-weight:650">S/ 32.80</span>
+  <span class="num" style="font-size:12px;color:#4a5068">287 clientes morosos</span>
+  <sc-if value="{{ openDeuda }}" hint-placeholder-val="{{ false }}"><div role="note" style="margin-top:6px;background:#eaedf5;color:#10142b;border-radius:8px;padding:8px 10px;font-size:12px;line-height:17px">Deuda vencida promedio de los clientes que tienen al menos una factura vencida: total vencido ÷ clientes morosos. No cuenta clientes al día ni facturas por vencer. S/ 9,412 ÷ 287 = S/ 32.80.</div></sc-if>
+ </div>
+</div>
+
+<!-- Plans -->
+<div style="display:flex;flex-direction:column;gap:12px;padding:24px 16px 0">
+ <div><div style="font-size:18px;line-height:24px;font-weight:600">Planes</div><div style="font-size:12px;line-height:16px;color:#4a5068">1,284 suscripciones activas · velocidad media 92 Mbps</div></div>
+ <div style="background:#ffffff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+  <span style="font-size:15px;line-height:22px;font-weight:600">Mezcla de planes</span>
+  <div style="display:flex;height:14px;border-radius:8px;overflow:hidden;gap:2px">
+   <div style="width:37.9%;background:#2f4ad0"></div><div style="width:31%;background:#e8541c"></div><div style="width:13.9%;background:#00897b"></div><div style="width:12%;background:#a87800"></div><div style="width:5.2%;background:#9aa0b4"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 44px 40px 64px;gap:10px 8px;align-items:center;font-size:13px">
+   <span style="font-size:11px;color:#4a5068">Plan</span><span style="font-size:11px;color:#4a5068;text-align:right">Subs</span><span style="font-size:11px;color:#4a5068;text-align:right">%</span><span style="font-size:11px;color:#4a5068;text-align:right">ARPU</span>
+   <span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="width:8px;height:8px;border-radius:2px;background:#2f4ad0;flex-shrink:0"></span>Fibra 60 Mbps<span style="font-size:10px;font-weight:600;background:#dfe3ff;color:#141d48;border-radius:6px;padding:1px 6px">Top</span></span><span class="num" style="text-align:right">486</span><span class="num" style="text-align:right;font-weight:600">38%</span><span class="num" style="text-align:right">S/ 28.40</span>
+   <span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="width:8px;height:8px;border-radius:2px;background:#e8541c;flex-shrink:0"></span>Fibra 100 Mbps</span><span class="num" style="text-align:right">398</span><span class="num" style="text-align:right;font-weight:600">31%</span><span class="num" style="text-align:right">S/ 37.90</span>
+   <span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="width:8px;height:8px;border-radius:2px;background:#00897b;flex-shrink:0"></span>Fibra 200 Mbps</span><span class="num" style="text-align:right">178</span><span class="num" style="text-align:right;font-weight:600">14%</span><span class="num" style="text-align:right">S/ 52.60</span>
+   <span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="width:8px;height:8px;border-radius:2px;background:#a87800;flex-shrink:0"></span>Inalámbrico 10 Mbps</span><span class="num" style="text-align:right">154</span><span class="num" style="text-align:right;font-weight:600">12%</span><span class="num" style="text-align:right">S/ 24.10</span>
+   <span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="width:8px;height:8px;border-radius:2px;background:#9aa0b4;flex-shrink:0"></span>Otros (TV)</span><span class="num" style="text-align:right">68</span><span class="num" style="text-align:right;font-weight:600">5%</span><span class="num" style="text-align:right">S/ 19.80</span>
+  </div>
+ </div>
+</div>
+
+<!-- Tickets -->
+<div style="display:flex;flex-direction:column;gap:12px;padding:24px 16px 0">
+ <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px">
+  <div><div style="font-size:18px;line-height:24px;font-weight:600">Tickets de asistencia</div><div style="font-size:12px;line-height:16px;color:#4a5068">112 creados en oct 2026</div></div>
+  <a href="#" style="font-size:12px;font-weight:600;text-decoration:none;padding:8px">Ver tickets</a>
+ </div>
+ <div style="background:#ffffff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+  <span style="font-size:15px;line-height:22px;font-weight:600">Abiertos por estado</span>
+  <div style="display:flex;height:14px;border-radius:8px;overflow:hidden;gap:2px"><div style="width:39%;background:#2f4ad0"></div><div style="width:26%;background:#e8541c"></div><div style="width:35%;background:#00897b"></div></div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px">
+   <span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:#2f4ad0"></span>Pendiente <b class="num">9</b></span>
+   <span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:#e8541c"></span>Asignado <b class="num">6</b></span>
+   <span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:#00897b"></span>En curso <b class="num">8</b></span>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+   <span class="num" style="font-size:12px;font-weight:600;background:#ffdad6;color:#ba1a1a;border-radius:8px;padding:3px 8px">Alta · 5</span>
+   <span class="num" style="font-size:12px;font-weight:600;background:#ffe8b8;color:#7a5000;border-radius:8px;padding:3px 8px">Media · 11</span>
+   <span class="num" style="font-size:12px;font-weight:600;background:#eaedf5;color:#4a5068;border-radius:8px;padding:3px 8px">Baja · 7</span>
+  </div>
+ </div>
+ <div style="background:#ffffff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;font-size:13px">
+  <span style="font-size:15px;line-height:22px;font-weight:600">Por categoría · oct</span>
+  <div style="display:grid;grid-template-columns:104px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>Sin internet</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:100%;height:10px;border-radius:999px;background:#141d48"></div></div><span class="num" style="text-align:right;font-weight:600">46</span></div>
+  <div style="display:grid;grid-template-columns:104px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>Lentitud</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:61%;height:10px;border-radius:999px;background:#141d48"></div></div><span class="num" style="text-align:right;font-weight:600">28</span></div>
+  <div style="display:grid;grid-template-columns:104px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>Wi-Fi / router</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:43%;height:10px;border-radius:999px;background:#141d48"></div></div><span class="num" style="text-align:right;font-weight:600">20</span></div>
+  <div style="display:grid;grid-template-columns:104px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>Traslado</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:20%;height:10px;border-radius:999px;background:#141d48"></div></div><span class="num" style="text-align:right;font-weight:600">9</span></div>
+  <div style="display:grid;grid-template-columns:104px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>Otros</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:20%;height:10px;border-radius:999px;background:#141d48"></div></div><span class="num" style="text-align:right;font-weight:600">9</span></div>
+ </div>
+</div>
+
+<!-- Zones -->
+<div style="display:flex;flex-direction:column;gap:12px;padding:24px 16px 0">
+ <div><div style="font-size:18px;line-height:24px;font-weight:600">Rendimiento por zona</div><div style="font-size:12px;line-height:16px;color:#4a5068">Clientes, ingreso del mes e incidencias por cada 100 clientes</div></div>
+ <div style="background:#ffffff;border-radius:16px;padding:8px 16px;overflow-x:auto">
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 52px 72px 60px;gap:0 8px;font-size:13px;align-items:center">
+   <span style="font-size:11px;color:#4a5068;padding:8px 0">Zona</span><span style="font-size:11px;color:#4a5068;text-align:right">Clientes</span><span style="font-size:11px;color:#4a5068;text-align:right">Ingreso</span><span style="font-size:11px;color:#4a5068;text-align:right">Incid./100</span>
+   <span style="padding:10px 0;border-top:1px solid #eaedf5;font-weight:600">[Zona 1]</span><span class="num" style="text-align:right;padding:10px 0;border-top:1px solid #eaedf5">412</span><span class="num" style="text-align:right;padding:10px 0;border-top:1px solid #eaedf5">S/ 13.6k</span><span style="text-align:right;padding:10px 0;border-top:1px solid #eaedf5"><span class="num" style="font-size:12px;font-weight:600;background:#d6f2e2;color:#17663d;border-radius:8px;padding:2px 6px">5.3</span></span>
+   <span style="padding:10px 0;border-top:1px solid #eaedf5;font-weight:600">[Zona 2]</span><span class="num" style="text-align:right;padding:10px 0;border-top:1px solid #eaedf5">338</span><span class="num" style="text-align:right;padding:10px 0;border-top:1px solid #eaedf5">S/ 11.2k</span><span style="text-align:right;padding:10px 0;border-top:1px solid #eaedf5"><span class="num" style="font-size:12px;font-weight:600;background:#ffe8b8;color:#7a5000;border-radius:8px;padding:2px 6px">9.8</span></span>
+   <span style="padding:10px 0;border-top:1px solid #eaedf5;font-weight:600">[Zona 3]</span><span class="num" style="text-align:right;padding:10px 0;border-top:1px solid #eaedf5">276</span><span class="num" style="text-align:right;padding:10px 0;border-top:1px solid #eaedf5">S/ 8.7k</span><span style="text-align:right;padding:10px 0;border-top:1px solid #eaedf5"><span class="num" style="font-size:12px;font-weight:600;background:#ffdad6;color:#ba1a1a;border-radius:8px;padding:2px 6px">14.1</span></span>
+   <span style="padding:10px 0;border-top:1px solid #eaedf5;font-weight:600">[Zona 4]</span><span class="num" style="text-align:right;padding:10px 0;border-top:1px solid #eaedf5">258</span><span class="num" style="text-align:right;padding:10px 0;border-top:1px solid #eaedf5">S/ 8.4k</span><span style="text-align:right;padding:10px 0;border-top:1px solid #eaedf5"><span class="num" style="font-size:12px;font-weight:600;background:#d6f2e2;color:#17663d;border-radius:8px;padding:2px 6px">6.2</span></span>
+  </div>
+ </div>
+</div>
+
+<!-- Lifecycle -->
+<div style="display:flex;flex-direction:column;gap:12px;padding:24px 16px 0">
+ <div><div style="font-size:18px;line-height:24px;font-weight:600">Ciclo de vida del cliente</div><div style="font-size:12px;line-height:16px;color:#4a5068">Desde la instalación</div></div>
+ <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+  <div style="background:#ffffff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px"><span class="ov" style="color:#4a5068">Hasta 1er incidente</span><span class="num" style="font-size:22px;line-height:28px;font-weight:650">47 días</span><span style="font-size:12px;color:#4a5068">promedio</span></div>
+  <div style="background:#ffffff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px"><span class="ov" style="color:#4a5068">Hasta cancelar</span><span class="num" style="font-size:22px;line-height:28px;font-weight:650">412 días</span><span style="font-size:12px;color:#4a5068">en los que cancelaron</span></div>
+ </div>
+ <div style="background:#ffffff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;font-size:13px">
+  <div style="display:flex;justify-content:space-between;gap:8px"><span style="font-size:15px;line-height:22px;font-weight:600">Cancelaciones por plan</span><span style="font-size:12px;color:#4a5068">últimos 6 meses</span></div>
+  <div style="display:grid;grid-template-columns:128px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>Fibra 60 Mbps</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:100%;height:10px;border-radius:999px;background:#e8541c"></div></div><span class="num" style="text-align:right;font-weight:600">41</span></div>
+  <div style="display:grid;grid-template-columns:128px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>Inalámbrico 10 Mbps</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:76%;height:10px;border-radius:999px;background:#e8541c"></div></div><span class="num" style="text-align:right;font-weight:600">31</span></div>
+  <div style="display:grid;grid-template-columns:128px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>Fibra 100 Mbps</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:51%;height:10px;border-radius:999px;background:#e8541c"></div></div><span class="num" style="text-align:right;font-weight:600">21</span></div>
+  <div style="display:grid;grid-template-columns:128px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>Fibra 200 Mbps</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:15%;height:10px;border-radius:999px;background:#e8541c"></div></div><span class="num" style="text-align:right;font-weight:600">6</span></div>
+  <div style="display:grid;grid-template-columns:128px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>Otros (TV)</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:20%;height:10px;border-radius:999px;background:#e8541c"></div></div><span class="num" style="text-align:right;font-weight:600">8</span></div>
+ </div>
+ <div style="background:#ffffff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;font-size:13px">
+  <div style="display:flex;justify-content:space-between;gap:8px"><span style="font-size:15px;line-height:22px;font-weight:600">Cancelaciones por zona</span><span style="font-size:12px;color:#4a5068">últimos 6 meses</span></div>
+  <div style="display:grid;grid-template-columns:128px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>[Zona 3]</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:100%;height:10px;border-radius:999px;background:#e8541c"></div></div><span class="num" style="text-align:right;font-weight:600">38</span></div>
+  <div style="display:grid;grid-template-columns:128px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>[Zona 2]</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:68%;height:10px;border-radius:999px;background:#e8541c"></div></div><span class="num" style="text-align:right;font-weight:600">26</span></div>
+  <div style="display:grid;grid-template-columns:128px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>[Zona 1]</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:61%;height:10px;border-radius:999px;background:#e8541c"></div></div><span class="num" style="text-align:right;font-weight:600">23</span></div>
+  <div style="display:grid;grid-template-columns:128px minmax(0,1fr) 32px;gap:8px;align-items:center"><span>[Zona 4]</span><div style="height:10px;border-radius:999px;background:#eaedf5"><div style="width:53%;height:10px;border-radius:999px;background:#e8541c"></div></div><span class="num" style="text-align:right;font-weight:600">20</span></div>
+ </div>
+ <p style="margin:8px 0 32px;font-size:12px;color:#4a5068;text-align:center">Datos de ejemplo</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2900}}'>
+class Component extends DCLogic {
+renderVals() {
+const s = this.state || {};
+const v = {};
+['Deuda'].forEach((k) => {
+v['open' + k] = !!s[k];
+v['bg' + k] = s[k] ? '#dfe3ff' : 'transparent';
+v['toggle' + k] = () => this.setState({ [k]: !s[k] });
+});
+return v;
+}
+}
+</script>
+</body>
+</html>

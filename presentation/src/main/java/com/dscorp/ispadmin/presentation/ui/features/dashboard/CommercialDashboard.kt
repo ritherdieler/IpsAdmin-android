@@ -2,12 +2,14 @@ package com.dscorp.ispadmin.presentation.ui.features.dashboard
 
 import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionsResumeStatics
+import java.text.Normalizer
 import java.time.YearMonth
 import java.time.ZoneId
 import java.util.Date
 
 private const val WINDOW_MONTHS = 6L
 private const val PERCENT = 100.0
+private const val NEW_ACTION = "NEW_SUBSCRIPTION"
 private const val CANCEL_ACTION = "TOTAL_CANCEL_SUBSCRIPTION"
 private const val RECONNECT_ACTION = "RECONNECT_CANCELLED_SUBSCRIPTION"
 private const val MIGRATE_ACTION = "MIGRATE_SUBSCRIPTION"
@@ -19,46 +21,53 @@ data class MonthlyTrend(val months: List<YearMonth>, val values: List<Double>) {
     val total: Double get() = values.sum()
 }
 
-/** What the commercial tab shows, derived from the legacy dashboard endpoint. */
+/**
+ * What the commercial tab shows, derived from the legacy dashboard endpoint.
+ *
+ * Event counts (new, cancelled, reconnected, migrated) all come from the subscription event log so the
+ * tiles and charts agree. The monthly snapshot only provides the non-cancelled base (active + cut off).
+ */
 data class CommercialDashboard(
+    /** Subscriptions in ACTIVE status right now. */
     val activeSubscriptions: Int,
-    val active: MonthlyTrend,
+    /** Non-cancelled subscriptions (active + cut off) at each monthly snapshot. */
+    val nonCancelled: MonthlyTrend,
     val newSubscriptions: MonthlyTrend,
     val cancellations: MonthlyTrend,
-    val loggedCancellations: MonthlyTrend,
     val reconnections: MonthlyTrend,
     val migrations: MonthlyTrend,
     val churnPercent: MonthlyTrend,
     val arpu: MonthlyTrend,
     val cancelledByUser: Int,
     val cancelledBySystem: Int,
-    val paymentMethods: Map<String, Double>,
+    /** Share of payments made by digital methods, per month. */
+    val digitalPaymentsPercent: MonthlyTrend,
     val installations: SubscriptionsResumeStatics,
 )
 
-fun DashBoardDataResponse.toCommercialDashboard(zone: ZoneId = ZoneId.of("America/Lima")): CommercialDashboard {
-    val history = subscriptionsHistoryStatics.sortedBy { it.date }.takeLast(WINDOW_MONTHS.toInt() + 1)
-    val historyMonths = history.map { it.date.toYearMonth(zone) }
-    val window = windowMonths(historyMonths.lastOrNull() ?: YearMonth.now(zone))
-    val activeByMonth = historyMonths.zip(history.map { it.totalActiveSubscriptions.toDouble() }).toMap()
+fun DashBoardDataResponse.toCommercialDashboard(
+    zone: ZoneId = ZoneId.of("America/Lima"),
+    currentMonth: YearMonth = YearMonth.now(zone),
+): CommercialDashboard {
+    val window = (WINDOW_MONTHS - 1 downTo 0).map { currentMonth.minusMonths(it) }
+    val baseByMonth = subscriptionsHistoryStatics
+        .associate { it.date.toYearMonth(zone) to it.totalActiveSubscriptions.toDouble() }
+    val cancellations = logTrend(window, CANCEL_ACTION)
     return CommercialDashboard(
         activeSubscriptions = activeSubscriptions,
-        active = trend(window, activeByMonth, fillMissing = false),
-        newSubscriptions = trend(window, historyMonths.zip(history.map { it.newSubscriptions.toDouble() }).toMap(), fillMissing = true),
-        cancellations = trend(window, historyMonths.zip(history.map { it.cancelledSubscriptions.toDouble() }).toMap(), fillMissing = true),
-        loggedCancellations = logTrend(window, CANCEL_ACTION),
+        nonCancelled = trend(window, baseByMonth, fillMissing = false),
+        newSubscriptions = logTrend(window, NEW_ACTION),
+        cancellations = cancellations,
         reconnections = logTrend(window, RECONNECT_ACTION),
         migrations = logTrend(window, MIGRATE_ACTION),
-        churnPercent = churn(window, history.map { it.date.toYearMonth(zone) to it }, activeByMonth),
-        arpu = arpu(window, zone, activeByMonth),
+        churnPercent = churn(cancellations, baseByMonth),
+        arpu = arpu(window, zone, baseByMonth),
         cancelledByUser = cancellationsResume.cancelledByUsers,
         cancelledBySystem = cancellationsResume.cancelledBySystem,
-        paymentMethods = paymentResume,
+        digitalPaymentsPercent = digitalPayments(paymentResume, currentMonth),
         installations = subscriptionsResume,
     )
 }
-
-private fun windowMonths(end: YearMonth): List<YearMonth> = (WINDOW_MONTHS - 1 downTo 0).map { end.minusMonths(it) }
 
 private fun trend(window: List<YearMonth>, byMonth: Map<YearMonth, Double>, fillMissing: Boolean): MonthlyTrend {
     val months = if (fillMissing) window else window.filter { it in byMonth }
@@ -73,27 +82,50 @@ private fun DashBoardDataResponse.logTrend(window: List<YearMonth>, action: Stri
     return trend(window, byMonth, fillMissing = true)
 }
 
-/** Cancellations of a month ÷ active subscriptions at the end of the previous month. */
-private fun churn(
-    window: List<YearMonth>,
-    history: List<Pair<YearMonth, com.dscorp.ispadmin.domain.model.MonthlySubscriptionResume>>,
-    activeByMonth: Map<YearMonth, Double>,
-): MonthlyTrend {
-    val byMonth = history.mapNotNull { (month, resume) ->
-        val activeAtStart = activeByMonth[month.minusMonths(1)]?.takeIf { it > 0 } ?: return@mapNotNull null
-        month to resume.cancelledSubscriptions / activeAtStart * PERCENT
+/** Cancellations of a month ÷ non-cancelled subscriptions at the previous month's snapshot. */
+private fun churn(cancellations: MonthlyTrend, baseByMonth: Map<YearMonth, Double>): MonthlyTrend {
+    val byMonth = cancellations.months.zip(cancellations.values).mapNotNull { (month, cancelled) ->
+        val base = baseByMonth[month.minusMonths(1)]?.takeIf { it > 0 } ?: return@mapNotNull null
+        month to cancelled / base * PERCENT
+    }.toMap()
+    return trend(cancellations.months, byMonth, fillMissing = false)
+}
+
+/**
+ * Collected in soles ÷ non-cancelled subscriptions of the month.
+ * `/dashboard` sends `totalRaised` as the collected percentage of `grossIncome`.
+ */
+private fun DashBoardDataResponse.arpu(window: List<YearMonth>, zone: ZoneId, baseByMonth: Map<YearMonth, Double>): MonthlyTrend {
+    val byMonth = monthlyCollects.mapNotNull { collect ->
+        val month = collect.date.toYearMonth(zone)
+        val base = baseByMonth[month]?.takeIf { it > 0 } ?: return@mapNotNull null
+        month to collectedSoles(collect.grossIncome, collect.totalRaised) / base
     }.toMap()
     return trend(window, byMonth, fillMissing = false)
 }
 
-/** Collected in the month ÷ active subscriptions of that month. */
-private fun DashBoardDataResponse.arpu(window: List<YearMonth>, zone: ZoneId, activeByMonth: Map<YearMonth, Double>): MonthlyTrend {
-    val byMonth = monthlyCollects.mapNotNull { collect ->
-        val month = collect.date.toYearMonth(zone)
-        val active = activeByMonth[month]?.takeIf { it > 0 } ?: return@mapNotNull null
-        month to collect.totalRaised / active
+internal fun collectedSoles(grossIncome: Double, collectedPercent: Double): Double = grossIncome * collectedPercent / PERCENT
+
+private val SPANISH_MONTHS = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
+
+/**
+ * `paymentResume` is keyed by short Spanish month name ("May.", "Set.") without a year. Each key is placed on
+ * its most recent occurrence up to [currentMonth], then sorted chronologically.
+ */
+internal fun digitalPayments(paymentResume: Map<String, Double>, currentMonth: YearMonth): MonthlyTrend {
+    val byMonth = paymentResume.mapNotNull { (key, percent) ->
+        val number = monthNumber(key) ?: return@mapNotNull null
+        val yearsBack = if (number > currentMonth.monthValue) 1L else 0L
+        YearMonth.of(currentMonth.year, number).minusYears(yearsBack) to percent
     }.toMap()
-    return trend(window, byMonth, fillMissing = false)
+    val months = byMonth.keys.sorted()
+    return MonthlyTrend(months, months.map { byMonth.getValue(it) })
+}
+
+private fun monthNumber(key: String): Int? {
+    val plain = Normalizer.normalize(key, Normalizer.Form.NFD).replace("\\p{M}".toRegex(), "")
+        .trim().trimEnd('.').lowercase().take(3).let { if (it == "set") "sep" else it }
+    return SPANISH_MONTHS.indexOf(plain).takeIf { it >= 0 }?.plus(1)
 }
 
 private fun Date.toYearMonth(zone: ZoneId): YearMonth = YearMonth.from(toInstant().atZone(zone))

@@ -47,6 +47,6 @@ class CollectionsUiTest {
         compose.setContent { MaterialTheme { ClientsContent(ClientsUiState(dashboard = dashboard), {}, {}, collections = summary) } }
 
         compose.onNodeWithTag("clients_debt_per_delinquent_value", useUnmergedTree = true).assertExists()
-        compose.onNodeWithText("287 clientes morosos", substring = true).assertExists()
+        compose.onNodeWithText("287 suscripciones morosas", substring = true).assertExists()
     }
 }

@@ -74,8 +74,9 @@ val DarkIspColors = IspColors(
     heroPositive = Color(0xFF7FE0A6),
     heroNegative = Color(0xFFFFB4AB),
     heroWarning = Color(0xFFF5C04A),
-    selectedContainer = Color(0xFF2A3678),
-    onSelectedContainer = Color(0xFFDDE1FF),
+    // Light chip on the navy band; a darker tint would disappear against the hero color.
+    selectedContainer = Color(0xFFB9C3FF),
+    onSelectedContainer = Color(0xFF0E1640),
     tabSelected = Color(0xFFB9C3FF),
     onTabSelected = Color(0xFF0E1640),
     card = Color(0xFF161B33),

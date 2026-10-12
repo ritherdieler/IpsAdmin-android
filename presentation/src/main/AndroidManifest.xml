@@ -33,6 +33,7 @@
         
         <activity
             android:name=".presentation.ui.features.main.MainActivity"
+            android:configChanges="uiMode"
             android:exported="true"
             android:theme="@style/Theme.IpsAdmin">
             <intent-filter>

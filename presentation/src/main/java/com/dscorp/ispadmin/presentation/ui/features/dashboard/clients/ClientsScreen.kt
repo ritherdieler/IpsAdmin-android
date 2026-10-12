@@ -54,8 +54,6 @@ import com.dscorp.ispadmin.presentation.designsystem.components.HeroBand
 import com.dscorp.ispadmin.presentation.designsystem.components.HeroTop
 import com.dscorp.ispadmin.presentation.designsystem.components.HeroFigure
 import com.dscorp.ispadmin.presentation.designsystem.components.HeroFigureModel
-import com.dscorp.ispadmin.presentation.designsystem.components.HeroBadge
-import com.dscorp.ispadmin.presentation.designsystem.components.DeltaTone
 import com.dscorp.ispadmin.presentation.designsystem.components.HorizontalBarList
 import com.dscorp.ispadmin.presentation.designsystem.components.KpiModel
 import com.dscorp.ispadmin.presentation.designsystem.components.ProportionBar
@@ -74,6 +72,7 @@ import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatCount
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatDecimal
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatPercent
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatSoles
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatSolesCompact
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.roundToInt
 
@@ -131,11 +130,8 @@ private fun ClientsHeroTop(state: ClientsUiState, onIntent: (ClientsIntent) -> U
 private fun ClientsHeroBody(dashboard: ClientsDashboard?) {
     HeroBand {
         dashboard?.tickets?.let { tickets ->
-            val badge = tickets.highPriority?.takeIf { it > 0 }?.let {
-                HeroBadge(stringResource(R.string.clients_high_priority, formatCount(it)), DeltaTone.Negative)
-            }
             HeroFigure(HeroFigureModel(stringResource(R.string.clients_open_tickets), formatCount(tickets.open), "clients_open_tickets",
-                badge = badge, supporting = stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), TICKET_HISTORY_MONTHS)))
+                supporting = stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), TICKET_HISTORY_MONTHS)))
         }
     }
 }
@@ -167,6 +163,7 @@ private fun LazyListScope.clientItems(dashboard: ClientsDashboard) {
         item("tickets_header") { SectionHeader(stringResource(R.string.clients_tickets), Modifier.padding(horizontal = IspSpacing.lg),
             stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), TICKET_HISTORY_MONTHS)) }
         item("tickets_status") { Padded { TicketStatusCard(tickets) } }
+        item("tickets_priority") { Padded { PriorityCard(tickets) } }
         item("tickets_category") { Padded { CountBarsCard(stringResource(R.string.clients_tickets_by_category), tickets.byCategory, "clients_tickets_category") } }
     }
     dashboard.zones?.let { zones ->
@@ -209,7 +206,8 @@ private fun PlanMixCard(plans: PlanAnalysis) {
     val palette = IspTheme.colors.chartCategorical
     val other = IspTheme.colors.chartOther
     val total = plans.totalSubscriptions.coerceAtLeast(1)
-    val colored = plans.plans.mapIndexed { index, plan -> plan to if (index < PLAN_SLOTS) palette[index] else other }
+    val colored = topPlansWithOthers(plans.plans, stringResource(R.string.clients_other_plans))
+        .mapIndexed { index, plan -> plan to if (index < PLAN_SLOTS) palette[index] else other }
     ChartCard(ChartCardHeader(stringResource(R.string.clients_plan_mix)), Modifier.testTag("clients_plan_mix")) {
         if (plans.plans.isEmpty()) {
             EmptyChart(stringResource(R.string.dashboard_no_data))
@@ -219,6 +217,16 @@ private fun PlanMixCard(plans: PlanAnalysis) {
             colored.forEach { (plan, color) -> PlanRow(plan, color, total, plan.name == plans.mostPopularPlan) }
         }
     }
+}
+
+/** The [PLAN_SLOTS] largest plans plus one "Otros" row; its ARPU is the subscriber-weighted average. */
+private fun topPlansWithOthers(plans: List<PlanStats>, othersLabel: String): List<PlanStats> {
+    if (plans.size <= PLAN_SLOTS + 1) return plans
+    val rest = plans.drop(PLAN_SLOTS)
+    val withRevenue = rest.filter { it.averageRevenue != null }
+    val weighted = withRevenue.sumOf { (it.averageRevenue ?: 0.0) * it.subscriptions }
+    val count = withRevenue.sumOf { it.subscriptions }
+    return plans.take(PLAN_SLOTS) + PlanStats(othersLabel, rest.sumOf { it.subscriptions }, if (count > 0) weighted / count else null)
 }
 
 @Composable
@@ -243,7 +251,8 @@ private fun PlanRow(plan: PlanStats, color: androidx.compose.ui.graphics.Color, 
         }
         Text(formatCount(plan.subscriptions), Modifier.width(44.dp), style = IspType.number, textAlign = TextAlign.End)
         Text(formatPercent(plan.subscriptions * 100.0 / total), Modifier.width(40.dp), style = IspType.number, textAlign = TextAlign.End)
-        Text(plan.averageRevenue?.let(::formatSoles) ?: "—", Modifier.width(72.dp), style = IspType.number, textAlign = TextAlign.End)
+        Text(plan.averageRevenue?.let(::formatSolesCompact) ?: "—", Modifier.width(72.dp), style = IspType.number, textAlign = TextAlign.End,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -262,10 +271,17 @@ private fun TicketStatusCard(tickets: TicketSummary) {
             ProportionBar(segments)
             segments.forEach { SegmentRow(it.label, formatCount(it.value), it.color) }
         }
-        if (tickets.byPriority.isNotEmpty()) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(IspSpacing.sm), verticalArrangement = Arrangement.spacedBy(IspSpacing.xs)) {
-                tickets.byPriority.withIndex().reversed().forEach { (priority, count) -> PriorityBadge(priority, count) }
-            }
+    }
+}
+
+/** Priorities count every ticket created in the history window, not only open ones. */
+@Composable
+private fun PriorityCard(tickets: TicketSummary) {
+    if (tickets.byPriority.isEmpty()) return
+    ChartCard(ChartCardHeader(stringResource(R.string.clients_tickets_by_priority),
+        stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), TICKET_HISTORY_MONTHS)), Modifier.testTag("clients_tickets_priority")) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(IspSpacing.sm), verticalArrangement = Arrangement.spacedBy(IspSpacing.xs)) {
+            tickets.byPriority.withIndex().reversed().forEach { (priority, count) -> PriorityBadge(priority, count) }
         }
     }
 }
@@ -288,7 +304,8 @@ private fun CountBarsCard(title: String, counts: List<Pair<String, Int>>, tag: S
         if (counts.isEmpty()) {
             EmptyChart(stringResource(R.string.dashboard_no_data))
         } else {
-            HorizontalBarList(counts.map { (label, count) -> BarItem(label, formatCount(count), count.toDouble()) }, barColor = color)
+            HorizontalBarList(counts.map { (label, count) -> BarItem(label, formatCount(count), count.toDouble()) }, barColor = color,
+                labelWidth = 150.dp)
         }
     }
 }
@@ -324,7 +341,8 @@ private fun ZoneRow(zone: ZonePerformance, median: Double?) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(IspSpacing.sm)) {
         Text(zone.zone, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(formatCount(zone.clients), Modifier.width(52.dp), style = IspType.number, textAlign = TextAlign.End)
-        Text(zone.revenue?.let(::formatSoles) ?: "—", Modifier.width(76.dp), style = IspType.number, textAlign = TextAlign.End, maxLines = 1)
+        Text(zone.revenue?.let(::formatSolesCompact) ?: "—", Modifier.width(76.dp), style = IspType.number, textAlign = TextAlign.End,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
         Row(Modifier.width(64.dp), horizontalArrangement = Arrangement.End) {
             zone.incidencePer100?.let { StatusBadge(formatDecimal(it), incidenceTone(it, median)) } ?: Text("—", style = IspType.number)
         }

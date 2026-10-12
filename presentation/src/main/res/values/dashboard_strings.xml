@@ -29,6 +29,7 @@
 
     <!-- Commercial -->
     <string name="commercial_active_subscriptions">Suscriptores activos</string>
+    <string name="commercial_active_caption">En estado activo ahora. No incluye cortados por deuda.</string>
     <string name="commercial_new">Altas</string>
     <string name="commercial_cancellations">Cancelaciones</string>
     <string name="commercial_reconnections">Reconexiones</string>
@@ -39,16 +40,16 @@
     <string name="commercial_arpu_info">Ingreso promedio por cliente: lo recaudado en el mes ÷ suscriptores activos. Muestra si el negocio crece por más clientes o porque cada uno paga más.</string>
     <string name="commercial_subscriptions_section">Suscripciones</string>
     <string name="commercial_new_vs_cancelled">Altas vs bajas</string>
-    <string name="commercial_active_history">Suscriptores activos</string>
-    <string name="commercial_end_of_month">Fin de mes</string>
+    <string name="commercial_active_history">Suscripciones no canceladas</string>
+    <string name="commercial_active_history_subtitle">Activas + cortadas, al cierre de cada mes</string>
     <string name="commercial_cancellation_reason">Motivo de cancelación</string>
     <string name="commercial_cancelled_by_user">Solicitada por el cliente</string>
     <string name="commercial_cancelled_by_system">Automática por el sistema</string>
     <string name="commercial_monthly_evolution">Evolución mensual</string>
     <string name="commercial_churn_chart">Tasa de cancelación (churn)</string>
     <string name="commercial_churn_chart_subtitle">Cancelaciones ÷ activos al inicio del mes · %</string>
-    <string name="commercial_payment_methods">Pagos por método</string>
-    <string name="commercial_payment_methods_subtitle">% de pagos del período</string>
+    <string name="commercial_digital_payments">Pagos electrónicos por mes</string>
+    <string name="commercial_digital_payments_subtitle">% de pagos hechos por medios digitales</string>
     <string name="commercial_total_months">Total %1$s meses: %2$s</string>
     <string name="commercial_installations_by_type">Instalaciones activas por tipo</string>
     <string name="commercial_fiber">Fibra</string>
@@ -66,7 +67,7 @@
     <string name="clients_active_clients">clientes activos</string>
     <string name="clients_debt_per_delinquent">Deuda por moroso</string>
     <string name="clients_debt_per_delinquent_info">Deuda vencida promedio de los clientes con al menos una factura de servicio vencida: total vencido ÷ clientes morosos. No cuenta clientes al día ni facturas por vencer.</string>
-    <string name="clients_delinquents">%1$s clientes morosos</string>
+    <string name="clients_delinquents">%1$s suscripciones morosas (incluye cortadas)</string>
     <string name="clients_plans">Planes</string>
     <string name="clients_plans_caption">%1$s suscripciones activas · velocidad media %2$s Mbps</string>
     <string name="clients_plan_mix">Mezcla de planes</string>
@@ -83,7 +84,8 @@
     <string name="clients_priority_low">Baja · %1$s</string>
     <string name="clients_priority_medium">Media · %1$s</string>
     <string name="clients_priority_high">Alta · %1$s</string>
-    <string name="clients_high_priority">%1$s de prioridad alta</string>
+    <string name="clients_tickets_by_priority">Por prioridad</string>
+    <string name="clients_other_plans">Otros</string>
     <string name="clients_tickets_by_category">Por categoría</string>
     <string name="clients_zones">Rendimiento por zona</string>
     <string name="clients_zones_caption">Clientes, ingreso e incidencias por cada 100 clientes</string>

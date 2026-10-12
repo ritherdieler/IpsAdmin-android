@@ -108,10 +108,8 @@ private fun CommercialHeroTop(state: DashboardState, onRefresh: () -> Unit, head
 private fun CommercialHeroBody(dashboard: CommercialDashboard?) {
     HeroBand {
         dashboard?.let {
-            val previous = it.active.months.getOrNull(it.active.months.size - 2)
-            val delta = countDelta(it.active, Polarity.HigherIsBetter, previous?.let { month -> stringResource(R.string.dashboard_vs_previous, month.shortLabel()) })
             HeroFigure(HeroFigureModel(stringResource(R.string.commercial_active_subscriptions), formatCount(it.activeSubscriptions),
-                "commercial_active", delta = delta))
+                "commercial_active", supporting = stringResource(R.string.commercial_active_caption)))
         }
     }
 }
@@ -133,13 +131,13 @@ private fun CommercialStatus(state: DashboardState, dashboard: CommercialDashboa
 private fun LazyListScope.commercialItems(dashboard: CommercialDashboard) {
     item("subscriptions_header") { SectionHeader(stringResource(R.string.commercial_subscriptions_section), Modifier.padding(horizontal = IspSpacing.lg), stringResource(R.string.dashboard_last_6_months)) }
     item("new_vs_cancelled") { Padded { NewVsCancelledCard(dashboard) } }
-    item("active_history") { Padded { ActiveHistoryCard(dashboard.active) } }
+    item("active_history") { Padded { ActiveHistoryCard(dashboard.nonCancelled) } }
     item("cancellation_reason") { Padded { CancellationReasonCard(dashboard) } }
     item("installations") { Padded { InstallationsCard(dashboard.installations) } }
     item("evolution_header") { SectionHeader(stringResource(R.string.commercial_monthly_evolution), Modifier.padding(horizontal = IspSpacing.lg), stringResource(R.string.dashboard_last_6_months)) }
     item("churn_chart") { Padded { ChurnCard(dashboard.churnPercent) } }
-    item("payment_methods") { Padded { PaymentMethodsCard(dashboard.paymentMethods) } }
-    item("cancellations_chart") { Padded { CountTrendCard(R.string.commercial_cancellations, dashboard.loggedCancellations, IspTheme.colors.chartCategorical[1], Polarity.LowerIsBetter) } }
+    item("digital_payments") { Padded { DigitalPaymentsCard(dashboard.digitalPaymentsPercent) } }
+    item("cancellations_chart") { Padded { CountTrendCard(R.string.commercial_cancellations, dashboard.cancellations, IspTheme.colors.chartCategorical[1], Polarity.LowerIsBetter) } }
     item("reconnections_chart") { Padded { CountTrendCard(R.string.commercial_reconnections, dashboard.reconnections, IspTheme.colors.chartCategorical[2], Polarity.HigherIsBetter) } }
     item("migrations_chart") { Padded { CountTrendCard(R.string.commercial_migrations, dashboard.migrations, IspTheme.colors.chartCategorical[0], Polarity.Neutral) } }
 }
@@ -174,8 +172,9 @@ internal fun KpiGrid(tiles: List<KpiModel>, overlapHero: Boolean = false) {
     val overlap = if (overlapHero) Modifier.pullUp(HERO_OVERLAP + IspSpacing.md) else Modifier
     Column(overlap.padding(horizontal = IspSpacing.lg), verticalArrangement = Arrangement.spacedBy(IspSpacing.md)) {
         tiles.chunked(2).forEach { row ->
-            Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(IspSpacing.md)) {
-                row.forEach { KpiTile(it, Modifier.weight(1f).fillMaxHeight()) }
+            // Top-aligned so an expanded explanation does not stretch the neighbouring tile.
+            Row(horizontalArrangement = Arrangement.spacedBy(IspSpacing.md), verticalAlignment = Alignment.Top) {
+                row.forEach { KpiTile(it, Modifier.weight(1f)) }
             }
         }
     }
@@ -204,7 +203,7 @@ private fun NewVsCancelledCard(dashboard: CommercialDashboard) {
 private fun ActiveHistoryCard(active: MonthlyTrend) {
     val data = ChartData(active.months.map { it.shortLabel() },
         listOf(ChartSeries(stringResource(R.string.commercial_active_history), IspTheme.colors.chartPrimary, active.values)))
-    ChartCard(ChartCardHeader(stringResource(R.string.commercial_active_history), stringResource(R.string.commercial_end_of_month)),
+    ChartCard(ChartCardHeader(stringResource(R.string.commercial_active_history), stringResource(R.string.commercial_active_history_subtitle)),
         Modifier.testTag("commercial_active_history")) {
         if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspLineChart(data)
     }
@@ -234,7 +233,7 @@ private fun InstallationsCard(installations: SubscriptionsResumeStatics) {
 @Composable
 internal fun ProportionCard(title: String, segments: List<Segment>, tag: String) {
     val total = segments.sumOf { it.value }
-    ChartCard(ChartCardHeader(title, formatCount(total)), Modifier.testTag(tag)) {
+    ChartCard(ChartCardHeader(title, formatCount(total).takeIf { total > 0 }), Modifier.testTag(tag)) {
         if (total <= 0) {
             EmptyChart(stringResource(R.string.dashboard_no_data))
         } else {
@@ -264,11 +263,11 @@ private fun ChurnCard(churn: MonthlyTrend) {
 }
 
 @Composable
-private fun PaymentMethodsCard(methods: Map<String, Double>) {
-    val items = methods.entries.sortedByDescending { it.value }.map { BarItem(it.key, formatPercent(it.value), it.value) }
-    ChartCard(ChartCardHeader(stringResource(R.string.commercial_payment_methods), stringResource(R.string.commercial_payment_methods_subtitle)),
-        Modifier.testTag("commercial_payment_methods")) {
-        if (items.isEmpty()) EmptyChart(stringResource(R.string.dashboard_no_data)) else HorizontalBarList(items)
+private fun DigitalPaymentsCard(trend: MonthlyTrend) {
+    val name = stringResource(R.string.commercial_digital_payments)
+    val data = ChartData(trend.months.map { it.shortLabel() }, listOf(ChartSeries(name, IspTheme.colors.chartPrimary, trend.values)))
+    ChartCard(ChartCardHeader(name, stringResource(R.string.commercial_digital_payments_subtitle)), Modifier.testTag("commercial_digital_payments")) {
+        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspColumnChart(data, valueFormat = { "${it.toInt()}%" })
     }
 }
 

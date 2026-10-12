@@ -1,0 +1,11 @@
+<!-- @dsCard group="Feedback" height=330 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&display=swap">
+<style>body{margin:0;background:var(--background);color:var(--on-surface);font-family:var(--font-sans);padding:16px}.num{font-variant-numeric:tabular-nums}
+.w{max-width:380px;display:flex;flex-direction:column;gap:var(--space-3)}
+.k{background:var(--surface-container-high);border-radius:var(--radius-sm);position:relative;overflow:hidden}
+.k::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--surface-container-highest),transparent);transform:translateX(-100%);animation:s 1.2s infinite}
+@media (prefers-reduced-motion:reduce){.k::after{animation:none}}
+@keyframes s{to{transform:translateX(100%)}}
+.hero{height:96px;border-radius:var(--radius-md)}.g{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)}.tile{height:72px;border-radius:var(--radius-md)}.chart{height:120px;border-radius:var(--radius-md)}
+</style>
+<div class="w" aria-busy="true" aria-label="Cargando dashboard"><div class="k hero"></div><div class="g"><div class="k tile"></div><div class="k tile"></div><div class="k tile"></div><div class="k tile"></div></div><div class="k chart"></div></div>

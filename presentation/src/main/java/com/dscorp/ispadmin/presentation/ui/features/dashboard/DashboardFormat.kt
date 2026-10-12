@@ -22,6 +22,18 @@ internal fun formatPercent(value: Double): String = "%.1f%%".format(PERU, value)
 
 internal fun formatDecimal(value: Double): String = "%.1f".format(PERU, value)
 
+private const val COMPACT_FROM = 100_000.0
+
+/** Soles; very large values (usually bad source data) shortened so they fit one line: "S/ 986.7M". */
+internal fun formatSolesCompact(value: Double): String = when {
+    kotlin.math.abs(value) >= 1_000_000 -> "S/ %.1fM".format(PERU, value / 1_000_000)
+    kotlin.math.abs(value) >= COMPACT_FROM -> "S/ %.1fk".format(PERU, value / 1_000)
+    else -> formatSoles(value)
+}
+
+/** Rounds to the precision shown, so a change that prints as zero is also treated as no change. */
+private fun Double.roundTo(decimals: Int): Double = java.math.BigDecimal(this).setScale(decimals, java.math.RoundingMode.HALF_UP).toDouble()
+
 /** Which direction of change is good for this metric. */
 enum class Polarity { HigherIsBetter, LowerIsBetter, Neutral }
 
@@ -41,7 +53,7 @@ private fun arrow(change: Double) = when {
 internal fun countDelta(trend: MonthlyTrend, polarity: Polarity, comparison: String?): KpiDelta? {
     val current = trend.current ?: return null
     val previous = trend.previous ?: return null
-    val change = current - previous
+    val change = (current - previous).roundTo(0)
     return KpiDelta("${arrow(change)} ${formatCount(abs(change))}", tone(change, polarity), comparison)
 }
 
@@ -49,13 +61,13 @@ internal fun countDelta(trend: MonthlyTrend, polarity: Polarity, comparison: Str
 internal fun pointsDelta(trend: MonthlyTrend, polarity: Polarity, comparison: String?): KpiDelta? {
     val current = trend.current ?: return null
     val previous = trend.previous ?: return null
-    val change = current - previous
+    val change = (current - previous).roundTo(1)
     return KpiDelta("${arrow(change)} ${formatDecimal(abs(change))} pp", tone(change, polarity), comparison)
 }
 
 internal fun solesDelta(trend: MonthlyTrend, polarity: Polarity, comparison: String?): KpiDelta? {
     val current = trend.current ?: return null
     val previous = trend.previous ?: return null
-    val change = current - previous
+    val change = (current - previous).roundTo(2)
     return KpiDelta("${arrow(change)} ${formatSoles(abs(change))}", tone(change, polarity), comparison)
 }

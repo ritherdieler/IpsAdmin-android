@@ -29,12 +29,17 @@ data class BarItem(val label: String, val valueText: String, val value: Double, 
 
 /** Ranked horizontal bars scaled to the largest value; text stays in text colors. */
 @Composable
-fun HorizontalBarList(items: List<BarItem>, modifier: Modifier = Modifier, barColor: Color = IspTheme.colors.chartPrimary) {
+fun HorizontalBarList(
+    items: List<BarItem>,
+    modifier: Modifier = Modifier,
+    barColor: Color = IspTheme.colors.chartPrimary,
+    labelWidth: androidx.compose.ui.unit.Dp = 112.dp,
+) {
     val maximum = items.maxOfOrNull { it.value }?.takeIf { it > 0 } ?: 1.0
     Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         items.forEach { item ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(IspSpacing.sm)) {
-                Text(item.label, Modifier.width(112.dp), style = MaterialTheme.typography.bodyMedium,
+                Text(item.label, Modifier.width(labelWidth), style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
                 ProgressTrack((item.value / maximum).toFloat(), item.color ?: barColor, Modifier.weight(1f), height = 10.dp)
                 Text(item.valueText, Modifier.width(72.dp), style = IspType.number, textAlign = TextAlign.End)

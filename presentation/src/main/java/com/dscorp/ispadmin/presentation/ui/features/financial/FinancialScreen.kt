@@ -28,6 +28,7 @@ import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
 import com.dscorp.ispadmin.domain.model.financial.*
 import com.dscorp.ispadmin.domain.model.dashboard.CollectionSummary
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.CollectionsSection
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.collectedSoles
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashboardTabData
 import com.dscorp.ispadmin.presentation.designsystem.charts.ChartData
 import com.dscorp.ispadmin.presentation.designsystem.charts.ChartSeries
@@ -411,7 +412,8 @@ private fun MonthlyCollectsCard(legacy: DashBoardDataResponse) {
     val zone = ZoneId.of("America/Lima")
     val labels = months.map { serviceMonthLabel(YearMonth.from(it.date.toInstant().atZone(zone)).toString()) }
     val data = ChartData(labels,
-        listOf(ChartSeries(stringResource(R.string.monthly_collects_history), IspTheme.colors.chartCollected, months.map { it.totalRaised })))
+        listOf(ChartSeries(stringResource(R.string.monthly_collects_history), IspTheme.colors.chartCollected,
+            months.map { collectedSoles(it.grossIncome, it.totalRaised) })))
     ChartCard(ChartCardHeader(stringResource(R.string.monthly_collects_history), currencySymbol("PEN")), Modifier.testTag("financial_collects_chart")) {
         if (data.isEmpty) EmptyChart(stringResource(R.string.financial_empty)) else IspColumnChart(data)
     }

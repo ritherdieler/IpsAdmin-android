@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Dashboard A · Financiero · Oscuro</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;display=swap">
+<style>
+body{margin:0;font-family:"Roboto Flex",Roboto,system-ui,sans-serif}
+a{color:#ff8a5f}a:hover{color:#ffb08f}
+.num{font-variant-numeric:tabular-nums}
+.ov{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+.icon-btn{width:44px;height:44px;border-radius:999px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.chip{font:600 12px/16px "Roboto Flex",Roboto,sans-serif;letter-spacing:.3px;border-radius:999px;padding:0 14px;min-height:36px;cursor:pointer}
+</style>
+</helmet>
+<div style="width:390px;min-height:2780px;background:#0d1022;color:#e4e6f2;display:flex;flex-direction:column">
+
+<!-- Hero band -->
+<div style="background:#1b2459;color:#e4e6f2;border-radius:0 0 28px 28px;padding:8px 16px 56px;display:flex;flex-direction:column;gap:12px">
+ <div style="display:flex;align-items:center;gap:4px">
+  <button class="icon-btn" aria-label="Abrir menú"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e4e6f2" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+  <div style="flex-grow:1;display:flex;flex-direction:column">
+   <span style="font-size:22px;line-height:28px;font-weight:600">Dashboard</span>
+   <span style="font-size:12px;line-height:16px;color:#aeb6dd">Actualizado hace 3 min</span>
+  </div>
+  <button class="icon-btn" aria-label="Exportar XLSX"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e4e6f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg></button>
+  <button class="icon-btn" aria-label="Actualizar panel"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e4e6f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"></path></svg></button>
+ </div>
+
+ <div role="tablist" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:rgba(255,255,255,0.08);border-radius:999px;padding:4px">
+  <button role="tab" aria-selected="true" class="chip" style="background:#b9c3ff;color:#0e1640;border:0">Financiero</button>
+  <button role="tab" aria-selected="false" class="chip" style="background:transparent;color:#e4e6f2;border:0">Comercial</button>
+  <button role="tab" aria-selected="false" class="chip" style="background:transparent;color:#e4e6f2;border:0">Clientes</button>
+ </div>
+
+ <div style="display:flex;gap:8px;flex-wrap:wrap">
+  <button class="chip" aria-pressed="true" style="background:#2a3678;color:#dde1ff;border:1px solid #2a3678">Cobros y egresos</button>
+  <button class="chip" aria-pressed="false" style="background:transparent;color:#e4e6f2;border:1px solid #aeb6dd">Facturación y cartera</button>
+ </div>
+
+ <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+  <span class="ov" style="color:#aeb6dd">Mes de movimientos</span>
+  <div style="display:flex;align-items:center;gap:2px">
+   <button class="icon-btn" aria-label="Mes anterior" style="width:36px;height:36px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e4e6f2" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
+   <span style="font-size:14px;font-weight:600">oct 2026</span>
+   <button class="icon-btn" aria-label="Mes siguiente" style="width:36px;height:36px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aeb6dd" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+  </div>
+ </div>
+
+ <div style="display:flex;flex-direction:column;gap:4px">
+  <span class="ov" style="color:#aeb6dd">Cobros recibidos</span>
+  <span class="num" style="font-size:36px;line-height:42px;font-weight:700;letter-spacing:-0.5px">S/ 41,870.40</span>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+   <span class="num" style="font-size:13px;font-weight:600;color:#7fe0a6">▲ 6.1% vs sep</span>
+   <span style="font-size:12px;font-weight:600;background:rgba(127,224,166,0.16);color:#7fe0a6;border-radius:8px;padding:3px 8px">✓ Completo · revisión 2</span>
+  </div>
+ </div>
+</div>
+
+<!-- KPI grid, overlapping the hero edge -->
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 16px;margin-top:-36px">
+ <div style="background:#161b33;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px;border:1px solid #262c4a">
+  <span class="ov" style="color:#aeb3c9">Egresos</span>
+  <span class="num" style="font-size:20px;line-height:28px;font-weight:650">S/ 18,240.00</span>
+  <span class="num" style="font-size:12px;font-weight:600;color:#ffb4ab">▲ 2.0% <span style="color:#aeb3c9;font-weight:400">vs sep</span></span>
+ </div>
+ <div style="background:#161b33;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px;border:1px solid #262c4a">
+  <span class="ov" style="color:#aeb3c9">Saldo del mes</span>
+  <span class="num" style="font-size:20px;line-height:28px;font-weight:650">S/ 23,630.40</span>
+  <span class="num" style="font-size:12px;font-weight:600;color:#5fd08e">▲ 9.4% <span style="color:#aeb3c9;font-weight:400">vs sep</span></span>
+ </div>
+ <div style="background:#161b33;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px;border:1px solid #262c4a">
+  <span class="ov" style="color:#aeb3c9">Cartera vencida</span>
+  <span class="num" style="font-size:20px;line-height:28px;font-weight:650">S/ 9,412.00</span>
+  <span class="num" style="font-size:12px;font-weight:600;color:#5fd08e">▼ 3.8% <span style="color:#aeb3c9;font-weight:400">vs sep</span></span>
+ </div>
+ <div style="background:#161b33;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:6px;border:1px solid #262c4a">
+  <span class="ov" style="color:#aeb3c9">Efectividad</span>
+  <span class="num" style="font-size:20px;line-height:28px;font-weight:650">87.4%</span>
+  <div style="height:6px;border-radius:999px;background:#2a3152;overflow:hidden"><div style="width:87.4%;height:6px;border-radius:999px;background:#5fd4c2"></div></div>
+ </div>
+</div>
+
+<!-- Section: collections follow-up -->
+<div style="display:flex;flex-direction:column;gap:12px;padding:24px 16px 0">
+ <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px">
+  <div><div style="font-size:18px;line-height:24px;font-weight:600">Cobranza operativa</div><div style="font-size:12px;line-height:16px;color:#aeb3c9">Al 11 oct 2026</div></div>
+  <a href="#" style="font-size:12px;font-weight:600;text-decoration:none;padding:8px">Ver deudores</a>
+ </div>
+ <div style="background:#161b33;border-radius:16px;display:flex;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #222846">
+   <div style="flex-grow:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;color:#aeb3c9">Por vencer en 7 días</span><span class="num" style="font-size:18px;font-weight:650">S/ 6,840.00</span><span class="num" style="font-size:12px;color:#aeb3c9">214 facturas</span></div>
+   <span style="font-size:12px;font-weight:600;background:#4a3400;color:#f5c04a;border-radius:8px;padding:3px 8px">◷ Por vencer</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-bottom:1px solid #222846">
+   <div style="display:flex;align-items:center;gap:12px">
+    <div style="flex-grow:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;color:#aeb3c9">Promesas de pago</span><span class="num" style="font-size:18px;font-weight:650">18 abiertas</span></div>
+    <span class="num" style="font-size:12px;font-weight:600;background:#5c0a0a;color:#ffb4ab;border-radius:8px;padding:3px 8px">! 4 vencidas</span>
+   </div>
+   <div style="display:flex;align-items:center;gap:8px"><div style="flex-grow:1;height:6px;border-radius:999px;background:#2a3152"><div style="width:72%;height:6px;border-radius:999px;background:#5fd4c2"></div></div><span class="num" style="font-size:12px;color:#aeb3c9">72% cumplidas</span></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #222846">
+   <div style="flex-grow:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;color:#aeb3c9">Prórrogas de corte activas</span><span class="num" style="font-size:18px;font-weight:650">9</span></div>
+   <span class="num" style="font-size:12px;font-weight:600;background:#4a3400;color:#f5c04a;border-radius:8px;padding:3px 8px">3 vencen hoy</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px;padding:14px 16px">
+   <span style="font-size:13px;color:#aeb3c9">Cortes por deuda vs restablecidos tras pago · oct</span>
+   <div style="display:grid;grid-template-columns:96px minmax(0,1fr) 32px;gap:8px;align-items:center;font-size:13px"><span>Cortados</span><div style="height:10px;border-radius:999px;background:#222846"><div style="width:100%;height:10px;border-radius:999px;background:#e2602b"></div></div><span class="num" style="text-align:right;font-weight:600">46</span></div>
+   <div style="display:grid;grid-template-columns:96px minmax(0,1fr) 32px;gap:8px;align-items:center;font-size:13px"><span>Restablecidos</span><div style="height:10px;border-radius:999px;background:#222846"><div style="width:85%;height:10px;border-radius:999px;background:#1fa898"></div></div><span class="num" style="text-align:right;font-weight:600">39</span></div>
+  </div>
+ </div>
+</div>
+
+<!-- Section: trend -->
+<div style="display:flex;flex-direction:column;gap:12px;padding:24px 16px 0">
+ <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px">
+  <div><div style="font-size:18px;line-height:24px;font-weight:600">Tendencia</div><div style="font-size:12px;line-height:16px;color:#aeb3c9">Por mes de servicio · últimos 6 meses</div></div>
+  <a href="#" style="font-size:12px;font-weight:600;text-decoration:none;padding:8px">12 meses</a>
+ </div>
+ <div style="background:#161b33;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+  <div style="display:flex;justify-content:space-between;gap:8px"><span style="font-size:15px;line-height:22px;font-weight:600">Facturado neto vs cobrado</span><span style="font-size:12px;color:#aeb3c9">S/ miles</span></div>
+  <div style="display:flex;gap:16px;font-size:12px;color:#aeb3c9">
+   <span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:#b9c3ff"></span>Neto</span>
+   <span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:#5fd4c2"></span>Cobrado</span>
+  </div>
+  <svg viewBox="0 0 348 180" width="100%" role="img" aria-label="Facturado neto y cobrado de mayo a octubre de 2026">
+   <g stroke="#262c4a" stroke-width="1"><line x1="30" x2="348" y1="20" y2="20"></line><line x1="30" x2="348" y1="66.7" y2="66.7"></line><line x1="30" x2="348" y1="113.3" y2="113.3"></line><line x1="30" x2="348" y1="160" y2="160"></line></g>
+   <g fill="#aeb3c9" font-size="10" text-anchor="end"><text x="24" y="24">60</text><text x="24" y="70">40</text><text x="24" y="117">20</text><text x="24" y="164">0</text></g>
+   <rect x="40" y="57.1" width="18" height="102.9" rx="4" fill="#b9c3ff"></rect><rect x="60" y="71.3" width="18" height="88.7" rx="4" fill="#5fd4c2"></rect>
+   <rect x="92" y="55.0" width="18" height="105.0" rx="4" fill="#b9c3ff"></rect><rect x="112" y="68.5" width="18" height="91.5" rx="4" fill="#5fd4c2"></rect>
+   <rect x="144" y="53.1" width="18" height="106.9" rx="4" fill="#b9c3ff"></rect><rect x="164" y="64.6" width="18" height="95.4" rx="4" fill="#5fd4c2"></rect>
+   <rect x="196" y="50.6" width="18" height="109.4" rx="4" fill="#b9c3ff"></rect><rect x="216" y="66.4" width="18" height="93.6" rx="4" fill="#5fd4c2"></rect>
+   <rect x="248" y="48.9" width="18" height="111.1" rx="4" fill="#b9c3ff"></rect><rect x="268" y="61.3" width="18" height="98.7" rx="4" fill="#5fd4c2"></rect>
+   <rect x="300" y="47.3" width="18" height="112.7" rx="4" fill="#b9c3ff"></rect><rect x="320" y="62.2" width="18" height="97.8" rx="4" fill="#5fd4c2"></rect>
+   <g fill="#e4e6f2" font-size="10" font-weight="600" text-anchor="middle"><text x="309" y="42">48.3</text><text x="329" y="57">41.9</text></g>
+   <g fill="#aeb3c9" font-size="10" text-anchor="middle"><text x="59" y="176">may</text><text x="111" y="176">jun</text><text x="163" y="176">jul</text><text x="215" y="176">ago</text><text x="267" y="176">sep</text><text x="319" y="176">oct</text></g>
+  </svg>
+ </div>
+</div>
+
+<!-- Section: history -->
+<div style="display:flex;flex-direction:column;gap:12px;padding:24px 16px 0">
+ <div><div style="font-size:18px;line-height:24px;font-weight:600">Historial</div><div style="font-size:12px;line-height:16px;color:#aeb3c9">Últimos 12 meses · S/ miles</div></div>
+
+ <div style="background:#161b33;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+   <div><div style="font-size:15px;line-height:22px;font-weight:600">Ingresos brutos por mes</div><div class="num" style="font-size:12px;color:#aeb3c9">oct: S/ 50,400 · <span style="color:#5fd08e;font-weight:600">▲ 14.5% en 12 meses</span></div></div>
+  </div>
+  <svg viewBox="0 0 348 170" width="100%" role="img" aria-label="Ingresos brutos por mes, noviembre 2025 a octubre 2026: de 44.0 a 50.4 miles de soles">
+<g stroke="#262c4a" stroke-width="1"><line x1="34" x2="342" y1="148.0" y2="148.0"></line><line x1="34" x2="342" y1="102.7" y2="102.7"></line><line x1="34" x2="342" y1="57.3" y2="57.3"></line><line x1="34" x2="342" y1="12.0" y2="12.0"></line></g>
+<g fill="#aeb3c9" font-size="10" text-anchor="end"><text x="28" y="151.0">0</text><text x="28" y="105.7">20</text><text x="28" y="60.3">40</text><text x="28" y="15.0">60</text></g>
+<polygon points="46.8,48.3 72.5,46.9 98.2,45.8 123.8,44.0 149.5,42.8 175.2,41.5 200.8,40.3 226.5,39.2 252.2,37.8 277.8,36.7 303.5,35.1 329.2,33.8 329.2,148 46.8,148" fill="#6b82f5" opacity="0.08"></polygon><polyline points="46.8,48.3 72.5,46.9 98.2,45.8 123.8,44.0 149.5,42.8 175.2,41.5 200.8,40.3 226.5,39.2 252.2,37.8 277.8,36.7 303.5,35.1 329.2,33.8" fill="none" stroke="#6b82f5" stroke-width="2" stroke-linejoin="round"></polyline><circle cx="329.2" cy="33.8" r="4" fill="#6b82f5" stroke="#161b33" stroke-width="2"></circle>
+<text x="329.2" y="25.8" text-anchor="end" font-size="10" font-weight="600" fill="#e4e6f2">50.4</text>
+<g fill="#aeb3c9" font-size="10" text-anchor="middle"><text x="46.8" y="164">nov</text><text x="72.5" y="164">dic</text><text x="98.2" y="164">ene</text><text x="123.8" y="164">feb</text><text x="149.5" y="164">mar</text><text x="175.2" y="164">abr</text><text x="200.8" y="164">may</text><text x="226.5" y="164">jun</text><text x="252.2" y="164">jul</text><text x="277.8" y="164">ago</text><text x="303.5" y="164">sep</text><text x="329.2" y="164">oct</text></g>
+  </svg>
+ </div>
+
+ <div style="background:#161b33;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px">
+  <div><div style="font-size:15px;line-height:22px;font-weight:600">Recaudación por mes</div><div class="num" style="font-size:12px;color:#aeb3c9">oct: S/ 41,870 · <span style="color:#ffb4ab;font-weight:600">▼ 0.9% vs sep</span></div></div>
+  <svg viewBox="0 0 348 170" width="100%" role="img" aria-label="Recaudación por mes, noviembre 2025 a octubre 2026: de 38.2 a 41.9 miles de soles">
+<g stroke="#262c4a" stroke-width="1"><line x1="34" x2="342" y1="148.0" y2="148.0"></line><line x1="34" x2="342" y1="102.7" y2="102.7"></line><line x1="34" x2="342" y1="57.3" y2="57.3"></line><line x1="34" x2="342" y1="12.0" y2="12.0"></line></g>
+<g fill="#aeb3c9" font-size="10" text-anchor="end"><text x="28" y="151.0">0</text><text x="28" y="105.7">20</text><text x="28" y="60.3">40</text><text x="28" y="15.0">60</text></g>
+<rect x="39.1" y="61.4" width="15.4" height="86.6" rx="3" fill="#5fd4c2"></rect><rect x="64.8" y="62.1" width="15.4" height="85.9" rx="3" fill="#5fd4c2"></rect><rect x="90.5" y="59.6" width="15.4" height="88.4" rx="3" fill="#5fd4c2"></rect><rect x="116.1" y="57.8" width="15.4" height="90.2" rx="3" fill="#5fd4c2"></rect><rect x="141.8" y="57.1" width="15.4" height="90.9" rx="3" fill="#5fd4c2"></rect><rect x="167.5" y="59.8" width="15.4" height="88.2" rx="3" fill="#5fd4c2"></rect><rect x="193.1" y="58.2" width="15.4" height="89.8" rx="3" fill="#5fd4c2"></rect><rect x="218.8" y="55.5" width="15.4" height="92.5" rx="3" fill="#5fd4c2"></rect><rect x="244.5" y="56.9" width="15.4" height="91.1" rx="3" fill="#5fd4c2"></rect><rect x="270.1" y="54.2" width="15.4" height="93.8" rx="3" fill="#5fd4c2"></rect><rect x="295.8" y="52.1" width="15.4" height="95.9" rx="3" fill="#5fd4c2"></rect><rect x="321.5" y="53.0" width="15.4" height="95.0" rx="3" fill="#5fd4c2"></rect>
+<text x="329.2" y="45.0" text-anchor="middle" font-size="10" font-weight="600" fill="#e4e6f2">41.9</text>
+<g fill="#aeb3c9" font-size="10" text-anchor="middle"><text x="46.8" y="164">nov</text><text x="72.5" y="164">dic</text><text x="98.2" y="164">ene</text><text x="123.8" y="164">feb</text><text x="149.5" y="164">mar</text><text x="175.2" y="164">abr</text><text x="200.8" y="164">may</text><text x="226.5" y="164">jun</text><text x="252.2" y="164">jul</text><text x="277.8" y="164">ago</text><text x="303.5" y="164">sep</text><text x="329.2" y="164">oct</text></g>
+  </svg>
+ </div>
+</div>
+
+<!-- Section: breakdowns -->
+<div style="display:flex;flex-direction:column;gap:12px;padding:24px 16px 0">
+ <div><div style="font-size:18px;line-height:24px;font-weight:600">Desglose</div><div style="font-size:12px;line-height:16px;color:#aeb3c9">Mes de movimientos · oct 2026</div></div>
+
+ <div style="background:#161b33;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+  <span style="font-size:15px;line-height:22px;font-weight:600">Cobros por método</span>
+  <div style="display:flex;align-items:center;gap:16px">
+   <svg width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Cobros por método: Yape 38%, Efectivo 27%, Transferencia 21%, Tarjeta 10%, Otros 4%">
+    <g transform="rotate(-90 64 64)" fill="none" stroke-width="16">
+     <circle cx="64" cy="64" r="52" stroke="#6b82f5" stroke-dasharray="122.16 204.57" stroke-dashoffset="0"></circle>
+     <circle cx="64" cy="64" r="52" stroke="#e2602b" stroke-dasharray="86.22 240.51" stroke-dashoffset="-124.16"></circle>
+     <circle cx="64" cy="64" r="52" stroke="#1fa898" stroke-dasharray="66.61 260.12" stroke-dashoffset="-212.38"></circle>
+     <circle cx="64" cy="64" r="52" stroke="#b88a10" stroke-dasharray="30.67 296.06" stroke-dashoffset="-280.99"></circle>
+     <circle cx="64" cy="64" r="52" stroke="#5b6283" stroke-dasharray="11.07 315.66" stroke-dashoffset="-313.66"></circle>
+    </g>
+    <text x="64" y="62" text-anchor="middle" font-size="10" fill="#aeb3c9">412 cobros</text>
+    <text x="64" y="78" text-anchor="middle" font-size="14" font-weight="700" fill="#e4e6f2">S/ 41.9k</text>
+   </svg>
+   <div style="flex-grow:1;display:flex;flex-direction:column;gap:8px;font-size:13px;min-width:0">
+    <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:2px;background:#6b82f5"></span><span style="flex-grow:1">Yape</span><span class="num" style="font-weight:600">38%</span></div>
+    <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:2px;background:#e2602b"></span><span style="flex-grow:1">Efectivo</span><span class="num" style="font-weight:600">27%</span></div>
+    <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:2px;background:#1fa898"></span><span style="flex-grow:1">Transferencia</span><span class="num" style="font-weight:600">21%</span></div>
+    <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:2px;background:#b88a10"></span><span style="flex-grow:1">Tarjeta</span><span class="num" style="font-weight:600">10%</span></div>
+    <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:2px;background:#5b6283"></span><span style="flex-grow:1">Otros</span><span class="num" style="font-weight:600">4%</span></div>
+   </div>
+  </div>
+ </div>
+
+ <div style="background:#161b33;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+  <div style="display:flex;justify-content:space-between;gap:8px"><span style="font-size:15px;line-height:22px;font-weight:600">Egresos por categoría</span><a href="#" style="font-size:12px;font-weight:600;text-decoration:none">Ver registros</a></div>
+  <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+   <div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between"><span>Planilla</span><span class="num" style="font-weight:600">S/ 7,800.00</span></div><div style="height:8px;border-radius:999px;background:#222846"><div style="width:100%;height:8px;border-radius:999px;background:#b9c3ff"></div></div></div>
+   <div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between"><span>Ancho de banda</span><span class="num" style="font-weight:600">S/ 5,150.00</span></div><div style="height:8px;border-radius:999px;background:#222846"><div style="width:66%;height:8px;border-radius:999px;background:#b9c3ff"></div></div></div>
+   <div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between"><span>Materiales de red</span><span class="num" style="font-weight:600">S/ 2,940.00</span></div><div style="height:8px;border-radius:999px;background:#222846"><div style="width:38%;height:8px;border-radius:999px;background:#b9c3ff"></div></div></div>
+   <div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between"><span>Movilidad</span><span class="num" style="font-weight:600">S/ 1,410.00</span></div><div style="height:8px;border-radius:999px;background:#222846"><div style="width:18%;height:8px;border-radius:999px;background:#b9c3ff"></div></div></div>
+   <div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between"><span>Otros</span><span class="num" style="font-weight:600">S/ 940.00</span></div><div style="height:8px;border-radius:999px;background:#222846"><div style="width:12%;height:8px;border-radius:999px;background:#b9c3ff"></div></div></div>
+  </div>
+ </div>
+
+ <div style="background:#4a3400;color:#f5c04a;border-radius:16px;padding:12px 16px;display:flex;gap:12px;align-items:flex-start;font-size:13px;line-height:18px">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5c04a" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex-shrink:0"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17v.5"></path></svg>
+  <span>3 cobros históricos sin fecha efectiva quedaron fuera del cálculo mensual.</span>
+ </div>
+
+ <p style="margin:8px 0 32px;font-size:12px;color:#aeb3c9;text-align:center">Datos de ejemplo · Corte: 11 oct 2026, 09:40</p>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2780}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

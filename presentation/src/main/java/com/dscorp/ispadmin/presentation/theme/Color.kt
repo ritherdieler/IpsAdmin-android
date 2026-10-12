@@ -43,8 +43,9 @@ val SurfaceContainerLow = Color(0xFFF1F3F9)
 val SurfaceContainerLowest = Color(0xFFFFFFFF)
 
 // Dark scheme.
-val DarkPrimary = Color(0xFF3A4998)
-val DarkOnPrimary = Color.White
+// Light periwinkle: readable as text and icons on the dark surfaces (navy #3A4998 was ~2:1).
+val DarkPrimary = Color(0xFFB9C3FF)
+val DarkOnPrimary = Color(0xFF0E1640)
 val DarkPrimaryContainer = Color(0xFF232D6B)
 val DarkOnPrimaryContainer = Color.White
 val DarkInversePrimary = Color(0xFF141D48)
