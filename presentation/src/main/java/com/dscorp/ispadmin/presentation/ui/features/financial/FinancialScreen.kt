@@ -29,6 +29,11 @@ import com.dscorp.ispadmin.domain.model.financial.*
 import com.dscorp.ispadmin.domain.model.dashboard.CollectionSummary
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.CollectionsSection
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.collectedSoles
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.billedMonths
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatPercent
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatSoles
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.percentChange
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.shares
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashboardTabData
 import com.dscorp.ispadmin.presentation.designsystem.charts.ChartData
 import com.dscorp.ispadmin.presentation.designsystem.charts.ChartSeries
@@ -54,6 +59,7 @@ import java.util.Currency
 import java.util.Locale
 
 private const val HISTORY_MONTHS = 12
+private const val TREND_MONTHS = 6
 
 /**
  * Financial tab of the dashboard. [header] draws inside the hero band (dashboard tabs);
@@ -167,8 +173,6 @@ private fun FinancialHeroBody(uiState: FinancialUiState, onIntent: (FinancialInt
             PeriodPicker(R.string.financial_service_month, uiState.serviceMonth, "service") { onIntent(FinancialIntent.SelectServiceMonth(it)) }
         } else {
             PeriodPicker(R.string.financial_movements_month, uiState.movementsMonth, "movements") { onIntent(FinancialIntent.SelectMovementsMonth(it)) }
-            Text(stringResource(R.string.financial_service_month) + ": " + uiState.serviceMonth,
-                style = MaterialTheme.typography.bodySmall, color = IspTheme.colors.onHeroMuted)
         }
         context.report?.let { report ->
             HeroMetric(report, context.billingView, openDetail)
@@ -235,7 +239,6 @@ private fun CutInfo(report: FinancialReport) {
     val muted = IspTheme.colors.onHeroMuted
     Column(Modifier.testTag("financial_cut"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(stringResource(R.string.financial_cut, cutoffLabel(report.cutoff), report.revision), style = MaterialTheme.typography.bodySmall, color = muted)
-        Text(stringResource(R.string.financial_cut_id, report.id), style = MaterialTheme.typography.bodySmall, color = muted)
         if (report.kind == "RECONSTRUCTED") Text(stringResource(R.string.financial_reconstructed), style = MaterialTheme.typography.bodySmall, color = muted)
         if (report.kind == "MONTHLY" || report.kind == "REVISION") Text(stringResource(R.string.financial_monthly_cut), style = MaterialTheme.typography.bodySmall, color = muted)
     }
@@ -251,7 +254,6 @@ private fun MovementTiles(report: FinancialReport, openDetail: (Detail) -> Unit)
         add(TileSpec(KpiModel(stringResource(R.string.financial_partial_balance), money(report.movements?.partialBalance), "financial_balance"), Detail.RECEIPTS))
         add(TileSpec(KpiModel(stringResource(R.string.financial_overdue), money(report.overdueTotal), "financial_overdue"), Detail.DEBT))
         add(TileSpec(KpiModel(stringResource(R.string.financial_differences_service), scope.selected.toString(), "financial_differences", supporting = summary), Detail.DIFFERENCES))
-        add(TileSpec(KpiModel(stringResource(R.string.financial_recovery), money(report.movements?.previousServiceRecovery), "financial_recovery"), Detail.RECEIPTS))
     }, openDetail)
 }
 
@@ -266,19 +268,27 @@ private fun LazyListScope.movementItems(
 ) {
     val legacy = extras.legacy
     val managementAccess = report.access == "FULL"
-    item("scope") {
-        Text(stringResource(if (managementAccess) R.string.financial_cash_scope else R.string.financial_operational_scope),
-            Modifier.padding(horizontal = IspSpacing.lg), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
     extras.collections?.let { summary -> item("collections") { CollectionsSection(summary) } }
+    val trend = report.history.sortedBy { it.serviceMonth }.takeLast(TREND_MONTHS).filter { it.billing?.net != null || it.billing?.collected != null }
+    if (trend.isNotEmpty()) {
+        item("trend_header") {
+            SectionHeader(stringResource(R.string.financial_trend), Modifier.padding(horizontal = IspSpacing.lg), stringResource(R.string.financial_trend_caption, trend.size))
+        }
+        item("trend") { Padded { NetVsCollectedCard(trend, report.currency) } }
+    }
     if (legacy != null) {
-        item("history_header") { SectionHeader(stringResource(R.string.dashboard_history), Modifier.padding(horizontal = IspSpacing.lg), stringResource(R.string.dashboard_last_12_months)) }
+        item("history_header") { SectionHeader(stringResource(R.string.dashboard_history), Modifier.padding(horizontal = IspSpacing.lg), stringResource(R.string.dashboard_history_caption)) }
         item("gross_revenue") { Padded { GrossRevenueCard(legacy) } }
         item("monthly_collects") { Padded { MonthlyCollectsCard(legacy) } }
     }
     item("breakdown_header") { SectionHeader(stringResource(R.string.dashboard_breakdown), Modifier.padding(horizontal = IspSpacing.lg), uiState.movementsMonth) }
     item("by_method") { Padded { MethodsCard(report.receiptsByMethod) } }
-    item("by_service") { Padded { GroupsCard(stringResource(R.string.financial_by_service, uiState.movementsMonth), report.receiptsByServiceMonth) } }
+    item("by_service") {
+        Padded {
+            GroupsCard(stringResource(R.string.financial_by_service, uiState.movementsMonth), report.receiptsByServiceMonth,
+                subtitle = stringResource(R.string.financial_recovery_caption, money(report.movements?.previousServiceRecovery)))
+        }
+    }
     item("by_collector") { Padded { GroupsCard(stringResource(R.string.financial_by_collector), report.receiptsByCollector) } }
     if (managementAccess) {
         item("by_category") {
@@ -286,6 +296,10 @@ private fun LazyListScope.movementItems(
         }
         item("by_center") { Padded { GroupsCard(stringResource(R.string.financial_by_cost_center), report.expensesByCostCenter.orEmpty()) } }
         item("corporate") { Padded { CorporateCard(report) { openDetail(Detail.CORPORATE) } } }
+    }
+    item("scope") {
+        Text(stringResource(if (managementAccess) R.string.financial_cash_scope else R.string.financial_operational_scope),
+            Modifier.padding(horizontal = IspSpacing.lg), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -396,14 +410,41 @@ private fun FinancialHistoryChart(history: List<ServiceHistory>, currency: Strin
     }
 }
 
+/** Net billed vs collected for the last service months, side by side. */
+@Composable
+private fun NetVsCollectedCard(months: List<ServiceHistory>, currency: String) {
+    val colors = IspTheme.colors
+    val series = listOf(
+        ChartSeries(stringResource(R.string.financial_chart_net), colors.chartPrimary, months.map { it.billing?.net.orZero() }),
+        ChartSeries(stringResource(R.string.financial_chart_collected), colors.chartCollected, months.map { it.billing?.collected.orZero() }),
+    )
+    ChartCard(ChartCardHeader(stringResource(R.string.financial_trend_chart), currencySymbol(currency), series.map { LegendItem(it.name, it.color) }),
+        Modifier.testTag("financial_trend_chart")) {
+        IspColumnChart(ChartData(months.map { serviceMonthLabel(it.serviceMonth) }, series))
+    }
+}
+
+/** Unbilled trailing months (billing runs mid-month) are left out instead of plotted as a drop to zero. */
 @Composable
 private fun GrossRevenueCard(legacy: DashBoardDataResponse) {
-    val months = legacy.grossRevenueHistoryStatics.sortedBy { it.billingMonth }.takeLast(HISTORY_MONTHS)
-    val data = ChartData(months.map { serviceMonthLabel(it.billingMonth.take(7)) },
-        listOf(ChartSeries(stringResource(R.string.gross_revenue_per_month), IspTheme.colors.chartCategorical[0], months.map { it.totalCharged })))
-    ChartCard(ChartCardHeader(stringResource(R.string.gross_revenue_per_month), currencySymbol("PEN")), Modifier.testTag("financial_gross_revenue_chart")) {
-        if (data.isEmpty) EmptyChart(stringResource(R.string.financial_empty)) else IspLineChart(data)
+    val months = billedMonths(legacy.grossRevenueHistoryStatics, YearMonth.now(ZoneId.of("America/Lima"))).takeLast(HISTORY_MONTHS)
+    val labels = months.map { serviceMonthLabel(it.billingMonth.take(7)) }
+    val values = months.map { it.totalCharged }
+    val data = ChartData(labels, listOf(ChartSeries(stringResource(R.string.gross_revenue_per_month), IspTheme.colors.chartCategorical[0], values)))
+    ChartCard(ChartCardHeader(stringResource(R.string.gross_revenue_per_month), lastMonthSummary(labels, values)), Modifier.testTag("financial_gross_revenue_chart")) {
+        if (data.isEmpty) EmptyChart(stringResource(R.string.financial_empty)) else IspLineChart(data, startAtZero = true)
     }
+}
+
+/** "sep: S/ 49,000.00 · ▲ 2.1% vs ago"; the currency alone when there is no data. */
+@Composable
+private fun lastMonthSummary(labels: List<String>, values: List<Double>): String {
+    val last = values.lastOrNull() ?: return currencySymbol("PEN")
+    val summary = stringResource(R.string.dashboard_month_value, labels.last(), formatSoles(last))
+    val previous = values.getOrNull(values.size - 2) ?: return summary
+    val change = percentChange(previous, last) ?: return summary
+    val arrow = if (change > 0) "▲" else if (change < 0) "▼" else "="
+    return "$summary · $arrow ${formatPercent(kotlin.math.abs(change))} " + stringResource(R.string.dashboard_vs_previous, labels[labels.size - 2])
 }
 
 @Composable
@@ -411,10 +452,9 @@ private fun MonthlyCollectsCard(legacy: DashBoardDataResponse) {
     val months = legacy.monthlyCollects.sortedBy { it.date }.takeLast(HISTORY_MONTHS)
     val zone = ZoneId.of("America/Lima")
     val labels = months.map { serviceMonthLabel(YearMonth.from(it.date.toInstant().atZone(zone)).toString()) }
-    val data = ChartData(labels,
-        listOf(ChartSeries(stringResource(R.string.monthly_collects_history), IspTheme.colors.chartCollected,
-            months.map { collectedSoles(it.grossIncome, it.totalRaised) })))
-    ChartCard(ChartCardHeader(stringResource(R.string.monthly_collects_history), currencySymbol("PEN")), Modifier.testTag("financial_collects_chart")) {
+    val values = months.map { collectedSoles(it.grossIncome, it.totalRaised) }
+    val data = ChartData(labels, listOf(ChartSeries(stringResource(R.string.monthly_collects_history), IspTheme.colors.chartCollected, values)))
+    ChartCard(ChartCardHeader(stringResource(R.string.monthly_collects_history), lastMonthSummary(labels, values)), Modifier.testTag("financial_collects_chart")) {
         if (data.isEmpty) EmptyChart(stringResource(R.string.financial_empty)) else IspColumnChart(data)
     }
 }
@@ -430,8 +470,15 @@ private fun MethodsCard(groups: List<FinancialGroup>) {
         if (groups.isEmpty()) {
             EmptyChart(stringResource(R.string.financial_empty))
         } else {
-            ProportionBar(colored.map { (group, color) -> Segment(groupLabel(group.key), group.amount.toDouble(), color) })
-            colored.forEach { (group, color) -> LegendRow(groupLabel(group.key), money(group.amount), color) }
+            val percents = shares(colored.map { (group, _) -> group.amount.toDouble() })
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(IspSpacing.lg)) {
+                DonutChart(colored.map { (group, color) -> Segment(groupLabel(group.key), group.amount.toDouble(), color) },
+                    stringResource(R.string.financial_group_count, formatCount(groups.sumOf { it.count })),
+                    money(groups.fold(BigDecimal.ZERO) { total, group -> total + group.amount }))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(IspSpacing.sm)) {
+                    colored.forEachIndexed { index, (group, color) -> LegendRow(groupLabel(group.key), formatPercent(percents[index]), color) }
+                }
+            }
         }
     }
 }
@@ -446,8 +493,8 @@ private fun LegendRow(label: String, value: String, color: androidx.compose.ui.g
 }
 
 @Composable
-private fun GroupsCard(title: String, groups: List<FinancialGroup>, modifier: Modifier = Modifier) {
-    ChartCard(ChartCardHeader(title), modifier) {
+private fun GroupsCard(title: String, groups: List<FinancialGroup>, modifier: Modifier = Modifier, subtitle: String? = null) {
+    ChartCard(ChartCardHeader(title, subtitle), modifier) {
         if (groups.isEmpty()) {
             EmptyChart(stringResource(R.string.financial_empty))
         } else {

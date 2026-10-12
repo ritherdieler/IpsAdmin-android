@@ -35,7 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dscorp.ispadmin.R
-import com.dscorp.ispadmin.data.repository.TICKET_HISTORY_MONTHS
+import com.dscorp.ispadmin.data.repository.CLIENTS_WINDOW_MONTHS
 import com.dscorp.ispadmin.domain.model.dashboard.ClientLifecycle
 import com.dscorp.ispadmin.domain.model.dashboard.ClientQuality
 import com.dscorp.ispadmin.domain.model.dashboard.ClientsDashboard
@@ -73,10 +73,16 @@ import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatDecimal
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatPercent
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatSoles
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatSolesCompact
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.topWithOthers
+import com.dscorp.ispadmin.presentation.designsystem.components.DeltaTone
+import com.dscorp.ispadmin.presentation.designsystem.components.HeroBadge
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.roundToInt
 
 private const val PLAN_SLOTS = 4
+/** Rows of a ranking before the rest folds into "Otros". */
+private const val RANKING_SLOTS = 4
+private const val ZONE_SLOTS = 5
 
 @Composable
 fun ClientsScreen(header: @Composable () -> Unit, collections: CollectionSummary? = null, viewModel: ClientsViewModel = koinViewModel()) {
@@ -130,8 +136,11 @@ private fun ClientsHeroTop(state: ClientsUiState, onIntent: (ClientsIntent) -> U
 private fun ClientsHeroBody(dashboard: ClientsDashboard?) {
     HeroBand {
         dashboard?.tickets?.let { tickets ->
+            val highPriority = tickets.openHighPriority?.takeIf { it > 0 }?.let {
+                HeroBadge(stringResource(R.string.clients_high_priority_open, formatCount(it)), DeltaTone.Negative)
+            }
             HeroFigure(HeroFigureModel(stringResource(R.string.clients_open_tickets), formatCount(tickets.open), "clients_open_tickets",
-                supporting = stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), TICKET_HISTORY_MONTHS)))
+                badge = highPriority, supporting = stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), CLIENTS_WINDOW_MONTHS)))
         }
     }
 }
@@ -161,7 +170,7 @@ private fun LazyListScope.clientItems(dashboard: ClientsDashboard) {
     }
     dashboard.tickets?.let { tickets ->
         item("tickets_header") { SectionHeader(stringResource(R.string.clients_tickets), Modifier.padding(horizontal = IspSpacing.lg),
-            stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), TICKET_HISTORY_MONTHS)) }
+            stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), CLIENTS_WINDOW_MONTHS)) }
         item("tickets_status") { Padded { TicketStatusCard(tickets) } }
         item("tickets_priority") { Padded { PriorityCard(tickets) } }
         item("tickets_category") { Padded { CountBarsCard(stringResource(R.string.clients_tickets_by_category), tickets.byCategory, "clients_tickets_category") } }
@@ -172,8 +181,8 @@ private fun LazyListScope.clientItems(dashboard: ClientsDashboard) {
     dashboard.lifecycle?.let { lifecycle ->
         item("lifecycle_header") { SectionHeader(stringResource(R.string.clients_lifecycle), Modifier.padding(horizontal = IspSpacing.lg), stringResource(R.string.clients_lifecycle_caption)) }
         item("lifecycle_kpis") { LifecycleKpis(lifecycle) }
-        item("cancel_by_plan") { Padded { CountBarsCard(stringResource(R.string.clients_cancellations_by_plan), lifecycle.cancellationsByPlan, "clients_cancel_by_plan", accent = true) } }
-        item("cancel_by_zone") { Padded { CountBarsCard(stringResource(R.string.clients_cancellations_by_zone), lifecycle.cancellationsByZone, "clients_cancel_by_zone", accent = true) } }
+        item("cancel_by_plan") { Padded { CountBarsCard(stringResource(R.string.clients_cancellations_by_plan), lifecycle.cancellationsByPlan, "clients_cancel_by_plan", accent = true, windowed = true) } }
+        item("cancel_by_zone") { Padded { CountBarsCard(stringResource(R.string.clients_cancellations_by_zone), lifecycle.cancellationsByZone, "clients_cancel_by_zone", accent = true, windowed = true) } }
     }
 }
 
@@ -279,7 +288,7 @@ private fun TicketStatusCard(tickets: TicketSummary) {
 private fun PriorityCard(tickets: TicketSummary) {
     if (tickets.byPriority.isEmpty()) return
     ChartCard(ChartCardHeader(stringResource(R.string.clients_tickets_by_priority),
-        stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), TICKET_HISTORY_MONTHS)), Modifier.testTag("clients_tickets_priority")) {
+        stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), CLIENTS_WINDOW_MONTHS)), Modifier.testTag("clients_tickets_priority")) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(IspSpacing.sm), verticalArrangement = Arrangement.spacedBy(IspSpacing.xs)) {
             tickets.byPriority.withIndex().reversed().forEach { (priority, count) -> PriorityBadge(priority, count) }
         }
@@ -297,14 +306,18 @@ private fun PriorityBadge(priority: Int, count: Int) {
     StatusBadge(stringResource(label, formatCount(count)), tone)
 }
 
+/** Ranked counts; long lists keep the largest [RANKING_SLOTS] and fold the rest into "Otros". */
 @Composable
-private fun CountBarsCard(title: String, counts: List<Pair<String, Int>>, tag: String, accent: Boolean = false) {
+private fun CountBarsCard(title: String, counts: List<Pair<String, Int>>, tag: String, accent: Boolean = false, windowed: Boolean = false) {
     val color = if (accent) IspTheme.colors.chartCategorical[1] else IspTheme.colors.chartPrimary
-    ChartCard(ChartCardHeader(title, formatCount(counts.sumOf { it.second })), Modifier.testTag(tag)) {
+    val total = formatCount(counts.sumOf { it.second })
+    val subtitle = if (windowed) stringResource(R.string.dashboard_window_caption, total, CLIENTS_WINDOW_MONTHS) else total
+    val ranked = topWithOthers(counts, RANKING_SLOTS, stringResource(R.string.clients_other_plans))
+    ChartCard(ChartCardHeader(title, subtitle), Modifier.testTag(tag)) {
         if (counts.isEmpty()) {
             EmptyChart(stringResource(R.string.dashboard_no_data))
         } else {
-            HorizontalBarList(counts.map { (label, count) -> BarItem(label, formatCount(count), count.toDouble()) }, barColor = color,
+            HorizontalBarList(ranked.map { (label, count) -> BarItem(label, formatCount(count), count.toDouble()) }, barColor = color,
                 labelWidth = 150.dp)
         }
     }
@@ -313,10 +326,14 @@ private fun CountBarsCard(title: String, counts: List<Pair<String, Int>>, tag: S
 @Composable
 private fun ZonesTable(zones: List<ZonePerformance>) {
     val median = zones.mapNotNull { it.incidencePer100 }.sorted().let { if (it.isEmpty()) null else it[it.size / 2] }
-    ChartCard(ChartCardHeader(stringResource(R.string.clients_zones), stringResource(R.string.clients_zones_caption)), Modifier.testTag("clients_zones")) {
+    val shown = zones.sortedByDescending { it.clients }.take(ZONE_SLOTS)
+    val caption = stringResource(R.string.clients_zones_caption).let {
+        if (shown.size < zones.size) stringResource(R.string.clients_zones_top, it, shown.size, zones.size) else it
+    }
+    ChartCard(ChartCardHeader(stringResource(R.string.clients_zones), caption), Modifier.testTag("clients_zones")) {
         if (zones.isEmpty()) EmptyChart(stringResource(R.string.dashboard_no_data))
         ZoneRowHeader()
-        zones.forEach { zone ->
+        shown.forEach { zone ->
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             ZoneRow(zone, median)
         }

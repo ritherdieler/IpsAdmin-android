@@ -55,6 +55,8 @@ import com.dscorp.ispadmin.presentation.designsystem.components.HeroFigure
 import com.dscorp.ispadmin.presentation.designsystem.components.HeroFigureModel
 import com.dscorp.ispadmin.presentation.designsystem.components.HorizontalBarList
 import com.dscorp.ispadmin.presentation.designsystem.components.KpiModel
+import com.dscorp.ispadmin.presentation.designsystem.components.KpiDelta
+import com.dscorp.ispadmin.presentation.designsystem.components.DeltaTone
 import com.dscorp.ispadmin.presentation.designsystem.components.KpiTile
 import com.dscorp.ispadmin.presentation.designsystem.components.LegendItem
 import com.dscorp.ispadmin.presentation.designsystem.components.ProportionBar
@@ -109,9 +111,28 @@ private fun CommercialHeroBody(dashboard: CommercialDashboard?) {
     HeroBand {
         dashboard?.let {
             HeroFigure(HeroFigureModel(stringResource(R.string.commercial_active_subscriptions), formatCount(it.activeSubscriptions),
-                "commercial_active", supporting = stringResource(R.string.commercial_active_caption)))
+                "commercial_active", delta = netAddsDelta(it), supporting = stringResource(R.string.commercial_active_caption)))
         }
     }
+}
+
+/** "▲ 13 netos en oct": new + reconnected − cancelled this month. */
+@Composable
+private fun netAddsDelta(dashboard: CommercialDashboard): KpiDelta? {
+    val net = netAdds(dashboard.newSubscriptions, dashboard.reconnections, dashboard.cancellations) ?: return null
+    val month = dashboard.newSubscriptions.months.lastOrNull() ?: return null
+    val arrow = when {
+        net > 0 -> "▲"
+        net < 0 -> "▼"
+        else -> "="
+    }
+    val tone = when {
+        net > 0 -> DeltaTone.Positive
+        net < 0 -> DeltaTone.Negative
+        else -> DeltaTone.Neutral
+    }
+    return KpiDelta(stringResource(R.string.commercial_net_adds, "$arrow ${formatCount(kotlin.math.abs(net))}"), tone,
+        stringResource(R.string.commercial_in_month, month.shortLabel()))
 }
 
 @Composable
@@ -161,7 +182,8 @@ private fun CommercialKpis(dashboard: CommercialDashboard) {
         KpiModel(stringResource(R.string.commercial_churn), dashboard.churnPercent.current?.let(::formatPercent) ?: unavailable, "commercial_churn",
             pointsDelta(dashboard.churnPercent, Polarity.LowerIsBetter, comparison(dashboard.churnPercent)), info = stringResource(R.string.commercial_churn_info)),
         KpiModel(stringResource(R.string.commercial_arpu), dashboard.arpu.current?.let(::formatSoles) ?: unavailable, "commercial_arpu",
-            solesDelta(dashboard.arpu, Polarity.HigherIsBetter, comparison(dashboard.arpu)), info = stringResource(R.string.commercial_arpu_info)),
+            solesDelta(dashboard.arpu, Polarity.HigherIsBetter, comparison(dashboard.arpu)), info = stringResource(R.string.commercial_arpu_info),
+            supporting = staleMonth(dashboard.arpu, currentMonth())?.let { stringResource(R.string.commercial_month_of, it.shortLabel()) }),
     )
     KpiGrid(tiles, overlapHero = true)
 }
@@ -185,17 +207,18 @@ internal fun Padded(content: @Composable ColumnScope.() -> Unit) {
     Column(Modifier.padding(horizontal = IspSpacing.lg), verticalArrangement = Arrangement.spacedBy(IspSpacing.sm), content = content)
 }
 
+/** Altas above zero and bajas below, one column per month. */
 @Composable
 private fun NewVsCancelledCard(dashboard: CommercialDashboard) {
     val colors = IspTheme.colors
     val series = listOf(
         ChartSeries(stringResource(R.string.commercial_new), colors.chartCategorical[0], dashboard.newSubscriptions.values),
-        ChartSeries(stringResource(R.string.commercial_cancellations), colors.chartCategorical[1], dashboard.cancellations.values),
+        ChartSeries(stringResource(R.string.commercial_bajas), colors.chartCategorical[1], dashboard.cancellations.values.map { -it }),
     )
     val data = ChartData(dashboard.newSubscriptions.months.map { it.shortLabel() }, series)
     ChartCard(ChartCardHeader(stringResource(R.string.commercial_new_vs_cancelled), legend = series.map { LegendItem(it.name, it.color) }),
         Modifier.testTag("commercial_new_vs_cancelled")) {
-        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspColumnChart(data)
+        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspColumnChart(data, integers = true, diverging = true)
     }
 }
 
@@ -256,9 +279,11 @@ internal fun SegmentRow(label: String, value: String, color: Color) {
 private fun ChurnCard(churn: MonthlyTrend) {
     val data = ChartData(churn.months.map { it.shortLabel() },
         listOf(ChartSeries(stringResource(R.string.commercial_churn_chart), IspTheme.colors.chartCategorical[1], churn.values)))
-    ChartCard(ChartCardHeader(stringResource(R.string.commercial_churn_chart), stringResource(R.string.commercial_churn_chart_subtitle)),
+    val subtitle = churn.average?.let { stringResource(R.string.commercial_churn_average, formatPercent(it)) }
+        ?: stringResource(R.string.commercial_churn_chart_subtitle)
+    ChartCard(ChartCardHeader(stringResource(R.string.commercial_churn_chart), subtitle),
         Modifier.testTag("commercial_churn_chart")) {
-        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspLineChart(data, valueFormat = ::formatDecimal)
+        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspLineChart(data, valueFormat = ::formatDecimal, startAtZero = true)
     }
 }
 
@@ -266,7 +291,10 @@ private fun ChurnCard(churn: MonthlyTrend) {
 private fun DigitalPaymentsCard(trend: MonthlyTrend) {
     val name = stringResource(R.string.commercial_digital_payments)
     val data = ChartData(trend.months.map { it.shortLabel() }, listOf(ChartSeries(name, IspTheme.colors.chartPrimary, trend.values)))
-    ChartCard(ChartCardHeader(name, stringResource(R.string.commercial_digital_payments_subtitle)), Modifier.testTag("commercial_digital_payments")) {
+    val subtitle = trend.current?.let { current ->
+        stringResource(R.string.commercial_digital_payments_current, trend.months.last().shortLabel(), formatPercent(current))
+    } ?: stringResource(R.string.commercial_digital_payments_subtitle)
+    ChartCard(ChartCardHeader(name, subtitle), Modifier.testTag("commercial_digital_payments")) {
         if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspColumnChart(data, valueFormat = { "${it.toInt()}%" })
     }
 }
@@ -277,12 +305,19 @@ private fun CountTrendCard(title: Int, trend: MonthlyTrend, color: Color, polari
     val data = ChartData(trend.months.map { it.shortLabel() }, listOf(ChartSeries(name, color, trend.values)))
     ChartCard(ChartCardHeader(name, stringResource(R.string.commercial_total_months, trend.months.size, formatCount(trend.total))),
         Modifier.testTag("commercial_trend_$title")) {
-        countDelta(trend, polarity, comparison(trend))?.let {
-            com.dscorp.ispadmin.presentation.designsystem.components.DeltaText(it)
+        trend.current?.let { current ->
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(IspSpacing.sm)) {
+                Text(formatCount(current), Modifier.testTag("commercial_trend_${title}_value"), style = IspType.kpi)
+                countDelta(trend, polarity, comparison(trend))?.let {
+                    com.dscorp.ispadmin.presentation.designsystem.components.DeltaText(it, Modifier.padding(bottom = 4.dp))
+                }
+            }
         }
-        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspColumnChart(data)
+        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspColumnChart(data, integers = true)
     }
 }
+
+private fun currentMonth(): java.time.YearMonth = java.time.YearMonth.now(java.time.ZoneId.of("America/Lima"))
 
 private fun timeLabel(millis: Long): String = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(millis))
 

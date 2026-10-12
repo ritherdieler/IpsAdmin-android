@@ -31,6 +31,13 @@ object IspType {
         lineHeight = 16.sp,
         fontFeatureSettings = TABULAR_NUMBERS,
     )
+    /** Section headers between cards: 18sp semibold, lighter than the Material title scale. */
+    val sectionTitle = TextStyle(
+        fontFamily = RobotoFlex,
+        fontWeight = FontWeight.W600,
+        fontSize = 18.sp,
+        lineHeight = 24.sp,
+    )
     val overline = TextStyle(
         fontFamily = RobotoFlex,
         fontWeight = FontWeight.W600,

@@ -19,7 +19,17 @@ data class MonthlyTrend(val months: List<YearMonth>, val values: List<Double>) {
     val current: Double? get() = values.lastOrNull()
     val previous: Double? get() = values.getOrNull(values.size - 2)
     val total: Double get() = values.sum()
+    val average: Double? get() = values.takeIf { it.isNotEmpty() }?.average()
 }
+
+/** New + reconnected − cancelled subscriptions of the current month. */
+internal fun netAdds(new: MonthlyTrend, reconnections: MonthlyTrend, cancellations: MonthlyTrend): Int? {
+    val added = (new.current ?: return null) + (reconnections.current ?: return null)
+    return (added - (cancellations.current ?: return null)).toInt()
+}
+
+/** Last month of [trend] when it is not [currentMonth], so the figure can say which month it is. */
+internal fun staleMonth(trend: MonthlyTrend, currentMonth: YearMonth): YearMonth? = trend.months.lastOrNull()?.takeIf { it != currentMonth }
 
 /**
  * What the commercial tab shows, derived from the legacy dashboard endpoint.
@@ -110,7 +120,7 @@ private val SPANISH_MONTHS = listOf("ene", "feb", "mar", "abr", "may", "jun", "j
 
 /**
  * `paymentResume` is keyed by short Spanish month name ("May.", "Set.") without a year. Each key is placed on
- * its most recent occurrence up to [currentMonth], then sorted chronologically.
+ * its most recent occurrence up to [currentMonth]; only the months of the dashboard window are kept, sorted chronologically.
  */
 internal fun digitalPayments(paymentResume: Map<String, Double>, currentMonth: YearMonth): MonthlyTrend {
     val byMonth = paymentResume.mapNotNull { (key, percent) ->
@@ -118,7 +128,8 @@ internal fun digitalPayments(paymentResume: Map<String, Double>, currentMonth: Y
         val yearsBack = if (number > currentMonth.monthValue) 1L else 0L
         YearMonth.of(currentMonth.year, number).minusYears(yearsBack) to percent
     }.toMap()
-    val months = byMonth.keys.sorted()
+    val firstMonth = currentMonth.minusMonths(WINDOW_MONTHS - 1)
+    val months = byMonth.keys.filter { it >= firstMonth }.sorted()
     return MonthlyTrend(months, months.map { byMonth.getValue(it) })
 }
 

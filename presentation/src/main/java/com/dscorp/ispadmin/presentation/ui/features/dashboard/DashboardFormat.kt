@@ -22,9 +22,9 @@ internal fun formatPercent(value: Double): String = "%.1f%%".format(PERU, value)
 
 internal fun formatDecimal(value: Double): String = "%.1f".format(PERU, value)
 
-private const val COMPACT_FROM = 100_000.0
+private const val COMPACT_FROM = 10_000.0
 
-/** Soles; very large values (usually bad source data) shortened so they fit one line: "S/ 986.7M". */
+/** Soles shortened from ten thousand so they fit a table column: "S/ 13.6k", "S/ 986.7M". */
 internal fun formatSolesCompact(value: Double): String = when {
     kotlin.math.abs(value) >= 1_000_000 -> "S/ %.1fM".format(PERU, value / 1_000_000)
     kotlin.math.abs(value) >= COMPACT_FROM -> "S/ %.1fk".format(PERU, value / 1_000)
@@ -71,3 +71,21 @@ internal fun solesDelta(trend: MonthlyTrend, polarity: Polarity, comparison: Str
     val change = (current - previous).roundTo(2)
     return KpiDelta("${arrow(change)} ${formatSoles(abs(change))}", tone(change, polarity), comparison)
 }
+
+/** Change from [from] to [to] in percent; null when [from] is zero. */
+internal fun percentChange(from: Double, to: Double): Double? = if (from == 0.0) null else (to - from) / kotlin.math.abs(from) * 100
+
+/** Each value as a percentage of the total; all zero when there is no total. */
+internal fun shares(values: List<Double>): List<Double> {
+    val total = values.sum()
+    return values.map { if (total > 0) it / total * 100 else 0.0 }
+}
+
+/**
+ * Chronological history of billed months: the month in progress ([currentMonth]) is left out because the monthly
+ * billing runs mid-month, and so are trailing months with nothing billed.
+ */
+internal fun billedMonths(history: List<com.dscorp.ispadmin.domain.model.MonthlyGrossRevenueResume>, currentMonth: YearMonth? = null) =
+    history.sortedBy { it.billingMonth }
+        .filter { month -> currentMonth == null || runCatching { YearMonth.parse(month.billingMonth.take(7)) < currentMonth }.getOrDefault(true) }
+        .dropLastWhile { it.totalCharged <= 0.0 }

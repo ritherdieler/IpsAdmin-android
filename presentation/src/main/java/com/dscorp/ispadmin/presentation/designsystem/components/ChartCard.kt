@@ -97,7 +97,7 @@ fun EmptyChart(text: String) {
 fun SectionHeader(title: String, modifier: Modifier = Modifier, caption: String? = null, action: CardAction? = null) {
     Row(modifier.fillMaxWidth().padding(top = IspSpacing.md), verticalAlignment = Alignment.Bottom) {
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleLarge)
+            Text(title, style = com.dscorp.ispadmin.presentation.theme.IspType.sectionTitle)
             caption?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

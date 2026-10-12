@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.data.repository
 
+import com.dscorp.ispadmin.data.datasource.remote.dashboard.AssistanceTicketsDto
 import com.dscorp.ispadmin.data.datasource.remote.dashboard.ClientsDashboardApi
 import com.dscorp.ispadmin.data.datasource.remote.dashboard.CollectionSummaryDto
 import com.google.gson.Gson
@@ -21,6 +22,19 @@ class DashboardRepositoriesTest {
         ClientsDashboardRepositoryImpl(api).load()
 
         coVerify { api.assistanceTickets(6) }
+    }
+
+    @Test fun `clients dashboard asks for the same six month window for zones and lifecycle`() = runTest {
+        ClientsDashboardRepositoryImpl(api).load()
+
+        coVerify { api.geographicPerformance(6) }
+        coVerify { api.clientLifecycle(6) }
+    }
+
+    @Test fun `open high priority tickets come from the current open snapshot`() {
+        val dto = Gson().fromJson("""{"ticketsByPriority":[0,339,19],"openTicketsByPriority":[4,1,3]}""", AssistanceTicketsDto::class.java)
+
+        assertEquals(3, dto.toDomain().openHighPriority)
     }
 
     @Test fun `collection summary keeps exact money and unknown ratios`() = runTest {

@@ -9,16 +9,16 @@ import kotlinx.coroutines.coroutineScope
 import retrofit2.HttpException
 import retrofit2.Response
 
-/** Ticket history shown in the Clients tab; open tickets are always current. */
-const val TICKET_HISTORY_MONTHS = 6
+/** History window of the Clients tab: tickets, zone incidents and cancellations. Open tickets are always current. */
+const val CLIENTS_WINDOW_MONTHS = 6
 
 class ClientsDashboardRepositoryImpl(private val api: ClientsDashboardApi) : ClientsDashboardRepository {
     override suspend fun load(): Result<ClientsDashboard> = coroutineScope {
         val plans = async { section { api.planAnalysis() }?.toDomain() }
-        val tickets = async { section { api.assistanceTickets(TICKET_HISTORY_MONTHS) }?.toDomain() }
+        val tickets = async { section { api.assistanceTickets(CLIENTS_WINDOW_MONTHS) }?.toDomain() }
         val quality = async { section { api.clientQuality() }?.toDomain() }
-        val zones = async { section { api.geographicPerformance() }?.toDomain() }
-        val lifecycle = async { section { api.clientLifecycle() }?.toDomain() }
+        val zones = async { section { api.geographicPerformance(CLIENTS_WINDOW_MONTHS) }?.toDomain() }
+        val lifecycle = async { section { api.clientLifecycle(CLIENTS_WINDOW_MONTHS) }?.toDomain() }
         val dashboard = ClientsDashboard(plans.await(), tickets.await(), quality.await(), zones.await(), lifecycle.await())
         val allFailed = listOf(dashboard.plans, dashboard.tickets, dashboard.quality, dashboard.zones, dashboard.lifecycle).all { it == null }
         if (allFailed) Result.failure(IllegalStateException("Clients dashboard unavailable")) else Result.success(dashboard)

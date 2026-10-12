@@ -79,3 +79,11 @@ El rediseño visual se hizo sin TDD, por decisión del usuario. La cobranza oper
 
 - Revisión visual: capturas de las 3 pestañas en claro y oscuro con Robolectric (`GraphicsMode.NATIVE`), mediante un test temporal no commiteado.
 - No se instaló en dispositivo ni se probó contra el Core real. En particular, falta validar contra datos reales los sub-endpoints de Clientes y el formato real de `subscriptionLogSummary.period`.
+
+## Segunda auditoría con datos de producción (2026-10-12, con TDD)
+
+- Pruebas nuevas: `DashboardLogicTest` (ranking top N + Otros, `formatSolesCompact`, `niceScale`/`divergingScale`, altas netas, ventana de pagos digitales, promedio, mes desfasado, meses facturados, `percentChange`, `shares`), `DashboardDesignUiTest` (Robolectric: hero de prioridad alta, rankings, zonas, altas netas, valor del mes, tendencia, % por método, recuperación, resumen de historial) y casos en `DashboardRepositoriesTest` (`months=6` en zonas y ciclo de vida, `openTicketsByPriority`). Suite: 458 pruebas en verde.
+- Design system: `IspType.sectionTitle`, `DonutChart`, `NiceScale.kt`; `IspColumnChart(integers, diverging)` e `IspLineChart(startAtZero)`.
+- `CLIENTS_WINDOW_MONTHS` (antes `TICKET_HISTORY_MONTHS`) = 6 cubre tickets, incidencias por zona y cancelaciones.
+- `subscription.price` es el monto pagado por la instalación. El Core lo usaba como ARPU por plan e ingreso por zona; desde 2026-10-12 ambos usan la mensualidad del plan (`plan.price`). La suscripción 1224 tiene una instalación mal digitada (986,690,708.00, nunca facturada) que ya no afecta al dashboard.
+- Detalle y capturas: `design/dashboard-redesign/README.md`.

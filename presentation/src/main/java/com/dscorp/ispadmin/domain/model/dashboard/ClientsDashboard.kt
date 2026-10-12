@@ -17,6 +17,8 @@ data class TicketSummary(
     val byCategory: List<Pair<String, Int>>,
     /** Counts by Core priority: index 0 = low, 1 = medium, 2 = high. */
     val byPriority: List<Int>,
+    /** Unfinished tickets of high priority right now; null when the Core does not send it. */
+    val openHighPriority: Int? = null,
 ) {
     val open: Int get() = pending + assigned + inProgress + reopened
     val highPriority: Int? get() = byPriority.getOrNull(HIGH_PRIORITY)

@@ -103,4 +103,22 @@
     <string name="clients_cancellations_by_zone">Cancelaciones por zona</string>
     <string name="clients_initial_failed">No se pudo cargar la información de clientes.</string>
     <string name="clients_partial_failed">Algunas secciones no se pudieron cargar.</string>
+
+    <!-- Design audit 2026-10-12 -->
+    <string name="dashboard_month_value">%1$s: %2$s</string>
+    <string name="dashboard_history_caption">Ingresos y recaudación por mes</string>
+    <string name="dashboard_window_caption">%1$s en los últimos %2$d meses</string>
+    <string name="commercial_net_adds">%1$s netos</string>
+    <string name="commercial_in_month">en %1$s</string>
+    <string name="commercial_net_adds_info">Altas + reconexiones − cancelaciones del mes.</string>
+    <string name="commercial_bajas">Bajas</string>
+    <string name="commercial_month_of">Dato de %1$s</string>
+    <string name="commercial_churn_average">Cancelaciones ÷ activos al inicio del mes · promedio %1$s</string>
+    <string name="commercial_digital_payments_current">%% de pagos por medios digitales · %1$s: %2$s</string>
+    <string name="clients_high_priority_open">! %1$s de prioridad alta</string>
+    <string name="clients_zones_top">%1$s · %2$d de %3$d zonas con más clientes</string>
+    <string name="financial_trend">Tendencia</string>
+    <string name="financial_trend_caption">Por mes de servicio · últimos %1$d meses</string>
+    <string name="financial_trend_chart">Facturado neto vs cobrado</string>
+    <string name="financial_recovery_caption">Recuperación de servicios anteriores: %1$s</string>
 </resources>

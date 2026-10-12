@@ -16,11 +16,13 @@ interface ClientsDashboardApi {
     @GET("dashboard/client-quality")
     suspend fun clientQuality(): Response<ClientQualityDto>
 
+    /** [months] limits the tickets behind incidents per 100 clients to the last N months. */
     @GET("dashboard/geographic-performance")
-    suspend fun geographicPerformance(): Response<GeographicPerformanceDto>
+    suspend fun geographicPerformance(@Query("months") months: Int?): Response<GeographicPerformanceDto>
 
+    /** [months] limits cancellations by plan and zone to the last N months. */
     @GET("dashboard/client-lifecycle")
-    suspend fun clientLifecycle(): Response<ClientLifecycleDto>
+    suspend fun clientLifecycle(@Query("months") months: Int?): Response<ClientLifecycleDto>
 
     @GET("dashboard/collections")
     suspend fun collections(): Response<CollectionSummaryDto>

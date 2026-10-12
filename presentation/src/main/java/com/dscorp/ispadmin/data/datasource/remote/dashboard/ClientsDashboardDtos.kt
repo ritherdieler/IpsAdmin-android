@@ -33,6 +33,7 @@ data class AssistanceTicketsDto(
     val reopenRate: Double? = null,
     val ticketsByCategory: Map<String, Int>? = null,
     val ticketsByPriority: List<Int>? = null,
+    val openTicketsByPriority: List<Int>? = null,
 ) {
     fun toDomain() = TicketSummary(
         total = totalTickets ?: 0,
@@ -44,6 +45,7 @@ data class AssistanceTicketsDto(
         reopenRatePercent = reopenRate?.takeUnless { it.isNaN() },
         byCategory = ticketsByCategory.orEmpty().entries.sortedByDescending { it.value }.map { it.key to it.value },
         byPriority = ticketsByPriority.orEmpty(),
+        openHighPriority = openTicketsByPriority?.getOrNull(TicketSummary.HIGH_PRIORITY),
     )
 }
 

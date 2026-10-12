@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,7 +43,8 @@ fun HorizontalBarList(
                 Text(item.label, Modifier.width(labelWidth), style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
                 ProgressTrack((item.value / maximum).toFloat(), item.color ?: barColor, Modifier.weight(1f), height = 10.dp)
-                Text(item.valueText, Modifier.width(72.dp), style = IspType.number, textAlign = TextAlign.End)
+                Text(item.valueText, Modifier.widthIn(min = 40.dp), style = IspType.number, textAlign = TextAlign.End,
+                    maxLines = 1, softWrap = false)
             }
         }
     }

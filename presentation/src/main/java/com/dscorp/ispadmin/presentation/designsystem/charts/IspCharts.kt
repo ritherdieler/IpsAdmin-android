@@ -40,8 +40,9 @@ import com.patrykandpatrick.vico.core.common.shape.CorneredShape
 
 private val CHART_HEIGHT = 180.dp
 private val COLUMN_THICKNESS = 12.dp
+private val DIVERGING_THICKNESS = 18.dp
 private const val VERTICAL_TICKS = 4
-private const val MAX_BOTTOM_LABELS = 6
+private const val MAX_BOTTOM_LABELS = 12
 
 /** One named series; values are aligned by index with [ChartData.labels]. */
 data class ChartSeries(val name: String, val color: Color, val values: List<Double>)
@@ -50,30 +51,59 @@ data class ChartData(val labels: List<String>, val series: List<ChartSeries>) {
     val isEmpty: Boolean get() = labels.isEmpty() || series.isEmpty() || series.all { it.values.isEmpty() }
 }
 
-/** Grouped column chart themed from the design system. One y-axis, starting at zero. */
+/**
+ * Grouped column chart themed from the design system. One y-axis, starting at zero, with round ticks
+ * ([integers] keeps counts on whole steps). [diverging] stacks the series on one column per label: pass the
+ * second series as negative values to draw it below zero; labels show magnitudes.
+ */
 @Composable
-fun IspColumnChart(data: ChartData, modifier: Modifier = Modifier, valueFormat: (Double) -> String = ::compactNumber) {
+fun IspColumnChart(
+    data: ChartData,
+    modifier: Modifier = Modifier,
+    valueFormat: (Double) -> String = ::compactNumber,
+    integers: Boolean = false,
+    diverging: Boolean = false,
+) {
     val columns = data.series.map { series ->
         rememberLineComponent(
             fill = fill(series.color),
-            thickness = COLUMN_THICKNESS,
-            shape = CorneredShape.rounded(4f, 4f, 0f, 0f),
+            thickness = if (diverging) DIVERGING_THICKNESS else COLUMN_THICKNESS,
+            shape = CorneredShape.rounded(4f, 4f, if (diverging) 4f else 0f, if (diverging) 4f else 0f),
         )
     }
+    val range = remember(data, integers, diverging) { columnRange(data, integers, diverging) }
     val layer = rememberColumnCartesianLayer(
         columnProvider = ColumnCartesianLayer.ColumnProvider.series(columns),
-        mergeMode = { ColumnCartesianLayer.MergeMode.grouped(columnSpacing = 2.dp) },
-        rangeProvider = CartesianLayerRangeProvider.fixed(minY = 0.0),
+        mergeMode = { if (diverging) ColumnCartesianLayer.MergeMode.Stacked else ColumnCartesianLayer.MergeMode.grouped(columnSpacing = 2.dp) },
+        rangeProvider = CartesianLayerRangeProvider.fixed(minY = range.min, maxY = range.max),
     )
     val model = remember(data) {
         CartesianChartModel(ColumnCartesianLayerModel.build { data.series.forEach { series(it.values) } })
     }
-    ChartHost(rememberCartesianChart(layer, startAxis = startAxis(valueFormat), bottomAxis = bottomAxis(data.labels)), model, modifier)
+    val format: (Double) -> String = if (diverging) { value -> valueFormat(kotlin.math.abs(value)) } else valueFormat
+    ChartHost(rememberCartesianChart(layer, startAxis = startAxis(format, range.step), bottomAxis = bottomAxis(data.labels)), model, modifier)
 }
 
-/** Line chart; a single series gets a faint area fill. The y-axis follows the data range with some headroom. */
+private fun columnRange(data: ChartData, integers: Boolean, diverging: Boolean): DivergingScale {
+    val values = data.series.flatMap { it.values }
+    if (diverging) {
+        return divergingScale(up = values.maxOrNull()?.coerceAtLeast(0.0) ?: 0.0, down = -(values.minOrNull()?.coerceAtMost(0.0) ?: 0.0))
+    }
+    val scale = niceScale(values.maxOrNull() ?: 0.0, integers)
+    return DivergingScale(min = 0.0, max = scale.max, step = scale.step)
+}
+
+/**
+ * Line chart; a single series gets a faint area fill. The y-axis follows the data range with some headroom, or
+ * runs from zero on round ticks when [startAtZero] (amounts whose level matters, not only their trend).
+ */
 @Composable
-fun IspLineChart(data: ChartData, modifier: Modifier = Modifier, valueFormat: (Double) -> String = ::compactNumber) {
+fun IspLineChart(
+    data: ChartData,
+    modifier: Modifier = Modifier,
+    valueFormat: (Double) -> String = ::compactNumber,
+    startAtZero: Boolean = false,
+) {
     val singleSeries = data.series.size == 1
     val lines = data.series.map { series ->
         LineCartesianLayer.rememberLine(
@@ -81,7 +111,8 @@ fun IspLineChart(data: ChartData, modifier: Modifier = Modifier, valueFormat: (D
             areaFill = if (singleSeries) LineCartesianLayer.AreaFill.single(fill(series.color.copy(alpha = 0.08f))) else null,
         )
     }
-    val range = remember(data) { lineRange(data) }
+    val zeroScale = remember(data, startAtZero) { if (startAtZero) niceScale(data.series.flatMap { it.values }.maxOrNull() ?: 0.0) else null }
+    val range = remember(data, zeroScale) { zeroScale?.let { 0.0..it.max } ?: lineRange(data) }
     val layer = rememberLineCartesianLayer(
         lineProvider = LineCartesianLayer.LineProvider.series(lines),
         rangeProvider = CartesianLayerRangeProvider.fixed(minY = range.start, maxY = range.endInclusive),
@@ -89,7 +120,7 @@ fun IspLineChart(data: ChartData, modifier: Modifier = Modifier, valueFormat: (D
     val model = remember(data) {
         CartesianChartModel(LineCartesianLayerModel.build { data.series.forEach { series(it.values) } })
     }
-    ChartHost(rememberCartesianChart(layer, startAxis = startAxis(valueFormat), bottomAxis = bottomAxis(data.labels)), model, modifier)
+    ChartHost(rememberCartesianChart(layer, startAxis = startAxis(valueFormat, zeroScale?.step), bottomAxis = bottomAxis(data.labels)), model, modifier)
 }
 
 @Composable
@@ -109,15 +140,18 @@ private fun axisLabel() = rememberTextComponent(
     textSize = 10.sp,
 )
 
+/** [step] places ticks on a round scale; without it the axis splits the range in [VERTICAL_TICKS]. */
 @Composable
-private fun startAxis(valueFormat: (Double) -> String): VerticalAxis<Axis.Position.Vertical.Start> =
+private fun startAxis(valueFormat: (Double) -> String, step: Double? = null): VerticalAxis<Axis.Position.Vertical.Start> =
     VerticalAxis.rememberStart(
         line = null,
         label = axisLabel(),
         valueFormatter = remember(valueFormat) { formatter { y -> valueFormat(y) } },
         tick = null,
         guideline = rememberLineComponent(fill = fill(IspTheme.colors.chartGrid), thickness = 1.dp),
-        itemPlacer = remember { VerticalAxis.ItemPlacer.count({ VERTICAL_TICKS }) },
+        itemPlacer = remember(step) {
+            if (step != null) VerticalAxis.ItemPlacer.step({ step }) else VerticalAxis.ItemPlacer.count({ VERTICAL_TICKS })
+        },
     )
 
 @Composable

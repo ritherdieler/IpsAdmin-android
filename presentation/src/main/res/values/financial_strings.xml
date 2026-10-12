@@ -14,10 +14,10 @@
     <string name="financial_received">Cobros recibidos</string>
     <string name="financial_received_dated">Cobros con fecha en el mes</string>
     <string name="financial_receipts_missing_date_warning">Cobros históricos sin fecha efectiva excluidos del cálculo mensual: %1$d</string>
-    <string name="financial_expenses">Egresos registrados</string>
-    <string name="financial_overdue">Cartera vencida confirmada</string>
+    <string name="financial_expenses">Egresos</string>
+    <string name="financial_overdue">Cartera vencida</string>
     <string name="financial_differences">Diferencias por conciliar</string>
-    <string name="financial_differences_service">Diferencias del mes de servicio</string>
+    <string name="financial_differences_service">Diferencias del servicio</string>
     <string name="financial_difference_scope">Diferencias por período</string>
     <string name="financial_difference_summary">Del servicio: %1$d · Otros períodos: %2$d · Sin período: %3$d</string>
     <string name="financial_difference_filter_service">Servicio %1$s · %2$d</string>
@@ -25,7 +25,7 @@
     <string name="financial_difference_service">Servicio: %1$s</string>
     <string name="financial_difference_related_receipts">Cobros relacionados: %1$s</string>
     <string name="financial_no_related_receipts">Sin cobros relacionados</string>
-    <string name="financial_partial_balance">Saldo parcial de movimientos registrados</string>
+    <string name="financial_partial_balance">Saldo parcial del mes</string>
     <string name="financial_cash_scope">Incluye cobros de suscripciones y egresos registrados. Cobros corporativos no incluidos.</string>
     <string name="financial_operational_scope">Acceso operativo a cobros y cartera. Los egresos y el presupuesto requieren acceso de gerencia o contabilidad.</string>
     <string name="financial_gross">Facturado bruto</string>
