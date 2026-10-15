@@ -31,6 +31,7 @@ class PayerFinderViewmodel(
     private companion object {
         const val OBS_FEATURE = "payment"
         const val OBS_SCREEN = "payer_finder"
+        const val SEARCH_ERROR = "No se pudo buscar. Revisa tu conexión y vuelve a intentar."
     }
 
     private val _state = MutableStateFlow(PayerFinderState())
@@ -48,8 +49,8 @@ class PayerFinderViewmodel(
     @OptIn(FlowPreview::class)
     private fun observeElectronicPayerSearch(query: String) {
         viewModelScope.launch {
-            if (query.isEmpty() || query.length < 3) {
-                _state.value = _state.value.copy(electronicPayers = emptyList())
+            if (query.trim().length < MIN_PAYER_QUERY) {
+                _state.value = _state.value.copy(electronicPayers = emptyList(), error = null)
                 return@launch
             }
             
@@ -74,7 +75,7 @@ class PayerFinderViewmodel(
                 )
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    error = e.message ?: "Error desconocido"
+                    error = SEARCH_ERROR
                 )
             }
         }
