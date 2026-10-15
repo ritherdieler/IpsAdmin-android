@@ -8,8 +8,7 @@
     <action>Tap login_username, escribir labmk1</action>
     <action>Tap login_password, escribir contraseña lab</action>
     <action>Tap login_submit</action>
-    <action>Tap main_nav_open_drawer</action>
-    <action>Tap drawer_nav_subscription_finder</action>
+    <action>Tap main_nav_subscriptions</action>
     <action>Tap subscription_search_filter_code</action>
     <action>Tap subscription_search_query_code e introducir 900001</action>
     <action>Tap subscription_result_item_900001</action>

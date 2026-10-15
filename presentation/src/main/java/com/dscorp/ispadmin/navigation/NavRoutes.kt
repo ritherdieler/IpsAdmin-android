@@ -49,6 +49,9 @@ sealed class NavRoutes {
         object Reports : FeatureRoutes()
 
         @Serializable
+        object More : FeatureRoutes()
+
+        @Serializable
         data class AsyncImageViewer(val imageUrl: String) : FeatureRoutes()
 
         @Serializable
@@ -160,6 +163,8 @@ sealed class NavRoutes {
                     Dashboard::class.qualifiedName -> Dashboard
                     Profile::class.qualifiedName -> Profile
                     Reports::class.qualifiedName -> Reports
+                    More::class.qualifiedName -> More
+                    Plan.List::class.qualifiedName -> Plan.List
                     AsyncImageViewer::class.qualifiedName -> AsyncImageViewer("")
 
                     Subscription.Register::class.qualifiedName -> Subscription.Register(0)

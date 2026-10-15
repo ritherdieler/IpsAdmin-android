@@ -16,7 +16,8 @@ import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
 import com.dscorp.ispadmin.presentation.ui.features.main.MainActivity
-import com.dscorp.ispadmin.presentation.ui.features.main.MainNavTestTags
+import com.dscorp.ispadmin.navigation.MainDestination
+import com.dscorp.ispadmin.presentation.ui.features.main.MainShellTestTags
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderTestTags
 import org.junit.Rule
 import org.junit.Test
@@ -71,7 +72,7 @@ class SubscriptionSearchStagingE2ETest {
     }
 
     private fun loginIfNeeded() {
-        waitUntilAnyTag(listOf("login_username", MainNavTestTags.OPEN_DRAWER), 90_000)
+        waitUntilAnyTag(listOf("login_username", MainShellTestTags.BOTTOM_BAR), 90_000)
         val loginVisible = composeRule.onAllNodesWithTag("login_username").fetchSemanticsNodes().isNotEmpty()
         if (!loginVisible) return
         composeRule.onNodeWithTag("login_username").performClick()
@@ -81,14 +82,13 @@ class SubscriptionSearchStagingE2ETest {
         composeRule.onNodeWithTag("login_password").performTextInput(password)
         closeSoftKeyboard()
         composeRule.onNodeWithTag("login_submit").performClick()
-        waitUntilTag(MainNavTestTags.OPEN_DRAWER, 90_000)
+        waitUntilTag(MainShellTestTags.BOTTOM_BAR, 90_000)
     }
 
     private fun openFinder() {
-        waitUntilTag(MainNavTestTags.OPEN_DRAWER, 60_000)
-        composeRule.onNodeWithTag(MainNavTestTags.OPEN_DRAWER).performClick()
-        waitUntilTag("drawer_nav_subscription_finder", 15_000)
-        composeRule.onNodeWithTag("drawer_nav_subscription_finder").performClick()
+        val subscriptions = MainShellTestTags.item(MainDestination.SUBSCRIPTIONS)
+        waitUntilTag(subscriptions, 60_000)
+        composeRule.onNodeWithTag(subscriptions).performClick()
     }
 
     private fun waitUntilTag(tag: String, timeoutMs: Long) {

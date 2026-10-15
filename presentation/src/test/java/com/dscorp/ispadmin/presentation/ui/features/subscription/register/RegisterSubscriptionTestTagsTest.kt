@@ -13,7 +13,7 @@ class RegisterSubscriptionTestTagsTest {
         }
         assertThat(RegisterSubscriptionTestTags.onuItem(0)).isEqualTo("register_onu_item_0")
         assertThat(RegisterSubscriptionTestTags.planItem(0)).isEqualTo("register_plan_item_0")
-        assertThat(RegisterSubscriptionNavTestTags.DRAWER_REGISTER).isNotEmpty()
+        assertThat(RegisterSubscriptionNavTestTags.MORE_REGISTER).isNotEmpty()
         assertThat(RegisterSubscriptionDebugActions.SET_FACADE_PHOTO).contains("DEBUG_SET_FACADE_PHOTO")
     }
 

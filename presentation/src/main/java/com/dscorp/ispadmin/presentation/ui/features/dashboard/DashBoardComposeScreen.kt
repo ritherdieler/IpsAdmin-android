@@ -36,9 +36,8 @@ data class DashboardTabData(
 
 /** Dashboard host: one hero band per tab, with the tab selector drawn inside it. */
 @Composable
-fun DashBoardComposeScreen(navController: NavHostController, onOpenDrawer: () -> Unit = {}) {
+fun DashBoardComposeScreen(navController: NavHostController) {
     val actions = DashboardActions(
-        openDrawer = onOpenDrawer,
         openTickets = { navController.navigate(NavRoutes.FeatureRoutes.SupportTicket.List) { launchSingleTop = true } },
         openSubscriptions = { navController.navigate(NavRoutes.FeatureRoutes.Subscription.Find) { launchSingleTop = true } },
     )

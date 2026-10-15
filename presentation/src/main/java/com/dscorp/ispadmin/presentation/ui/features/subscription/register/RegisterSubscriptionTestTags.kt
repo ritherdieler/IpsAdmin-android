@@ -114,5 +114,5 @@ object RegisterSubscriptionDebugActions {
 }
 
 object RegisterSubscriptionNavTestTags {
-    const val DRAWER_REGISTER = "drawer_nav_register_subscription"
+    const val MORE_REGISTER = "more_item_register_subscription"
 }

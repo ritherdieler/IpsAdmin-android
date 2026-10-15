@@ -36,7 +36,8 @@ import androidx.test.rule.GrantPermissionRule
 import androidx.test.uiautomator.UiDevice
 import com.dscorp.ispadmin.domain.model.AccessMode
 import com.dscorp.ispadmin.presentation.ui.features.main.MainActivity
-import com.dscorp.ispadmin.presentation.ui.features.main.MainNavTestTags
+import com.dscorp.ispadmin.navigation.MainDestination
+import com.dscorp.ispadmin.presentation.ui.features.main.MainShellTestTags
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderTestTags
 import com.google.android.material.textfield.TextInputLayout
 import com.google.common.truth.Truth.assertThat
@@ -251,7 +252,7 @@ class FiberRegisterFirstOnuE2ETest {
 
     private fun loginIfNeeded() {
         waitUntilAnyTag(
-            tags = listOf(E2eLoginTags.USERNAME, MainNavTestTags.OPEN_DRAWER),
+            tags = listOf(E2eLoginTags.USERNAME, MainShellTestTags.BOTTOM_BAR),
             timeoutMs = 90_000,
         )
         val loginVisible = composeRule.onAllNodesWithTag(E2eLoginTags.USERNAME)
@@ -279,10 +280,9 @@ class FiberRegisterFirstOnuE2ETest {
 
     private fun openNewServiceForExistingCustomer() {
         val subscriptionId = requireNotNull(existingSubscriptionId) { "e2e.subscriptionId is required" }
-        waitUntilTag(MainNavTestTags.OPEN_DRAWER, timeoutMs = 60_000)
-        composeRule.onNodeWithTag(MainNavTestTags.OPEN_DRAWER).performClick()
-        waitUntilTag("drawer_nav_subscription_finder", timeoutMs = 15_000)
-        composeRule.onNodeWithTag("drawer_nav_subscription_finder").performClick()
+        val subscriptions = MainShellTestTags.item(MainDestination.SUBSCRIPTIONS)
+        waitUntilTag(subscriptions, timeoutMs = 60_000)
+        composeRule.onNodeWithTag(subscriptions).performClick()
         waitUntilTag(SubscriptionFinderTestTags.FILTER_DOCUMENT, timeoutMs = 30_000)
         composeRule.onNodeWithTag(SubscriptionFinderTestTags.FILTER_DOCUMENT).performClick()
         waitUntilTag(SubscriptionFinderTestTags.QUERY_DOCUMENT, timeoutMs = 15_000)
@@ -302,10 +302,11 @@ class FiberRegisterFirstOnuE2ETest {
     }
 
     private fun openRegisterSubscription() {
-        waitUntilTag(MainNavTestTags.OPEN_DRAWER, timeoutMs = 60_000)
-        composeRule.onNodeWithTag(MainNavTestTags.OPEN_DRAWER).performClick()
-        waitUntilTag(RegisterSubscriptionNavTestTags.DRAWER_REGISTER, timeoutMs = 15_000)
-        composeRule.onNodeWithTag(RegisterSubscriptionNavTestTags.DRAWER_REGISTER).performClick()
+        val more = MainShellTestTags.item(MainDestination.MORE)
+        waitUntilTag(more, timeoutMs = 60_000)
+        composeRule.onNodeWithTag(more).performClick()
+        waitUntilTag(RegisterSubscriptionNavTestTags.MORE_REGISTER, timeoutMs = 15_000)
+        composeRule.onNodeWithTag(RegisterSubscriptionNavTestTags.MORE_REGISTER).performClick()
     }
 
     private fun ensureLocationReady() {
