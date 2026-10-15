@@ -31,7 +31,12 @@ import androidx.compose.material.icons.rounded.Phone
 import androidx.compose.material.icons.rounded.Router
 import androidx.compose.material.icons.rounded.SignalCellularAlt
 import androidx.compose.material.icons.rounded.Wifi
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -51,6 +56,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import android.content.Context
+import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.ChargeSheetContent
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.ChargeSheetState
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.HubAction
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.HubQuickActions
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.SubscriptionHubEvent
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.SubscriptionHubHeader
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.SubscriptionHubIntent
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.SubscriptionHubViewModel
 import com.dscorp.components.components.loaders.Loader
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
@@ -99,8 +114,24 @@ fun SubscriptionDetailScreen(
     subscriptionId: Int,
     viewModel: SubscriptionDetailViewModel = koinViewModel(),
     accessMigrationViewModel: AccessMigrationViewModel = koinViewModel(),
+    hubViewModel: SubscriptionHubViewModel = koinViewModel(),
     navController: NavController
 ) {
+    val hubState by hubViewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(subscriptionId) {
+        hubViewModel.onIntent(SubscriptionHubIntent.Load(subscriptionId))
+    }
+    LaunchedEffect(hubViewModel) {
+        hubViewModel.events.collect { event ->
+            when (event) {
+                is SubscriptionHubEvent.Message -> {
+                    viewModel.getSubscription(subscriptionId)
+                    snackbarHostState.showSnackbar(event.text)
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.getSubscription(subscriptionId)
@@ -211,7 +242,67 @@ fun SubscriptionDetailScreen(
                 accessMigrationState = accessMigrationState,
                 onAccessMigrationIntent = accessMigrationViewModel::onIntent,
                 onProvisioningClick = { navController.navigate(com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription.Provisioning(subscriptionId)) },
+                hubHeader = hubState.header?.let { header ->
+                    {
+                        SubscriptionHubHeader(header, onCharge = { hubViewModel.onIntent(SubscriptionHubIntent.OpenCharge) })
+                        HubQuickActions(
+                            actions = HubAction.available(
+                                hasPhone = !loadedSubscription.phone.isNullOrBlank(),
+                                isFiber = loadedSubscription.installationType == InstallationType.FIBER,
+                            ),
+                            onAction = { action ->
+                                onHubAction(action, loadedSubscription, context, navController)
+                            },
+                        )
+                    }
+                },
             )
+        }
+        hubState.charge?.let { charge ->
+            ChargeBottomSheet(
+                charge = charge,
+                holderName = hubState.header?.name.orEmpty(),
+                onIntent = hubViewModel::onIntent,
+            )
+        }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+            SnackbarHost(snackbarHostState)
+        }
+    }
+}
+
+private fun onHubAction(action: HubAction, subscription: SubscriptionResponse, context: Context, navController: NavController) {
+    when (action) {
+        HubAction.CALL -> subscription.phone?.let { dial(context, it) }
+        HubAction.WHATSAPP -> subscription.phone?.let { openWhatsApp(context, it) }
+        HubAction.PAYMENTS -> navController.navigate(FeatureRoutes.Payment.History(subscription.id, subscription.serviceStatus.toString()))
+        HubAction.TICKET -> navController.navigate(FeatureRoutes.SupportTicket.Create)
+        HubAction.PROVISIONING -> navController.navigate(FeatureRoutes.Subscription.Provisioning(subscription.id))
+    }
+}
+
+private fun dial(context: Context, phoneNumber: String) {
+    context.startActivity(Intent(Intent.ACTION_DIAL).apply { data = Uri.parse("tel:$phoneNumber") })
+}
+
+private fun openWhatsApp(context: Context, phoneNumber: String) {
+    try {
+        val cleanNumber = phoneNumber.replace("+", "").replace(" ", "").replace("-", "")
+        context.startActivity(Intent(Intent.ACTION_VIEW).apply { data = Uri.parse("https://wa.me/51$cleanNumber") })
+    } catch (e: Exception) {
+        Toast.makeText(context, "No se pudo abrir WhatsApp", Toast.LENGTH_SHORT).show()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ChargeBottomSheet(charge: ChargeSheetState, holderName: String, onIntent: (SubscriptionHubIntent) -> Unit) {
+    ModalBottomSheet(
+        onDismissRequest = { onIntent(SubscriptionHubIntent.CloseCharge) },
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            ChargeSheetContent(charge.draft, holderName, onIntent, isSubmitting = charge.isSubmitting, error = charge.error)
         }
     }
 }
@@ -226,6 +317,8 @@ fun SubscriptionDetailForm(
     accessMigrationState: AccessMigrationUiState = AccessMigrationUiState(),
     onAccessMigrationIntent: (AccessMigrationIntent) -> Unit = {},
     onProvisioningClick: () -> Unit = {},
+    /** Proposal A hub header (band, debt card, quick actions). Null keeps the previous header for previews. */
+    hubHeader: (@Composable () -> Unit)? = null,
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -257,12 +350,13 @@ fun SubscriptionDetailForm(
             .fillMaxSize()
             .verticalScroll(scrollState)    
     ) {
-        if (subscription.installationType == InstallationType.FIBER) {
+        if (hubHeader != null) hubHeader()
+        if (hubHeader == null && subscription.installationType == InstallationType.FIBER) {
             Button(modifier = Modifier.testTag("subscription_provisioning"), onClick = onProvisioningClick) {
                 Text("Ver registro de la ONU")
             }
         }
-        Surface(
+        if (hubHeader == null) Surface(
             modifier = Modifier.fillMaxWidth(),
             color = when (subscription.serviceStatus) {
                 ServiceStatus.ACTIVE -> MaterialTheme.colorScheme.primary
@@ -381,7 +475,7 @@ fun SubscriptionDetailForm(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            subscription.phone?.let { phoneNumber ->
+            subscription.phone?.takeIf { hubHeader == null }?.let { phoneNumber ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)

@@ -24,6 +24,8 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.EditSubscr
 import com.dscorp.ispadmin.presentation.ui.features.subscription.pending.PendingSubscriptionsViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionComposeViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.SubscriptionDetailViewModel
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.RepositorySubscriptionHubGateway
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.SubscriptionHubViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.accessmigration.AccessMigrationViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.CreateSupportTicketViewModel
@@ -82,6 +84,12 @@ val viewModelModule = module {
     viewModel { MufaViewModel(get(), get()) }
     viewModel { EditSubscriptionViewModel(get(), get()) }
     viewModel { SubscriptionDetailViewModel(get(), get(), get()) }
+    viewModel {
+        SubscriptionHubViewModel(
+            gateway = RepositorySubscriptionHubGateway(get(), get()),
+            mainImmediate = get<CoroutineDispatcher>(named("mainImmediate")),
+        )
+    }
     viewModel {
         AccessMigrationViewModel(
             get(),

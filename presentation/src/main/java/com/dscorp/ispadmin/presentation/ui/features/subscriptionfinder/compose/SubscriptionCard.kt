@@ -105,7 +105,9 @@ fun SubscriptionCard(
         else -> MaterialTheme.colorScheme.onSurface
     }
 
+    // The whole card opens the subscription hub, where every action lives.
     ElevatedCard(
+        onClick = { onMenuItemSelected(SubscriptionMenu.SEE_DETAILS) },
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
