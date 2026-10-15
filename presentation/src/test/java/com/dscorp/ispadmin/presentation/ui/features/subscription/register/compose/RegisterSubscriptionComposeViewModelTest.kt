@@ -296,7 +296,7 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
-    fun `selected ONU is authorized directly and exposes only ACS retry or cancel`() = runTest(testDispatcher) {
+    fun `selected ONU is authorized directly and the client form opens while ACS is pending`() = runTest(testDispatcher) {
         val onu = Onu("1", "olt-lab", "3", "type-1", "VSOLVA74", "gpon", "2", "VSOL0031C0B6")
         val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
         val waiting = OnuRegistrationOperation(
@@ -322,10 +322,12 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
         advanceUntilIdle()
 
+        // Proposal A: the technician keeps filling the form while ACS confirms the ONU.
         assertEquals(
-            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.WAITING_FOR_ACS,
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.CLIENT_LOCATION,
             viewModel.uiState.value.wizardStep,
         )
+        assertTrue(viewModel.uiState.value.acsPending)
         assertEquals(waiting, viewModel.uiState.value.preauthorizationOperation)
         coVerify(exactly = 1) {
             operationUseCase.start(match { it.serial == onu.sn && it.target.oltId == onu.olt_id && it.target.board == onu.board && it.target.port == onu.port })
@@ -368,7 +370,91 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
-    fun `ACS watch leaves the waiting screen visible while the check is in flight`() = runTest(testDispatcher) {
+    fun `ACS confirming the ONU does not overwrite what the technician already typed`() = runTest(testDispatcher) {
+        val onu = Onu("1", "olt-lab", "3", "type-1", "VSOLVA74", "gpon", "2", "VSOL0031C0B6")
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val waiting = OnuRegistrationOperation(
+            id = "preauth-typing", serial = onu.sn, subscriptionId = null,
+            phase = "WAITING_FOR_ACS", state = "WAITING", revision = 2,
+        )
+        val ready = waiting.copy(phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 3)
+        val confirm = CompletableDeferred<OnuRegistrationOperation>()
+        coEvery { operationUseCase.active() } returns null
+        coEvery { operationUseCase.start(any()) } returns waiting
+        coEvery { operationUseCase.draft(any()) } returns null
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { operationUseCase.retry(waiting.id, waiting.revision) } coAnswers { confirm.await() }
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(onus = listOf(fiberOnu().copy(sn = onu.sn)))
+        )
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
+        viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        testScheduler.runCurrent()
+
+        viewModel.onIntent(RegisterSubscriptionIntent.FirstNameChanged("Lucía"))
+        confirm.complete(ready)
+        testScheduler.advanceTimeBy(6_000)
+        testScheduler.runCurrent()
+
+        assertEquals(com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.CLIENT_LOCATION, viewModel.uiState.value.wizardStep)
+        assertEquals("LUCÍA", viewModel.uiState.value.registerSubscriptionForm.firstName)
+        assertFalse(viewModel.uiState.value.acsPending)
+        coVerify(exactly = 0) { operationUseCase.draft(any()) }
+    }
+
+    @Test
+    fun `registering is blocked until ACS confirms the ONU`() = runTest(testDispatcher) {
+        val onu = Onu("1", "olt-lab", "3", "type-1", "VSOLVA74", "gpon", "2", "VSOL0031C0B6")
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val waiting = OnuRegistrationOperation(
+            id = "preauth-submit", serial = onu.sn, subscriptionId = null,
+            phase = "WAITING_FOR_ACS", state = "WAITING", revision = 2,
+        )
+        coEvery { operationUseCase.active() } returns null
+        coEvery { operationUseCase.start(any()) } returns waiting
+        coEvery { operationUseCase.retry(waiting.id, any()) } returns waiting
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(onus = listOf(fiberOnu().copy(sn = onu.sn)))
+        )
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
+        viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        testScheduler.runCurrent()
+
+        viewModel.onIntent(RegisterSubscriptionIntent.RegisterClick(null))
+        testScheduler.runCurrent()
+
+        assertEquals(
+            "El equipo aún no conecta con la gestión remota. Te avisamos cuando esté listo para registrar.",
+            viewModel.uiState.value.submitBlockedReason,
+        )
+        coVerify(exactly = 0) { registerSubscriptionUseCase(any(), any(), any()) }
+    }
+
+    @Test
+    fun `a failed ACS wait still shows the waiting screen with retry and cleanup`() = runTest(testDispatcher) {
+        val failed = OnuRegistrationOperation(
+            id = "preauth-failed", serial = "VSOL0031C0B6", subscriptionId = null,
+            phase = "WAITING_FOR_ACS", state = "FAILED", revision = 4,
+        )
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        coEvery { operationUseCase.active() } returns failed
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        assertEquals(com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.WAITING_FOR_ACS, viewModel.uiState.value.wizardStep)
+        assertFalse(viewModel.uiState.value.acsPending)
+    }
+
+    @Test
+    fun `ACS watch keeps the client form open while the check is in flight`() = runTest(testDispatcher) {
         val onu = Onu("1", "olt-lab", "3", "type-1", "VSOLVA74", "gpon", "2", "VSOL0031C0B6")
         val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
         val waiting = OnuRegistrationOperation(
@@ -399,7 +485,7 @@ class RegisterSubscriptionComposeViewModelTest {
 
         assertFalse(requestStarted.isCompleted)
         assertEquals(
-            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.WAITING_FOR_ACS,
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.CLIENT_LOCATION,
             viewModel.uiState.value.wizardStep,
         )
 
@@ -410,7 +496,7 @@ class RegisterSubscriptionComposeViewModelTest {
         assertFalse(viewModel.uiState.value.isLoading)
         assertFalse(viewModel.uiState.value.isPreauthorizationRequestInProgress)
         assertEquals(
-            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.WAITING_FOR_ACS,
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.CLIENT_LOCATION,
             viewModel.uiState.value.wizardStep,
         )
 
@@ -531,7 +617,7 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
         advanceUntilIdle()
         assertEquals(
-            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.WAITING_FOR_ACS,
+            com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.CLIENT_LOCATION,
             viewModel.uiState.value.wizardStep,
         )
 

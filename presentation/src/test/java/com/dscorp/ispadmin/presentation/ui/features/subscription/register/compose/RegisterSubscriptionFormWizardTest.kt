@@ -17,6 +17,7 @@ import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.NetworkDevice
 import com.dscorp.ispadmin.domain.model.Onu
+import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.RegistrationProgressCheckpoint
@@ -450,4 +451,55 @@ class RegisterSubscriptionFormWizardTest {
         wifiSsid24 = "CasaFibra",
         wifiPassword24 = "clave123",
     )
+
+    private fun acsOperation(phase: String, state: String) =
+        OnuRegistrationOperation("op-1", "VSOL0031C0B6", null, phase, state, 2)
+
+    @Test
+    fun `client form is usable while ACS is still connecting the ONU`() {
+        val state = RegisterSubscriptionState(
+            wizardStep = RegisterSubscriptionWizardStep.CLIENT_LOCATION,
+            preauthorizationEnabled = true,
+            preauthorizationOperation = acsOperation("WAITING_FOR_ACS", "WAITING"),
+        )
+
+        composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        composeRule.setContent { MaterialTheme { RegisterSubscriptionForm(formState = state) } }
+
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ACS_PENDING_BANNER).assertExists()
+        composeRule.onNodeWithText("ONU VSOL0031C0B6 · conectando con la gestión remota…").assertExists()
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.FIRST_NAME).assertExists()
+    }
+
+    @Test
+    fun `the ready banner follows the technician to the last step`() {
+        val state = RegisterSubscriptionState(
+            wizardStep = RegisterSubscriptionWizardStep.CONFIRMATION,
+            preauthorizationEnabled = true,
+            preauthorizationOperation = acsOperation("READY_FOR_FORM", "READY_FOR_FORM"),
+        )
+
+        composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        composeRule.setContent { MaterialTheme { RegisterSubscriptionForm(formState = state) } }
+
+        composeRule.onNodeWithText("Equipo listo").assertExists()
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ACS_PENDING_BANNER).assertDoesNotExist()
+    }
+
+    @Test
+    fun `blocked submit explains why next to the register button`() {
+        val state = RegisterSubscriptionState(
+            wizardStep = RegisterSubscriptionWizardStep.CONFIRMATION,
+            preauthorizationEnabled = true,
+            preauthorizationOperation = acsOperation("WAITING_FOR_ACS", "WAITING"),
+            submitBlockedReason = "El equipo aún no conecta con la gestión remota.",
+        )
+
+        composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        composeRule.setContent { MaterialTheme { RegisterSubscriptionForm(formState = state) } }
+
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SUBMIT_BLOCKED_REASON)
+            .assertTextEquals("El equipo aún no conecta con la gestión remota.")
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SUBMIT).assertExists()
+    }
 }
