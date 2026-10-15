@@ -18,7 +18,9 @@ import java.time.ZoneId
 data class FinancialUiState(
     val report: FinancialReport? = null, val isLoading: Boolean = false, val failed: Boolean = false,
     val serviceMonth: String = "", val movementsMonth: String = "", val billingView: Boolean = false,
-    val exporting: Boolean = false, val exportFailed: Boolean = false
+    val exporting: Boolean = false, val exportFailed: Boolean = false,
+    /** Previous movements month, only to compare the money received; null while unknown. */
+    val previousReport: FinancialReport? = null,
 )
 sealed interface FinancialIntent {
     data object Load : FinancialIntent
@@ -49,12 +51,12 @@ class FinancialViewModel(
             is FinancialIntent.SelectView -> state.update { it.copy(billingView = intent.billing) }
             is FinancialIntent.SelectServiceMonth -> {
                 YearMonth.parse(intent.month)
-                state.update { it.copy(serviceMonth = intent.month, report = null) }
+                state.update { it.copy(serviceMonth = intent.month, report = null, previousReport = null) }
                 load()
             }
             is FinancialIntent.SelectMovementsMonth -> {
                 YearMonth.parse(intent.month)
-                state.update { it.copy(movementsMonth = intent.month, report = null) }
+                state.update { it.copy(movementsMonth = intent.month, report = null, previousReport = null) }
                 load()
             }
         }
@@ -71,7 +73,14 @@ class FinancialViewModel(
                 onSuccess = { report -> state.update { it.copy(report = report, isLoading = false, failed = false) } },
                 onFailure = { state.update { it.copy(isLoading = false, failed = true) } }
             )
+            if (result.isSuccess) loadPrevious(service, movements)
         }
+    }
+    /** The month before, only to compare the money received; failing to load it never fails the screen. */
+    private suspend fun loadPrevious(service: String, movements: String) {
+        val previous = repository.load(YearMonth.parse(service).minusMonths(1).toString(), YearMonth.parse(movements).minusMonths(1).toString())
+        previous.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+        state.update { it.copy(previousReport = previous.getOrNull()) }
     }
     private fun export() {
         if (exportJob?.isActive == true) return

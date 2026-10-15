@@ -89,3 +89,18 @@ internal fun billedMonths(history: List<com.dscorp.ispadmin.domain.model.Monthly
     history.sortedBy { it.billingMonth }
         .filter { month -> currentMonth == null || runCatching { YearMonth.parse(month.billingMonth.take(7)) < currentMonth }.getOrDefault(true) }
         .dropLastWhile { it.totalCharged <= 0.0 }
+
+/** Change in hours with one decimal: "▼ 2.1 h". */
+internal fun hoursDelta(trend: MonthlyTrend, polarity: Polarity, comparison: String?): KpiDelta? {
+    val current = trend.current ?: return null
+    val previous = trend.previous ?: return null
+    val change = (current - previous).roundTo(1)
+    return KpiDelta("${arrow(change)} ${formatDecimal(abs(change))} h", tone(change, polarity), comparison)
+}
+
+/** Change between two counts: "▼ 5"; null without a previous count. */
+internal fun countChange(current: Int, previous: Int?, polarity: Polarity, comparison: String?): KpiDelta? {
+    previous ?: return null
+    val change = (current - previous).toDouble()
+    return KpiDelta("${arrow(change)} ${formatCount(abs(change))}", tone(change, polarity), comparison)
+}

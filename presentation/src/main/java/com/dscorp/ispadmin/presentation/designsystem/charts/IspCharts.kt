@@ -23,6 +23,19 @@ import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
 import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
 import com.patrykandpatrick.vico.compose.common.fill
+import com.patrykandpatrick.vico.compose.common.insets
+import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
+import com.patrykandpatrick.vico.compose.cartesian.marker.rememberDefaultCartesianMarker
+import com.patrykandpatrick.vico.core.cartesian.marker.CartesianMarker
+import com.patrykandpatrick.vico.core.cartesian.marker.CartesianMarkerVisibilityListener
+import com.patrykandpatrick.vico.core.cartesian.decoration.Decoration
+import com.patrykandpatrick.vico.core.cartesian.decoration.HorizontalLine
+import com.patrykandpatrick.vico.core.common.Position
+import com.patrykandpatrick.vico.core.common.data.ExtraStore
+import com.patrykandpatrick.vico.core.common.shape.DashedShape
+import com.patrykandpatrick.vico.core.common.shape.Shape
+import com.patrykandpatrick.vico.compose.cartesian.layer.point
+import com.patrykandpatrick.vico.core.cartesian.marker.DefaultCartesianMarker
 import com.patrykandpatrick.vico.core.cartesian.CartesianChart
 import com.patrykandpatrick.vico.core.cartesian.CartesianMeasuringContext
 import com.patrykandpatrick.vico.core.cartesian.Zoom
@@ -63,6 +76,8 @@ fun IspColumnChart(
     valueFormat: (Double) -> String = ::compactNumber,
     integers: Boolean = false,
     diverging: Boolean = false,
+    markerFormat: (Double) -> String = ::exactNumber,
+    showAverage: Boolean = false,
 ) {
     val columns = data.series.map { series ->
         rememberLineComponent(
@@ -81,7 +96,11 @@ fun IspColumnChart(
         CartesianChartModel(ColumnCartesianLayerModel.build { data.series.forEach { series(it.values) } })
     }
     val format: (Double) -> String = if (diverging) { value -> valueFormat(kotlin.math.abs(value)) } else valueFormat
-    ChartHost(rememberCartesianChart(layer, startAxis = startAxis(format, range.step), bottomAxis = bottomAxis(data.labels)), model, modifier)
+    val marker = rememberValueMarker(data, if (diverging) { value -> markerFormat(kotlin.math.abs(value)) } else markerFormat)
+    val selection = rememberMarkerSelection(data)
+    ChartHost(rememberCartesianChart(layer, startAxis = startAxis(format, range.step), bottomAxis = bottomAxis(data.labels), marker = marker,
+        markerVisibilityListener = selection.listener, persistentMarkers = selection.persistent(marker),
+        decorations = averageLine(data, showAverage)), model, modifier)
 }
 
 private fun columnRange(data: ChartData, integers: Boolean, diverging: Boolean): DivergingScale {
@@ -103,12 +122,16 @@ fun IspLineChart(
     modifier: Modifier = Modifier,
     valueFormat: (Double) -> String = ::compactNumber,
     startAtZero: Boolean = false,
+    markerFormat: (Double) -> String = ::exactNumber,
+    showAverage: Boolean = false,
 ) {
     val singleSeries = data.series.size == 1
+    val lastIndex = data.labels.lastIndex
     val lines = data.series.map { series ->
         LineCartesianLayer.rememberLine(
             fill = LineCartesianLayer.LineFill.single(fill(series.color)),
             areaFill = if (singleSeries) LineCartesianLayer.AreaFill.single(fill(series.color.copy(alpha = 0.08f))) else null,
+            pointProvider = rememberMonthPoints(series.color, lastIndex),
         )
     }
     val zeroScale = remember(data, startAtZero) { if (startAtZero) niceScale(data.series.flatMap { it.values }.maxOrNull() ?: 0.0) else null }
@@ -120,7 +143,11 @@ fun IspLineChart(
     val model = remember(data) {
         CartesianChartModel(LineCartesianLayerModel.build { data.series.forEach { series(it.values) } })
     }
-    ChartHost(rememberCartesianChart(layer, startAxis = startAxis(valueFormat, zeroScale?.step), bottomAxis = bottomAxis(data.labels)), model, modifier)
+    val marker = rememberValueMarker(data, markerFormat)
+    val selection = rememberMarkerSelection(data)
+    ChartHost(rememberCartesianChart(layer, startAxis = startAxis(valueFormat, zeroScale?.step), bottomAxis = bottomAxis(data.labels), marker = marker,
+        markerVisibilityListener = selection.listener, persistentMarkers = selection.persistent(marker),
+        decorations = averageLine(data, showAverage)), model, modifier)
 }
 
 @Composable
@@ -133,6 +160,112 @@ private fun ChartHost(chart: CartesianChart, model: CartesianChartModel, modifie
         zoomState = rememberVicoZoomState(false, Zoom.Content, Zoom.Content, Zoom.Content),
     )
 }
+
+/**
+ * Shown when a month is touched: a guideline and a label with the month and the exact value of each series
+ * ("sep\nNeto: S/ 49,000.00\nCobrado: S/ 45,000.00"). Values come from [data] by month, so they match the bars.
+ */
+@Composable
+private fun rememberValueMarker(data: ChartData, format: (Double) -> String): CartesianMarker {
+    val label = rememberTextComponent(
+        color = MaterialTheme.colorScheme.inverseOnSurface,
+        textSize = 12.sp,
+        lineCount = data.series.size + 1,
+        padding = insets(MARKER_PADDING_H, MARKER_PADDING_V),
+        background = rememberShapeComponent(fill(MaterialTheme.colorScheme.inverseSurface), CorneredShape.rounded(6f, 6f, 6f, 6f)),
+    )
+    val formatter = remember(data, format) {
+        DefaultCartesianMarker.ValueFormatter { _, targets -> markerText(data, targets.firstOrNull()?.x?.toInt(), format) }
+    }
+    return rememberDefaultCartesianMarker(
+        label = label,
+        valueFormatter = formatter,
+        guideline = rememberLineComponent(fill(MaterialTheme.colorScheme.outline), thickness = 1.dp),
+    )
+}
+
+/**
+ * One point per month with a ring in the card color, so each month reads on its own; the latest month is larger
+ * because it is the one the screen talks about.
+ */
+@Composable
+private fun rememberMonthPoints(color: Color, lastIndex: Int): LineCartesianLayer.PointProvider {
+    val ring = IspTheme.colors.card
+    val regular = LineCartesianLayer.point(
+        rememberShapeComponent(fill(color), CorneredShape.Pill, strokeFill = fill(ring), strokeThickness = POINT_RING), POINT_SIZE)
+    val latest = LineCartesianLayer.point(
+        rememberShapeComponent(fill(color), CorneredShape.Pill, strokeFill = fill(ring), strokeThickness = POINT_RING), LATEST_POINT_SIZE)
+    return remember(regular, latest, lastIndex) {
+        object : LineCartesianLayer.PointProvider {
+            override fun getPoint(entry: LineCartesianLayerModel.Entry, seriesIndex: Int, extraStore: ExtraStore) =
+                if (entry.x.toInt() == lastIndex) latest else regular
+
+            override fun getLargestPoint(extraStore: ExtraStore) = latest
+        }
+    }
+}
+
+/**
+ * Dashed average of a single series, to read each month as above or below usual. Only for monthly flows
+ * ([showAverage]); levels such as subscribers and multi-series charts skip it. The value goes in the card
+ * subtitle (see [averageCaption]) so it never covers a bar or the line.
+ */
+@Composable
+private fun averageLine(data: ChartData, showAverage: Boolean): List<Decoration> {
+    val values = data.series.singleOrNull()?.values?.takeIf { it.size > 1 }
+    val line = rememberLineComponent(fill(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = AVERAGE_ALPHA)), thickness = 1.dp,
+        shape = DashedShape(Shape.Rectangle, DASH_LENGTH, DASH_GAP))
+    if (!showAverage || values == null) return emptyList()
+    val average = values.average()
+    return remember(average, line) { listOf(HorizontalLine(y = { average }, line = line)) }
+}
+
+/** "prom. 19.7" for the subtitle of a card whose chart draws the dashed average; null when it draws none. */
+fun averageCaption(values: List<Double>, format: (Double) -> String): String? =
+    values.takeIf { it.size > 1 }?.let { "prom. ${format(it.average())}" }
+
+private val POINT_SIZE = 8.dp
+private val LATEST_POINT_SIZE = 11.dp
+private val POINT_RING = 2.dp
+private const val AVERAGE_ALPHA = 0.7f
+private const val DASH_LENGTH = 4f
+private const val DASH_GAP = 3f
+
+/** Month last touched; its value stays visible after the finger lifts, until another month is touched. */
+private class MarkerSelection(private val selected: androidx.compose.runtime.MutableState<Double?>) {
+    val listener = object : CartesianMarkerVisibilityListener {
+        override fun onShown(marker: CartesianMarker, targets: List<CartesianMarker.Target>) = select(targets)
+        override fun onUpdated(marker: CartesianMarker, targets: List<CartesianMarker.Target>) = select(targets)
+        override fun onHidden(marker: CartesianMarker) = Unit
+    }
+
+    private fun select(targets: List<CartesianMarker.Target>) {
+        targets.firstOrNull()?.let { selected.value = it.x }
+    }
+
+    fun persistent(marker: CartesianMarker): (CartesianChart.PersistentMarkerScope.(com.patrykandpatrick.vico.core.common.data.ExtraStore) -> Unit)? {
+        val x = selected.value ?: return null
+        return { marker at x }
+    }
+}
+
+@Composable
+private fun rememberMarkerSelection(data: ChartData): MarkerSelection {
+    val selected = remember(data) { androidx.compose.runtime.mutableStateOf<Double?>(null) }
+    return remember(selected) { MarkerSelection(selected) }
+}
+
+private fun markerText(data: ChartData, index: Int?, format: (Double) -> String): CharSequence {
+    index ?: return ""
+    val month = data.labels.getOrNull(index).orEmpty()
+    val values = data.series.mapNotNull { series ->
+        series.values.getOrNull(index)?.let { value -> if (data.series.size == 1) format(value) else "${series.name}: ${format(value)}" }
+    }
+    return (listOf(month) + values).joinToString("\n")
+}
+
+private val MARKER_PADDING_H = 8.dp
+private val MARKER_PADDING_V = 4.dp
 
 @Composable
 private fun axisLabel() = rememberTextComponent(
@@ -183,6 +316,10 @@ private fun lineRange(data: ChartData): ClosedFloatingPointRange<Double> {
     val start = (min - padding).let { if (min >= 0 && it < 0) 0.0 else it }
     return start..(max + padding)
 }
+
+/** Full value for the touch label: 41870.4 -> "41,870.4", 1284.0 -> "1,284", 1.25 -> "1.25". */
+fun exactNumber(value: Double): String =
+    java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("es-PE")).apply { maximumFractionDigits = 2 }.format(value)
 
 /** 41870.0 -> "41.9k", 1284.0 -> "1,284", 866.7 -> "867", 1.25 -> "1.3". */
 fun compactNumber(value: Double): String {

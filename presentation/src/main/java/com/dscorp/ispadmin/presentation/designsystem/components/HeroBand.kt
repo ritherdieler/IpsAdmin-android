@@ -9,6 +9,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -43,7 +50,7 @@ fun HeroTop(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -
         Column(
             modifier.fillMaxWidth().background(colors.hero)
                 .padding(start = IspSpacing.lg, end = IspSpacing.lg, top = IspSpacing.sm, bottom = IspSpacing.xs),
-            verticalArrangement = Arrangement.spacedBy(IspSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(IspSpacing.md),
             content = content,
         )
     }
@@ -56,7 +63,7 @@ fun HeroBand(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
     CompositionLocalProvider(LocalContentColor provides colors.onHero) {
         Column(
             modifier.fillMaxWidth().background(colors.hero, IspShapes.heroBottom)
-                .padding(start = IspSpacing.lg, end = IspSpacing.lg, top = IspSpacing.xs, bottom = HERO_OVERLAP + IspSpacing.lg),
+                .padding(start = IspSpacing.lg, end = IspSpacing.lg, top = IspSpacing.lg, bottom = HERO_BOTTOM_PADDING),
             verticalArrangement = Arrangement.spacedBy(IspSpacing.md),
             content = content,
         )
@@ -65,6 +72,40 @@ fun HeroBand(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
 
 /** How far the first KPI row rides over the hero band. */
 val HERO_OVERLAP = 36.dp
+private val HERO_BOTTOM_PADDING = 56.dp
+
+/**
+ * First row of the hero band: menu, screen title with a status line below ("Actualizado hace 3 min") and the
+ * screen actions on the right. Replaces the shared top app bar on dashboard screens.
+ */
+@Composable
+fun HeroTitleBar(
+    title: String,
+    subtitle: String?,
+    onMenu: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    subtitleTag: String? = null,
+    menuTag: String = "hero_menu",
+    actions: @Composable RowScope.() -> Unit = {},
+) {
+    val colors = IspTheme.colors
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(IspSpacing.xs)) {
+        if (onMenu != null) {
+            IconButton(onClick = onMenu, modifier = Modifier.size(44.dp).testTag(menuTag)) {
+                Icon(Icons.Default.Menu, contentDescription = "Abrir menú", tint = colors.onHero)
+            }
+        }
+        Column(Modifier.weight(1f)) {
+            Text(title, style = IspType.screenTitle, color = colors.onHero)
+            subtitle?.let {
+                Text(it, subtitleTag?.let { tag -> Modifier.testTag(tag) } ?: Modifier, style = MaterialTheme.typography.bodySmall,
+                    color = colors.onHeroMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        actions()
+    }
+}
+
 
 /**
  * Pulls content up by [amount] and shrinks its reported height by the same, so a list item overlaps the
@@ -94,7 +135,7 @@ fun HeroTabs(tabs: List<String>, selected: Int, onSelect: (Int) -> Unit, modifie
                     .heightIn(min = 36.dp).padding(vertical = 10.dp)
                     .testTag("dashboard_tab_$index"),
                 color = if (isSelected) colors.onTabSelected else colors.onHero,
-                style = MaterialTheme.typography.labelLarge,
+                style = IspType.label,
                 textAlign = TextAlign.Center,
             )
         }
@@ -117,7 +158,7 @@ fun HeroChips(chips: List<HeroChip>, modifier: Modifier = Modifier) {
                 contentColor = if (chip.selected) colors.onSelectedContainer else colors.onHero,
                 border = if (chip.selected) null else BorderStroke(1.dp, colors.onHeroMuted),
             ) {
-                Text(chip.label, Modifier.padding(horizontal = 14.dp, vertical = 9.dp), style = MaterialTheme.typography.labelMedium)
+                Text(chip.label, Modifier.padding(horizontal = 14.dp, vertical = 10.dp), style = IspType.label)
             }
         }
     }
@@ -140,10 +181,10 @@ fun HeroFigure(model: HeroFigureModel, modifier: Modifier = Modifier, onClick: (
     val colors = IspTheme.colors
     val clickable = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
     Column(modifier.then(clickable).testTag(model.tag), verticalArrangement = Arrangement.spacedBy(IspSpacing.xs)) {
-        Text(model.label, style = IspType.overline, color = colors.onHeroMuted)
+        Overline(model.label, colors.onHeroMuted)
         Text(model.value, Modifier.testTag("${model.tag}_value"), style = IspType.kpiHero, color = colors.onHero)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(IspSpacing.sm), verticalArrangement = Arrangement.spacedBy(IspSpacing.xs)) {
-            model.delta?.let { DeltaText(it, Modifier.align(Alignment.CenterVertically), onHero = true) }
+            model.delta?.let { DeltaText(it, Modifier.align(Alignment.CenterVertically), onHero = true, style = IspType.heroDelta) }
             model.badge?.let { HeroBadgeChip(it) }
         }
         model.supporting?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = colors.onHeroMuted) }

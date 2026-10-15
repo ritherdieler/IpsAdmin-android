@@ -66,8 +66,8 @@
     <string name="clients_months">%1$s meses</string>
     <string name="clients_active_clients">clientes activos</string>
     <string name="clients_debt_per_delinquent">Deuda por moroso</string>
-    <string name="clients_debt_per_delinquent_info">Deuda vencida promedio de los clientes con al menos una factura de servicio vencida: total vencido ÷ clientes morosos. No cuenta clientes al día ni facturas por vencer.</string>
-    <string name="clients_delinquents">%1$s suscripciones morosas (incluye cortadas)</string>
+    <string name="clients_debt_per_delinquent_info">Deuda vencida promedio de los clientes con al menos una factura de servicio vencida: total vencido ÷ clientes morosos. No cuenta clientes al día ni facturas por vencer. Incluye suscripciones cortadas.</string>
+    <string name="clients_delinquents">%1$s suscripciones morosas</string>
     <string name="clients_plans">Planes</string>
     <string name="clients_plans_caption">%1$s suscripciones activas · velocidad media %2$s Mbps</string>
     <string name="clients_plan_mix">Mezcla de planes</string>
@@ -121,4 +121,25 @@
     <string name="financial_trend_caption">Por mes de servicio · últimos %1$d meses</string>
     <string name="financial_trend_chart">Facturado neto vs cobrado</string>
     <string name="financial_recovery_caption">Recuperación de servicios anteriores: %1$s</string>
+    <!-- Design audit 2: header and section links -->
+    <string name="dashboard_screen_title">Dashboard</string>
+    <string name="dashboard_updated_now">Actualizado ahora</string>
+    <string name="dashboard_updated_minutes">Actualizado hace %1$d min</string>
+    <string name="dashboard_updated_at">Actualizado a las %1$s</string>
+    <string name="dashboard_see_all">Ver todo</string>
+    <string name="dashboard_see_tickets">Ver tickets</string>
+    <string name="collections_see_debtors">Ver deudores</string>
+    <string name="collections_as_of">Al %1$s</string>
+    <string name="commercial_subscriptions_caption">Altas y bajas · últimos %1$d meses</string>
+    <string name="dashboard_last_n_months">Últimos %1$d meses</string>
+    <string name="clients_vs_last_week">vs semana pasada</string>
+    <string name="commercial_period_month">Este mes</string>
+    <string name="commercial_period_six">6 meses</string>
+    <string name="commercial_period_twelve">12 meses</string>
+    <string name="commercial_vs_previous_months">vs %1$d meses anteriores</string>
+    <string name="commercial_plan_upgrades">⇄ Plan superior: %1$s</string>
+    <string name="commercial_active_end_of_month">Suscriptores activos fin de mes</string>
+    <string name="commercial_active_end_of_month_subtitle">Solo en estado activo, sin cortados</string>
+    <string name="financial_vs_same_day">vs %1$s al día %2$d</string>
+    <string name="financial_export_short">Exportar XLSX</string>
 </resources>

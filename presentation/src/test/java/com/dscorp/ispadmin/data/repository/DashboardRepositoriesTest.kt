@@ -37,6 +37,19 @@ class DashboardRepositoriesTest {
         assertEquals(3, dto.toDomain().openHighPriority)
     }
 
+    @Test fun `ticket quality by month and open tickets a week ago reach the domain`() {
+        val dto = Gson().fromJson("""{"openTicketsWeekAgo":14,"monthlyQuality":[
+            {"month":"2026-09","averageResolutionTimeHours":20.5,"reopenRate":1.0},
+            {"month":"2026-10","averageResolutionTimeHours":18.4,"reopenRate":null}]}""", AssistanceTicketsDto::class.java)
+
+        val tickets = dto.toDomain()
+
+        assertEquals(14, tickets.openWeekAgo)
+        assertEquals(listOf(java.time.YearMonth.of(2026, 9), java.time.YearMonth.of(2026, 10)), tickets.monthly.map { it.month })
+        assertEquals(18.4, tickets.monthly.last().resolutionHours ?: Double.NaN, 0.0)
+        assertNull(tickets.monthly.last().reopenRatePercent)
+    }
+
     @Test fun `collection summary keeps exact money and unknown ratios`() = runTest {
         val dto = Gson().fromJson(
             """{"dueSoonDays":7,"dueSoonAmount":6840.10,"dueSoonInvoices":214,"activeDeferrals":9,"deferralsExpiringToday":3,

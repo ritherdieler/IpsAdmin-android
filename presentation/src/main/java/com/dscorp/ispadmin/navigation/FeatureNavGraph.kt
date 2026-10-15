@@ -219,7 +219,8 @@ fun FeatureNavGraph(
     ) {
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar(
+                // The dashboard draws its own title row inside the hero band.
+                if (currentRoute !is Dashboard) CenterAlignedTopAppBar(
                     title = {
                         Text(
                             text = title,
@@ -263,6 +264,7 @@ fun FeatureNavGraph(
                     onLoggedOut = onLoggedOut,
                     currentUser = uiState.currentUser,
                     startDestination = drawerStart,
+                    onOpenDrawer = { scope.launch { drawerState.open() } },
                 )
             }
         }
@@ -275,7 +277,8 @@ private fun NavGraphContent(
     navController: NavHostController,
     onLoggedOut: () -> Unit = {},
     currentUser: User?,
-    startDestination: Any?
+    startDestination: Any?,
+    onOpenDrawer: () -> Unit = {},
 ) {
     NavHost(
         navController = navController,
@@ -305,7 +308,7 @@ private fun NavGraphContent(
 
         // Dashboard
         composable<Dashboard> {
-            DashBoardComposeScreen(navController = navController)
+            DashBoardComposeScreen(navController = navController, onOpenDrawer = onOpenDrawer)
         }
         // Profile
         composable<Profile> {

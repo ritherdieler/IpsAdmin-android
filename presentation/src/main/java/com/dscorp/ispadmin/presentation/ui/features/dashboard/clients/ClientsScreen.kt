@@ -74,6 +74,17 @@ import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatPercent
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatSoles
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatSolesCompact
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.topWithOthers
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.countChange
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.hoursDelta
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.pointsDelta
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.Polarity
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.MonthlyTrend
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.shortLabel
+import com.dscorp.ispadmin.domain.model.dashboard.TicketMonthQuality
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashboardTitleBar
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.LocalDashboardActions
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.updatedLabel
+import com.dscorp.ispadmin.presentation.designsystem.components.CardAction
 import com.dscorp.ispadmin.presentation.designsystem.components.DeltaTone
 import com.dscorp.ispadmin.presentation.designsystem.components.HeroBadge
 import org.koin.androidx.compose.koinViewModel
@@ -122,13 +133,12 @@ fun ClientsContent(
 @Composable
 private fun ClientsHeroTop(state: ClientsUiState, onIntent: (ClientsIntent) -> Unit, header: @Composable () -> Unit) {
     HeroTop {
-        header()
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
-            IconButton(onClick = { onIntent(ClientsIntent.Load) }, enabled = !state.isLoading, modifier = Modifier.size(48.dp).testTag("clients_refresh")) {
+        DashboardTitleBar(updatedLabel(state.lastUpdatedAtMillis)) {
+            IconButton(onClick = { onIntent(ClientsIntent.Load) }, enabled = !state.isLoading, modifier = Modifier.size(44.dp).testTag("clients_refresh")) {
                 Icon(Icons.Default.Refresh, stringResource(R.string.dashboard_refresh), tint = IspTheme.colors.onHero)
             }
         }
+        header()
     }
 }
 
@@ -140,7 +150,8 @@ private fun ClientsHeroBody(dashboard: ClientsDashboard?) {
                 HeroBadge(stringResource(R.string.clients_high_priority_open, formatCount(it)), DeltaTone.Negative)
             }
             HeroFigure(HeroFigureModel(stringResource(R.string.clients_open_tickets), formatCount(tickets.open), "clients_open_tickets",
-                badge = highPriority, supporting = stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), CLIENTS_WINDOW_MONTHS)))
+                delta = countChange(tickets.open, tickets.openWeekAgo, Polarity.LowerIsBetter, stringResource(R.string.clients_vs_last_week)),
+                badge = highPriority))
         }
     }
 }
@@ -169,8 +180,12 @@ private fun LazyListScope.clientItems(dashboard: ClientsDashboard) {
         item("plan_mix") { Padded { PlanMixCard(plans) } }
     }
     dashboard.tickets?.let { tickets ->
-        item("tickets_header") { SectionHeader(stringResource(R.string.clients_tickets), Modifier.padding(horizontal = IspSpacing.lg),
-            stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), CLIENTS_WINDOW_MONTHS)) }
+        item("tickets_header") {
+            val openTickets = LocalDashboardActions.current.openTickets
+            SectionHeader(stringResource(R.string.clients_tickets), Modifier.padding(horizontal = IspSpacing.lg),
+                stringResource(R.string.clients_tickets_caption, formatCount(tickets.total), CLIENTS_WINDOW_MONTHS),
+                openTickets?.let { CardAction(stringResource(R.string.dashboard_see_tickets), it) })
+        }
         item("tickets_status") { Padded { TicketStatusCard(tickets) } }
         item("tickets_priority") { Padded { PriorityCard(tickets) } }
         item("tickets_category") { Padded { CountBarsCard(stringResource(R.string.clients_tickets_by_category), tickets.byCategory, "clients_tickets_category") } }
@@ -189,10 +204,15 @@ private fun LazyListScope.clientItems(dashboard: ClientsDashboard) {
 @Composable
 private fun ClientKpis(tickets: TicketSummary?, quality: ClientQuality?, collections: CollectionSummary?) {
     val unavailable = stringResource(R.string.dashboard_unavailable)
+    // Month by month when the Core sends it (value of the latest month, change against the one before); else the window average.
+    val resolution = tickets?.monthly?.let { months -> monthlyTrend(months) { it.resolutionHours } }
+    val reopen = tickets?.monthly?.let { months -> monthlyTrend(months) { it.reopenRatePercent } }
     KpiGrid(listOf(
         KpiModel(stringResource(R.string.clients_resolution_time),
-            tickets?.averageResolutionHours?.let { stringResource(R.string.clients_hours, formatDecimal(it)) } ?: unavailable, "clients_resolution_time"),
-        KpiModel(stringResource(R.string.clients_reopen_rate), tickets?.reopenRatePercent?.let(::formatPercent) ?: unavailable, "clients_reopen_rate"),
+            (resolution?.current ?: tickets?.averageResolutionHours)?.let { stringResource(R.string.clients_hours, formatDecimal(it)) } ?: unavailable,
+            "clients_resolution_time", resolution?.let { hoursDelta(it, Polarity.LowerIsBetter, previousMonthLabel(it)) }),
+        KpiModel(stringResource(R.string.clients_reopen_rate), (reopen?.current ?: tickets?.reopenRatePercent)?.let(::formatPercent) ?: unavailable,
+            "clients_reopen_rate", reopen?.let { pointsDelta(it, Polarity.LowerIsBetter, previousMonthLabel(it)) }),
         KpiModel(stringResource(R.string.clients_antiquity),
             quality?.averageAntiquityMonths?.let { stringResource(R.string.clients_months, it.roundToInt()) } ?: unavailable, "clients_antiquity",
             supporting = stringResource(R.string.clients_active_clients)),
@@ -202,6 +222,16 @@ private fun ClientKpis(tickets: TicketSummary?, quality: ClientQuality?, collect
             info = stringResource(R.string.clients_debt_per_delinquent_info)),
     ), overlapHero = true)
 }
+
+/** Months with a known value, oldest first; null when none. */
+private fun monthlyTrend(months: List<TicketMonthQuality>, value: (TicketMonthQuality) -> Double?): MonthlyTrend? {
+    val known = months.mapNotNull { month -> value(month)?.let { month.month to it } }
+    return known.takeIf { it.isNotEmpty() }?.let { MonthlyTrend(it.map { pair -> pair.first }, it.map { pair -> pair.second }) }
+}
+
+@Composable
+private fun previousMonthLabel(trend: MonthlyTrend): String? =
+    trend.months.getOrNull(trend.months.size - 2)?.let { stringResource(R.string.dashboard_vs_previous, it.shortLabel()) }
 
 @Composable
 private fun PlansHeader(plans: PlanAnalysis) {

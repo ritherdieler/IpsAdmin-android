@@ -22,7 +22,9 @@ class DashBoardDataResponse(
     val teamPerformanceResume: Any? = null,
     val networkHealthResume: Any? = null,
     val clientLifecycleResume: Any? = null,
-    val subscriptionLogSummary: Map<String, SubscriptionLogSummary>? = null
+    val subscriptionLogSummary: Map<String, SubscriptionLogSummary>? = null,
+    /** Migrations of this month to a plan with a higher monthly fee; null while unknown. */
+    val planUpgradesThisMonth: Int? = null,
 ) {
     fun grossRevenueAsString() = economicResume.grossRevenue.toCurrencyString()
     fun totalRaisedAsString() = economicResume.totalRaised.toCurrencyString()

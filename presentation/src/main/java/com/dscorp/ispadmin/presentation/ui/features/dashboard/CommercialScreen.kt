@@ -42,6 +42,7 @@ import com.dscorp.ispadmin.presentation.designsystem.charts.ChartData
 import com.dscorp.ispadmin.presentation.designsystem.charts.ChartSeries
 import com.dscorp.ispadmin.presentation.designsystem.charts.IspColumnChart
 import com.dscorp.ispadmin.presentation.designsystem.charts.IspLineChart
+import com.dscorp.ispadmin.presentation.designsystem.charts.averageCaption
 import com.dscorp.ispadmin.presentation.designsystem.components.BarItem
 import com.dscorp.ispadmin.presentation.designsystem.components.ChartCard
 import com.dscorp.ispadmin.presentation.designsystem.components.ChartCardHeader
@@ -55,6 +56,14 @@ import com.dscorp.ispadmin.presentation.designsystem.components.HeroFigure
 import com.dscorp.ispadmin.presentation.designsystem.components.HeroFigureModel
 import com.dscorp.ispadmin.presentation.designsystem.components.HorizontalBarList
 import com.dscorp.ispadmin.presentation.designsystem.components.KpiModel
+import com.dscorp.ispadmin.presentation.designsystem.components.HeroChip
+import com.dscorp.ispadmin.presentation.designsystem.components.HeroChips
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import java.time.YearMonth
+import com.dscorp.ispadmin.presentation.designsystem.components.CardAction
 import com.dscorp.ispadmin.presentation.designsystem.components.KpiDelta
 import com.dscorp.ispadmin.presentation.designsystem.components.DeltaTone
 import com.dscorp.ispadmin.presentation.designsystem.components.KpiTile
@@ -67,7 +76,6 @@ import com.dscorp.ispadmin.presentation.theme.IspSpacing
 import com.dscorp.ispadmin.presentation.theme.IspTheme
 import com.dscorp.ispadmin.presentation.theme.IspType
 import com.dscorp.ispadmin.presentation.theme.MyTheme
-import java.text.DateFormat
 import java.util.Date
 
 /** Commercial tab: subscriber flow, churn and ARPU from the legacy dashboard endpoint. */
@@ -75,8 +83,10 @@ import java.util.Date
 @Composable
 fun CommercialContent(state: DashboardState, onRefresh: () -> Unit, header: @Composable () -> Unit) {
     val dashboard = remember(state.dashboardData) { state.dashboardData?.toCommercialDashboard() }
+    var period by rememberSaveable { mutableStateOf(CommercialPeriod.MONTH) }
+    val charts = remember(dashboard, period) { dashboard?.forCharts(period) }
     Column(Modifier.fillMaxSize()) {
-        CommercialHeroTop(state, onRefresh, header)
+        CommercialHeroTop(state, onRefresh, header, period) { period = it }
         PullToRefreshBox(isRefreshing = state.isLoading && dashboard != null, onRefresh = onRefresh, modifier = Modifier.fillMaxWidth().weight(1f)) {
             LazyColumn(
                 Modifier.fillMaxSize().testTag("commercial_list"),
@@ -84,26 +94,52 @@ fun CommercialContent(state: DashboardState, onRefresh: () -> Unit, header: @Com
                 verticalArrangement = Arrangement.spacedBy(IspSpacing.md),
             ) {
                 item("hero") { CommercialHeroBody(dashboard) }
-                if (dashboard != null) item("kpis") { CommercialKpis(dashboard) }
+                if (dashboard != null) item("kpis") { CommercialKpis(dashboard, period) }
                 item("status") { CommercialStatus(state, dashboard, onRefresh) }
-                if (dashboard != null) commercialItems(dashboard)
+                if (charts != null) commercialItems(charts, period)
             }
         }
     }
 }
 
 @Composable
-private fun CommercialHeroTop(state: DashboardState, onRefresh: () -> Unit, header: @Composable () -> Unit) {
+private fun CommercialHeroTop(
+    state: DashboardState,
+    onRefresh: () -> Unit,
+    header: @Composable () -> Unit,
+    period: CommercialPeriod,
+    onPeriod: (CommercialPeriod) -> Unit,
+) {
     HeroTop {
-        header()
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(state.lastUpdatedAtMillis?.let { stringResource(R.string.dashboard_last_updated, timeLabel(it)) }.orEmpty(),
-                Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = IspTheme.colors.onHeroMuted)
-            IconButton(onClick = onRefresh, enabled = !state.isLoading, modifier = Modifier.size(48.dp).testTag("commercial_refresh")) {
+        DashboardTitleBar(updatedLabel(state.lastUpdatedAtMillis)) {
+            IconButton(onClick = onRefresh, enabled = !state.isLoading, modifier = Modifier.size(44.dp).testTag("commercial_refresh")) {
                 Icon(Icons.Default.Refresh, stringResource(R.string.dashboard_refresh), tint = IspTheme.colors.onHero)
             }
         }
+        header()
+        HeroChips(CommercialPeriod.entries.map { option ->
+            HeroChip(stringResource(option.label), option == period, "commercial_period_${option.name}") { onPeriod(option) }
+        })
     }
+}
+
+private val CommercialPeriod.label: Int
+    get() = when (this) {
+        CommercialPeriod.MONTH -> R.string.commercial_period_month
+        CommercialPeriod.SIX_MONTHS -> R.string.commercial_period_six
+        CommercialPeriod.TWELVE_MONTHS -> R.string.commercial_period_twelve
+    }
+
+/** Trends cut to the months the charts of [period] show. */
+private fun CommercialDashboard.forCharts(period: CommercialPeriod): CommercialDashboard {
+    val months = period.chartMonths
+    return copy(
+        nonCancelled = nonCancelled.takeLastMonths(months), active = active.takeLastMonths(months),
+        newSubscriptions = newSubscriptions.takeLastMonths(months), cancellations = cancellations.takeLastMonths(months),
+        reconnections = reconnections.takeLastMonths(months), migrations = migrations.takeLastMonths(months),
+        churnPercent = churnPercent.takeLastMonths(months), arpu = arpu.takeLastMonths(months),
+        digitalPaymentsPercent = digitalPaymentsPercent.takeLastMonths(months),
+    )
 }
 
 @Composable
@@ -111,7 +147,7 @@ private fun CommercialHeroBody(dashboard: CommercialDashboard?) {
     HeroBand {
         dashboard?.let {
             HeroFigure(HeroFigureModel(stringResource(R.string.commercial_active_subscriptions), formatCount(it.activeSubscriptions),
-                "commercial_active", delta = netAddsDelta(it), supporting = stringResource(R.string.commercial_active_caption)))
+                "commercial_active", delta = netAddsDelta(it)))
         }
     }
 }
@@ -149,13 +185,21 @@ private fun CommercialStatus(state: DashboardState, dashboard: CommercialDashboa
     }
 }
 
-private fun LazyListScope.commercialItems(dashboard: CommercialDashboard) {
-    item("subscriptions_header") { SectionHeader(stringResource(R.string.commercial_subscriptions_section), Modifier.padding(horizontal = IspSpacing.lg), stringResource(R.string.dashboard_last_6_months)) }
+private fun LazyListScope.commercialItems(dashboard: CommercialDashboard, period: CommercialPeriod) {
+    item("subscriptions_header") {
+        val openSubscriptions = LocalDashboardActions.current.openSubscriptions
+        SectionHeader(stringResource(R.string.commercial_subscriptions_section), Modifier.padding(horizontal = IspSpacing.lg),
+            stringResource(R.string.commercial_subscriptions_caption, period.chartMonths),
+            openSubscriptions?.let { CardAction(stringResource(R.string.dashboard_see_all), it) })
+    }
     item("new_vs_cancelled") { Padded { NewVsCancelledCard(dashboard) } }
-    item("active_history") { Padded { ActiveHistoryCard(dashboard.nonCancelled) } }
+    item("active_history") { Padded { ActiveHistoryCard(dashboard) } }
     item("cancellation_reason") { Padded { CancellationReasonCard(dashboard) } }
     item("installations") { Padded { InstallationsCard(dashboard.installations) } }
-    item("evolution_header") { SectionHeader(stringResource(R.string.commercial_monthly_evolution), Modifier.padding(horizontal = IspSpacing.lg), stringResource(R.string.dashboard_last_6_months)) }
+    item("evolution_header") {
+        SectionHeader(stringResource(R.string.commercial_monthly_evolution), Modifier.padding(horizontal = IspSpacing.lg),
+            stringResource(R.string.dashboard_last_n_months, period.chartMonths))
+    }
     item("churn_chart") { Padded { ChurnCard(dashboard.churnPercent) } }
     item("digital_payments") { Padded { DigitalPaymentsCard(dashboard.digitalPaymentsPercent) } }
     item("cancellations_chart") { Padded { CountTrendCard(R.string.commercial_cancellations, dashboard.cancellations, IspTheme.colors.chartCategorical[1], Polarity.LowerIsBetter) } }
@@ -167,26 +211,53 @@ private fun LazyListScope.commercialItems(dashboard: CommercialDashboard) {
 private fun comparison(trend: MonthlyTrend): String? =
     trend.months.getOrNull(trend.months.size - 2)?.let { stringResource(R.string.dashboard_vs_previous, it.shortLabel()) }
 
+/** Counts add up the period; churn and ARPU average it. The change compares with the same number of months before. */
 @Composable
-private fun CommercialKpis(dashboard: CommercialDashboard) {
+private fun CommercialKpis(dashboard: CommercialDashboard, period: CommercialPeriod) {
     val unavailable = stringResource(R.string.dashboard_unavailable)
+    @Composable
+    fun counted(trend: MonthlyTrend, polarity: Polarity): Pair<String, KpiDelta?> {
+        val current = periodTotal(trend, period)
+        val previous = previousPeriodTotal(trend, period)
+        return (current?.let(::formatCount) ?: unavailable) to
+            if (current != null && previous != null) countDelta(pair(previous, current), polarity, periodComparison(trend, period)) else null
+    }
+    val (newValue, newDelta) = counted(dashboard.newSubscriptions, Polarity.HigherIsBetter)
+    val (cancelValue, cancelDelta) = counted(dashboard.cancellations, Polarity.LowerIsBetter)
+    val (reconnectValue, reconnectDelta) = counted(dashboard.reconnections, Polarity.HigherIsBetter)
+    val (migrateValue, migrateDelta) = counted(dashboard.migrations, Polarity.Neutral)
+    val churn = periodAverage(dashboard.churnPercent, period)
+    val churnBefore = previousPeriodAverage(dashboard.churnPercent, period)
+    val arpu = periodAverage(dashboard.arpu, period)
+    val arpuBefore = previousPeriodAverage(dashboard.arpu, period)
     val tiles = listOf(
-        KpiModel(stringResource(R.string.commercial_new), dashboard.newSubscriptions.current?.let(::formatCount) ?: unavailable, "commercial_new",
-            countDelta(dashboard.newSubscriptions, Polarity.HigherIsBetter, comparison(dashboard.newSubscriptions))),
-        KpiModel(stringResource(R.string.commercial_cancellations), dashboard.cancellations.current?.let(::formatCount) ?: unavailable, "commercial_cancellations",
-            countDelta(dashboard.cancellations, Polarity.LowerIsBetter, comparison(dashboard.cancellations))),
-        KpiModel(stringResource(R.string.commercial_reconnections), dashboard.reconnections.current?.let(::formatCount) ?: unavailable, "commercial_reconnections",
-            countDelta(dashboard.reconnections, Polarity.HigherIsBetter, comparison(dashboard.reconnections))),
-        KpiModel(stringResource(R.string.commercial_migrations), dashboard.migrations.current?.let(::formatCount) ?: unavailable, "commercial_migrations",
-            countDelta(dashboard.migrations, Polarity.Neutral, comparison(dashboard.migrations))),
-        KpiModel(stringResource(R.string.commercial_churn), dashboard.churnPercent.current?.let(::formatPercent) ?: unavailable, "commercial_churn",
-            pointsDelta(dashboard.churnPercent, Polarity.LowerIsBetter, comparison(dashboard.churnPercent)), info = stringResource(R.string.commercial_churn_info)),
-        KpiModel(stringResource(R.string.commercial_arpu), dashboard.arpu.current?.let(::formatSoles) ?: unavailable, "commercial_arpu",
-            solesDelta(dashboard.arpu, Polarity.HigherIsBetter, comparison(dashboard.arpu)), info = stringResource(R.string.commercial_arpu_info),
-            supporting = staleMonth(dashboard.arpu, currentMonth())?.let { stringResource(R.string.commercial_month_of, it.shortLabel()) }),
+        KpiModel(stringResource(R.string.commercial_new), newValue, "commercial_new", newDelta),
+        KpiModel(stringResource(R.string.commercial_cancellations), cancelValue, "commercial_cancellations", cancelDelta),
+        KpiModel(stringResource(R.string.commercial_reconnections), reconnectValue, "commercial_reconnections", reconnectDelta),
+        KpiModel(stringResource(R.string.commercial_migrations), migrateValue, "commercial_migrations", migrateDelta,
+            badge = dashboard.planUpgrades?.takeIf { it > 0 }?.let { stringResource(R.string.commercial_plan_upgrades, formatCount(it)) }),
+        KpiModel(stringResource(R.string.commercial_churn), churn?.let(::formatPercent) ?: unavailable, "commercial_churn",
+            if (churn != null && churnBefore != null) pointsDelta(pair(churnBefore, churn), Polarity.LowerIsBetter, periodComparison(dashboard.churnPercent, period)) else null,
+            info = stringResource(R.string.commercial_churn_info)),
+        KpiModel(stringResource(R.string.commercial_arpu), arpu?.let(::formatSoles) ?: unavailable, "commercial_arpu",
+            if (arpu != null && arpuBefore != null) solesDelta(pair(arpuBefore, arpu), Polarity.HigherIsBetter, periodComparison(dashboard.arpu, period)) else null,
+            info = stringResource(R.string.commercial_arpu_info),
+            supporting = staleMonth(dashboard.arpu, currentMonth())?.takeIf { period == CommercialPeriod.MONTH }
+                ?.let { stringResource(R.string.commercial_month_of, it.shortLabel()) }),
     )
     KpiGrid(tiles, overlapHero = true)
 }
+
+/** Two-point trend so the period figures reuse the month delta formatting. */
+private fun pair(previous: Double, current: Double): MonthlyTrend {
+    val now = YearMonth.now()
+    return MonthlyTrend(listOf(now.minusMonths(1), now), listOf(previous, current))
+}
+
+/** "vs sep" for a month, "vs 6 meses anteriores" for longer periods. */
+@Composable
+private fun periodComparison(trend: MonthlyTrend, period: CommercialPeriod): String? =
+    if (period == CommercialPeriod.MONTH) comparison(trend) else stringResource(R.string.commercial_vs_previous_months, period.months)
 
 /** Two-column KPI grid used by the dashboard tabs; the first grid of a tab rides over the hero band. */
 @Composable
@@ -194,9 +265,9 @@ internal fun KpiGrid(tiles: List<KpiModel>, overlapHero: Boolean = false) {
     val overlap = if (overlapHero) Modifier.pullUp(HERO_OVERLAP + IspSpacing.md) else Modifier
     Column(overlap.padding(horizontal = IspSpacing.lg), verticalArrangement = Arrangement.spacedBy(IspSpacing.md)) {
         tiles.chunked(2).forEach { row ->
-            // Top-aligned so an expanded explanation does not stretch the neighbouring tile.
-            Row(horizontalArrangement = Arrangement.spacedBy(IspSpacing.md), verticalAlignment = Alignment.Top) {
-                row.forEach { KpiTile(it, Modifier.weight(1f)) }
+            // Tiles of a row share its height, as in the design grid; an open explanation grows both.
+            Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(IspSpacing.md)) {
+                row.forEach { KpiTile(it, Modifier.weight(1f).fillMaxHeight()) }
             }
         }
     }
@@ -222,12 +293,15 @@ private fun NewVsCancelledCard(dashboard: CommercialDashboard) {
     }
 }
 
+/** ACTIVE subscribers at month end once the Core has recorded two or more months; until then, non-cancelled ones. */
 @Composable
-private fun ActiveHistoryCard(active: MonthlyTrend) {
-    val data = ChartData(active.months.map { it.shortLabel() },
-        listOf(ChartSeries(stringResource(R.string.commercial_active_history), IspTheme.colors.chartPrimary, active.values)))
-    ChartCard(ChartCardHeader(stringResource(R.string.commercial_active_history), stringResource(R.string.commercial_active_history_subtitle)),
-        Modifier.testTag("commercial_active_history")) {
+private fun ActiveHistoryCard(dashboard: CommercialDashboard) {
+    val activeOnly = dashboard.active.months.size >= MIN_LINE_POINTS
+    val active = if (activeOnly) dashboard.active else dashboard.nonCancelled
+    val title = stringResource(if (activeOnly) R.string.commercial_active_end_of_month else R.string.commercial_active_history)
+    val subtitle = stringResource(if (activeOnly) R.string.commercial_active_end_of_month_subtitle else R.string.commercial_active_history_subtitle)
+    val data = ChartData(active.months.map { it.shortLabel() }, listOf(ChartSeries(title, IspTheme.colors.chartPrimary, active.values)))
+    ChartCard(ChartCardHeader(title, subtitle), Modifier.testTag("commercial_active_history")) {
         if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspLineChart(data)
     }
 }
@@ -283,7 +357,7 @@ private fun ChurnCard(churn: MonthlyTrend) {
         ?: stringResource(R.string.commercial_churn_chart_subtitle)
     ChartCard(ChartCardHeader(stringResource(R.string.commercial_churn_chart), subtitle),
         Modifier.testTag("commercial_churn_chart")) {
-        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspLineChart(data, valueFormat = ::formatDecimal, startAtZero = true)
+        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspLineChart(data, valueFormat = ::formatDecimal, startAtZero = true, markerFormat = ::formatPercent, showAverage = true)
     }
 }
 
@@ -293,9 +367,10 @@ private fun DigitalPaymentsCard(trend: MonthlyTrend) {
     val data = ChartData(trend.months.map { it.shortLabel() }, listOf(ChartSeries(name, IspTheme.colors.chartPrimary, trend.values)))
     val subtitle = trend.current?.let { current ->
         stringResource(R.string.commercial_digital_payments_current, trend.months.last().shortLabel(), formatPercent(current))
-    } ?: stringResource(R.string.commercial_digital_payments_subtitle)
+    }?.let { listOfNotNull(it, averageCaption(trend.values, ::formatPercent)).joinToString(" · ") }
+        ?: stringResource(R.string.commercial_digital_payments_subtitle)
     ChartCard(ChartCardHeader(name, subtitle), Modifier.testTag("commercial_digital_payments")) {
-        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspColumnChart(data, valueFormat = { "${it.toInt()}%" })
+        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspColumnChart(data, valueFormat = { "${it.toInt()}%" }, markerFormat = ::formatPercent, showAverage = true)
     }
 }
 
@@ -303,7 +378,9 @@ private fun DigitalPaymentsCard(trend: MonthlyTrend) {
 private fun CountTrendCard(title: Int, trend: MonthlyTrend, color: Color, polarity: Polarity) {
     val name = stringResource(title)
     val data = ChartData(trend.months.map { it.shortLabel() }, listOf(ChartSeries(name, color, trend.values)))
-    ChartCard(ChartCardHeader(name, stringResource(R.string.commercial_total_months, trend.months.size, formatCount(trend.total))),
+    val subtitle = listOfNotNull(stringResource(R.string.commercial_total_months, trend.months.size, formatCount(trend.total)),
+        averageCaption(trend.values, ::formatDecimal)).joinToString(" · ")
+    ChartCard(ChartCardHeader(name, subtitle),
         Modifier.testTag("commercial_trend_$title")) {
         trend.current?.let { current ->
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(IspSpacing.sm)) {
@@ -313,13 +390,14 @@ private fun CountTrendCard(title: Int, trend: MonthlyTrend, color: Color, polari
                 }
             }
         }
-        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspColumnChart(data, integers = true)
+        if (data.isEmpty) EmptyChart(stringResource(R.string.dashboard_no_data)) else IspColumnChart(data, integers = true, showAverage = true)
     }
 }
 
+private const val MIN_LINE_POINTS = 2
+
 private fun currentMonth(): java.time.YearMonth = java.time.YearMonth.now(java.time.ZoneId.of("America/Lima"))
 
-private fun timeLabel(millis: Long): String = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(millis))
 
 @Preview(heightDp = 1400)
 @Composable

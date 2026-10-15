@@ -48,6 +48,8 @@ data class KpiModel(
     val supporting: String? = null,
     val info: String? = null,
     val progress: Float? = null,
+    /** Short qualifier shown as an info badge under the value, e.g. "⇄ Plan superior: 5". */
+    val badge: String? = null,
 )
 
 /** One business figure: label, value, optional delta, progress and an expandable explanation. */
@@ -56,7 +58,7 @@ fun KpiTile(model: KpiModel, modifier: Modifier = Modifier, onClick: (() -> Unit
     val colors = IspTheme.colors
     val border = colors.cardBorder.takeIf { it != Color.Transparent }?.let { BorderStroke(1.dp, it) }
     val content: @Composable () -> Unit = { KpiTileContent(model) }
-    val tileModifier = modifier.fillMaxWidth().heightIn(min = 96.dp).testTag(model.tag)
+    val tileModifier = modifier.fillMaxWidth().testTag(model.tag)
     if (onClick == null) {
         Surface(tileModifier, shape = IspShapes.card, color = colors.card, border = border, shadowElevation = 1.dp, content = content)
     } else {
@@ -69,8 +71,7 @@ private fun KpiTileContent(model: KpiModel) {
     var showInfo by rememberSaveable(model.tag) { mutableStateOf(false) }
     Column(Modifier.padding(IspSpacing.lg), verticalArrangement = Arrangement.spacedBy(IspSpacing.xs)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(model.label, Modifier.weight(1f), style = IspType.overline,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Overline(model.label, MaterialTheme.colorScheme.onSurfaceVariant, Modifier.weight(1f))
             if (model.info != null) {
                 IconButton(onClick = { showInfo = !showInfo }, modifier = Modifier.size(28.dp).testTag("${model.tag}_info")) {
                     Icon(Icons.Outlined.Info, contentDescription = "Qué es ${model.label.lowercase()}",
@@ -80,6 +81,7 @@ private fun KpiTileContent(model: KpiModel) {
         }
         Text(model.value, Modifier.testTag("${model.tag}_value"), style = IspType.kpi, color = MaterialTheme.colorScheme.onSurface)
         model.delta?.let { DeltaText(it) }
+        model.badge?.let { StatusBadge(it, BadgeTone.Info) }
         model.progress?.let { ProgressTrack(it, IspTheme.colors.chartCollected, Modifier.padding(top = IspSpacing.xs)) }
         model.supporting?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -93,7 +95,7 @@ private fun KpiTileContent(model: KpiModel) {
 }
 
 @Composable
-fun DeltaText(delta: KpiDelta, modifier: Modifier = Modifier, onHero: Boolean = false) {
+fun DeltaText(delta: KpiDelta, modifier: Modifier = Modifier, onHero: Boolean = false, style: androidx.compose.ui.text.TextStyle = IspType.kpiDelta) {
     val colors = IspTheme.colors
     val color = when (delta.tone) {
         DeltaTone.Positive -> if (onHero) colors.heroPositive else colors.success
@@ -101,7 +103,7 @@ fun DeltaText(delta: KpiDelta, modifier: Modifier = Modifier, onHero: Boolean = 
         DeltaTone.Neutral -> if (onHero) colors.onHeroMuted else MaterialTheme.colorScheme.onSurfaceVariant
     }
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(IspSpacing.xs)) {
-        Text(delta.text, style = IspType.kpiDelta, color = color)
+        Text(delta.text, style = style, color = color)
         delta.comparison?.let {
             Text(it, style = MaterialTheme.typography.bodySmall,
                 color = if (onHero) colors.onHeroMuted else MaterialTheme.colorScheme.onSurfaceVariant)

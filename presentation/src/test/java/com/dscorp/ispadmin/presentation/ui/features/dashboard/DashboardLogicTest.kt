@@ -105,4 +105,39 @@ class DashboardLogicTest {
         assertEquals(listOf(75.0, 25.0), shares(listOf(3.0, 1.0)))
         assertEquals(listOf(0.0, 0.0), shares(listOf(0.0, 0.0)))
     }
+
+    private val twelve = trend(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0)
+
+    @Test fun `a period adds up its last months and compares with the same number of months before`() {
+        assertEquals(60.0, periodTotal(twelve, CommercialPeriod.MONTH))
+        assertEquals(50.0, previousPeriodTotal(twelve, CommercialPeriod.MONTH))
+        assertEquals(210.0, periodTotal(twelve, CommercialPeriod.SIX_MONTHS))
+        assertEquals(21.0, previousPeriodTotal(twelve, CommercialPeriod.SIX_MONTHS))
+        assertEquals(231.0, periodTotal(twelve, CommercialPeriod.TWELVE_MONTHS))
+        assertNull(previousPeriodTotal(twelve, CommercialPeriod.TWELVE_MONTHS))
+    }
+
+    @Test fun `rates and averages of a period are the mean of its months`() {
+        assertEquals(35.0, periodAverage(twelve, CommercialPeriod.SIX_MONTHS))
+        assertEquals(3.5, previousPeriodAverage(twelve, CommercialPeriod.SIX_MONTHS))
+    }
+
+    @Test fun `charts show at least six months and twelve for the yearly period`() {
+        assertEquals(6, twelve.takeLastMonths(CommercialPeriod.MONTH.chartMonths).months.size)
+        assertEquals(12, twelve.takeLastMonths(CommercialPeriod.TWELVE_MONTHS.chartMonths).months.size)
+        assertEquals(oct, twelve.takeLastMonths(6).months.last())
+    }
+
+    @Test fun `resolution time changes are shown in hours`() {
+        val delta = hoursDelta(trend(20.5, 18.4), Polarity.LowerIsBetter, "vs sep")
+        assertEquals("▼ 2.1 h", delta?.text)
+        assertEquals(com.dscorp.ispadmin.presentation.designsystem.components.DeltaTone.Positive, delta?.tone)
+    }
+
+    @Test fun `open tickets compare with a week ago, fewer is better`() {
+        val delta = countChange(current = 9, previous = 14, Polarity.LowerIsBetter, "vs semana pasada")
+        assertEquals("▼ 5", delta?.text)
+        assertEquals(com.dscorp.ispadmin.presentation.designsystem.components.DeltaTone.Positive, delta?.tone)
+        assertNull(countChange(current = 9, previous = null, Polarity.LowerIsBetter, "vs semana pasada"))
+    }
 }

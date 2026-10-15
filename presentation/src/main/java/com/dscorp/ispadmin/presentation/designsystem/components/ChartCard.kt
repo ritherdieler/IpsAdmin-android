@@ -42,7 +42,7 @@ fun ChartCard(header: ChartCardHeader, modifier: Modifier = Modifier, content: @
     IspCard(modifier) {
         Row(verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f)) {
-                Text(header.title, style = MaterialTheme.typography.titleMedium)
+                Text(header.title, style = com.dscorp.ispadmin.presentation.theme.IspType.cardTitle)
                 header.subtitle?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -82,7 +82,7 @@ fun Swatch(color: Color, modifier: Modifier = Modifier) {
 @Composable
 fun ActionText(action: CardAction, modifier: Modifier = Modifier) {
     TextButton(onClick = action.onClick, modifier = modifier) {
-        Text(action.label, style = MaterialTheme.typography.labelMedium, color = IspTheme.colors.accentInk)
+        Text(action.label, style = com.dscorp.ispadmin.presentation.theme.IspType.label, color = IspTheme.colors.accentInk)
     }
 }
 

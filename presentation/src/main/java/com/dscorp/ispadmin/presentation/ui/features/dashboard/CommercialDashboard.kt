@@ -7,7 +7,9 @@ import java.time.YearMonth
 import java.time.ZoneId
 import java.util.Date
 
-private const val WINDOW_MONTHS = 6L
+/** Months loaded for the commercial tab; the period selector shows 6 or 12 of them. */
+private const val WINDOW_MONTHS = 12L
+private const val DIGITAL_PAYMENTS_DEFAULT_MONTHS = 6L
 private const val PERCENT = 100.0
 private const val NEW_ACTION = "NEW_SUBSCRIPTION"
 private const val CANCEL_ACTION = "TOTAL_CANCEL_SUBSCRIPTION"
@@ -42,6 +44,10 @@ data class CommercialDashboard(
     val activeSubscriptions: Int,
     /** Non-cancelled subscriptions (active + cut off) at each monthly snapshot. */
     val nonCancelled: MonthlyTrend,
+    /** Subscriptions in ACTIVE status at each snapshot; only months the Core recorded it. */
+    val active: MonthlyTrend,
+    /** Migrations of this month to a plan with a higher fee; null while unknown. */
+    val planUpgrades: Int?,
     val newSubscriptions: MonthlyTrend,
     val cancellations: MonthlyTrend,
     val reconnections: MonthlyTrend,
@@ -66,6 +72,10 @@ fun DashBoardDataResponse.toCommercialDashboard(
     return CommercialDashboard(
         activeSubscriptions = activeSubscriptions,
         nonCancelled = trend(window, baseByMonth, fillMissing = false),
+        active = trend(window, subscriptionsHistoryStatics.mapNotNull { snapshot ->
+            snapshot.activeSubscriptions?.let { snapshot.date.toYearMonth(zone) to it.toDouble() }
+        }.toMap(), fillMissing = false),
+        planUpgrades = planUpgradesThisMonth,
         newSubscriptions = logTrend(window, NEW_ACTION),
         cancellations = cancellations,
         reconnections = logTrend(window, RECONNECT_ACTION),
@@ -74,7 +84,7 @@ fun DashBoardDataResponse.toCommercialDashboard(
         arpu = arpu(window, zone, baseByMonth),
         cancelledByUser = cancellationsResume.cancelledByUsers,
         cancelledBySystem = cancellationsResume.cancelledBySystem,
-        digitalPaymentsPercent = digitalPayments(paymentResume, currentMonth),
+        digitalPaymentsPercent = digitalPayments(paymentResume, currentMonth, WINDOW_MONTHS),
         installations = subscriptionsResume,
     )
 }
@@ -122,13 +132,13 @@ private val SPANISH_MONTHS = listOf("ene", "feb", "mar", "abr", "may", "jun", "j
  * `paymentResume` is keyed by short Spanish month name ("May.", "Set.") without a year. Each key is placed on
  * its most recent occurrence up to [currentMonth]; only the months of the dashboard window are kept, sorted chronologically.
  */
-internal fun digitalPayments(paymentResume: Map<String, Double>, currentMonth: YearMonth): MonthlyTrend {
+internal fun digitalPayments(paymentResume: Map<String, Double>, currentMonth: YearMonth, windowMonths: Long = DIGITAL_PAYMENTS_DEFAULT_MONTHS): MonthlyTrend {
     val byMonth = paymentResume.mapNotNull { (key, percent) ->
         val number = monthNumber(key) ?: return@mapNotNull null
         val yearsBack = if (number > currentMonth.monthValue) 1L else 0L
         YearMonth.of(currentMonth.year, number).minusYears(yearsBack) to percent
     }.toMap()
-    val firstMonth = currentMonth.minusMonths(WINDOW_MONTHS - 1)
+    val firstMonth = currentMonth.minusMonths(windowMonths - 1)
     val months = byMonth.keys.filter { it >= firstMonth }.sorted()
     return MonthlyTrend(months, months.map { byMonth.getValue(it) })
 }

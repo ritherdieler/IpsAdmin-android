@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import com.dscorp.ispadmin.navigation.NavRoutes
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -33,10 +35,14 @@ data class DashboardTabData(
 )
 
 /** Dashboard host: one hero band per tab, with the tab selector drawn inside it. */
-@Suppress("UNUSED_PARAMETER")
 @Composable
-fun DashBoardComposeScreen(navController: NavHostController) {
-    MyTheme {
+fun DashBoardComposeScreen(navController: NavHostController, onOpenDrawer: () -> Unit = {}) {
+    val actions = DashboardActions(
+        openDrawer = onOpenDrawer,
+        openTickets = { navController.navigate(NavRoutes.FeatureRoutes.SupportTicket.List) { launchSingleTop = true } },
+        openSubscriptions = { navController.navigate(NavRoutes.FeatureRoutes.Subscription.Find) { launchSingleTop = true } },
+    )
+    MyTheme { CompositionLocalProvider(LocalDashboardActions provides actions) {
         var selected by rememberSaveable { mutableIntStateOf(0) }
         // The legacy endpoint feeds the commercial tab and the financial history charts.
         val commercialViewModel: DashBoardViewModel = koinViewModel()
@@ -53,5 +59,5 @@ fun DashBoardComposeScreen(navController: NavHostController) {
                 DashboardTab.CLIENTS -> ClientsScreen(header, collections.summary)
             }
         }
-    }
+    } }
 }

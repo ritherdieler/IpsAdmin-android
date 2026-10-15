@@ -16,6 +16,7 @@ data class ClientsUiState(
     val dashboard: ClientsDashboard? = null,
     val isLoading: Boolean = false,
     val failed: Boolean = false,
+    val lastUpdatedAtMillis: Long? = null,
 )
 
 sealed interface ClientsIntent {
@@ -41,7 +42,9 @@ class ClientsViewModel(
         loadJob = viewModelScope.launch(mainImmediate) {
             state.update { it.copy(isLoading = true, failed = false) }
             repository.load().fold(
-                onSuccess = { dashboard -> state.update { it.copy(dashboard = dashboard, isLoading = false) } },
+                onSuccess = { dashboard ->
+                    state.update { it.copy(dashboard = dashboard, isLoading = false, lastUpdatedAtMillis = System.currentTimeMillis()) }
+                },
                 // Keep the last loaded sections visible when a refresh fails.
                 onFailure = { state.update { it.copy(isLoading = false, failed = true) } },
             )

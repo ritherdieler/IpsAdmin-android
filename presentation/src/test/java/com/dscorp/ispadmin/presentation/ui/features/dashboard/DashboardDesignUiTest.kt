@@ -8,6 +8,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.assertTextEquals
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.CancellationResumeDto
 import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
@@ -166,5 +168,53 @@ class DashboardDesignUiTest {
 
         compose.onNodeWithTag("financial_list").performScrollToNode(hasTestTag("financial_gross_revenue_chart"))
         compose.onNodeWithText("49,000", substring = true).assertExists()
+    }
+
+    private val trendTickets = tickets.copy(openWeekAgo = 14, monthly = listOf(
+        com.dscorp.ispadmin.domain.model.dashboard.TicketMonthQuality(YearMonth.of(2026, 9), 20.5, 1.0),
+        com.dscorp.ispadmin.domain.model.dashboard.TicketMonthQuality(YearMonth.of(2026, 10), 18.4, 1.0),
+    ))
+
+    @Test fun `clients hero compares open tickets with a week ago`() {
+        compose.setContent { MaterialTheme { ClientsContent(ClientsUiState(dashboard = ClientsDashboard(null, trendTickets, null, null, null)), {}, {}) } }
+
+        compose.onNodeWithText("▼ 5").assertExists()
+        compose.onNodeWithText("vs semana pasada").assertExists()
+    }
+
+    @Test fun `resolution time shows the month value and its change against the previous month`() {
+        compose.setContent { MaterialTheme { ClientsContent(ClientsUiState(dashboard = ClientsDashboard(null, trendTickets, null, null, null)), {}, {}) } }
+
+        compose.onNodeWithTag("clients_resolution_time_value", useUnmergedTree = true).assertTextEquals("18.4 h")
+        compose.onNodeWithText("▼ 2.1 h").assertExists()
+    }
+
+    @Test fun `migrations flag how many moved to a more expensive plan`() {
+        val withUpgrades = DashBoardDataResponse(legacy.economicResume, legacy.activeSubscriptions, legacy.subscriptionsResume,
+            legacy.cancellationsResume, legacy.paymentResume, legacy.subscriptionsHistoryStatics, legacy.monthlyCollects,
+            legacy.grossRevenueHistoryStatics, legacy.reconnections, subscriptionLogSummary = legacy.subscriptionLogSummary,
+            planUpgradesThisMonth = 2)
+        compose.setContent { MaterialTheme { CommercialContent(DashboardState(dashboardData = withUpgrades), {}, {}) } }
+
+        compose.onNodeWithText("⇄ Plan superior: 2").assertExists()
+    }
+
+    @Test fun `the yearly period widens the commercial charts to twelve months`() {
+        compose.setContent { MaterialTheme { CommercialContent(DashboardState(dashboardData = legacy), {}, {}) } }
+
+        compose.onNodeWithTag("commercial_period_TWELVE_MONTHS").performClick()
+
+        compose.onNodeWithTag("commercial_list").performScrollToNode(hasText("Altas y bajas · últimos 12 meses"))
+    }
+
+    @Test fun `money received is compared with the previous month in the hero`() {
+        val previous = report.copy(id = "cut-sep", movements = MovementSummary(BigDecimal("10000"), BigDecimal.ZERO, BigDecimal("10000"), BigDecimal.ZERO, BigDecimal("10000")))
+        compose.setContent {
+            MaterialTheme {
+                FinancialContent(FinancialUiState(serviceMonth = "2026-08", movementsMonth = "2026-09", report = report, previousReport = previous), {}, {})
+            }
+        }
+
+        compose.onNodeWithText("vs ago", substring = true).assertExists()
     }
 }

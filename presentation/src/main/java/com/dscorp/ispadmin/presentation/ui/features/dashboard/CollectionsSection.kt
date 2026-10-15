@@ -17,6 +17,7 @@ import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.dashboard.CollectionSummary
 import com.dscorp.ispadmin.presentation.designsystem.components.BadgeTone
 import com.dscorp.ispadmin.presentation.designsystem.components.BarItem
+import com.dscorp.ispadmin.presentation.designsystem.components.CardAction
 import com.dscorp.ispadmin.presentation.designsystem.components.HorizontalBarList
 import com.dscorp.ispadmin.presentation.designsystem.components.IspCard
 import com.dscorp.ispadmin.presentation.designsystem.components.ProgressTrack
@@ -30,9 +31,10 @@ private const val PERCENT = 100f
 
 /** "Cobranza operativa": invoices about to fall due, deferred cuts and this month's cuts vs restores. */
 @Composable
-fun CollectionsSection(summary: CollectionSummary, modifier: Modifier = Modifier) {
-    Column(modifier.padding(horizontal = IspSpacing.lg).testTag("financial_collections"), verticalArrangement = Arrangement.spacedBy(IspSpacing.sm)) {
-        SectionHeader(stringResource(R.string.collections_title), caption = stringResource(R.string.collections_caption))
+fun CollectionsSection(summary: CollectionSummary, modifier: Modifier = Modifier, onSeeDebtors: (() -> Unit)? = null) {
+    Column(modifier.padding(horizontal = IspSpacing.lg).testTag("financial_collections"), verticalArrangement = Arrangement.spacedBy(IspSpacing.md)) {
+        SectionHeader(stringResource(R.string.collections_title), caption = stringResource(R.string.collections_as_of, todayLabel()),
+            action = onSeeDebtors?.let { CardAction(stringResource(R.string.collections_see_debtors), it) })
         IspCard {
             DueSoonRow(summary)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -48,7 +50,7 @@ private fun DueSoonRow(summary: CollectionSummary) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Label(stringResource(R.string.collections_due_soon, summary.dueSoonDays))
-            Text(formatSoles(summary.dueSoonAmount.toDouble()), style = IspType.kpi)
+            Text(formatSoles(summary.dueSoonAmount.toDouble()), style = IspType.rowValue)
             Label(stringResource(R.string.collections_invoices, formatCount(summary.dueSoonInvoices)))
         }
         if (summary.dueSoonInvoices > 0) StatusBadge(stringResource(R.string.collections_due_badge), BadgeTone.Warning)
@@ -61,7 +63,7 @@ private fun DeferralsRow(summary: CollectionSummary) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Label(stringResource(R.string.collections_active_deferrals))
-                Text(formatCount(summary.activeDeferrals), style = IspType.kpi)
+                Text(formatCount(summary.activeDeferrals), style = IspType.rowValue)
             }
             if (summary.deferralsExpiringToday > 0) {
                 StatusBadge(stringResource(R.string.collections_expiring_today, formatCount(summary.deferralsExpiringToday)), BadgeTone.Warning)
@@ -89,7 +91,10 @@ private fun CutsRow(summary: CollectionSummary) {
 
 @Composable
 private fun Label(text: String) {
-    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(text, style = IspType.rowLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
+
+private fun todayLabel(): String = java.time.LocalDate.now(java.time.ZoneId.of("America/Lima"))
+    .format(java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy", java.util.Locale.forLanguageTag("es-PE"))).replace(".", "")
 
 

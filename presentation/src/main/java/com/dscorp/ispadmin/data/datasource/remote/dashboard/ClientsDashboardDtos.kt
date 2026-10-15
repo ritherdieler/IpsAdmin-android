@@ -5,6 +5,7 @@ import com.dscorp.ispadmin.domain.model.dashboard.ClientQuality
 import com.dscorp.ispadmin.domain.model.dashboard.PlanAnalysis
 import com.dscorp.ispadmin.domain.model.dashboard.PlanStats
 import com.dscorp.ispadmin.domain.model.dashboard.TicketSummary
+import com.dscorp.ispadmin.domain.model.dashboard.TicketMonthQuality
 import com.dscorp.ispadmin.domain.model.dashboard.ZonePerformance
 
 // Gson may leave non-null fields null when the server omits them, so every field is nullable here.
@@ -34,6 +35,8 @@ data class AssistanceTicketsDto(
     val ticketsByCategory: Map<String, Int>? = null,
     val ticketsByPriority: List<Int>? = null,
     val openTicketsByPriority: List<Int>? = null,
+    val monthlyQuality: List<TicketMonthQualityDto>? = null,
+    val openTicketsWeekAgo: Int? = null,
 ) {
     fun toDomain() = TicketSummary(
         total = totalTickets ?: 0,
@@ -46,6 +49,8 @@ data class AssistanceTicketsDto(
         byCategory = ticketsByCategory.orEmpty().entries.sortedByDescending { it.value }.map { it.key to it.value },
         byPriority = ticketsByPriority.orEmpty(),
         openHighPriority = openTicketsByPriority?.getOrNull(TicketSummary.HIGH_PRIORITY),
+        monthly = monthlyQuality.orEmpty().mapNotNull { it.toDomain() },
+        openWeekAgo = openTicketsWeekAgo,
     )
 }
 
@@ -75,4 +80,11 @@ data class ClientLifecycleDto(
         cancellationsByPlan = cancellationsByPlan.orEmpty().entries.sortedByDescending { it.value }.map { it.key to it.value },
         cancellationsByZone = cancellationsByZone.orEmpty().entries.sortedByDescending { it.value }.map { it.key to it.value },
     )
+}
+
+data class TicketMonthQualityDto(val month: String? = null, val averageResolutionTimeHours: Double? = null, val reopenRate: Double? = null) {
+    fun toDomain(): TicketMonthQuality? {
+        val parsed = month?.let { runCatching { java.time.YearMonth.parse(it) }.getOrNull() } ?: return null
+        return TicketMonthQuality(parsed, averageResolutionTimeHours?.takeUnless { it.isNaN() }, reopenRate?.takeUnless { it.isNaN() })
+    }
 }

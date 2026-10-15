@@ -19,6 +19,10 @@ data class TicketSummary(
     val byPriority: List<Int>,
     /** Unfinished tickets of high priority right now; null when the Core does not send it. */
     val openHighPriority: Int? = null,
+    /** Quality of the tickets created each month of the window, oldest first. */
+    val monthly: List<TicketMonthQuality> = emptyList(),
+    /** Unfinished tickets seven days ago; null when the Core does not send it. */
+    val openWeekAgo: Int? = null,
 ) {
     val open: Int get() = pending + assigned + inProgress + reopened
     val highPriority: Int? get() = byPriority.getOrNull(HIGH_PRIORITY)
@@ -50,3 +54,5 @@ data class ClientsDashboard(
 ) {
     val hasFailures: Boolean get() = listOf(plans, tickets, quality, zones, lifecycle).any { it == null }
 }
+
+data class TicketMonthQuality(val month: java.time.YearMonth, val resolutionHours: Double?, val reopenRatePercent: Double?)

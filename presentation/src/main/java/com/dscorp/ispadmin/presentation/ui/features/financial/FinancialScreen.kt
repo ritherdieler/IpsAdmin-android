@@ -34,6 +34,10 @@ import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatPercent
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatSoles
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.percentChange
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.shares
+import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashboardTitleBar
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.unit.sp
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashboardTabData
 import com.dscorp.ispadmin.presentation.designsystem.charts.ChartData
 import com.dscorp.ispadmin.presentation.designsystem.charts.ChartSeries
@@ -128,7 +132,7 @@ fun FinancialContent(
                 contentPadding = PaddingValues(bottom = IspSpacing.xl),
                 verticalArrangement = Arrangement.spacedBy(IspSpacing.md),
             ) {
-                item("hero") { FinancialHeroBody(uiState, onIntent, HeroContext(report, managementAccess, billingView), openDetail) }
+                item("hero") { FinancialHeroBody(uiState, onIntent, HeroContext(report, managementAccess, billingView, uiState.previousReport, uiState.movementsMonth), openDetail) }
                 if (report != null) item("tiles") { if (billingView) BillingTiles(report, uiState, openDetail) else MovementTiles(report, openDetail) }
                 item("status") { StatusArea(uiState, report) }
                 if (report != null) {
@@ -142,7 +146,13 @@ fun FinancialContent(
     if (openRecords != null && report != null) RecordsDialog(report, openRecords) { detail = null }
 }
 
-private data class HeroContext(val report: FinancialReport?, val managementAccess: Boolean, val billingView: Boolean)
+private data class HeroContext(
+    val report: FinancialReport?,
+    val managementAccess: Boolean,
+    val billingView: Boolean,
+    val previousReport: FinancialReport? = null,
+    val movementsMonth: String = "",
+)
 
 /** Fixed part: dashboard tabs, report view selector and refresh stay reachable while scrolling. */
 @Composable
@@ -153,15 +163,23 @@ private fun FinancialHeroTop(
     managementAccess: Boolean,
     billingView: Boolean,
 ) {
+    val report = uiState.report
+    val status = report?.let { stringResource(R.string.financial_cut, cutoffLabel(it.cutoff), it.revision) }
     HeroTop {
-        header()
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            HeroChips(viewChips(managementAccess, billingView, onIntent), Modifier.weight(1f))
+        DashboardTitleBar(status, statusTag = "financial_cut") {
+            if (report != null) {
+                IconButton(onClick = { onIntent(FinancialIntent.Export) }, enabled = !uiState.exporting && !uiState.isLoading,
+                    modifier = Modifier.size(44.dp).testTag("financial_export_header")) {
+                    Icon(Icons.Default.FileDownload, stringResource(R.string.financial_export_short), tint = IspTheme.colors.onHero)
+                }
+            }
             IconButton(onClick = { onIntent(FinancialIntent.Load) }, enabled = !uiState.isLoading,
-                modifier = Modifier.size(48.dp).testTag("financial_refresh")) {
+                modifier = Modifier.size(44.dp).testTag("financial_refresh")) {
                 Icon(Icons.Default.Refresh, stringResource(R.string.dashboard_refresh), tint = IspTheme.colors.onHero)
             }
         }
+        header()
+        HeroChips(viewChips(managementAccess, billingView, onIntent))
     }
 }
 
@@ -174,10 +192,7 @@ private fun FinancialHeroBody(uiState: FinancialUiState, onIntent: (FinancialInt
         } else {
             PeriodPicker(R.string.financial_movements_month, uiState.movementsMonth, "movements") { onIntent(FinancialIntent.SelectMovementsMonth(it)) }
         }
-        context.report?.let { report ->
-            HeroMetric(report, context.billingView, openDetail)
-            CutInfo(report)
-        }
+        context.report?.let { report -> HeroMetric(report, context.billingView, openDetail, context.previousReport?.let { it to context.movementsMonth }) }
     }
 }
 
@@ -193,7 +208,12 @@ private fun viewChips(managementAccess: Boolean, billingView: Boolean, onIntent:
 }
 
 @Composable
-private fun HeroMetric(report: FinancialReport, billingView: Boolean, openDetail: (Detail) -> Unit) {
+private fun HeroMetric(
+    report: FinancialReport,
+    billingView: Boolean,
+    openDetail: (Detail) -> Unit,
+    comparison: Pair<FinancialReport, String>? = null,
+) {
     val badge = HeroBadge(
         stringResource(if (report.status == "COMPLETE") R.string.financial_status_complete else R.string.financial_status_observed),
         if (report.status == "COMPLETE") DeltaTone.Positive else DeltaTone.Neutral,
@@ -207,7 +227,7 @@ private fun HeroMetric(report: FinancialReport, billingView: Boolean, openDetail
         val warning = if (receiptsWithoutDate > 0) stringResource(R.string.financial_receipts_missing_date_warning, receiptsWithoutDate) else null
         HeroFigure(
             HeroFigureModel(stringResource(R.string.financial_received_dated), money(receivedWithDate(report), report.currency),
-                "financial_received", badge = badge, supporting = warning),
+                "financial_received", delta = comparison?.let { (previous, month) -> receivedDelta(report, previous, month) }, badge = badge, supporting = warning),
         ) { openDetail(Detail.RECEIPTS) }
     }
 }
@@ -234,15 +254,6 @@ private fun HeroError(uiState: FinancialUiState, report: FinancialReport?, onInt
     }
 }
 
-@Composable
-private fun CutInfo(report: FinancialReport) {
-    val muted = IspTheme.colors.onHeroMuted
-    Column(Modifier.testTag("financial_cut"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(stringResource(R.string.financial_cut, cutoffLabel(report.cutoff), report.revision), style = MaterialTheme.typography.bodySmall, color = muted)
-        if (report.kind == "RECONSTRUCTED") Text(stringResource(R.string.financial_reconstructed), style = MaterialTheme.typography.bodySmall, color = muted)
-        if (report.kind == "MONTHLY" || report.kind == "REVISION") Text(stringResource(R.string.financial_monthly_cut), style = MaterialTheme.typography.bodySmall, color = muted)
-    }
-}
 
 @Composable
 private fun MovementTiles(report: FinancialReport, openDetail: (Detail) -> Unit) {
@@ -268,7 +279,7 @@ private fun LazyListScope.movementItems(
 ) {
     val legacy = extras.legacy
     val managementAccess = report.access == "FULL"
-    extras.collections?.let { summary -> item("collections") { CollectionsSection(summary) } }
+    extras.collections?.let { summary -> item("collections") { CollectionsSection(summary, onSeeDebtors = { openDetail(Detail.DEBT) }) } }
     val trend = report.history.sortedBy { it.serviceMonth }.takeLast(TREND_MONTHS).filter { it.billing?.net != null || it.billing?.collected != null }
     if (trend.isNotEmpty()) {
         item("trend_header") {
@@ -347,6 +358,9 @@ private fun LazyListScope.closingItems(report: FinancialReport, uiState: Financi
                         formatCount(coverage.unconfirmedDueDates), formatCount(coverage.receiptsWithoutDate)), style = MaterialTheme.typography.bodyMedium)
                     coverage.notes.forEach { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
+                cutKindNote(report.kind)?.let {
+                    Text(stringResource(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
     }
@@ -405,7 +419,7 @@ private fun FinancialHistoryChart(history: List<ServiceHistory>, currency: Strin
             EmptyChart(stringResource(R.string.financial_empty))
         } else {
             IspLineChart(ChartData(months.map { serviceMonthLabel(it.serviceMonth) }, series),
-                Modifier.testTag("financial_history_chart").semantics { contentDescription = chartDescription })
+                Modifier.testTag("financial_history_chart").semantics { contentDescription = chartDescription }, markerFormat = ::formatSoles)
         }
     }
 }
@@ -420,7 +434,7 @@ private fun NetVsCollectedCard(months: List<ServiceHistory>, currency: String) {
     )
     ChartCard(ChartCardHeader(stringResource(R.string.financial_trend_chart), currencySymbol(currency), series.map { LegendItem(it.name, it.color) }),
         Modifier.testTag("financial_trend_chart")) {
-        IspColumnChart(ChartData(months.map { serviceMonthLabel(it.serviceMonth) }, series))
+        IspColumnChart(ChartData(months.map { serviceMonthLabel(it.serviceMonth) }, series), markerFormat = ::formatSoles)
     }
 }
 
@@ -431,8 +445,9 @@ private fun GrossRevenueCard(legacy: DashBoardDataResponse) {
     val labels = months.map { serviceMonthLabel(it.billingMonth.take(7)) }
     val values = months.map { it.totalCharged }
     val data = ChartData(labels, listOf(ChartSeries(stringResource(R.string.gross_revenue_per_month), IspTheme.colors.chartCategorical[0], values)))
-    ChartCard(ChartCardHeader(stringResource(R.string.gross_revenue_per_month), lastMonthSummary(labels, values)), Modifier.testTag("financial_gross_revenue_chart")) {
-        if (data.isEmpty) EmptyChart(stringResource(R.string.financial_empty)) else IspLineChart(data, startAtZero = true)
+    ChartCard(ChartCardHeader(stringResource(R.string.gross_revenue_per_month), withAverage(lastMonthSummary(labels, values), values)),
+        Modifier.testTag("financial_gross_revenue_chart")) {
+        if (data.isEmpty) EmptyChart(stringResource(R.string.financial_empty)) else IspLineChart(data, startAtZero = true, markerFormat = ::formatSoles, showAverage = true)
     }
 }
 
@@ -454,8 +469,9 @@ private fun MonthlyCollectsCard(legacy: DashBoardDataResponse) {
     val labels = months.map { serviceMonthLabel(YearMonth.from(it.date.toInstant().atZone(zone)).toString()) }
     val values = months.map { collectedSoles(it.grossIncome, it.totalRaised) }
     val data = ChartData(labels, listOf(ChartSeries(stringResource(R.string.monthly_collects_history), IspTheme.colors.chartCollected, values)))
-    ChartCard(ChartCardHeader(stringResource(R.string.monthly_collects_history), lastMonthSummary(labels, values)), Modifier.testTag("financial_collects_chart")) {
-        if (data.isEmpty) EmptyChart(stringResource(R.string.financial_empty)) else IspColumnChart(data)
+    ChartCard(ChartCardHeader(stringResource(R.string.monthly_collects_history), withAverage(lastMonthSummary(labels, values), values)),
+        Modifier.testTag("financial_collects_chart")) {
+        if (data.isEmpty) EmptyChart(stringResource(R.string.financial_empty)) else IspColumnChart(data, markerFormat = ::formatSoles, showAverage = true)
     }
 }
 
@@ -567,23 +583,34 @@ private fun CorporateCard(report: FinancialReport, openRecords: () -> Unit) {
     }
 }
 
+/** "▲ 6.1% vs sep"; while the month is in progress it compares up to the same day ("vs sep al día 11"). */
+@Composable
+private fun receivedDelta(report: FinancialReport, previous: FinancialReport, movementsMonth: String): KpiDelta? {
+    val selected = runCatching { YearMonth.parse(movementsMonth) }.getOrNull() ?: return null
+    val today = java.time.LocalDate.now(ZoneId.of("America/Lima"))
+    val inProgress = selected == YearMonth.from(today)
+    val change = receivedChange(report, previous, if (inProgress) today.dayOfMonth else null) ?: return null
+    val month = serviceMonthLabel(selected.minusMonths(1).toString())
+    val comparison = if (inProgress) stringResource(R.string.financial_vs_same_day, month, today.dayOfMonth)
+        else stringResource(R.string.dashboard_vs_previous, month)
+    val arrow = if (change > 0) "▲" else if (change < 0) "▼" else "="
+    val tone = if (change > 0) DeltaTone.Positive else if (change < 0) DeltaTone.Negative else DeltaTone.Neutral
+    return KpiDelta("$arrow ${formatPercent(kotlin.math.abs(change))}", tone, comparison)
+}
+
 @Composable
 private fun groupLabel(key: String) = key.takeUnless { it == "SIN_DATO" } ?: stringResource(R.string.financial_unavailable)
 
 private fun BigDecimal?.orZero(): Double = this?.toDouble() ?: 0.0
 
+/** "sep: S/ 49,000.00 · ▲ 2.1% vs ago · prom. S/ 49.2k": the dashed line of the chart is the average. */
+private fun withAverage(summary: String, values: List<Double>): String =
+    listOfNotNull(summary, com.dscorp.ispadmin.presentation.designsystem.charts.averageCaption(values) {
+        "S/ " + com.dscorp.ispadmin.presentation.designsystem.charts.compactNumber(it)
+    }).joinToString(" · ")
+
 private fun currencySymbol(currency: String) = when (currency) { "PEN" -> "S/"; "USD" -> "US$"; else -> currency }
 
-private fun receivedWithDate(report: FinancialReport): BigDecimal? {
-    val movements = report.movements ?: return null
-    movements.receivedWithDate?.let { return it }
-    movements.received?.let { return it }
-    val month = runCatching { YearMonth.parse(report.movementsMonth) }.getOrNull() ?: return null
-    return report.receipts.fold(BigDecimal.ZERO) { total, item ->
-        val paidAt = item.receipt.paidAt?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() }
-        if (paidAt != null && YearMonth.from(paidAt) == month) total + item.receipt.amount else total
-    }
-}
 
 internal fun serviceMonthLabel(month: String): String = runCatching {
     YearMonth.parse(month).month.getDisplayName(java.time.format.TextStyle.SHORT, Locale.forLanguageTag("es-PE")).trimEnd('.')
@@ -612,20 +639,32 @@ private fun differenceScope(report: FinancialReport, selectedMonth: String): Dif
     return DifferenceScope(selected, otherPeriods, unknownPeriods)
 }
 
+/** "MES DE MOVIMIENTOS        ‹ oct 2026 ›"; screen readers hear "Mes de movimientos: 2026-10". */
 @Composable
 private fun PeriodPicker(label: Int, month: String, tag: String, select: (String) -> Unit) {
     val parsed = runCatching { YearMonth.parse(month) }.getOrNull() ?: return
-    val onHero = IspTheme.colors.onHero
+    val colors = IspTheme.colors
+    val canGoForward = parsed < YearMonth.now(ZoneId.of("America/Lima"))
+    val name = stringResource(label)
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = { select(parsed.minusMonths(1).toString()) }, modifier = Modifier.size(48.dp).testTag("financial_previous_$tag")) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, stringResource(R.string.financial_previous_month), tint = onHero)
+        Overline(name, colors.onHeroMuted, Modifier.weight(1f), maxLines = 1, spokenText = "$name: $month")
+        IconButton(onClick = { select(parsed.minusMonths(1).toString()) }, modifier = Modifier.size(36.dp).testTag("financial_previous_$tag")) {
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, stringResource(R.string.financial_previous_month), Modifier.size(20.dp), tint = colors.onHero)
         }
-        Text(stringResource(label) + ": " + month, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, color = onHero)
-        IconButton(onClick = { select(parsed.plusMonths(1).toString()) }, enabled = parsed < YearMonth.now(ZoneId.of("America/Lima")),
-            modifier = Modifier.size(48.dp).testTag("financial_next_$tag")) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.financial_next_month), tint = onHero)
+        Text("${serviceMonthLabel(month)} ${parsed.year}", Modifier.clearAndSetSemantics {}, style = IspType.label.copy(fontSize = 14.sp),
+            color = colors.onHero)
+        IconButton(onClick = { select(parsed.plusMonths(1).toString()) }, enabled = canGoForward,
+            modifier = Modifier.size(36.dp).testTag("financial_next_$tag")) {
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.financial_next_month), Modifier.size(20.dp),
+                tint = if (canGoForward) colors.onHero else colors.onHeroMuted)
         }
     }
+}
+
+private fun cutKindNote(kind: String): Int? = when (kind) {
+    "RECONSTRUCTED" -> R.string.financial_reconstructed
+    "MONTHLY", "REVISION" -> R.string.financial_monthly_cut
+    else -> null
 }
 
 @Composable

@@ -87,3 +87,10 @@ El rediseño visual se hizo sin TDD, por decisión del usuario. La cobranza oper
 - `CLIENTS_WINDOW_MONTHS` (antes `TICKET_HISTORY_MONTHS`) = 6 cubre tickets, incidencias por zona y cancelaciones.
 - `subscription.price` es el monto pagado por la instalación. El Core lo usaba como ARPU por plan e ingreso por zona; desde 2026-10-12 ambos usan la mensualidad del plan (`plan.price`). La suscripción 1224 tiene una instalación mal digitada (986,690,708.00, nunca facturada) que ya no afecta al dashboard.
 - Detalle y capturas: `design/dashboard-redesign/README.md`.
+
+## Comparaciones y periodos (2026-10-12, con TDD)
+
+- Pruebas: `FinancialComparisonTest`, casos nuevos en `FinancialViewModelTest`, `DashboardLogicTest` (periodos, `hoursDelta`, `countChange`), `DashboardDesignUiTest` y `DashboardRepositoriesTest`. Suite: 474 en verde.
+- `FinancialUiState.previousReport`: el VM carga el mes de movimientos anterior después del actual; si falla, la pantalla sigue cargada. `receivedChange` compara al mismo día mientras el mes está en curso.
+- `CommercialPeriod` (MONTH, SIX_MONTHS, TWELVE_MONTHS): KPIs por periodo y `forCharts` recorta las tendencias. `CommercialDashboard` carga 12 meses.
+- `TicketSummary.monthly` / `openWeekAgo`, `MonthlySubscriptionResume.activeSubscriptions`, `DashBoardDataResponse.planUpgradesThisMonth`, `KpiModel.badge`.

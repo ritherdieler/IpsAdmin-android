@@ -24,9 +24,28 @@ class FinancialViewModelTest {
     @Before fun setup() {
         Dispatchers.setMain(dispatcher)
         vm = FinancialViewModel(repository, dispatcher, "2026-10")
+        // The comparison month; tests that check it stub their own result.
+        coEvery { repository.load("2026-08", "2026-09") } returns Result.failure(Exception("not stubbed"))
     }
     @After fun cleanup() { Dispatchers.resetMain() }
 
+    @Test fun `load also brings the previous movements month to compare the money received`() = runTest(dispatcher) {
+        coEvery { repository.load("2026-09", "2026-10") } returns Result.success(report)
+        coEvery { repository.load("2026-08", "2026-09") } returns Result.success(report.copy(id = "cut-sep"))
+        vm.onIntent(FinancialIntent.Load)
+        advanceUntilIdle()
+        assertEquals("cut-1", vm.uiState.value.report?.id)
+        assertEquals("cut-sep", vm.uiState.value.previousReport?.id)
+    }
+    @Test fun `a comparison month that fails to load leaves the screen loaded`() = runTest(dispatcher) {
+        coEvery { repository.load("2026-09", "2026-10") } returns Result.success(report)
+        coEvery { repository.load("2026-08", "2026-09") } returns Result.failure(Exception("network"))
+        vm.onIntent(FinancialIntent.Load)
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.failed)
+        assertEquals("cut-1", vm.uiState.value.report?.id)
+        assertNull(vm.uiState.value.previousReport)
+    }
     @Test fun `load uses previous service month and current movements month`() = runTest(dispatcher) {
         coEvery { repository.load("2026-09", "2026-10") } returns Result.success(report)
         vm.onIntent(FinancialIntent.Load)
@@ -35,7 +54,7 @@ class FinancialViewModelTest {
         assertFalse(vm.uiState.value.isLoading)
     }
     @Test fun `failed refresh retains saved cut and retry clears error`() = runTest(dispatcher) {
-        coEvery { repository.load(any(), any()) } returns Result.success(report) andThen Result.failure(Exception("network")) andThen Result.success(report.copy(id = "cut-2"))
+        coEvery { repository.load("2026-09", "2026-10") } returns Result.success(report) andThen Result.failure(Exception("network")) andThen Result.success(report.copy(id = "cut-2"))
         vm.onIntent(FinancialIntent.Load)
         advanceUntilIdle()
         vm.onIntent(FinancialIntent.Load)

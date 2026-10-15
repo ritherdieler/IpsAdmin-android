@@ -37,7 +37,7 @@ data class IspColors(
 
 val LightIspColors = IspColors(
     // Matches the shared top app bar (primaryContainer) so the band reads as its continuation.
-    hero = Color(0xFF1E2A6D),
+    hero = Color(0xFF141D48),
     onHero = Color.White,
     onHeroMuted = Color(0xFFB6BFE8),
     heroPositive = Color(0xFF7FE0A6),
@@ -68,7 +68,7 @@ val LightIspColors = IspColors(
 )
 
 val DarkIspColors = IspColors(
-    hero = Color(0xFF232D6B),
+    hero = Color(0xFF1B2459),
     onHero = Color(0xFFE4E6F2),
     onHeroMuted = Color(0xFFAEB6DD),
     heroPositive = Color(0xFF7FE0A6),
