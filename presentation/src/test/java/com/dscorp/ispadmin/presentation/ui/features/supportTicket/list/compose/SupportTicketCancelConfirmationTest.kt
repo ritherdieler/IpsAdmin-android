@@ -3,6 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose
 import android.app.Application
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
@@ -29,7 +30,7 @@ class SupportTicketCancelConfirmationTest {
     fun `cancel asks for confirmation before cancelling a pending ticket`() {
         setScreen()
 
-        composeRule.onNodeWithText("Cancelar").performClick()
+        openCancel()
 
         assertTrue(cancelled.isEmpty())
         composeRule.onNodeWithText("¿Cancelar ticket #3213?").assertExists()
@@ -39,7 +40,7 @@ class SupportTicketCancelConfirmationTest {
     fun `confirming cancels the ticket once`() {
         setScreen()
 
-        composeRule.onNodeWithText("Cancelar").performClick()
+        openCancel()
         composeRule.onNodeWithText("Sí, cancelar").performClick()
 
         assertEquals(listOf(3213), cancelled.map { it.id })
@@ -50,11 +51,17 @@ class SupportTicketCancelConfirmationTest {
     fun `dismissing the confirmation keeps the ticket`() {
         setScreen()
 
-        composeRule.onNodeWithText("Cancelar").performClick()
+        openCancel()
         composeRule.onNodeWithText("No").performClick()
 
         assertTrue(cancelled.isEmpty())
         composeRule.onNodeWithText("¿Cancelar ticket #3213?").assertDoesNotExist()
+    }
+
+    // Proposal A: secondary ticket actions live in the card menu.
+    private fun openCancel() {
+        composeRule.onNodeWithContentDescription("Más acciones del ticket").performClick()
+        composeRule.onNodeWithText("Cancelar").performClick()
     }
 
     private fun setScreen() {
