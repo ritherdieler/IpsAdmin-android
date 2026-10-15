@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -34,6 +35,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -71,6 +74,7 @@ fun SupportTicketListScreen(
 ) {
     var selectedTicket by remember { mutableStateOf<AssistanceTicketResponse?>(null) }
     var ticketToReschedule by remember { mutableStateOf<AssistanceTicketResponse?>(null) }
+    var ticketToCancel by remember { mutableStateOf<AssistanceTicketResponse?>(null) }
     var selectedPhoneNumber by remember {
         mutableStateOf<String?>(null)
     }
@@ -181,7 +185,7 @@ fun SupportTicketListScreen(
                         loadingTickets = uiState.pendingTicketsLoading,
                         currentUser = uiState.user!!,
                         onTakeTicket = onTakeTicket,
-                        onCloseTicket = onCloseUnattendedTicket,
+                        onCloseTicket = { ticket -> ticketToCancel = ticket },
                         onRescheduleTicket = { ticket -> ticketToReschedule = ticket },
                         onPhoneClick = { phoneNumber ->
                             selectedPhoneNumber = phoneNumber
@@ -233,6 +237,17 @@ fun SupportTicketListScreen(
                     onConfirm = { uri ->
                         onCloseTicket(ticket, uri)
                         selectedTicket = null
+                    }
+                )
+            }
+
+            ticketToCancel?.let { ticket ->
+                CancelTicketDialog(
+                    ticket = ticket,
+                    onDismiss = { ticketToCancel = null },
+                    onConfirm = {
+                        onCloseUnattendedTicket(ticket)
+                        ticketToCancel = null
                     }
                 )
             }
@@ -329,6 +344,29 @@ fun ErrorDialog(
                     text = "Aceptar",
                     modifier = Modifier.fillMaxWidth()
                 )
+            }
+        }
+    )
+}
+
+@Composable
+private fun CancelTicketDialog(
+    ticket: AssistanceTicketResponse,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("¿Cancelar ticket #${ticket.id}?") },
+        text = { Text("El ticket de ${ticket.name} quedará cancelado y no podrá ser atendido.") },
+        confirmButton = {
+            TextButton(onClick = onConfirm, modifier = Modifier.testTag("cancel_ticket_confirm")) {
+                Text("Sí, cancelar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.testTag("cancel_ticket_dismiss")) {
+                Text("No")
             }
         }
     )

@@ -155,7 +155,7 @@ fun FeatureNavGraph(
     val currentRoute = FeatureRoutes.FromString(currentEntry?.destination?.route)
 
     LaunchedEffect(uiState.currentUser?.id) {
-        if (uiState.currentUser == null || currentRoute is Subscription.Register) return@LaunchedEffect
+        if (!uiState.currentUser.canRegisterSubscription() || currentRoute is Subscription.Register) return@LaunchedEffect
         val pending = try {
             onuRegistrationOperationUseCase.active()
         } catch (cancelled: CancellationException) {
@@ -163,7 +163,7 @@ fun FeatureNavGraph(
         } catch (_: Exception) {
             null
         }
-        if (pending?.subscriptionId == null) {
+        if (shouldResumeOnuRegistration(uiState.currentUser, pending)) {
             runNavigationOnMainThread {
                 navController.navigate(Subscription.Register()) { launchSingleTop = true }
             }
@@ -319,11 +319,7 @@ private fun NavGraphContent(
             val route = it.toRoute<Subscription.Register>()
             val installationOrder = route.installationOrderId
             val customerId = route.customerId
-            val canRegisterSubscription = currentUser?.type in listOf(
-                User.UserType.ADMIN,
-                User.UserType.ACCOUNTANT,
-                User.UserType.TECHNICIAN
-            )
+            val canRegisterSubscription = currentUser.canRegisterSubscription()
 
             when {
                 currentUser == null -> Unit

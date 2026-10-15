@@ -203,7 +203,7 @@ private fun PaymentHistoryCard(payer: PayerFinderResult) {
     }
 }
 
-private fun formatCurrency(amount: Double): String {
-    val format = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
+internal fun formatCurrency(amount: Double): String {
+    val format = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-PE"))
     return format.format(amount)
 }

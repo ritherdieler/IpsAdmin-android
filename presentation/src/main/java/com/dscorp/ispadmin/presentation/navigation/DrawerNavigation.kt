@@ -156,7 +156,8 @@ object DrawerNavigation {
                 DrawerGroup.Plans
             )
 
-            else -> throw Exception("Tipo de usuario no soportado")
+            User.UserType.LOGISTIC,
+            User.UserType.CLIENT -> listOf(DrawerGroup.Profile)
         }
     }
 

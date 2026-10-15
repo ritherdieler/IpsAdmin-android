@@ -28,7 +28,7 @@ sealed class LoginState {
 sealed class CheckVersionState {
     object Loading : CheckVersionState()
     data class Error(val message: String) : CheckVersionState()
-    data class CheckVersionSuccess(val forceUpdate: Boolean) : CheckVersionState()
+    data class CheckVersionSuccess(val forceUpdate: Boolean, val downloadUrl: String? = null) : CheckVersionState()
 }
 
 class LoginViewModel(
@@ -111,7 +111,8 @@ class LoginViewModel(
         }.fold(
             onSuccess = { response ->
                 checkVersionFlow.value = CheckVersionState.CheckVersionSuccess(
-                    response.versionCode > BuildConfig.VERSION_CODE
+                    forceUpdate = response.versionCode > BuildConfig.VERSION_CODE,
+                    downloadUrl = response.downloadUrl
                 )
             },
             onFailure = { e ->

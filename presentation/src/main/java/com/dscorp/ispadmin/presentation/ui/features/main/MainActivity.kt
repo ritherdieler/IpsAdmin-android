@@ -43,7 +43,10 @@ class MainActivity : FragmentActivity() {
         setContent {
             MyTheme {
                 TestTagResourceIdRoot {
-                    IpsAdminNavHost()
+                    IpsAdminNavHost(
+                        onSessionStarted = ::onSessionStarted,
+                        onSessionEnded = fcmTopicManager::unsubscribeFromRoleTopics,
+                    )
                 }
             }
         }
@@ -52,16 +55,24 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun updateFcmToken() {
-        val currentUser = viewModel.getCurrentUser()
-        currentUser?.let { user ->
-            lifecycleScope.launch {
-                updateFcmToken(
-                    context = this@MainActivity,
-                    user = user,
-                    updateDeviceTokenUseCase = updateDeviceTokenUseCase
-                )
-            }
+        viewModel.getCurrentUser()?.let(::registerDeviceToken)
+    }
+
+    private fun registerDeviceToken(user: User) {
+        lifecycleScope.launch {
+            updateFcmToken(
+                context = this@MainActivity,
+                user = user,
+                updateDeviceTokenUseCase = updateDeviceTokenUseCase
+            )
         }
+    }
+
+    // A fresh login does not recreate the activity, so onCreate never sees this user.
+    private fun onSessionStarted(user: User) {
+        firebaseAnalytics.setUserId(user.id.toString())
+        applyUserConfiguration(user)
+        registerDeviceToken(user)
     }
 
     private fun setupUserProfile() {
@@ -81,7 +92,7 @@ class MainActivity : FragmentActivity() {
 
     private fun applyUserConfiguration(user: User) {
         // Configurar suscripciones FCM
-        fcmTopicManager.subscribeToTopicsForUserType(user.type!!)
+        user.type?.let(fcmTopicManager::subscribeToTopicsForUserType)
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
