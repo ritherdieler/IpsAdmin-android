@@ -28,6 +28,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +51,21 @@ fun ProfileContent(
     onLogout: () -> Unit,
     onClearError: () -> Unit
 ) {
+    var confirmLogout by remember { mutableStateOf(false) }
+    if (confirmLogout) {
+        AlertDialog(
+            onDismissRequest = { confirmLogout = false },
+            title = { Text("¿Cerrar sesión?") },
+            text = { Text("Dejarás de recibir avisos de tickets en este teléfono hasta que vuelvas a ingresar.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmLogout = false
+                    onLogout()
+                }) { Text("Cerrar sesión", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { confirmLogout = false }) { Text("Volver") } },
+        )
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -221,10 +242,10 @@ fun ProfileContent(
                 
                 Spacer(modifier = Modifier.weight(1f))
                 
-                // Botón de cerrar sesión con estilo destacado
+                // Logging out stops push notices on this phone, so it is confirmed first.
                 MyButton(
-                    onClick = onLogout,
-                    text = "Cerrar Sesión",
+                    onClick = { confirmLogout = true },
+                    text = "Cerrar sesión",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 24.dp)
