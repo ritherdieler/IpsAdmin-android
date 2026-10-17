@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.navigation
 
+import androidx.lifecycle.compose.currentStateAsState
 import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.activity.compose.BackHandler
@@ -417,22 +418,22 @@ private fun NavGraphContent(
             )
         }
         // SUPPORT TICKET MODULE
-        composable<SupportTicket.List> {
-            val viewModel: SupportTicketListViewModel = koinViewModel()
-            val uiState by viewModel.uiState.collectAsState()
-            SupportTicketListScreen(
-                uiState = uiState,
-                onTabChange = viewModel::onTabChange,
-                onDateFilterChange = viewModel::onDateFilterChange,
-                onSortOptionChange = viewModel::onSortOptionChange,
-                onTakeTicket = viewModel::takeTicket,
-                onCloseUnattendedTicket = viewModel::closeUnattendedTicket,
-                onCloseTicket = viewModel::closeTicket,
-                onRescheduleTicket = viewModel::rescheduleTicket,
-                onRefresh = viewModel::refreshData,
-                onDismissError = viewModel::dismissError,
-                onDismissSuccessMessage = viewModel::dismissSuccessMessage,
-                onTicketCardClick = { ticket -> navController.navigate(SupportTicket.Detail(ticket.id)) }
+        composable<SupportTicket.List> { backStackEntry ->
+            val viewModel: com.dscorp.ispadmin.presentation.ui.features.supportTicket.inbox.TicketInboxViewModel = koinViewModel()
+            val state by viewModel.uiState.collectAsState()
+            LaunchedEffect(Unit) { viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.supportTicket.inbox.TicketInboxIntent.Load) }
+            // Coming back from a ticket (taken, closed, rescheduled) refreshes the list and the counts.
+            val resumed = backStackEntry.lifecycle.currentStateAsState()
+            LaunchedEffect(resumed.value) {
+                if (resumed.value == androidx.lifecycle.Lifecycle.State.RESUMED && state.tickets.isNotEmpty()) {
+                    viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.supportTicket.inbox.TicketInboxIntent.Refresh)
+                }
+            }
+            com.dscorp.ispadmin.presentation.ui.features.supportTicket.inbox.TicketInboxContent(
+                state = state,
+                onIntent = viewModel::onIntent,
+                onOpen = { navController.navigate(SupportTicket.Detail(it)) },
+                onNew = { navController.navigate(SupportTicket.Create) },
             )
         }
         composable<SupportTicket.Detail> { backStackEntry ->
@@ -467,6 +468,8 @@ private fun NavGraphContent(
                 onCustomerNameChange = viewModel::updateCustomerName,
                 onCreateTicket = viewModel::createTicket,
                 onDismissError = viewModel::resetError,
+                onOpenAssign = viewModel::loadTechnicians,
+                onAssigneeChange = viewModel::updateAssignee,
                 categories = viewModel.categories,
                 onNavigateBack = {
                     navController.popBackStack()

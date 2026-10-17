@@ -13,6 +13,9 @@ interface FichaApi {
     @GET("subscription/{id}/history")
     suspend fun history(@Path("id") subscriptionId: Int): List<com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.HistoryLog>
 
+    @GET("assistanceTicket/counts")
+    suspend fun ticketCounts(): TicketCountsResponse
+
     @GET("assistanceTicket/bySubscription/{id}")
     suspend fun ticketsBySubscription(@Path("id") subscriptionId: Int): List<com.dscorp.ispadmin.data.response.AssistanceTicketResponse>
 }
@@ -36,3 +39,6 @@ data class CpeStatusResponse(
 }
 
 data class CpeCapabilitiesResponse(val vendor: String? = null, val model: String? = null)
+
+/** Core `AssistanceTicketCountsDto`; only the per-status totals are read. */
+data class TicketCountsResponse(val byStatus: Map<String, Long>? = null)

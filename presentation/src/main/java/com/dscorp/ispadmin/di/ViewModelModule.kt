@@ -92,6 +92,12 @@ val viewModelModule = module {
         )
     }
     viewModel {
+        com.dscorp.ispadmin.presentation.ui.features.supportTicket.inbox.TicketInboxViewModel(
+            gateway = com.dscorp.ispadmin.presentation.ui.features.supportTicket.inbox.RepositoryTicketInboxGateway(get(), get()),
+            mainImmediate = get<CoroutineDispatcher>(named("mainImmediate")),
+        )
+    }
+    viewModel {
         com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.CloseTicketViewModel(
             gateway = com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.RepositoryTicketGateway(get(), get(), get(), get()),
             mainImmediate = get<CoroutineDispatcher>(named("mainImmediate")),

@@ -105,7 +105,7 @@ object MainNavigation {
             showBack = !isTopLevel,
             // Dashboard, the subscription search and the ficha draw their own header, as in the design.
             showTopBar = route !is FeatureRoutes.Dashboard && route !is Subscription.Find && route !is Subscription.Details &&
-                route !is SupportTicket.Detail && route !is SupportTicket.Close,
+                route !is SupportTicket.Detail && route !is SupportTicket.Close && route !is SupportTicket.Create,
             bottomBar = if (isTopLevel && bar.size > 1) bar else emptyList(),
             selected = selected,
         )

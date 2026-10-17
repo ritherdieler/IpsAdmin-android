@@ -187,6 +187,47 @@ class CreateSupportTicketViewModelTest {
         assertTrue(viewModel.uiState.value.isTicketCreated)
     }
 
+    @Test
+    fun `changing the subscriber does not flag an error until the form is sent`() = runTest(testDispatcher) {
+        advanceUntilIdle()
+
+        viewModel.updateSelectedSubscription(null)
+        assertEquals(null, viewModel.uiState.value.subscriptionError)
+
+        viewModel.updateCategory("Otros")
+        viewModel.updateDescription("Sin internet")
+        viewModel.createTicket()
+        advanceUntilIdle()
+        assertEquals("Debe seleccionar un cliente", viewModel.uiState.value.subscriptionError)
+    }
+
+    @Test
+    fun `an optional assignee gets the new ticket right after it is created`() = runTest(testDispatcher) {
+        advanceUntilIdle()
+        coEvery { repository.getTechnicians() } returns listOf(
+            com.dscorp.ispadmin.domain.model.User(id = 7, name = "marco", lastName = "salinas"),
+        )
+        coEvery { repository.createTicket(any()) } returns mockk(relaxed = true) { io.mockk.every { id } returns 3613 }
+        coEvery { repository.assignSupportTicketToUser(3613, com.dscorp.ispadmin.data.response.AssistanceTicketStatus.ASSIGNED, 7) } returns mockk(relaxed = true)
+        coEvery { repository.subscriptionById(10) } returns subscription(id = 10)
+
+        viewModel.loadTechnicians()
+        advanceUntilIdle()
+        assertEquals(listOf(7 to "Marco Salinas"), viewModel.uiState.value.technicians)
+        viewModel.updateSelectedSubscription(SubscriptionFastSearchResponse(id = 10, fullName = "Ana Lopez"))
+        advanceUntilIdle()
+        viewModel.updateCategory("Otros")
+        viewModel.updateDescription("Sin internet")
+        viewModel.updateAssignee(7)
+        viewModel.createTicket()
+        advanceUntilIdle()
+
+        io.mockk.coVerify(exactly = 1) {
+            repository.assignSupportTicketToUser(3613, com.dscorp.ispadmin.data.response.AssistanceTicketStatus.ASSIGNED, 7)
+        }
+        assertTrue(viewModel.uiState.value.isTicketCreated)
+    }
+
     private fun subscription(
         id: Int,
         firstName: String = "Juan",

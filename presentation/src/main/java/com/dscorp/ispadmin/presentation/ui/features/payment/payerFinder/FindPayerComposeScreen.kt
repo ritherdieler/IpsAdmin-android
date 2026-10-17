@@ -112,14 +112,13 @@ fun CashContent(
             icon = { Icon(Icons.Rounded.Add, contentDescription = null) },
             text = { Text("Nuevo cobro", fontWeight = FontWeight.SemiBold) },
             containerColor = IspTheme.colors.accent,
-            contentColor = OnAccent,
+            contentColor = IspTheme.colors.onAccent,
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).testTag(CashTestTags.NEW_CHARGE),
         )
     }
 }
 
 /** Text on the orange accent: white fails contrast (3.2:1). */
-private val OnAccent = androidx.compose.ui.graphics.Color(0xFF2A0C00)
 
 @Composable
 private fun CashMessage(text: String, isError: Boolean = false) {

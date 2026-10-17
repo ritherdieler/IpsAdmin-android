@@ -190,6 +190,7 @@ class MainNavigationTest {
     fun `ticket detail and close draw their own top bar`() {
         assertFalse(MainNavigation.shellChrome(UserType.TECHNICIAN, SupportTicket.Detail(3609)).showTopBar)
         assertFalse(MainNavigation.shellChrome(UserType.TECHNICIAN, SupportTicket.Close(3609)).showTopBar)
+        assertFalse(MainNavigation.shellChrome(UserType.SECRETARY, SupportTicket.Create).showTopBar)
         assertTrue(MainNavigation.shellChrome(UserType.TECHNICIAN, SupportTicket.Detail(3609)).showBack)
     }
 }

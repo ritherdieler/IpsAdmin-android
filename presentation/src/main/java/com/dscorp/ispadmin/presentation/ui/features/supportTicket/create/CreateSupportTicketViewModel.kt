@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.data.apirequestmodel.AssistanceTicketRequest
 import com.dscorp.ispadmin.data.repository.IRepository
+import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.dscorp.ispadmin.domain.model.Place
+import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionFastSearchResponse
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTitleCase
 import com.dscorp.ispadmin.observability.ObsBreadcrumbCategory
 import com.dscorp.ispadmin.observability.ObservabilityClient
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,24 +30,7 @@ class CreateSupportTicketViewModel(
     private val _uiState = MutableStateFlow(CreateSupportTicketUiState())
     val uiState: StateFlow<CreateSupportTicketUiState> = _uiState.asStateFlow()
 
-    val categories = listOf(
-        "Sin Conexión a Internet",
-        "Internet Lento",
-        "Migración a fibra óptica",
-        "Cambio de Domicilio",
-        "Cambio de Contraseña",
-        "Ruptura de cable última milla",
-        "Alineamiento de antena CPE",
-        "Instalación de Tv Cable",
-        "Añadir Tv Cable a su plan de internet",
-        "No tiene señal de Tv Cable",
-        "Cambio de Onu",
-        "Cambio de Router",
-        "Instalación de repetidor",
-        "Evaluar Factibilidad de Servicio",
-        "Instalación de Internet",
-        "Otros",
-    )
+    val categories = TICKET_CATEGORIES
 
     init {
         getPlaces()
@@ -166,7 +152,7 @@ class CreateSupportTicketViewModel(
             _uiState.update {
                 it.copy(
                     selectedSubscription = null,
-                    subscriptionError = if (it.isClient) "Debe seleccionar un cliente" else null,
+                    subscriptionError = null,
                     phone = "",
                     phoneError = null
                 ).clearedClientDetails()
@@ -208,6 +194,8 @@ class CreateSupportTicketViewModel(
                             clientName = fullName,
                             clientIp = details.ip.orEmpty(),
                             clientLocation = details.place?.name.orEmpty(),
+                            clientPlan = details.plan?.name.orEmpty(),
+                            clientStatus = details.serviceStatus,
                             selectedSubscription = current.selectedSubscription?.copy(fullName = fullName)
                         )
                     }
@@ -302,11 +290,17 @@ class CreateSupportTicketViewModel(
                         placeName = state.selectedPlace?.name
                     )
 
-                    repository.createTicket(ticketRequest)
+                    val created = repository.createTicket(ticketRequest)
+                    val assignError = state.assigneeId?.let { assigneeId ->
+                        runCatching {
+                            repository.assignSupportTicketToUser(created.id, AssistanceTicketStatus.ASSIGNED, assigneeId)
+                        }.exceptionOrNull()?.let { "Ticket #${created.id} creado, pero no se pudo asignar" }
+                    }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            isTicketCreated = true
+                            isTicketCreated = true,
+                            error = assignError,
                         )
                     }
                 } else {
@@ -372,6 +366,30 @@ class CreateSupportTicketViewModel(
         }
     }
 
+    fun loadTechnicians() {
+        if (_uiState.value.technicians.isNotEmpty()) return
+        viewModelScope.launch {
+            runCatching { repository.getTechnicians() }
+                .onSuccess { users ->
+                    val options = users.mapNotNull { user ->
+                        user.id?.let { id -> id to "${user.name} ${user.lastName.orEmpty()}".trim().toTitleCase() }
+                    }
+                    _uiState.update { it.copy(technicians = options) }
+                }
+                .onFailure { e ->
+                    observabilityClient.reportError(
+                        throwable = e,
+                        message = "Fallo al cargar técnicos para crear ticket",
+                        tags = mapOf("feature" to OBS_FEATURE, "screen" to OBS_SCREEN, "action" to "load_technicians")
+                    )
+                }
+        }
+    }
+
+    fun updateAssignee(userId: Int?) {
+        _uiState.update { it.copy(assigneeId = userId) }
+    }
+
     fun resetError() {
         _uiState.update { it.copy(error = null) }
     }
@@ -417,16 +435,23 @@ data class CreateSupportTicketUiState(
     val clientName: String = "",
     val clientIp: String = "",
     val clientLocation: String = "",
+    val clientPlan: String = "",
+    val clientStatus: ServiceStatus? = null,
     val isLoadingSubscription: Boolean = false,
     val hasLoadedClientDetails: Boolean = false,
     val subscriptionLoadError: String? = null,
 
     val subscriptions: List<SubscriptionFastSearchResponse> = emptyList(),
-    val places: List<Place> = emptyList()
+    val places: List<Place> = emptyList(),
+    /** Optional technician for the new ticket: (id, name). */
+    val technicians: List<Pair<Int, String>> = emptyList(),
+    val assigneeId: Int? = null,
 )
 
 private fun CreateSupportTicketUiState.clearedClientDetails() = copy(
     clientName = "",
+    clientPlan = "",
+    clientStatus = null,
     clientIp = "",
     clientLocation = "",
     isLoadingSubscription = false,

@@ -33,6 +33,8 @@ data class IspColors(
     val chartCategorical: List<Color>,
     val chartOther: Color,
     val chartGrid: Color,
+    /** Text and icons on the accent «Nuevo» buttons. */
+    val onAccent: Color = Color(0xFF2A0C00),
 )
 
 val LightIspColors = IspColors(
