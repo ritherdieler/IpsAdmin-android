@@ -27,6 +27,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.Subscript
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.RepositorySubscriptionHubGateway
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.SubscriptionHubViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.accessmigration.AccessMigrationViewModel
+import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SharedPrefsRecentSubscriptionsStore
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.CreateSupportTicketViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.SupportTicketViewModel
@@ -102,7 +103,12 @@ val viewModelModule = module {
     viewModel { MigrationViewModel(get(), get()) }
     viewModel { OltAdministrationViewModel(get(), get()) }
     viewModel { OutLayViewModel(get(), get()) }
-    viewModel { SubscriptionFinderViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel {
+        SubscriptionFinderViewModel(
+            get(), get(), get(), get(), get(), get(), get(),
+            recentSubscriptionsStore = SharedPrefsRecentSubscriptionsStore(get()),
+        )
+    }
     viewModel { FixedCostViewModel(get(), get()) }
     viewModel { CreateInstallationOrderViewModel(get(), get(), get(), get()) }
     viewModel { SupportTicketListViewModel(get(), get(), get()) }

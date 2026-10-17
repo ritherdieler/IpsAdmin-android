@@ -60,7 +60,22 @@ data class SubscriptionFinderUiState(
     val searchPerformed: Boolean = false,
     val currentPage: Int = 0,
     val canLoadMore: Boolean = false,
-)
+    val smartQuery: String = "",
+    val resultFilter: ResultFilter = ResultFilter.ALL,
+    val quickAccess: List<QuickAccess> = emptyList(),
+    val recents: List<RecentSubscription> = emptyList(),
+) {
+    /** Loaded results narrowed by the selected chip. */
+    val results: List<SubscriptionResume>
+        get() = subscriptions.entries
+            .sortedBy { it.key == ServiceStatus.CANCELLED }
+            .flatMap { it.value }
+            .filter(resultFilter::matches)
+
+    /** Nothing typed and no list opened: show quick accesses and recents. */
+    val showStart: Boolean
+        get() = smartQuery.isBlank() && (lastUsedFilter == null || lastUsedFilter is SubscriptionFilter.BY_NAME)
+}
 
 data class CustomerFormData(
     val name: String = "",
@@ -108,12 +123,55 @@ class SubscriptionFinderViewModel(
     private val observabilityClient: ObservabilityClient,
     private val retryTr069ProvisioningUseCase: RetryTr069ProvisioningUseCase,
     private val subscriptionActionsRepository: com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository? = null,
+    private val recentSubscriptionsStore: RecentSubscriptionsStore? = null,
 ) : ViewModel() {
+
+    fun onSmartQueryChanged(text: String) {
+        _uiState.update { it.copy(smartQuery = text) }
+        val filter = SmartQuery.toFilter(text) ?: SubscriptionFilter.BY_NAME(name = "", lastName = "")
+        viewModelScope.launch { documentNumberFlow.emit(filter) }
+    }
+
+    fun onResultFilterSelected(filter: ResultFilter) {
+        _uiState.update { it.copy(resultFilter = filter) }
+    }
+
+    fun openQuickAccess(status: ServiceStatus) {
+        _uiState.update { it.copy(smartQuery = "") }
+        viewModelScope.launch { runFilter(SubscriptionFilter.BY_STATUS(status)) }
+    }
+
+    fun onSubscriptionOpened(subscription: SubscriptionResume) {
+        val row = SubscriptionRowModel.from(subscription)
+        val opened = RecentSubscription(subscription.id, row.name, row.subtitle, subscription.serviceStatus)
+        val recents = (listOf(opened) + _uiState.value.recents.filterNot { it.id == opened.id }).take(MAX_RECENTS)
+        _uiState.update { it.copy(recents = recents) }
+        recentSubscriptionsStore?.save(recents)
+    }
+
+    fun clearRecents() {
+        _uiState.update { it.copy(recents = emptyList()) }
+        recentSubscriptionsStore?.save(emptyList())
+    }
+
+    private fun loadQuickAccess() = viewModelScope.launch {
+        val quickAccess = QUICK_ACCESS_STATES.mapNotNull { (status, label) ->
+            searchSubscriptionsUseCase(query = "", status = status.name, page = 0, size = 1)
+                .getOrNull()
+                ?.let { QuickAccess(status, label, it.total) }
+        }
+        _uiState.update { it.copy(quickAccess = quickAccess) }
+    }
 
     private companion object {
         const val OBS_FEATURE = "subscription"
         const val OBS_SCREEN = "subscription_finder"
         const val PAGE_SIZE = 20
+        const val MAX_RECENTS = 5
+        val QUICK_ACCESS_STATES = listOf(
+            ServiceStatus.CUT_OFF to "Cortados",
+            ServiceStatus.CANCELLED to "Cancelados",
+        )
     }
 
     private var currentQuery: String = ""
@@ -132,6 +190,8 @@ class SubscriptionFinderViewModel(
     fun initialize() {
         if (initialized) return
         initialized = true
+        _uiState.update { it.copy(recents = recentSubscriptionsStore?.load().orEmpty()) }
+        loadQuickAccess()
         observeSubscriptions()
         findSubscription()
         getPlaces()
@@ -155,19 +215,21 @@ class SubscriptionFinderViewModel(
     @OptIn(FlowPreview::class)
     fun findSubscription() = viewModelScope.launch {
         documentNumberFlow.debounce(REQUEST_DELAY)
-            .collect { filterType ->
-                _uiState.update { it.copy(lastUsedFilter = filterType) }
-                observabilityClient.addBreadcrumb(
-                    category = ObsBreadcrumbCategory.USER_ACTION,
-                    message = "$OBS_FEATURE.find",
-                    data = mapOf("feature" to OBS_FEATURE, "screen" to OBS_SCREEN, "filterType" to filterType::class.simpleName)
-                )
-                if (filterType is SubscriptionFilter.BY_NAME) {
-                    searchByName(filterType)
-                } else {
-                    legacyFind(filterType)
-                }
-            }
+            .collect { filterType -> runFilter(filterType) }
+    }
+
+    private suspend fun runFilter(filterType: SubscriptionFilter) {
+        _uiState.update { it.copy(lastUsedFilter = filterType) }
+        observabilityClient.addBreadcrumb(
+            category = ObsBreadcrumbCategory.USER_ACTION,
+            message = "$OBS_FEATURE.find",
+            data = mapOf("feature" to OBS_FEATURE, "screen" to OBS_SCREEN, "filterType" to filterType::class.simpleName)
+        )
+        when (filterType) {
+            is SubscriptionFilter.BY_NAME -> searchByName(filterType)
+            is SubscriptionFilter.BY_STATUS -> searchPaged(query = "", status = filterType.status.name, filterType = filterType)
+            else -> legacyFind(filterType)
+        }
     }
 
     private suspend fun searchByName(filterType: SubscriptionFilter.BY_NAME) {
@@ -186,7 +248,12 @@ class SubscriptionFinderViewModel(
             }
             return
         }
+        searchPaged(query = query, status = null, filterType = filterType)
+    }
+
+    private suspend fun searchPaged(query: String, status: String?, filterType: SubscriptionFilter) {
         currentQuery = query
+        currentStatus = status
         _uiState.update { it.copy(isSearching = true, searchError = null, searchPerformed = true) }
         searchSubscriptionsUseCase(query = query, status = currentStatus, page = 0, size = PAGE_SIZE).fold(
             onSuccess = { result ->
@@ -219,7 +286,9 @@ class SubscriptionFinderViewModel(
     fun loadNextPage() {
         val state = _uiState.value
         if (state.isSearching || !state.canLoadMore) return
-        if (state.lastUsedFilter !is SubscriptionFilter.BY_NAME || currentQuery.isEmpty()) return
+        val pagedSearch = (state.lastUsedFilter is SubscriptionFilter.BY_NAME && currentQuery.isNotEmpty()) ||
+            state.lastUsedFilter is SubscriptionFilter.BY_STATUS
+        if (!pagedSearch) return
 
         viewModelScope.launch {
             val nextPage = state.currentPage + 1

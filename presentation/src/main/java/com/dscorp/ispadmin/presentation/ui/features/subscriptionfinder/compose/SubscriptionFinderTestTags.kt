@@ -1,16 +1,12 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose
 
 object SubscriptionFinderTestTags {
-    const val FILTER_NAME = "subscription_search_filter_name"
-    const val FILTER_DOCUMENT = "subscription_search_filter_document"
-    const val FILTER_DATE = "subscription_search_filter_date"
-    const val FILTER_IP = "subscription_search_filter_ip"
-    const val FILTER_CODE = "subscription_search_filter_code"
-
-    const val QUERY_NAME = "subscription_search_query_name"
-    const val QUERY_DOCUMENT = "subscription_search_query_document"
-    const val QUERY_IP = "subscription_search_query_ip"
-    const val QUERY_CODE = "subscription_search_query_code"
+    /** Single box: name, DNI/RUC, IP or code. */
+    const val SMART_QUERY = "subscription_search_query"
+    const val SEARCH_BY_DATE = "subscription_search_by_date"
+    const val CLEAR_QUERY = "subscription_search_clear"
+    const val CLEAR_RECENTS = "subscription_search_clear_recents"
+    const val RESULT_COUNT = "subscription_search_result_count"
 
     const val DATE_START = "subscription_search_date_start"
     const val DATE_END = "subscription_search_date_end"
@@ -58,6 +54,10 @@ object SubscriptionFinderTestTags {
 
     fun listRetryTr069(subscriptionId: Int) = "btn_list_retry_tr069_$subscriptionId"
     fun resultItem(subscriptionId: Int) = "subscription_result_item_$subscriptionId"
+    fun resultFilter(filter: ResultFilter) = "subscription_search_chip_${filter.name.lowercase()}"
+    fun quickAccess(status: com.dscorp.ispadmin.domain.model.ServiceStatus) =
+        "subscription_search_quick_${status.name.lowercase()}"
+    fun recent(subscriptionId: Int) = "subscription_search_recent_$subscriptionId"
     fun resultExpand(subscriptionId: Int) = "subscription_result_expand_$subscriptionId"
     fun resultMenu(subscriptionId: Int) = "subscription_result_menu_$subscriptionId"
     fun resultMenuItem(subscriptionId: Int, action: String) = "subscription_result_menu_${action}_$subscriptionId"
@@ -89,15 +89,10 @@ object SubscriptionFinderTestTags {
     }
 
     val searchInteractive = listOf(
-        FILTER_NAME,
-        FILTER_DOCUMENT,
-        FILTER_DATE,
-        FILTER_IP,
-        FILTER_CODE,
-        QUERY_NAME,
-        QUERY_DOCUMENT,
-        QUERY_IP,
-        QUERY_CODE,
+        SMART_QUERY,
+        SEARCH_BY_DATE,
+        CLEAR_QUERY,
+        CLEAR_RECENTS,
         DATE_START,
         DATE_END,
         DATE_SUBMIT,

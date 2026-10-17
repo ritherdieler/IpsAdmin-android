@@ -43,15 +43,13 @@
 
 | Tag | Control |
 |-----|---------|
-| `subscription_search_filter_name` | Chip filtro Nombre |
-| `subscription_search_filter_document` | Chip filtro Documento |
-| `subscription_search_filter_date` | Chip filtro Fecha |
-| `subscription_search_filter_ip` | Chip filtro IP |
-| `subscription_search_filter_code` | Chip filtro Código |
-| `subscription_search_query_name` | Campo nombre/apellido |
-| `subscription_search_query_document` | Campo DNI |
-| `subscription_search_query_ip` | Campo IP |
-| `subscription_search_query_code` | Campo código suscripción |
+| `subscription_search_query` | Caja única: nombre, DNI/RUC, IP o código (propuesta A, 2026-10-17) |
+| `subscription_search_by_date` | Botón buscar por fecha de alta |
+| `subscription_search_clear` | Limpiar la caja |
+| `subscription_search_chip_{filtro}` | Chips Todos, Con deuda, Cortados, Fibra, Inalámbrico, Solo TV |
+| `subscription_search_quick_{estado}` | Accesos rápidos (cut_off, cancelled) |
+| `subscription_search_recent_{id}` | Suscripción reciente |
+| `subscription_search_clear_recents` | Borrar recientes |
 | `subscription_search_date_start` | Fecha inicial |
 | `subscription_search_date_end` | Fecha final |
 | `subscription_search_date_submit` | Botón buscar por fechas |

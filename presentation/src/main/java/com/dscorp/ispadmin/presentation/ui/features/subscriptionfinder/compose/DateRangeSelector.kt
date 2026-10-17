@@ -251,3 +251,17 @@ private fun DateFieldBox(
         shape = RoundedCornerShape(8.dp),
     )
 }
+
+/** Search by sign-up date, opened from the calendar button next to the search box. */
+@Composable
+fun DateSearchDialog(onDismiss: () -> Unit, onSearch: (String, String) -> Unit) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { androidx.compose.material3.Text("Buscar por fecha de alta") },
+        text = { DateRangeSelector(onSearch = onSearch) },
+        confirmButton = {},
+        dismissButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) { androidx.compose.material3.Text("Cerrar") }
+        },
+    )
+}

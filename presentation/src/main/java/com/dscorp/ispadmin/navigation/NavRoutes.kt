@@ -158,7 +158,8 @@ sealed class NavRoutes {
 
         companion object {
             fun FromString(string: String?): FeatureRoutes {
-                return when (string?.split("?")[0]) {
+                // Type-safe routes append arguments as "/{arg}" or "?arg={arg}"; match on the class name only.
+                return when (string?.substringBefore("?")?.substringBefore("/")) {
                     Home::class.qualifiedName -> Home
                     Dashboard::class.qualifiedName -> Dashboard
                     Profile::class.qualifiedName -> Profile

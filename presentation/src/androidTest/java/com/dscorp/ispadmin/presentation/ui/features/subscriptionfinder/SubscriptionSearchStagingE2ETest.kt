@@ -54,10 +54,8 @@ class SubscriptionSearchStagingE2ETest {
         }
         loginIfNeeded()
         openFinder()
-        waitUntilTag(SubscriptionFinderTestTags.FILTER_DOCUMENT, timeoutMs = 30_000)
-        composeRule.onNodeWithTag(SubscriptionFinderTestTags.FILTER_DOCUMENT).performClick()
-        waitUntilTag(SubscriptionFinderTestTags.QUERY_DOCUMENT, timeoutMs = 15_000)
-        val editable = hasTestTag(SubscriptionFinderTestTags.QUERY_DOCUMENT).and(hasSetTextAction())
+        waitUntilTag(SubscriptionFinderTestTags.SMART_QUERY, timeoutMs = 30_000)
+        val editable = hasTestTag(SubscriptionFinderTestTags.SMART_QUERY).and(hasSetTextAction())
         composeRule.onNode(editable).performClick()
         composeRule.onNode(editable).performTextClearance()
         composeRule.onNode(editable).performTextInput(dni)

@@ -154,4 +154,26 @@ class MainNavigationTest {
         assertEquals(Plan.List, FeatureRoutes.FromString(Plan.List::class.qualifiedName))
         assertEquals(FeatureRoutes.More, FeatureRoutes.FromString(FeatureRoutes.More::class.qualifiedName))
     }
+
+    @Test
+    fun `routes with path arguments resolve so secondary screens get title and back`() {
+        val details = FeatureRoutes.FromString("${Subscription.Details::class.qualifiedName}/{subscriptionId}")
+        assertEquals(Subscription.Details(0), details)
+        val chrome = MainNavigation.shellChrome(UserType.ADMIN, details)
+        assertTrue(chrome.showBack)
+        assertEquals("Ficha de suscripción", chrome.title)
+
+        assertEquals(
+            Payment.History(0, ""),
+            FeatureRoutes.FromString("${Payment.History::class.qualifiedName}/{subscriptionId}/{status}"),
+        )
+        assertEquals(
+            Subscription.ChangePlan(0),
+            FeatureRoutes.FromString("${Subscription.ChangePlan::class.qualifiedName}/{subscriptionId}"),
+        )
+        assertEquals(
+            SupportTicket.Detail(0),
+            FeatureRoutes.FromString("${SupportTicket.Detail::class.qualifiedName}/{ticketId}"),
+        )
+    }
 }

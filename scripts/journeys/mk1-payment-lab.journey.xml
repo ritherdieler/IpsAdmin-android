@@ -9,9 +9,7 @@
     <action>Tap login_password, escribir contraseña lab</action>
     <action>Tap login_submit</action>
     <action>Tap main_nav_subscriptions</action>
-    <action>Tap subscription_search_filter_code</action>
-    <action>Tap subscription_search_query_code e introducir 900001</action>
-    <action>Tap subscription_result_item_900001</action>
+    <action>Tap subscription_search_query e introducir 900001</action>
     <action>Tap subscription_result_menu_900001</action>
     <action>Tap subscription_result_menu_payment_history_900001</action>
     <action>Tap payment_history_item_900001</action>

@@ -120,6 +120,37 @@ fun CardHeader(
     }
 }
 
+/** ⋮ button of a compact search row; keeps every card action until the hub has «Más acciones». */
+@Composable
+fun SubscriptionRowMenu(
+    subscription: SubscriptionResume,
+    onMenuItemSelected: (SubscriptionMenu) -> Unit,
+    onEditHolder: () -> Unit,
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(
+            onClick = { menuExpanded = true },
+            modifier = Modifier.testTag(SubscriptionFinderTestTags.resultMenu(subscription.id))
+        ) {
+            Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Más acciones de la suscripción")
+        }
+        SubscriptionDropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false },
+            subscription = subscription,
+            onMenuItemSelected = {
+                menuExpanded = false
+                onMenuItemSelected(it)
+            },
+            onEditHolder = {
+                menuExpanded = false
+                onEditHolder()
+            },
+        )
+    }
+}
+
 /**
  * Dropdown menu for subscription actions
  */
@@ -128,7 +159,8 @@ private fun SubscriptionDropdownMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
     subscription: SubscriptionResume,
-    onMenuItemSelected: (SubscriptionMenu) -> Unit
+    onMenuItemSelected: (SubscriptionMenu) -> Unit,
+    onEditHolder: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     
@@ -186,6 +218,14 @@ private fun SubscriptionDropdownMenu(
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
         )
         
+        onEditHolder?.let { edit ->
+            DropdownMenuItem(
+                modifier = Modifier.testTag(SubscriptionFinderTestTags.resultExpand(subscription.id)),
+                text = { Text("Editar datos del titular", style = MaterialTheme.typography.bodyMedium) },
+                onClick = edit,
+            )
+        }
+
         // Menu items
         menuItems.forEach { menuItem ->
             DropdownMenuItem(
