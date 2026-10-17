@@ -68,15 +68,16 @@ fun KpiTile(model: KpiModel, modifier: Modifier = Modifier, onClick: (() -> Unit
 
 @Composable
 private fun KpiTileContent(model: KpiModel) {
-    var showInfo by rememberSaveable(model.tag) { mutableStateOf(false) }
     Column(Modifier.padding(IspSpacing.lg), verticalArrangement = Arrangement.spacedBy(IspSpacing.xs)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Overline(model.label, MaterialTheme.colorScheme.onSurfaceVariant, Modifier.weight(1f))
-            if (model.info != null) {
-                IconButton(onClick = { showInfo = !showInfo }, modifier = Modifier.size(28.dp).testTag("${model.tag}_info")) {
-                    Icon(Icons.Outlined.Info, contentDescription = "Qué es ${model.label.lowercase()}",
-                        Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+            model.info?.let { info ->
+                InfoBubbleButton(
+                    text = info,
+                    title = model.label,
+                    contentDescription = "Qué es ${model.label.lowercase()}",
+                    modifier = Modifier.testTag("${model.tag}_info"),
+                )
             }
         }
         Text(model.value, Modifier.testTag("${model.tag}_value"), style = IspType.kpi, color = MaterialTheme.colorScheme.onSurface)
@@ -85,11 +86,6 @@ private fun KpiTileContent(model: KpiModel) {
         model.progress?.let { ProgressTrack(it, IspTheme.colors.chartCollected, Modifier.padding(top = IspSpacing.xs)) }
         model.supporting?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        AnimatedVisibility(showInfo && model.info != null) {
-            Surface(Modifier.padding(top = IspSpacing.xs), shape = IspShapes.badge, color = IspTheme.colors.track) {
-                Text(model.info.orEmpty(), Modifier.padding(IspSpacing.sm), style = MaterialTheme.typography.bodySmall)
-            }
         }
     }
 }

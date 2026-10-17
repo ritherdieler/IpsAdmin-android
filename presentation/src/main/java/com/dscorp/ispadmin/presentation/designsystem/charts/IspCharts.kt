@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dscorp.ispadmin.presentation.theme.IspTheme
@@ -36,6 +37,7 @@ import com.patrykandpatrick.vico.core.common.shape.DashedShape
 import com.patrykandpatrick.vico.core.common.shape.Shape
 import com.patrykandpatrick.vico.compose.cartesian.layer.point
 import com.patrykandpatrick.vico.core.cartesian.marker.DefaultCartesianMarker
+import com.patrykandpatrick.vico.core.common.shape.MarkerCorneredShape
 import com.patrykandpatrick.vico.core.cartesian.CartesianChart
 import com.patrykandpatrick.vico.core.cartesian.CartesianMeasuringContext
 import com.patrykandpatrick.vico.core.cartesian.Zoom
@@ -172,13 +174,17 @@ private fun rememberValueMarker(data: ChartData, format: (Double) -> String): Ca
         textSize = 12.sp,
         lineCount = data.series.size + 1,
         padding = insets(MARKER_PADDING_H, MARKER_PADDING_V),
-        background = rememberShapeComponent(fill(MaterialTheme.colorScheme.inverseSurface), CorneredShape.rounded(6f, 6f, 6f, 6f)),
+        background = rememberShapeComponent(
+            fill(MaterialTheme.colorScheme.inverseSurface),
+            MarkerCorneredShape(CorneredShape.rounded(MARKER_RADIUS, MARKER_RADIUS, MARKER_RADIUS, MARKER_RADIUS), MARKER_TAIL),
+        ),
     )
     val formatter = remember(data, format) {
         DefaultCartesianMarker.ValueFormatter { _, targets -> markerText(data, targets.firstOrNull()?.x?.toInt(), format) }
     }
     return rememberDefaultCartesianMarker(
         label = label,
+        labelPosition = DefaultCartesianMarker.LabelPosition.AbovePoint,
         valueFormatter = formatter,
         guideline = rememberLineComponent(fill(MaterialTheme.colorScheme.outline), thickness = 1.dp),
     )
@@ -255,17 +261,33 @@ private fun rememberMarkerSelection(data: ChartData): MarkerSelection {
     return remember(selected) { MarkerSelection(selected) }
 }
 
-private fun markerText(data: ChartData, index: Int?, format: (Double) -> String): CharSequence {
+/** Detail bubble text: the month in bold, then each value; with several series, a dot in the series color and its name. */
+internal fun markerText(data: ChartData, index: Int?, format: (Double) -> String): CharSequence {
     index ?: return ""
+    val text = android.text.SpannableStringBuilder()
     val month = data.labels.getOrNull(index).orEmpty()
-    val values = data.series.mapNotNull { series ->
-        series.values.getOrNull(index)?.let { value -> if (data.series.size == 1) format(value) else "${series.name}: ${format(value)}" }
+    text.append(month)
+    text.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, month.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    data.series.forEach { series ->
+        val value = series.values.getOrNull(index) ?: return@forEach
+        text.append("\n")
+        if (data.series.size == 1) {
+            text.append(format(value))
+        } else {
+            val dotStart = text.length
+            text.append("●")
+            text.setSpan(android.text.style.ForegroundColorSpan(series.color.toArgb()), dotStart, text.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            text.append(" ${series.name}  ${format(value)}")
+        }
     }
-    return (listOf(month) + values).joinToString("\n")
+    return text
 }
 
-private val MARKER_PADDING_H = 8.dp
-private val MARKER_PADDING_V = 4.dp
+private val MARKER_PADDING_H = 12.dp
+private val MARKER_PADDING_V = 8.dp
+/** Same bubble as the design system «Burbuja de detalle»: 12 dp corners and an 8 dp tail to the touched point. */
+private const val MARKER_RADIUS = 12f
+private const val MARKER_TAIL = 8f
 
 @Composable
 private fun axisLabel() = rememberTextComponent(
