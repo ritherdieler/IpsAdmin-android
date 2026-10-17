@@ -1,5 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail
 
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaAction
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaScreen
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -229,6 +231,29 @@ fun SubscriptionDetailScreen(
                 )
             }
 
+            loadedSubscription != null && hubState.ficha != null -> FichaScreen(
+                header = hubState.ficha!!,
+                subscription = loadedSubscription,
+                otherServices = uiState.otherServices,
+                tab = hubState.tab,
+                onTab = { hubViewModel.onIntent(SubscriptionHubIntent.TabSelected(it)) },
+                onBack = { navController.popBackStack() },
+                onMore = null,
+                onCharge = { hubViewModel.onIntent(SubscriptionHubIntent.OpenCharge) },
+                onAction = { action -> onFichaAction(action, loadedSubscription, context, navController, hubViewModel) },
+                onUpdatePhoto = { showFacadePhotoOptionsDialog = true },
+                onOpenService = { serviceId -> navController.navigate(FeatureRoutes.Subscription.Details(serviceId)) },
+                tabContent = { tab ->
+                    Text(
+                        "${tab.label}: en construcción",
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+            )
+
+            hubState.isLoading -> Loader()
+
             loadedSubscription != null -> SubscriptionDetailForm(
                 subscription = loadedSubscription,
                 otherServices = uiState.otherServices,
@@ -267,6 +292,29 @@ fun SubscriptionDetailScreen(
         }
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
             SnackbarHost(snackbarHostState)
+        }
+    }
+}
+
+private fun onFichaAction(
+    action: FichaAction,
+    subscription: SubscriptionResponse,
+    context: Context,
+    navController: NavController,
+    hubViewModel: SubscriptionHubViewModel,
+) {
+    when (action) {
+        FichaAction.CALL -> subscription.phone?.let { dial(context, it) }
+        FichaAction.WHATSAPP -> subscription.phone?.let { openWhatsApp(context, it) }
+        FichaAction.RESTORE -> hubViewModel.onIntent(SubscriptionHubIntent.RestoreService)
+        FichaAction.TICKET -> navController.navigate(FeatureRoutes.SupportTicket.Create)
+        FichaAction.MAP -> subscription.location?.let { location ->
+            val uri = Uri.parse("geo:${location.latitude},${location.longitude}?q=${location.latitude},${location.longitude}")
+            try {
+                context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+            } catch (e: Exception) {
+                Toast.makeText(context, "No se pudo abrir el mapa", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

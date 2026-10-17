@@ -103,8 +103,8 @@ object MainNavigation {
         return ShellChrome(
             title = selected?.label ?: screenTitle(route),
             showBack = !isTopLevel,
-            // Dashboard and the subscription search draw their own header, as in the design.
-            showTopBar = route !is FeatureRoutes.Dashboard && route !is Subscription.Find,
+            // Dashboard, the subscription search and the ficha draw their own header, as in the design.
+            showTopBar = route !is FeatureRoutes.Dashboard && route !is Subscription.Find && route !is Subscription.Details,
             bottomBar = if (isTopLevel && bar.size > 1) bar else emptyList(),
             selected = selected,
         )

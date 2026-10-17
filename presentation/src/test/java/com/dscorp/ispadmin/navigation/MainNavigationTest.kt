@@ -162,6 +162,8 @@ class MainNavigationTest {
         val chrome = MainNavigation.shellChrome(UserType.ADMIN, details)
         assertTrue(chrome.showBack)
         assertEquals("Ficha de suscripción", chrome.title)
+        // The ficha draws its own navy header with the back arrow (a-sus-04).
+        assertFalse(chrome.showTopBar)
 
         assertEquals(
             Payment.History(0, ""),

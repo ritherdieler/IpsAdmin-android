@@ -7,6 +7,11 @@ import com.dscorp.ispadmin.domain.model.PaymentMethodOption
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FICHA_ZONE
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaHeader
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTab
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.canRestore
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.restoreHint
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +50,9 @@ data class SubscriptionHubUiState(
     val receipts: List<Payment> = emptyList(),
     val methods: List<PaymentMethodOption> = emptyList(),
     val charge: ChargeSheetState? = null,
+    val ficha: FichaHeader? = null,
+    val tab: FichaTab =
+        FichaTab.RESUMEN,
 ) {
     val unpaidReceipts: List<Payment> get() = receipts.filter { !it.paid }.sortedBy { it.billingDate }
 }
@@ -58,6 +66,8 @@ sealed interface SubscriptionHubIntent {
     data class PayerNameChanged(val name: String) : SubscriptionHubIntent
     data object RestoreToggled : SubscriptionHubIntent
     data object SubmitCharge : SubscriptionHubIntent
+    data class TabSelected(val tab: FichaTab) : SubscriptionHubIntent
+    data object RestoreService : SubscriptionHubIntent
 }
 
 sealed interface SubscriptionHubEvent {
@@ -67,6 +77,7 @@ sealed interface SubscriptionHubEvent {
 class SubscriptionHubViewModel(
     private val gateway: SubscriptionHubGateway,
     private val mainImmediate: CoroutineDispatcher = Dispatchers.Main.immediate,
+    private val today: () -> java.time.LocalDate = { java.time.LocalDate.now(FICHA_ZONE) },
 ) : ViewModel() {
 
     private companion object {
@@ -92,6 +103,8 @@ class SubscriptionHubViewModel(
             is SubscriptionHubIntent.PayerNameChanged -> updateDraft { it.copy(payerName = intent.name) }
             SubscriptionHubIntent.RestoreToggled -> updateDraft { it.copy(restore = !it.restore) }
             SubscriptionHubIntent.SubmitCharge -> submitCharge()
+            is SubscriptionHubIntent.TabSelected -> _uiState.update { it.copy(tab = intent.tab) }
+            SubscriptionHubIntent.RestoreService -> restoreService()
         }
     }
 
@@ -107,6 +120,7 @@ class SubscriptionHubViewModel(
                         isLoading = false,
                         subscription = subscription,
                         header = HubHeader.from(subscription),
+                        ficha = FichaHeader.from(subscription, receipts, today()),
                         receipts = receipts,
                         methods = methods,
                     )
@@ -126,6 +140,21 @@ class SubscriptionHubViewModel(
         throw cancelled
     } catch (_: Exception) {
         emptyList()
+    }
+
+    /** «Restablecer» quick action: only when the cut subscription keeps fewer than two pending receipts. */
+    private fun restoreService() {
+        val subscription = _uiState.value.subscription ?: return
+        viewModelScope.launch(mainImmediate) {
+            val pending = subscription.pendingInvoiceQuantity
+            if (!canRestore(subscription.serviceStatus, pending)) {
+                restoreHint(subscription.serviceStatus, pending)?.let { _events.emit(SubscriptionHubEvent.Message(it)) }
+                return@launch
+            }
+            val restored = gateway.restoreInternet(subscription.id).isSuccess
+            _events.emit(SubscriptionHubEvent.Message(if (restored) "Servicio restablecido" else "No se pudo restablecer el servicio"))
+            if (restored) load(subscription.id)
+        }
     }
 
     private fun openCharge() {
