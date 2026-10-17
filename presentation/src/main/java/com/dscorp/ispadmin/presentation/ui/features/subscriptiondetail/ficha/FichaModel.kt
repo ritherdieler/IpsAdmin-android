@@ -397,3 +397,108 @@ fun moreActionsSubtitle(subscription: SubscriptionResponse): String = listOfNotN
     subscription.plan?.name?.takeIf { it.isNotBlank() }?.let(::planLabel),
     subscription.place?.name?.takeIf { it.isNotBlank() }?.toTitleCase(),
 ).joinToString(" · ")
+
+/** One subscription_log row from the Core (GET subscription/{id}/history). */
+data class HistoryLog(
+    val date: Long,
+    val actionType: String,
+    val planName: String? = null,
+    val planPrice: Double? = null,
+    val previousPlanPrice: Double? = null,
+    val responsibleName: String? = null,
+)
+
+enum class HistoryKind { PAYMENT, TICKET, NETWORK, CHANGE }
+
+enum class HistoryFilter(val label: String) {
+    ALL("Todo"), PAYMENTS("Pagos"), TICKETS("Tickets"), NETWORK("Red"), CHANGES("Cambios")
+}
+
+data class HistoryItem(val day: String, val title: String, val detail: String?, val actor: String?, val kind: HistoryKind)
+data class HistoryMonth(val title: String, val items: List<HistoryItem>)
+
+/** «Historial» tab (a-sus-07): service changes, payments and tickets in one timeline. */
+class FichaHistory private constructor(private val events: List<Pair<Long, HistoryItem>>) {
+    fun months(filter: HistoryFilter): List<HistoryMonth> = events
+        .filter { (_, item) -> filter.matches(item.kind) }
+        .sortedByDescending { it.first }
+        .groupBy { (at, _) -> YearMonth.from(Instant.ofEpochMilli(at).atZone(FICHA_ZONE)) }
+        .map { (month, items) ->
+            HistoryMonth("${monthName(month).replaceFirstChar { it.uppercase() }} ${month.year}", items.map { it.second })
+        }
+
+    companion object {
+        fun from(
+            logs: List<HistoryLog>,
+            receipts: List<Payment>,
+            tickets: List<AssistanceTicketResponse>,
+        ): FichaHistory {
+            val changes = logs.map { log -> log.date to log.toItem() }
+            val payments = receipts.filter { it.paid && it.paymentDate > 0 }.map { paid ->
+                val amount = paid.amountPaid?.takeIf { it > 0 } ?: paid.amountToPay
+                val month = paid.billingMonth()
+                paid.paymentDate to HistoryItem(
+                    day = dayOf(paid.paymentDate),
+                    title = listOfNotNull("Pago ${formatSoles(amount)}", paid.method?.takeIf { it.isNotBlank() }).joinToString(" · "),
+                    detail = "Recibo de ${monthName(month)} ${month.year}",
+                    actor = paid.responsibleName?.takeIf { it.isNotBlank() }?.toTitleCase(),
+                    kind = HistoryKind.PAYMENT,
+                )
+            }
+            val ticketEvents = tickets.map { ticket ->
+                val at = (ticket.resolvedAt ?: ticket.createdAt).time
+                val opened = Instant.ofEpochMilli(ticket.createdAt.time).atZone(FICHA_ZONE).toLocalDate()
+                at to HistoryItem(
+                    day = dayOf(at),
+                    title = "Ticket #${ticket.id} ${ticket.status.historyVerb()} · ${ticket.category}",
+                    detail = "Prioridad ${ticket.priority} · abierto el ${dayMonth(opened)}",
+                    actor = ticket.assignedTo?.takeIf { it.isNotBlank() }?.toTitleCase(),
+                    kind = HistoryKind.TICKET,
+                )
+            }
+            return FichaHistory(changes + payments + ticketEvents)
+        }
+
+        private fun dayOf(millis: Long): String = dayMonth(Instant.ofEpochMilli(millis).atZone(FICHA_ZONE).toLocalDate())
+
+        private fun HistoryFilter.matches(kind: HistoryKind): Boolean = when (this) {
+            HistoryFilter.ALL -> true
+            HistoryFilter.PAYMENTS -> kind == HistoryKind.PAYMENT
+            HistoryFilter.TICKETS -> kind == HistoryKind.TICKET
+            HistoryFilter.NETWORK -> kind == HistoryKind.NETWORK
+            HistoryFilter.CHANGES -> kind == HistoryKind.CHANGE
+        }
+
+        private fun AssistanceTicketStatus.historyVerb(): String = when (this) {
+            AssistanceTicketStatus.PENDING -> "abierto"
+            AssistanceTicketStatus.ASSIGNED, AssistanceTicketStatus.IN_PROGRESS -> "en curso"
+            AssistanceTicketStatus.RESOLVED, AssistanceTicketStatus.CLOSED -> "cerrado"
+            AssistanceTicketStatus.CANCELLED -> "cancelado"
+        }
+
+        private fun HistoryLog.toItem(): HistoryItem {
+            val plan = planName?.takeIf { it.isNotBlank() }?.let(::planLabel)
+            val (title, kind) = when (actionType) {
+                "CUT_FOR_DEBT" -> "Corte automático por deuda" to HistoryKind.NETWORK
+                "RESTORED_AFTER_PAYMENT" -> "Restablecido tras el pago" to HistoryKind.NETWORK
+                "RESTORE_INTERNET_CONNECTION" -> "Servicio restablecido" to HistoryKind.NETWORK
+                "REBOOT_FIBER_ONU" -> "Reinicio de ONU" to HistoryKind.NETWORK
+                "CHANGE_NAP_BOX" -> "Cambio de caja NAP" to HistoryKind.NETWORK
+                "CHANGE_PLAN" -> (plan?.let { "Cambio de plan a $it" } ?: "Cambio de plan") to HistoryKind.CHANGE
+                "NEW_SUBSCRIPTION" -> listOfNotNull("Alta del servicio", plan).joinToString(" · ") to HistoryKind.CHANGE
+                "MIGRATE_SUBSCRIPTION" -> "Migración a fibra" to HistoryKind.CHANGE
+                "UPDATE_LOCATION" -> "Ubicación actualizada" to HistoryKind.CHANGE
+                "UPDATE_SUBSCRIPTION" -> "Datos actualizados" to HistoryKind.CHANGE
+                "CUT_DEFERRED" -> "Corte postergado" to HistoryKind.CHANGE
+                "RECONNECT_CANCELLED_SUBSCRIPTION" -> "Servicio reactivado" to HistoryKind.CHANGE
+                "CANCEL_SUBSCRIPTION", "CANCELED_BY_STORED_PROCEDURE", "TOTAL_CANCEL_SUBSCRIPTION" ->
+                    "Suscripción cancelada" to HistoryKind.CHANGE
+                else -> actionType.lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() } to HistoryKind.CHANGE
+            }
+            val detail = if (actionType == "CHANGE_PLAN" && planPrice != null && previousPlanPrice != null) {
+                "${formatSoles(previousPlanPrice)} → ${formatSoles(planPrice)} al mes"
+            } else null
+            return HistoryItem(dayOf(date), title, detail, responsibleName?.takeIf { it.isNotBlank() } ?: "Sistema", kind)
+        }
+    }
+}

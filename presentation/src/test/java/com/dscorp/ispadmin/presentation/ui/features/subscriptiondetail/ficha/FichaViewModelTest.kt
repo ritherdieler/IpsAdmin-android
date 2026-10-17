@@ -190,4 +190,25 @@ class FichaViewModelTest {
         assertEquals(false, viewModel.uiState.value.network == null)
         coVerify(exactly = 2) { gateway.cpeReading(1842) }
     }
+
+    @Test
+    fun `history loads on its tab, filters by chip and survives a failing log`() = runTest(dispatcher) {
+        coEvery { gateway.history(1842) } returns listOf(HistoryLog(java.time.Instant.parse("2026-09-15T11:00:00Z").toEpochMilli(), "CUT_FOR_DEBT"))
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842))
+        advanceUntilIdle()
+
+        viewModel.onIntent(SubscriptionHubIntent.TabSelected(FichaTab.HISTORIAL))
+        advanceUntilIdle()
+        assertEquals(listOf("Corte automático por deuda"), viewModel.uiState.value.historyMonths.flatMap { it.items }.map { it.title })
+
+        viewModel.onIntent(SubscriptionHubIntent.HistoryFilterSelected(HistoryFilter.PAYMENTS))
+        assertEquals(HistoryFilter.PAYMENTS, viewModel.uiState.value.historyFilter)
+        assertEquals(emptyList<HistoryMonth>(), viewModel.uiState.value.historyMonths)
+
+        coEvery { gateway.history(1842) } throws IllegalStateException("500")
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842))
+        advanceUntilIdle()
+        assertEquals(HistoryFilter.PAYMENTS, viewModel.uiState.value.historyFilter)
+        assertEquals(false, viewModel.uiState.value.history == null)
+    }
 }

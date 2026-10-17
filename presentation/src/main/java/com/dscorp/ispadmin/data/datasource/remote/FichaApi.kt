@@ -10,6 +10,9 @@ interface FichaApi {
     @GET("subscription/{id}/cpe-status")
     suspend fun cpeStatus(@Path("id") subscriptionId: Int): CpeStatusResponse
 
+    @GET("subscription/{id}/history")
+    suspend fun history(@Path("id") subscriptionId: Int): List<com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.HistoryLog>
+
     @GET("assistanceTicket/bySubscription/{id}")
     suspend fun ticketsBySubscription(@Path("id") subscriptionId: Int): List<com.dscorp.ispadmin.data.response.AssistanceTicketResponse>
 }

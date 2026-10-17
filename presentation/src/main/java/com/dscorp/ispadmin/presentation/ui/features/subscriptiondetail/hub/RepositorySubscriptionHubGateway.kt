@@ -24,6 +24,8 @@ class RepositorySubscriptionHubGateway(
         requireNotNull(networkApi) { "Network API not wired" }.cpeStatus(subscriptionId).toReading()
     override suspend fun tickets(subscriptionId: Int) =
         requireNotNull(networkApi) { "Ficha API not wired" }.ticketsBySubscription(subscriptionId)
+    override suspend fun history(subscriptionId: Int) =
+        requireNotNull(networkApi) { "Ficha API not wired" }.history(subscriptionId)
     override suspend fun mufaName(mufaId: Int): String? =
         repository.getMufas().firstOrNull { it.id == mufaId }?.let(::mufaLabel)
     override suspend fun rebootOnu(subscriptionId: Int): Result<Unit> =

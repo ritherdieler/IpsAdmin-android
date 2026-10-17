@@ -13,6 +13,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.Fic
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaPaymentsTab
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaNetworkTab
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTicketsTab
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaHistoryTab
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTab
 import android.content.Intent
 import android.net.Uri
@@ -286,13 +287,15 @@ fun SubscriptionDetailScreen(
                             onNewTicket = { navController.navigate(FeatureRoutes.SupportTicket.Create) },
                             onOpenTicket = { ticketId -> navController.navigate(FeatureRoutes.SupportTicket.Detail(ticketId)) },
                         )
-                    } else if (tab == FichaTab.RED) {
+                    } else if (tab == FichaTab.HISTORIAL && hubState.history != null) {
+                        FichaHistoryTab(
+                            months = hubState.historyMonths,
+                            filter = hubState.historyFilter,
+                            onFilter = { hubViewModel.onIntent(SubscriptionHubIntent.HistoryFilterSelected(it)) },
+                        )
+                    } else {
                         Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                    } else Text(
-                        "${tab.label}: en construcción",
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    }
                 },
             )
 

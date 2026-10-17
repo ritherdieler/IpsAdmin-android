@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -35,6 +36,7 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -598,4 +600,79 @@ private fun MoreAction.icon(): ImageVector = when (this) {
     MoreAction.UPDATE_PHOTO -> Icons.Outlined.PhotoCamera
     MoreAction.CANCEL -> Icons.Outlined.Delete
     MoreAction.REACTIVATE -> Icons.Outlined.PowerSettingsNew
+}
+
+@Composable
+fun FichaHistoryTab(months: List<HistoryMonth>, filter: HistoryFilter, onFilter: (HistoryFilter) -> Unit) {
+    Column(Modifier.padding(vertical = 12.dp)) {
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            HistoryFilter.entries.forEach { option ->
+                val selected = option == filter
+                androidx.compose.material3.FilterChip(
+                    selected = selected,
+                    onClick = { onFilter(option) },
+                    label = { Text(option.label, fontSize = 13.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium) },
+                    leadingIcon = if (selected) {
+                        { Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                    } else null,
+                    shape = RoundedCornerShape(8.dp),
+                    colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = IspTheme.colors.selectedContainer,
+                        selectedLabelColor = IspTheme.colors.onSelectedContainer,
+                        selectedLeadingIconColor = IspTheme.colors.onSelectedContainer,
+                    ),
+                    border = androidx.compose.material3.FilterChipDefaults.filterChipBorder(
+                        enabled = true, selected = selected, borderColor = MaterialTheme.colorScheme.outline, selectedBorderWidth = 0.dp,
+                    ),
+                    modifier = Modifier.height(32.dp),
+                )
+            }
+        }
+        if (months.isEmpty()) EmptyNote("Sin eventos en este filtro.")
+        months.forEach { month ->
+            Text(
+                month.title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
+            )
+            Column(Modifier.padding(horizontal = 16.dp).fillMaxWidth().background(MaterialTheme.colorScheme.surface, CARD).padding(vertical = 8.dp)) {
+                month.items.forEachIndexed { index, item ->
+                    HistoryRow(item, isLast = index == month.items.lastIndex)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryRow(item: HistoryItem, isLast: Boolean) {
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = 16.dp)) {
+        Text(item.day, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(52.dp).padding(top = 8.dp))
+        Column(Modifier.width(16.dp).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.padding(top = 13.dp).size(8.dp).background(item.kind.dotColor(), androidx.compose.foundation.shape.CircleShape))
+            if (!isLast) Box(Modifier.width(1.dp).weight(1f).background(MaterialTheme.colorScheme.outlineVariant))
+        }
+        Column(Modifier.weight(1f).padding(start = 8.dp, top = 6.dp, bottom = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(item.title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            item.detail?.let { Text(it, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            item.actor?.let { actor ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(
+                        if (actor == "Sistema") Icons.Outlined.Schedule else Icons.Outlined.Person,
+                        contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(actor, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryKind.dotColor(): Color = when (this) {
+    HistoryKind.PAYMENT -> IspTheme.colors.success
+    HistoryKind.TICKET -> IspTheme.colors.info
+    HistoryKind.NETWORK -> MaterialTheme.colorScheme.error
+    HistoryKind.CHANGE -> IspTheme.colors.hero
 }

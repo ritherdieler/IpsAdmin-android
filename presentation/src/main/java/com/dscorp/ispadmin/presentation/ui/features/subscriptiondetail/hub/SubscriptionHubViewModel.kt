@@ -13,7 +13,12 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.Fic
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaHeader
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaPayments
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTab
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaHistory
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTickets
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.HistoryFilter
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.HistoryLog
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.HistoryMonth
+import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.canRestore
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.restoreHint
 import kotlinx.coroutines.CancellationException
@@ -41,6 +46,7 @@ interface SubscriptionHubGateway {
     suspend fun rebootOnu(subscriptionId: Int): Result<Unit> = Result.failure(UnsupportedOperationException())
     suspend fun resendConfig(subscriptionId: Int): Result<Unit> = Result.failure(UnsupportedOperationException())
     suspend fun tickets(subscriptionId: Int): List<com.dscorp.ispadmin.data.response.AssistanceTicketResponse> = emptyList()
+    suspend fun history(subscriptionId: Int): List<HistoryLog> = emptyList()
 }
 
 data class ChargeSheetState(
@@ -64,7 +70,12 @@ data class SubscriptionHubUiState(
     val payments: FichaPayments? = null,
     val network: FichaNetwork? = null,
     val tickets: FichaTickets? = null,
+    val history: FichaHistory? = null,
+    val historyFilter: HistoryFilter =
+        HistoryFilter.ALL,
 ) {
+    val historyMonths: List<HistoryMonth>
+        get() = history?.months(historyFilter).orEmpty()
     val unpaidReceipts: List<Payment> get() = receipts.filter { !it.paid }.sortedBy { it.billingDate }
 }
 
@@ -81,6 +92,7 @@ sealed interface SubscriptionHubIntent {
     data object RestoreService : SubscriptionHubIntent
     data object RebootOnu : SubscriptionHubIntent
     data object ResendConfig : SubscriptionHubIntent
+    data class HistoryFilterSelected(val filter: HistoryFilter) : SubscriptionHubIntent
 }
 
 sealed interface SubscriptionHubEvent {
@@ -120,11 +132,13 @@ class SubscriptionHubViewModel(
             is SubscriptionHubIntent.TabSelected -> {
                 _uiState.update { it.copy(tab = intent.tab) }
                 if (intent.tab == FichaTab.RED && _uiState.value.network == null) loadNetwork()
+                if (intent.tab == FichaTab.HISTORIAL && _uiState.value.history == null) loadHistory()
             }
             SubscriptionHubIntent.RestoreService -> restoreService()
             SubscriptionHubIntent.RebootOnu -> equipmentAction("Reinicio de ONU enviado", "No se pudo reiniciar la ONU") {
                 gateway.rebootOnu(it)
             }
+            is SubscriptionHubIntent.HistoryFilterSelected -> _uiState.update { it.copy(historyFilter = intent.filter) }
             SubscriptionHubIntent.ResendConfig -> equipmentAction("Configuración reenviada al equipo", "No se pudo reenviar la configuración") {
                 gateway.resendConfig(it)
             }
@@ -148,11 +162,13 @@ class SubscriptionHubViewModel(
                         payments = FichaPayments.from(receipts, subscription.totalDebt, today()),
                         tickets = tickets,
                         network = null,
+                        history = null,
                         receipts = receipts,
                         methods = methods,
                     )
                 }
                 if (_uiState.value.tab == FichaTab.RED) loadNetwork()
+                if (_uiState.value.tab == FichaTab.HISTORIAL) loadHistory()
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
@@ -163,7 +179,7 @@ class SubscriptionHubViewModel(
 
     /** Tickets are a side panel of the ficha: if they fail the rest still loads. */
     private suspend fun loadTickets(subscriptionId: Int): FichaTickets? = try {
-        FichaTickets.from(gateway.tickets(subscriptionId))
+        gateway.tickets(subscriptionId).also { rawTickets = it }.let(FichaTickets::from)
     } catch (cancelled: CancellationException) {
         throw cancelled
     } catch (_: Exception) {
@@ -177,6 +193,25 @@ class SubscriptionHubViewModel(
         throw cancelled
     } catch (_: Exception) {
         emptyList()
+    }
+
+    /** Tickets as the Core sent them; the history timeline reads their dates and priority. */
+    private var rawTickets: List<AssistanceTicketResponse> = emptyList()
+
+    /** «Historial» tab: service changes from the Core plus the payments and tickets already loaded. */
+    private fun loadHistory() {
+        val state = _uiState.value
+        val subscription = state.subscription ?: return
+        viewModelScope.launch(mainImmediate) {
+            val logs = try {
+                gateway.history(subscription.id)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                emptyList()
+            }
+            _uiState.update { it.copy(history = FichaHistory.from(logs, it.receipts, rawTickets)) }
+        }
     }
 
     /** «Red» tab: the equipment reading may fail (Core health off); the rest of the tab still shows. */
