@@ -513,7 +513,7 @@ private fun HandleCancelSubscriptionState(
  * Dialog to confirm subscription cancellation
  */
 @Composable
-private fun CancelSubscriptionDialog(
+internal fun CancelSubscriptionDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -762,7 +762,7 @@ private fun RetryTr069ConfirmDialog(
  * Dialog to confirm service reactivation
  */
 @Composable
-private fun ReactivateServiceDialog(
+internal fun ReactivateServiceDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
     isLoading: Boolean = false,
@@ -879,7 +879,7 @@ private fun ReactivateServiceDialog(
 
 /** Asks for the date (within the current month) and the reason to defer the cut for debt. */
 @Composable
-private fun DeferCutDialog(onDismiss: () -> Unit, onConfirm: (untilDate: String, reason: String) -> Unit) {
+internal fun DeferCutDialog(onDismiss: () -> Unit, onConfirm: (untilDate: String, reason: String) -> Unit) {
     var untilDate by remember { mutableStateOf("") }
     var reason by remember { mutableStateOf("") }
     val validDate = Regex("\\d{4}-\\d{2}-\\d{2}").matches(untilDate.trim())

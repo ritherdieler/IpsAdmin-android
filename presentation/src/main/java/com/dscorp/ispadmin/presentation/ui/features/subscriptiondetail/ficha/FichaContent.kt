@@ -21,6 +21,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Phone
@@ -515,4 +524,78 @@ private fun EmptyNote(text: String) {
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().padding(24.dp),
     )
+}
+
+/** Body of the «Más acciones» sheet (a-sus-08). */
+@Composable
+fun FichaMoreActionsContent(name: String, subtitle: String, sections: List<MoreSection>, onAction: (MoreAction) -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(40.dp).background(IspTheme.colors.selectedContainer, androidx.compose.foundation.shape.CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    name.split(' ').filter { it.isNotEmpty() }.take(2).joinToString("") { it.first().uppercase() },
+                    fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = IspTheme.colors.onSelectedContainer,
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text(name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text(subtitle, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer)
+        sections.forEach { section ->
+            if (section.title == null) {
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.surfaceContainer)
+            } else {
+                Text(
+                    section.title,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+                )
+            }
+            section.actions.forEach { action ->
+                val destructive = action == MoreAction.CANCEL
+                Row(
+                    Modifier.fillMaxWidth().clickable(role = Role.Button) { onAction(action) }.heightIn(min = 52.dp).padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        action.icon(), contentDescription = null, modifier = Modifier.size(22.dp),
+                        tint = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                    )
+                    Spacer(Modifier.width(16.dp))
+                    Text(
+                        action.label, fontSize = 15.sp, modifier = Modifier.weight(1f),
+                        color = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                        fontWeight = if (destructive) FontWeight.SemiBold else FontWeight.Normal,
+                    )
+                    if (!destructive) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                            contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun MoreAction.icon(): ImageVector = when (this) {
+    MoreAction.CHANGE_PLAN -> Icons.Outlined.Sync
+    MoreAction.CHANGE_NAP -> Icons.Outlined.GridView
+    MoreAction.MIGRATE_TO_FIBER -> Icons.Outlined.SwapHoriz
+    MoreAction.UPDATE_LOCATION -> Icons.Outlined.LocationOn
+    MoreAction.NEW_SERVICE -> Icons.Outlined.Add
+    MoreAction.DEFER_CUT -> Icons.Outlined.Schedule
+    MoreAction.EDIT_HOLDER -> Icons.Outlined.Person
+    MoreAction.UPDATE_PHOTO -> Icons.Outlined.PhotoCamera
+    MoreAction.CANCEL -> Icons.Outlined.Delete
+    MoreAction.REACTIVATE -> Icons.Outlined.PowerSettingsNew
 }

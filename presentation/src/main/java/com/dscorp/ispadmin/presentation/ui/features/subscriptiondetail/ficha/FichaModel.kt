@@ -357,3 +357,43 @@ data class FichaTickets(val openCount: Int, val rows: List<TicketRow>) {
         }
     }
 }
+
+enum class MoreAction(val label: String) {
+    CHANGE_PLAN("Cambiar plan"),
+    CHANGE_NAP("Cambiar caja NAP"),
+    MIGRATE_TO_FIBER("Migrar a fibra"),
+    UPDATE_LOCATION("Actualizar ubicación"),
+    NEW_SERVICE("Nuevo servicio para el titular"),
+    DEFER_CUT("Postergar corte"),
+    EDIT_HOLDER("Editar datos del titular"),
+    UPDATE_PHOTO("Actualizar foto de fachada"),
+    CANCEL("Cancelar suscripción"),
+    REACTIVATE("Reactivar servicio"),
+}
+
+/** A titled group of the «Más acciones» sheet (a-sus-08); the last, untitled one holds the destructive action. */
+data class MoreSection(val title: String?, val actions: List<MoreAction>)
+
+fun moreActions(subscription: SubscriptionResponse): List<MoreSection> {
+    val cancelled = subscription.serviceStatus == ServiceStatus.CANCELLED
+    val wireless = subscription.installationType == InstallationType.WIRELESS
+    val service = buildList {
+        if (!cancelled) add(MoreAction.CHANGE_PLAN)
+        if (!cancelled) add(if (wireless) MoreAction.MIGRATE_TO_FIBER else MoreAction.CHANGE_NAP)
+        add(MoreAction.UPDATE_LOCATION)
+        if (!cancelled && subscription.customerId != null) add(MoreAction.NEW_SERVICE)
+    }
+    return listOfNotNull(
+        MoreSection("Servicio", service),
+        if (!cancelled) MoreSection("Cobranza", listOf(MoreAction.DEFER_CUT)) else null,
+        MoreSection("Titular", listOf(MoreAction.EDIT_HOLDER, MoreAction.UPDATE_PHOTO)),
+        MoreSection(null, listOf(if (cancelled) MoreAction.REACTIVATE else MoreAction.CANCEL)),
+    )
+}
+
+/** "Cód. 1842 · Basico · La Villa" under the holder in the «Más acciones» sheet. */
+fun moreActionsSubtitle(subscription: SubscriptionResponse): String = listOfNotNull(
+    "Cód. ${subscription.id}",
+    subscription.plan?.name?.takeIf { it.isNotBlank() }?.let(::planLabel),
+    subscription.place?.name?.takeIf { it.isNotBlank() }?.toTitleCase(),
+).joinToString(" · ")

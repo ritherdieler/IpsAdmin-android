@@ -623,7 +623,7 @@ class SubscriptionFinderViewModel(
         }
     }
 
-    private fun getPlaces() = viewModelScope.launch {
+    fun getPlaces() = viewModelScope.launch {
         try {
             _uiState.update { it.copy(placesState = it.placesState.copy(isLoading = true)) }
             val places = repository.getPlaces()

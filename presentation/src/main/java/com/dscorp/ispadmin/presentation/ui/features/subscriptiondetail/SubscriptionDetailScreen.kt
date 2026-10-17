@@ -1,5 +1,13 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail
 
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaActionHost
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaMoreActionsContent
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.MoreAction
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.moreActions
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.moreActionsSubtitle
+import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaAction
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaScreen
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaPaymentsTab
@@ -116,14 +124,19 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.rememberAsyncImagePainter
 import androidx.compose.foundation.layout.heightIn
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubscriptionDetailScreen(
     subscriptionId: Int,
     viewModel: SubscriptionDetailViewModel = koinViewModel(),
     accessMigrationViewModel: AccessMigrationViewModel = koinViewModel(),
     hubViewModel: SubscriptionHubViewModel = koinViewModel(),
+    actionsViewModel: SubscriptionFinderViewModel = koinViewModel(),
     navController: NavController
 ) {
+    var showMoreActions by remember { mutableStateOf(false) }
+    var moreAction by remember { mutableStateOf<MoreAction?>(null) }
+    val screenScope = rememberCoroutineScope()
     val hubState by hubViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(subscriptionId) {
@@ -244,7 +257,7 @@ fun SubscriptionDetailScreen(
                 ticketsCount = hubState.tickets?.openCount,
                 onTab = { hubViewModel.onIntent(SubscriptionHubIntent.TabSelected(it)) },
                 onBack = { navController.popBackStack() },
-                onMore = null,
+                onMore = { showMoreActions = true },
                 onCharge = { hubViewModel.onIntent(SubscriptionHubIntent.OpenCharge) },
                 onAction = { action -> onFichaAction(action, loadedSubscription, context, navController, hubViewModel) },
                 onUpdatePhoto = { showFacadePhotoOptionsDialog = true },
@@ -312,6 +325,38 @@ fun SubscriptionDetailScreen(
                         )
                     }
                 },
+            )
+        }
+        val fichaSubscription = uiState.subscription
+        if (showMoreActions && fichaSubscription != null) {
+            ModalBottomSheet(
+                onDismissRequest = { showMoreActions = false },
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            ) {
+                FichaMoreActionsContent(
+                    name = hubState.ficha?.name.orEmpty(),
+                    subtitle = moreActionsSubtitle(fichaSubscription),
+                    sections = moreActions(fichaSubscription),
+                    onAction = { action ->
+                        showMoreActions = false
+                        moreAction = action
+                    },
+                )
+            }
+        }
+        if (fichaSubscription != null) {
+            FichaActionHost(
+                action = moreAction,
+                subscription = fichaSubscription,
+                viewModel = actionsViewModel,
+                navController = navController,
+                onUpdatePhoto = { showFacadePhotoOptionsDialog = true },
+                onChanged = { message ->
+                    hubViewModel.onIntent(SubscriptionHubIntent.Load(subscriptionId))
+                    viewModel.getSubscription(subscriptionId)
+                    message?.let { screenScope.launch { snackbarHostState.showSnackbar(it) } }
+                },
+                onClosed = { moreAction = null },
             )
         }
         hubState.charge?.let { charge ->
