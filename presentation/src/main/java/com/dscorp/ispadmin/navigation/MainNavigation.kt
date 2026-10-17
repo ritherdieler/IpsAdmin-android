@@ -104,7 +104,8 @@ object MainNavigation {
             title = selected?.label ?: screenTitle(route),
             showBack = !isTopLevel,
             // Dashboard, the subscription search and the ficha draw their own header, as in the design.
-            showTopBar = route !is FeatureRoutes.Dashboard && route !is Subscription.Find && route !is Subscription.Details,
+            showTopBar = route !is FeatureRoutes.Dashboard && route !is Subscription.Find && route !is Subscription.Details &&
+                route !is SupportTicket.Detail && route !is SupportTicket.Close,
             bottomBar = if (isTopLevel && bar.size > 1) bar else emptyList(),
             selected = selected,
         )

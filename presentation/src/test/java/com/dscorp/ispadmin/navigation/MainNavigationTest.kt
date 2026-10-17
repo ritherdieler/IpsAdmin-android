@@ -185,4 +185,11 @@ class MainNavigationTest {
         assertFalse(chrome.showTopBar)
         assertEquals(MainDestination.SUBSCRIPTIONS, chrome.selected)
     }
+
+    @Test
+    fun `ticket detail and close draw their own top bar`() {
+        assertFalse(MainNavigation.shellChrome(UserType.TECHNICIAN, SupportTicket.Detail(3609)).showTopBar)
+        assertFalse(MainNavigation.shellChrome(UserType.TECHNICIAN, SupportTicket.Close(3609)).showTopBar)
+        assertTrue(MainNavigation.shellChrome(UserType.TECHNICIAN, SupportTicket.Detail(3609)).showBack)
+    }
 }

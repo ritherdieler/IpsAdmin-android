@@ -365,7 +365,7 @@ private fun InfoItem(
 @Composable
 private fun getStatusColor(status: AssistanceTicketStatus): Color {
     return when (status) {
-        AssistanceTicketStatus.PENDING -> MaterialTheme.colorScheme.tertiary
+        AssistanceTicketStatus.PENDING, AssistanceTicketStatus.REOPEN -> MaterialTheme.colorScheme.tertiary
         AssistanceTicketStatus.ASSIGNED -> MaterialTheme.colorScheme.primary
         AssistanceTicketStatus.IN_PROGRESS -> MaterialTheme.colorScheme.secondary
         AssistanceTicketStatus.RESOLVED, 
@@ -377,7 +377,7 @@ private fun getStatusColor(status: AssistanceTicketStatus): Color {
 @Composable
 private fun getStatusIcon(status: AssistanceTicketStatus): ImageVector {
     return when (status) {
-        AssistanceTicketStatus.PENDING -> Icons.Outlined.Pending
+        AssistanceTicketStatus.PENDING, AssistanceTicketStatus.REOPEN -> Icons.Outlined.Pending
         AssistanceTicketStatus.ASSIGNED, 
         AssistanceTicketStatus.IN_PROGRESS -> Icons.Outlined.Pending
         AssistanceTicketStatus.RESOLVED,

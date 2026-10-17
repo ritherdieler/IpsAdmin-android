@@ -22,6 +22,11 @@ data class AssistanceTicketResponse(
     val place: String? = null,
     val address: String? = null,
     val sheetImageUrl:String?,
+    val assignedAt: Date? = null,
+    val closedAt: Date? = null,
+    val subscriptionId: Int? = null,
+    val placeId: Int? = null,
+    val isExternalCustomer: Boolean = false,
 ):Serializable {
     fun getCreatedAtDateAsString(): String {
         val dateFormatter =
@@ -43,6 +48,7 @@ data class AssistanceTicketResponse(
             AssistanceTicketStatus.RESOLVED -> "Resuelto"
             AssistanceTicketStatus.CLOSED -> "Cerrado"
             AssistanceTicketStatus.CANCELLED -> "Cancelado"
+            AssistanceTicketStatus.REOPEN -> "Reabierto"
         }
     }
 
@@ -55,5 +61,6 @@ enum class AssistanceTicketStatus {
     IN_PROGRESS,
     RESOLVED,
     CLOSED,
-    CANCELLED
+    CANCELLED,
+    REOPEN,
 }

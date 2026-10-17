@@ -432,12 +432,24 @@ private fun NavGraphContent(
                 onRefresh = viewModel::refreshData,
                 onDismissError = viewModel::dismissError,
                 onDismissSuccessMessage = viewModel::dismissSuccessMessage,
-                onTicketCardClick = { ticket ->
-                    if (ticket.status == AssistanceTicketStatus.CLOSED && ticket.sheetImageUrl?.isNotEmpty() == true) {
-                        navController.navigate(AsyncImageViewer(ticket.sheetImageUrl))
-                    }
-                }
+                onTicketCardClick = { ticket -> navController.navigate(SupportTicket.Detail(ticket.id)) }
             )
+        }
+        composable<SupportTicket.Detail> { backStackEntry ->
+            val ticketId = backStackEntry.toRoute<SupportTicket.Detail>().ticketId
+            val viewModel: com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.TicketDetailViewModel = koinViewModel()
+            val closed = backStackEntry.savedStateHandle.get<String>(com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.CLOSED_MESSAGE_KEY)
+            LaunchedEffect(closed) {
+                if (closed != null) {
+                    backStackEntry.savedStateHandle.remove<String>(com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.CLOSED_MESSAGE_KEY)
+                    viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.TicketDetailIntent.Load(ticketId))
+                }
+            }
+            com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.TicketDetailScreen(ticketId, navController, viewModel)
+        }
+        composable<SupportTicket.Close> { backStackEntry ->
+            val ticketId = backStackEntry.toRoute<SupportTicket.Close>().ticketId
+            com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.CloseTicketScreen(ticketId, navController)
         }
         composable<SupportTicket.Create> {
             val viewModel: CreateSupportTicketViewModel = koinViewModel()

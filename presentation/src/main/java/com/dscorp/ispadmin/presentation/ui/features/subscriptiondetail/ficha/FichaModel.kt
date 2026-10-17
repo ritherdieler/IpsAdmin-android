@@ -157,7 +157,7 @@ private fun accessLabel(accessMode: String?): String? = when {
     else -> null
 }
 
-private fun phoneLabel(phone: String): String =
+internal fun phoneLabel(phone: String): String =
     if (phone.length == 9 && phone.all(Char::isDigit)) phone.chunked(3).joinToString(" ") else phone
 
 enum class FichaTab(val label: String) {
@@ -304,10 +304,10 @@ data class FichaNetwork(
     }
 }
 
-/** GPON receive power: −25 dBm or better is good, down to −27 acceptable, below that low. */
+/** GPON receive power as the design reads it: −24 dBm or better is good, down to −27 acceptable, below that low. */
 fun powerLabel(rxDbm: Double): String {
     val quality = when {
-        rxDbm >= -25.0 -> "buena"
+        rxDbm >= -24.0 -> "buena"
         rxDbm >= -27.0 -> "aceptable"
         else -> "baja"
     }
@@ -347,14 +347,9 @@ data class FichaTickets(val openCount: Int, val rows: List<TicketRow>) {
             },
         )
 
-        private val OPEN_TICKET_STATES = setOf(AssistanceTicketStatus.PENDING, AssistanceTicketStatus.ASSIGNED, AssistanceTicketStatus.IN_PROGRESS)
-
-        private fun AssistanceTicketStatus.ticketBadge(): StatusBadge = when (this) {
-            AssistanceTicketStatus.PENDING -> StatusBadge("Pendiente", BadgeTone.WARNING)
-            AssistanceTicketStatus.ASSIGNED, AssistanceTicketStatus.IN_PROGRESS -> StatusBadge("En curso", BadgeTone.INFO)
-            AssistanceTicketStatus.RESOLVED, AssistanceTicketStatus.CLOSED -> StatusBadge("Cerrado", BadgeTone.NEUTRAL)
-            AssistanceTicketStatus.CANCELLED -> StatusBadge("Cancelado", BadgeTone.NEUTRAL)
-        }
+        private val OPEN_TICKET_STATES = setOf(
+            AssistanceTicketStatus.PENDING, AssistanceTicketStatus.ASSIGNED, AssistanceTicketStatus.IN_PROGRESS, AssistanceTicketStatus.REOPEN,
+        )
     }
 }
 
@@ -474,6 +469,7 @@ class FichaHistory private constructor(private val events: List<Pair<Long, Histo
             AssistanceTicketStatus.ASSIGNED, AssistanceTicketStatus.IN_PROGRESS -> "en curso"
             AssistanceTicketStatus.RESOLVED, AssistanceTicketStatus.CLOSED -> "cerrado"
             AssistanceTicketStatus.CANCELLED -> "cancelado"
+            AssistanceTicketStatus.REOPEN -> "reabierto"
         }
 
         private fun HistoryLog.toItem(): HistoryItem {
@@ -501,4 +497,13 @@ class FichaHistory private constructor(private val events: List<Pair<Long, Histo
             return HistoryItem(dayOf(date), title, detail, responsibleName?.takeIf { it.isNotBlank() } ?: "Sistema", kind)
         }
     }
+}
+
+/** Ticket state as the app shows it everywhere (ficha, ticket list and detail). */
+fun AssistanceTicketStatus.ticketBadge(): StatusBadge = when (this) {
+    AssistanceTicketStatus.PENDING -> StatusBadge("Pendiente", BadgeTone.WARNING)
+    AssistanceTicketStatus.REOPEN -> StatusBadge("Reabierto", BadgeTone.WARNING)
+    AssistanceTicketStatus.ASSIGNED, AssistanceTicketStatus.IN_PROGRESS -> StatusBadge("En curso", BadgeTone.INFO)
+    AssistanceTicketStatus.RESOLVED, AssistanceTicketStatus.CLOSED -> StatusBadge("Cerrado", BadgeTone.NEUTRAL)
+    AssistanceTicketStatus.CANCELLED -> StatusBadge("Cancelado", BadgeTone.NEUTRAL)
 }

@@ -17,7 +17,8 @@ private val MONTHS = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ag
 
 fun ticketActions(ticket: AssistanceTicketResponse, user: User): TicketActions {
     val type = user.type
-    val status = ticket.status
+    // A reopened ticket is handled like a new one.
+    val status = ticket.status.takeUnless { it == AssistanceTicketStatus.REOPEN } ?: AssistanceTicketStatus.PENDING
     val canTake = status == AssistanceTicketStatus.PENDING && type in setOf(UserType.TECHNICIAN, UserType.ADMIN)
     val canClose = status == AssistanceTicketStatus.ASSIGNED && type in setOf(UserType.TECHNICIAN, UserType.ADMIN)
     val canCancel = status == AssistanceTicketStatus.PENDING && type in setOf(UserType.SECRETARY, UserType.ADMIN)

@@ -86,6 +86,18 @@ val viewModelModule = module {
     viewModel { EditSubscriptionViewModel(get(), get()) }
     viewModel { SubscriptionDetailViewModel(get(), get(), get()) }
     viewModel {
+        com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.TicketDetailViewModel(
+            gateway = com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.RepositoryTicketGateway(get(), get(), get(), get()),
+            mainImmediate = get<CoroutineDispatcher>(named("mainImmediate")),
+        )
+    }
+    viewModel {
+        com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.CloseTicketViewModel(
+            gateway = com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.RepositoryTicketGateway(get(), get(), get(), get()),
+            mainImmediate = get<CoroutineDispatcher>(named("mainImmediate")),
+        )
+    }
+    viewModel {
         SubscriptionHubViewModel(
             gateway = RepositorySubscriptionHubGateway(get(), get(), get(), get(), get()),
             mainImmediate = get<CoroutineDispatcher>(named("mainImmediate")),
