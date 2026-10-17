@@ -1,7 +1,6 @@
 package com.dscorp.ispadmin.data.repository
 
 import com.dscorp.ispadmin.domain.model.AppVersion
-import com.dscorp.ispadmin.domain.model.Coupon
 import com.dscorp.ispadmin.domain.model.CustomerData
 import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
 import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
@@ -93,6 +92,7 @@ interface IRepository {
     suspend fun getFilteredPaymentHistory(request: SearchPaymentsRequest): List<Payment>
     suspend fun findSubscriptionByDNI(id: String): List<SubscriptionResume>
     suspend fun registerPayment(payment: Payment): Payment
+    suspend fun getPaymentMethods(): List<com.dscorp.ispadmin.domain.model.PaymentMethodOption>
     suspend fun getNetworkDeviceTypes(): List<String>
     suspend fun getDebtors(): List<SubscriptionResponse>
     suspend fun registerIpPool(ipPool: IpPoolRequest): IpPool
@@ -102,9 +102,7 @@ interface IRepository {
     suspend fun updateSubscriptionPlan(subscription: UpdateSubscriptionPlanBody): SubscriptionResponse
     suspend fun downloadDebtorWithActiveSubscriptionsReport(): DownloadDocumentResponse
 
-    suspend fun downloadPaymentCommitmentSubscriptionsReport(): DownloadDocumentResponse
 
-    suspend fun downloadSuspendedSubscriptionsReport(): DownloadDocumentResponse
 
     suspend fun downloadCutOffSubscriptionsReport(): DownloadDocumentResponse
 
@@ -119,7 +117,6 @@ interface IRepository {
     suspend fun editServiceOrder(serviceOrder: ServiceOrder): ServiceOrderResponse
     suspend fun getMufas(): List<Mufa>
     suspend fun  getUnconfirmedOnus(): List<Onu>
-    suspend fun applyCoupon(code: String): Coupon?
     suspend fun findSubscriptionBySubscriptionDate(
         startDate: String,
         endDate: String
@@ -127,7 +124,6 @@ interface IRepository {
 
     suspend fun sendCloudMessaging(body: FirebaseBody?): FireBaseResponse
     suspend fun updatePlan(plan: Plan): PlanResponse
-    suspend fun savePaymentCommitment(id: Int)
     suspend fun reactivateService(subscription: Int, responsibleId: Int, notes: String?)
     suspend fun restoreInternetConnection(subscriptionId: Int, responsibleId: Int, notes: String?)
     suspend fun findSubscriptionByNameAndLastName(

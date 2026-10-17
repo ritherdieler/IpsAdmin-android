@@ -24,7 +24,10 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.EditSubscr
 import com.dscorp.ispadmin.presentation.ui.features.subscription.pending.PendingSubscriptionsViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionComposeViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.SubscriptionDetailViewModel
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.RepositorySubscriptionHubGateway
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.SubscriptionHubViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.accessmigration.AccessMigrationViewModel
+import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SharedPrefsRecentSubscriptionsStore
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.CreateSupportTicketViewModel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.SupportTicketViewModel
@@ -42,6 +45,9 @@ import org.koin.dsl.module
  *
  **/
 val viewModelModule = module {
+    viewModel { com.dscorp.ispadmin.presentation.ui.features.financial.FinancialViewModel(get(), get<CoroutineDispatcher>(named("mainImmediate"))) }
+    viewModel { com.dscorp.ispadmin.presentation.ui.features.dashboard.clients.ClientsViewModel(get(), get<CoroutineDispatcher>(named("mainImmediate"))) }
+    viewModel { com.dscorp.ispadmin.presentation.ui.features.dashboard.CollectionsViewModel(get(), get<CoroutineDispatcher>(named("mainImmediate"))) }
     viewModel { com.dscorp.ispadmin.presentation.ui.features.subscription.provisioning.ProvisioningViewModel(get()) }
     viewModel { LoginViewModel(get(), get()) }
     viewModel { RegisterViewModel(get(), get(), get()) }
@@ -80,6 +86,12 @@ val viewModelModule = module {
     viewModel { EditSubscriptionViewModel(get(), get()) }
     viewModel { SubscriptionDetailViewModel(get(), get(), get()) }
     viewModel {
+        SubscriptionHubViewModel(
+            gateway = RepositorySubscriptionHubGateway(get(), get(), get(), get(), get()),
+            mainImmediate = get<CoroutineDispatcher>(named("mainImmediate")),
+        )
+    }
+    viewModel {
         AccessMigrationViewModel(
             get(),
             get(),
@@ -91,7 +103,12 @@ val viewModelModule = module {
     viewModel { MigrationViewModel(get(), get()) }
     viewModel { OltAdministrationViewModel(get(), get()) }
     viewModel { OutLayViewModel(get(), get()) }
-    viewModel { SubscriptionFinderViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel {
+        SubscriptionFinderViewModel(
+            get(), get(), get(), get(), get(), get(), get(),
+            recentSubscriptionsStore = SharedPrefsRecentSubscriptionsStore(get()),
+        )
+    }
     viewModel { FixedCostViewModel(get(), get()) }
     viewModel { CreateInstallationOrderViewModel(get(), get(), get(), get()) }
     viewModel { SupportTicketListViewModel(get(), get(), get()) }

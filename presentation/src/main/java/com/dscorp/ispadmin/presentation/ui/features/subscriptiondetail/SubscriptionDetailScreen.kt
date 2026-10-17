@@ -1,5 +1,20 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail
 
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaActionHost
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaMoreActionsContent
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.MoreAction
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.moreActions
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.moreActionsSubtitle
+import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaAction
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaScreen
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaPaymentsTab
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaNetworkTab
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTicketsTab
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaHistoryTab
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTab
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -31,10 +46,16 @@ import androidx.compose.material.icons.rounded.Phone
 import androidx.compose.material.icons.rounded.Router
 import androidx.compose.material.icons.rounded.SignalCellularAlt
 import androidx.compose.material.icons.rounded.Wifi
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -51,6 +72,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import android.content.Context
+import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.ChargeSheetContent
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.ChargeSheetState
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.HubAction
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.HubQuickActions
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.SubscriptionHubEvent
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.SubscriptionHubHeader
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.SubscriptionHubIntent
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.SubscriptionHubViewModel
 import com.dscorp.components.components.loaders.Loader
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
@@ -94,13 +125,34 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.rememberAsyncImagePainter
 import androidx.compose.foundation.layout.heightIn
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubscriptionDetailScreen(
     subscriptionId: Int,
     viewModel: SubscriptionDetailViewModel = koinViewModel(),
     accessMigrationViewModel: AccessMigrationViewModel = koinViewModel(),
+    hubViewModel: SubscriptionHubViewModel = koinViewModel(),
+    actionsViewModel: SubscriptionFinderViewModel = koinViewModel(),
     navController: NavController
 ) {
+    var showMoreActions by remember { mutableStateOf(false) }
+    var moreAction by remember { mutableStateOf<MoreAction?>(null) }
+    val screenScope = rememberCoroutineScope()
+    val hubState by hubViewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(subscriptionId) {
+        hubViewModel.onIntent(SubscriptionHubIntent.Load(subscriptionId))
+    }
+    LaunchedEffect(hubViewModel) {
+        hubViewModel.events.collect { event ->
+            when (event) {
+                is SubscriptionHubEvent.Message -> {
+                    viewModel.getSubscription(subscriptionId)
+                    snackbarHostState.showSnackbar(event.text)
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.getSubscription(subscriptionId)
@@ -198,9 +250,61 @@ fun SubscriptionDetailScreen(
                 )
             }
 
+            loadedSubscription != null && hubState.ficha != null -> FichaScreen(
+                header = hubState.ficha!!,
+                subscription = loadedSubscription,
+                otherServices = uiState.otherServices,
+                tab = hubState.tab,
+                ticketsCount = hubState.tickets?.openCount,
+                onTab = { hubViewModel.onIntent(SubscriptionHubIntent.TabSelected(it)) },
+                onBack = { navController.popBackStack() },
+                onMore = { showMoreActions = true },
+                onCharge = { hubViewModel.onIntent(SubscriptionHubIntent.OpenCharge) },
+                onAction = { action -> onFichaAction(action, loadedSubscription, context, navController, hubViewModel) },
+                onUpdatePhoto = { showFacadePhotoOptionsDialog = true },
+                onOpenService = { serviceId -> navController.navigate(FeatureRoutes.Subscription.Details(serviceId)) },
+                tabContent = { tab ->
+                    val payments = hubState.payments
+                    if (tab == FichaTab.PAGOS && payments != null) {
+                        FichaPaymentsTab(
+                            payments = payments,
+                            onCharge = { hubViewModel.onIntent(SubscriptionHubIntent.OpenCharge) },
+                            onSeeHistory = {
+                                navController.navigate(FeatureRoutes.Payment.History(loadedSubscription.id, loadedSubscription.serviceStatus.toString()))
+                            },
+                        )
+                    } else if (tab == FichaTab.RED && hubState.network != null) {
+                        FichaNetworkTab(
+                            network = hubState.network!!,
+                            isFiber = loadedSubscription.installationType != InstallationType.WIRELESS,
+                            onReboot = { hubViewModel.onIntent(SubscriptionHubIntent.RebootOnu) },
+                            onResend = { hubViewModel.onIntent(SubscriptionHubIntent.ResendConfig) },
+                            onSeeRegistration = { navController.navigate(FeatureRoutes.Subscription.Provisioning(loadedSubscription.id)) },
+                        )
+                    } else if (tab == FichaTab.TICKETS) {
+                        FichaTicketsTab(
+                            tickets = hubState.tickets,
+                            onNewTicket = { navController.navigate(FeatureRoutes.SupportTicket.Create) },
+                            onOpenTicket = { ticketId -> navController.navigate(FeatureRoutes.SupportTicket.Detail(ticketId)) },
+                        )
+                    } else if (tab == FichaTab.HISTORIAL && hubState.history != null) {
+                        FichaHistoryTab(
+                            months = hubState.historyMonths,
+                            filter = hubState.historyFilter,
+                            onFilter = { hubViewModel.onIntent(SubscriptionHubIntent.HistoryFilterSelected(it)) },
+                        )
+                    } else {
+                        Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                    }
+                },
+            )
+
+            hubState.isLoading -> Loader()
+
             loadedSubscription != null -> SubscriptionDetailForm(
                 subscription = loadedSubscription,
                 otherServices = uiState.otherServices,
+                customerCredit = uiState.customerCredit,
                 onOpenService = { serviceId ->
                     navController.navigate(com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription.Details(serviceId))
                 },
@@ -210,7 +314,122 @@ fun SubscriptionDetailScreen(
                 accessMigrationState = accessMigrationState,
                 onAccessMigrationIntent = accessMigrationViewModel::onIntent,
                 onProvisioningClick = { navController.navigate(com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription.Provisioning(subscriptionId)) },
+                hubHeader = hubState.header?.let { header ->
+                    {
+                        SubscriptionHubHeader(header, onCharge = { hubViewModel.onIntent(SubscriptionHubIntent.OpenCharge) })
+                        HubQuickActions(
+                            actions = HubAction.available(
+                                hasPhone = !loadedSubscription.phone.isNullOrBlank(),
+                                isFiber = loadedSubscription.installationType == InstallationType.FIBER,
+                            ),
+                            onAction = { action ->
+                                onHubAction(action, loadedSubscription, context, navController)
+                            },
+                        )
+                    }
+                },
             )
+        }
+        val fichaSubscription = uiState.subscription
+        if (showMoreActions && fichaSubscription != null) {
+            ModalBottomSheet(
+                onDismissRequest = { showMoreActions = false },
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            ) {
+                FichaMoreActionsContent(
+                    name = hubState.ficha?.name.orEmpty(),
+                    subtitle = moreActionsSubtitle(fichaSubscription),
+                    sections = moreActions(fichaSubscription),
+                    onAction = { action ->
+                        showMoreActions = false
+                        moreAction = action
+                    },
+                )
+            }
+        }
+        if (fichaSubscription != null) {
+            FichaActionHost(
+                action = moreAction,
+                subscription = fichaSubscription,
+                viewModel = actionsViewModel,
+                navController = navController,
+                onUpdatePhoto = { showFacadePhotoOptionsDialog = true },
+                onChanged = { message ->
+                    hubViewModel.onIntent(SubscriptionHubIntent.Load(subscriptionId))
+                    viewModel.getSubscription(subscriptionId)
+                    message?.let { screenScope.launch { snackbarHostState.showSnackbar(it) } }
+                },
+                onClosed = { moreAction = null },
+            )
+        }
+        hubState.charge?.let { charge ->
+            ChargeBottomSheet(
+                charge = charge,
+                holderName = hubState.header?.name.orEmpty(),
+                onIntent = hubViewModel::onIntent,
+            )
+        }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+            SnackbarHost(snackbarHostState)
+        }
+    }
+}
+
+private fun onFichaAction(
+    action: FichaAction,
+    subscription: SubscriptionResponse,
+    context: Context,
+    navController: NavController,
+    hubViewModel: SubscriptionHubViewModel,
+) {
+    when (action) {
+        FichaAction.CALL -> subscription.phone?.let { dial(context, it) }
+        FichaAction.WHATSAPP -> subscription.phone?.let { openWhatsApp(context, it) }
+        FichaAction.RESTORE -> hubViewModel.onIntent(SubscriptionHubIntent.RestoreService)
+        FichaAction.TICKET -> navController.navigate(FeatureRoutes.SupportTicket.Create)
+        FichaAction.MAP -> subscription.location?.let { location ->
+            val uri = Uri.parse("geo:${location.latitude},${location.longitude}?q=${location.latitude},${location.longitude}")
+            try {
+                context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+            } catch (e: Exception) {
+                Toast.makeText(context, "No se pudo abrir el mapa", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+}
+
+private fun onHubAction(action: HubAction, subscription: SubscriptionResponse, context: Context, navController: NavController) {
+    when (action) {
+        HubAction.CALL -> subscription.phone?.let { dial(context, it) }
+        HubAction.WHATSAPP -> subscription.phone?.let { openWhatsApp(context, it) }
+        HubAction.PAYMENTS -> navController.navigate(FeatureRoutes.Payment.History(subscription.id, subscription.serviceStatus.toString()))
+        HubAction.TICKET -> navController.navigate(FeatureRoutes.SupportTicket.Create)
+        HubAction.PROVISIONING -> navController.navigate(FeatureRoutes.Subscription.Provisioning(subscription.id))
+    }
+}
+
+private fun dial(context: Context, phoneNumber: String) {
+    context.startActivity(Intent(Intent.ACTION_DIAL).apply { data = Uri.parse("tel:$phoneNumber") })
+}
+
+private fun openWhatsApp(context: Context, phoneNumber: String) {
+    try {
+        val cleanNumber = phoneNumber.replace("+", "").replace(" ", "").replace("-", "")
+        context.startActivity(Intent(Intent.ACTION_VIEW).apply { data = Uri.parse("https://wa.me/51$cleanNumber") })
+    } catch (e: Exception) {
+        Toast.makeText(context, "No se pudo abrir WhatsApp", Toast.LENGTH_SHORT).show()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ChargeBottomSheet(charge: ChargeSheetState, holderName: String, onIntent: (SubscriptionHubIntent) -> Unit) {
+    ModalBottomSheet(
+        onDismissRequest = { onIntent(SubscriptionHubIntent.CloseCharge) },
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            ChargeSheetContent(charge.draft, holderName, onIntent, isSubmitting = charge.isSubmitting, error = charge.error)
         }
     }
 }
@@ -219,11 +438,14 @@ fun SubscriptionDetailScreen(
 fun SubscriptionDetailForm(
     subscription: SubscriptionResponse,
     otherServices: List<com.dscorp.ispadmin.domain.model.CustomerServiceSummary> = emptyList(),
+    customerCredit: Double = 0.0,
     onOpenService: (Int) -> Unit = {},
     onFacadePhotoClick: () -> Unit = {},
     accessMigrationState: AccessMigrationUiState = AccessMigrationUiState(),
     onAccessMigrationIntent: (AccessMigrationIntent) -> Unit = {},
     onProvisioningClick: () -> Unit = {},
+    /** Proposal A hub header (band, debt card, quick actions). Null keeps the previous header for previews. */
+    hubHeader: (@Composable () -> Unit)? = null,
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -255,12 +477,13 @@ fun SubscriptionDetailForm(
             .fillMaxSize()
             .verticalScroll(scrollState)    
     ) {
-        if (subscription.installationType == InstallationType.FIBER) {
+        if (hubHeader != null) hubHeader()
+        if (hubHeader == null && subscription.installationType == InstallationType.FIBER) {
             Button(modifier = Modifier.testTag("subscription_provisioning"), onClick = onProvisioningClick) {
                 Text("Ver registro de la ONU")
             }
         }
-        Surface(
+        if (hubHeader == null) Surface(
             modifier = Modifier.fillMaxWidth(),
             color = when (subscription.serviceStatus) {
                 ServiceStatus.ACTIVE -> MaterialTheme.colorScheme.primary
@@ -344,6 +567,14 @@ fun SubscriptionDetailForm(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
+            if (customerCredit > 0.0) {
+                Text(
+                    text = "Saldo a favor: S/ %.2f".format(java.util.Locale.US, customerCredit),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
             if (otherServices.isNotEmpty()) {
                 Text(
                     text = "Otros servicios del cliente",
@@ -371,7 +602,7 @@ fun SubscriptionDetailForm(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            subscription.phone?.let { phoneNumber ->
+            subscription.phone?.takeIf { hubHeader == null }?.let { phoneNumber ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -961,10 +1192,8 @@ fun SubscriptionDetailFormPreview() {
         lastPaymentDate = "15/10/2024",
         note = "Cliente preferencial. Solicita factura electrónica mensualmente.",
         new = false,
-        isPaymentCommitment = false,
         isMigration = false,
         isReactivation = false,
-        paymentCommitmentDate = null,
         lastCutOffDate = null,
         reactivationDate = null,
         cpeDeviceId = null,
@@ -1019,10 +1248,8 @@ fun SubscriptionDetailFormSuspendedPreview() {
         lastPaymentDate = "20/08/2024",
         note = null,
         new = false,
-        isPaymentCommitment = true,
         isMigration = false,
         isReactivation = false,
-        paymentCommitmentDate = System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000),
         lastCutOffDate = null,
         reactivationDate = null,
         cpeDeviceId = null,

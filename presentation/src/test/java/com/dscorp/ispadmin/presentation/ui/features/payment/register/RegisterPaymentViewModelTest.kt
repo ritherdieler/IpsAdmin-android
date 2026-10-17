@@ -90,4 +90,39 @@ class RegisterPaymentViewModelTest {
         verify { observabilityClient.addBreadcrumb(any(), any(), any()) }
         assertTrue(viewModel.state.value.isSuccess)
     }
+
+    @Test
+    fun loadPaymentData_loadsCoreCatalogAndValidatesPayerNameFromIt() = runTest {
+        val payment = Payment(id = 99, subscriptionId = 882, amountToPay = 50.0, paid = false, method = "", responsibleId = 0)
+        coEvery { repository.getPaymentById("99") } returns payment
+        coEvery { repository.getPaymentMethods() } returns listOf(
+            com.dscorp.ispadmin.domain.model.PaymentMethodOption("Efectivo", requiresPayerName = false),
+            com.dscorp.ispadmin.domain.model.PaymentMethodOption("Billetera", requiresPayerName = true),
+        )
+
+        viewModel.onEvent(RegisterPaymentEvent.LoadPaymentData(99))
+        advanceUntilIdle()
+        org.junit.Assert.assertEquals(listOf("Efectivo", "Billetera"), viewModel.state.value.paymentMethods.map { it.name })
+
+        viewModel.onEvent(RegisterPaymentEvent.PaymentMethodSelected("Billetera"))
+        viewModel.onEvent(RegisterPaymentEvent.RegisterPayment)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.state.value.errorMessages.containsKey("electronicPayerName"))
+        coVerify(exactly = 0) { repository.registerPayment(any()) }
+    }
+
+    @Test
+    fun registerPayment_sendsTheAmountReceivedWhenEntered() = runTest {
+        val payment = Payment(id = 99, subscriptionId = 882, amountToPay = 50.0, paid = false, method = "", responsibleId = 0)
+        coEvery { repository.registerPayment(any()) } returns payment
+
+        viewModel.onEvent(RegisterPaymentEvent.SetPayment(payment))
+        viewModel.onEvent(RegisterPaymentEvent.PaymentMethodSelected("Efectivo"))
+        viewModel.onEvent(RegisterPaymentEvent.AmountReceivedChanged("60"))
+        viewModel.onEvent(RegisterPaymentEvent.RegisterPayment)
+        advanceUntilIdle()
+
+        coVerify { repository.registerPayment(match { it.amountReceived == 60.0 }) }
+    }
 }

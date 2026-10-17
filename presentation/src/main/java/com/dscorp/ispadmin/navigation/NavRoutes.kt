@@ -49,6 +49,9 @@ sealed class NavRoutes {
         object Reports : FeatureRoutes()
 
         @Serializable
+        object More : FeatureRoutes()
+
+        @Serializable
         data class AsyncImageViewer(val imageUrl: String) : FeatureRoutes()
 
         @Serializable
@@ -155,11 +158,14 @@ sealed class NavRoutes {
 
         companion object {
             fun FromString(string: String?): FeatureRoutes {
-                return when (string?.split("?")[0]) {
+                // Type-safe routes append arguments as "/{arg}" or "?arg={arg}"; match on the class name only.
+                return when (string?.substringBefore("?")?.substringBefore("/")) {
                     Home::class.qualifiedName -> Home
                     Dashboard::class.qualifiedName -> Dashboard
                     Profile::class.qualifiedName -> Profile
                     Reports::class.qualifiedName -> Reports
+                    More::class.qualifiedName -> More
+                    Plan.List::class.qualifiedName -> Plan.List
                     AsyncImageViewer::class.qualifiedName -> AsyncImageViewer("")
 
                     Subscription.Register::class.qualifiedName -> Subscription.Register(0)

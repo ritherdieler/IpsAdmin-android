@@ -268,6 +268,8 @@ sealed class SubscriptionFilter(val valueName: String) {
         SubscriptionFilter("Fecha")
     data class BY_IP(val ip: String = "") : SubscriptionFilter("IP")
     data class BY_CODE(val code: String = "") : SubscriptionFilter("Código")
+    /** Lists every subscription in one service state (quick accesses). */
+    data class BY_STATUS(val status: com.dscorp.ispadmin.domain.model.ServiceStatus) : SubscriptionFilter("Estado")
 }
 
 

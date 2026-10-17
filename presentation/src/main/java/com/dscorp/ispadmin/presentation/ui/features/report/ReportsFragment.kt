@@ -27,8 +27,6 @@ class ReportsFragment : BaseFragment<ReportsUiState, FragmentReportsBinding>() {
 
     private fun downloadDocument(it: DownloadDocumentType) =
         when (it) {
-            WITH_PAYMENT_COMMITMENT -> viewModel.downloadPaymentCommitmentSubscriptionsReport()
-            SUSPENDED -> viewModel.downloadSuspendedSubscriptionsReport()
             CUT_OFF -> viewModel.downloadCutOffSubscriptionsReport()
             DEBTORS_FROM_PAST_MONTH -> viewModel.downloadPastMonthDebtorsReport()
             DEBTORS_CUT_OFF_CANDIDATES -> viewModel.downloadDebtorsCutOffCandidatesSubscriptionsReport()
@@ -52,12 +50,6 @@ class ReportsFragment : BaseFragment<ReportsUiState, FragmentReportsBinding>() {
             }
             btnGetDebtorsWithCancelledServiceCustomers.setOnClickListener {
                 downloadDocument(DEBTORS_WITH_CANCELLED_SERVICE)
-            }
-            btnGetWithPaymentCommitmentCustomers.setOnClickListener {
-                downloadDocument(WITH_PAYMENT_COMMITMENT)
-            }
-            btnSuspendedCustomers.setOnClickListener {
-                downloadDocument(SUSPENDED)
             }
             btnGetCutoffCustomers.setOnClickListener {
                 downloadDocument(CUT_OFF)

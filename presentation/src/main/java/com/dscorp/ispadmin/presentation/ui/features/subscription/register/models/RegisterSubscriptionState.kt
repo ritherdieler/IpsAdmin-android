@@ -36,4 +36,10 @@ data class RegisterSubscriptionState(
     val registrationProgressCheckpoints: List<RegistrationProgressCheckpoint> = emptyList(),
     val submission: SubmissionState = SubmissionState.Idle,
     val dniWarning: String? = null,
-)
+    val submitBlockedReason: String? = null,
+) {
+    /** The ONU is authorized on the OLT but ACS has not confirmed it yet; the form stays usable. */
+    val acsPending: Boolean
+        get() = preauthorizationOperation?.let { it.phase == "WAITING_FOR_ACS" && it.state == "WAITING" } == true &&
+            !registrationCancelled && !cancellationInProgress
+}

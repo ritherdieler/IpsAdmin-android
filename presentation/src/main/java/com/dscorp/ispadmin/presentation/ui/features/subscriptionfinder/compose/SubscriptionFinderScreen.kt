@@ -1,14 +1,13 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,18 +17,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -41,20 +32,16 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.observability.ObservabilityComposeText
 import androidx.navigation.NavController
@@ -100,6 +87,8 @@ fun SubscriptionFinderScreen(
     var showChangeNapBoxDialog by remember { mutableStateOf(false) }
     var showRebootOnuDialog by remember { mutableStateOf(false) }
     var showRetryTr069Dialog by remember { mutableStateOf(false) }
+    var deferCutTarget by remember { mutableStateOf<SubscriptionResume?>(null) }
+    var showDateSearch by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
@@ -223,338 +212,77 @@ fun SubscriptionFinderScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Search card with nice material design
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = "Buscar suscripción",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    val filters = filters
-                    var selectedFilter by remember { mutableStateOf(filters[0]) }
-                    var searchQuery by remember { mutableStateOf("") }
-                    var lastNameQuery by remember { mutableStateOf("") }
-
-                    // Show filter tabs
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        filters.forEach { filter ->
-                            val isSelected = selectedFilter == filter
-                            val filterTag = when (filter) {
-                                is SubscriptionFilter.BY_NAME -> SubscriptionFinderTestTags.FILTER_NAME
-                                is SubscriptionFilter.BY_DOCUMENT -> SubscriptionFinderTestTags.FILTER_DOCUMENT
-                                is SubscriptionFilter.BY_DATE -> SubscriptionFinderTestTags.FILTER_DATE
-                                is SubscriptionFilter.BY_IP -> SubscriptionFinderTestTags.FILTER_IP
-                                is SubscriptionFilter.BY_CODE -> SubscriptionFinderTestTags.FILTER_CODE
+            SubscriptionSearchContent(
+                state = uiState,
+                onQueryChange = viewModel::onSmartQueryChanged,
+                onFilterSelected = viewModel::onResultFilterSelected,
+                onQuickAccess = viewModel::openQuickAccess,
+                onOpenSubscription = { subscription ->
+                    viewModel.onSubscriptionOpened(subscription)
+                    navController.navigate(Subscription.Details(subscription.id))
+                },
+                onOpenRecent = { id -> navController.navigate(Subscription.Details(id)) },
+                onClearRecents = viewModel::clearRecents,
+                onOpenFilters = { showDateSearch = true },
+                onLoadMore = viewModel::loadNextPage,
+                rowMenu = { subscription, expanded, onDismiss ->
+                    SubscriptionRowMenu(
+                        subscription = subscription,
+                        expanded = expanded,
+                        onDismiss = onDismiss,
+                        onMenuItemSelected = { menuItem ->
+                            handleMenuAction(
+                                menuItem = menuItem,
+                                subscription = subscription,
+                                navController = navController,
+                                context = context,
+                                viewModel = viewModel,
+                                onShowCancelDialog = { showCancelSubscriptionConfirmDialog = true },
+                                onShowChangeNapBoxDialog = { showChangeNapBoxDialog = true },
+                                onShowReactivateDialog = { showReactivateServiceDialog = true },
+                                onShowRebootOnuDialog = { showRebootOnuDialog = true },
+                                onShowRetryTr069Dialog = { showRetryTr069Dialog = true },
+                                onShowDeferCutDialog = { deferCutTarget = subscription },
+                            )
+                        },
+                        onEditHolder = {
+                            val expand = expandedSubscriptionId != subscription.id
+                            expandedSubscriptionId = if (expand) subscription.id else null
+                            if (expand) {
+                                viewModel.setSelectedSubscription(subscription)
+                                viewModel.initCustomerFormData(subscription)
                             }
-                            FilterChip(
-                                filter = filter,
-                                isSelected = isSelected,
-                                testTag = filterTag,
-                                onClick = {
-                                    // Restablecer los campos de búsqueda al cambiar de filtro
-                                    if (selectedFilter != filter) {
-                                        searchQuery = ""
-                                        lastNameQuery = ""
-                                    }
-                                    selectedFilter = filter
-                                }
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Contenido específico según el tipo de filtro
-                    when (selectedFilter) {
-                        is SubscriptionFilter.BY_NAME -> {
-                            // Campo único de búsqueda por nombre o apellido
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { newValue ->
-                                    val upperValue = newValue.uppercase()
-                                    searchQuery = upperValue
-                                    ObservabilityComposeText.report(
-                                        tag = SubscriptionFinderTestTags.QUERY_NAME,
-                                        label = "Nombre o apellido",
-                                        value = upperValue
-                                    )
-                                    coroutinesScope.launch {
-                                        viewModel.documentNumberFlow.emit(
-                                            SubscriptionFilter.BY_NAME(
-                                                name = upperValue,
-                                                lastName = ""
-                                            )
-                                        )
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag(SubscriptionFinderTestTags.QUERY_NAME),
-                                label = { Text("Nombre o apellido") },
-                                placeholder = { Text("Ej: Juan Pérez") },
-                                trailingIcon = {
-                                    if (uiState.isSearching) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(20.dp),
-                                            strokeWidth = 2.dp,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Filled.Search,
-                                            contentDescription = SubscriptionFinderContentDescriptions.SEARCH_LOADING,
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                },
-                                singleLine = true,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                        }
-
-                        is SubscriptionFilter.BY_DOCUMENT -> {
-                            // Campo único para documento
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { newValue ->
-                                    searchQuery = newValue
-                                    ObservabilityComposeText.report(
-                                        tag = SubscriptionFinderTestTags.QUERY_DOCUMENT,
-                                        label = "DNI",
-                                        value = newValue
-                                    )
-                                    coroutinesScope.launch {
-                                        viewModel.documentNumberFlow.emit(
-                                            SubscriptionFilter.BY_DOCUMENT(
-                                                newValue
-                                            )
-                                        )
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag(SubscriptionFinderTestTags.QUERY_DOCUMENT),
-                                label = { Text("DNI") },
-                                placeholder = { Text("Ingrese número de documento") },
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Filled.Search,
-                                        contentDescription = "Buscar",
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                },
-                                singleLine = true,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                        }
-
-                        is SubscriptionFilter.BY_DATE -> {
-                            // Reemplazamos la implementación por completo
-                            DateRangeSelector(
-                                onSearch = { startDate, endDate ->
-                                    coroutinesScope.launch {
-                                        viewModel.documentNumberFlow.emit(
-                                            SubscriptionFilter.BY_DATE(startDate, endDate)
-                                        )
-                                    }
-                                }
-                            )
-                        }
-
-                        is SubscriptionFilter.BY_IP -> {
-                            // Campo único para IP
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { newValue ->
-                                    val filteredValue = newValue.filter { it.isDigit() || it == '.' }
-                                    searchQuery = filteredValue
-                                    ObservabilityComposeText.report(
-                                        tag = SubscriptionFinderTestTags.QUERY_IP,
-                                        label = "IP",
-                                        value = filteredValue
-                                    )
-                                    coroutinesScope.launch {
-                                        viewModel.documentNumberFlow.emit(
-                                            SubscriptionFilter.BY_IP(filteredValue)
-                                        )
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag(SubscriptionFinderTestTags.QUERY_IP),
-                                label = { Text("IP") },
-                                placeholder = { Text("Ej: 192.168.1.1") },
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Filled.Search,
-                                        contentDescription = "Buscar",
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                },
-                                singleLine = true,
-                                shape = RoundedCornerShape(8.dp),
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Number
-                                )
-                            )
-                        }
-                        is SubscriptionFilter.BY_CODE -> {
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { newValue ->
-                                    val filteredValue = newValue.filter { it.isDigit() }
-                                    searchQuery = filteredValue
-                                    ObservabilityComposeText.report(
-                                        tag = SubscriptionFinderTestTags.QUERY_CODE,
-                                        label = "Código",
-                                        value = filteredValue
-                                    )
-                                    coroutinesScope.launch {
-                                        viewModel.documentNumberFlow.emit(
-                                            SubscriptionFilter.BY_CODE(filteredValue)
-                                        )
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag(SubscriptionFinderTestTags.QUERY_CODE),
-                                label = { Text("Código") },
-                                placeholder = { Text("Ingrese ID de suscripción") },
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Filled.Search,
-                                        contentDescription = "Buscar",
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                },
-                                singleLine = true,
-                                shape = RoundedCornerShape(8.dp),
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Number
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Results section
-            if (uiState.cancelSubscriptionState == CancelSubscriptionState.Loading ||
-                (uiState.isSearching && uiState.subscriptions.isEmpty())
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
-                        color = MaterialTheme.colorScheme.primary
+                        },
                     )
-                }
-            } else if (uiState.subscriptions.isEmpty()) {
-                // Estado vacío diferenciado: inicial vs sin resultados
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = if (uiState.searchPerformed) Icons.Outlined.Info else Icons.Filled.Search,
-                            contentDescription = SubscriptionFinderContentDescriptions.EMPTY_STATE_ICON,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = if (uiState.searchPerformed) "No se encontraron resultados" else "Busca una suscripción",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = if (uiState.searchPerformed) "Intente con otros criterios de búsqueda" else "Ingresa un nombre, apellido o documento para comenzar",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                },
+                rowExpansion = { subscription ->
+                    val formData = uiState.customerFormData
+                    if (expandedSubscriptionId == subscription.id && formData?.subscriptionId == subscription.id) {
+                        CustomerDataForm(
+                            formData = formData,
+                            placesState = uiState.placesState,
+                            saveState = uiState.saveSubscriptionState,
+                            onFieldChange = viewModel::updateCustomerFormField,
+                            onPlaceSelected = viewModel::onPlaceSelected,
+                            onUpdatePlace = viewModel::updateCustomerPlaceId,
+                            onSaveClick = viewModel::saveCustomerData,
                         )
                     }
-                }
-            } else {
-                // Main subscription finder content
-                SubscriptionFinder(
-                    subscriptions = uiState.subscriptions,
-                    isLoadingMore = uiState.isSearching,
-                    onLoadMore = viewModel::loadNextPage,
-                    onMenuItemSelected = { menuItem, subscription ->
-                        handleMenuAction(
-                            menuItem = menuItem,
-                            subscription = subscription,
-                            navController = navController,
-                            context = context,
-                            viewModel = viewModel,
-                            onShowCancelDialog = { showCancelSubscriptionConfirmDialog = true },
-                            onShowChangeNapBoxDialog = { showChangeNapBoxDialog = true },
-                            onShowReactivateDialog = { showReactivateServiceDialog = true },
-                            onShowRebootOnuDialog = { showRebootOnuDialog = true },
-                            onShowRetryTr069Dialog = { showRetryTr069Dialog = true }
-                        )
-                    },
-                    onSubscriptionExpanded = { subscription, expanded ->
-                        // Handle the expanded state change
-                        expandedSubscriptionId = if (expanded) subscription.id else null
-
-                        // Initialize customer form data when expanding
-                        if (expanded) {
-                            // Set the selected subscription first
-                            viewModel.setSelectedSubscription(subscription)
-
-                            // Then initialize the form data for this subscription
-                            viewModel.initCustomerFormData(subscription)
-                        }
-                    },
-                    expandedSubscriptionId = expandedSubscriptionId,
-                    customerFormData = uiState.customerFormData,
-                    placesState = uiState.placesState,
-                    saveState = uiState.saveSubscriptionState,
-                    onFieldChange = viewModel::updateCustomerFormField,
-                    onPlaceSelected = viewModel::onPlaceSelected,
-                    onUpdatePlaceId = viewModel::updateCustomerPlaceId,
-                    onSaveCustomer = viewModel::saveCustomerData
-                )
-            }
+                },
+            )
         }
+    }
+
+    if (showDateSearch) {
+        DateSearchDialog(
+            onDismiss = { showDateSearch = false },
+            onSearch = { startDate, endDate ->
+                showDateSearch = false
+                coroutinesScope.launch {
+                    viewModel.documentNumberFlow.emit(SubscriptionFilter.BY_DATE(startDate, endDate))
+                }
+            },
+        )
     }
 
     // Handle cancel subscription state
@@ -611,6 +339,23 @@ fun SubscriptionFinderScreen(
         )
     }
 
+    LaunchedEffect(uiState.deferCutMessage) {
+        uiState.deferCutMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            viewModel.clearDeferCutMessage()
+        }
+    }
+
+    deferCutTarget?.let { target ->
+        DeferCutDialog(
+            onDismiss = { deferCutTarget = null },
+            onConfirm = { untilDate, reason ->
+                viewModel.deferCut(target.id, untilDate, reason)
+                deferCutTarget = null
+            },
+        )
+    }
+
     if (showRetryTr069Dialog) {
         RetryTr069ConfirmDialog(
             onDismiss = {
@@ -654,45 +399,6 @@ fun SubscriptionFinderScreen(
     }
 }
 
-@Composable
-fun FilterChip(
-    filter: SubscriptionFilter,
-    isSelected: Boolean,
-    testTag: String,
-    onClick: () -> Unit
-) {
-    val backgroundColor = if (isSelected) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
-    }
-
-    val contentColor = if (isSelected) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(backgroundColor)
-            .clickable(onClick = onClick)
-            .testTag(testTag)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = filter.valueName,
-            color = contentColor,
-            style = MaterialTheme.typography.labelMedium
-        )
-    }
-}
-
-/**
- * Handles menu actions for subscription items
- */
 private fun handleMenuAction(
     menuItem: SubscriptionMenu,
     subscription: SubscriptionResume,
@@ -704,6 +410,7 @@ private fun handleMenuAction(
     onShowReactivateDialog: () -> Unit,
     onShowRebootOnuDialog: () -> Unit,
     onShowRetryTr069Dialog: () -> Unit,
+    onShowDeferCutDialog: () -> Unit = {},
 ) {
     when (menuItem) {
         SHOW_PAYMENT_HISTORY -> {
@@ -768,6 +475,8 @@ private fun handleMenuAction(
             viewModel.setSelectedSubscription(subscription)
             onShowRetryTr069Dialog()
         }
+
+        SubscriptionMenu.DEFER_CUT -> onShowDeferCutDialog()
     }
 }
 
@@ -804,7 +513,7 @@ private fun HandleCancelSubscriptionState(
  * Dialog to confirm subscription cancellation
  */
 @Composable
-private fun CancelSubscriptionDialog(
+internal fun CancelSubscriptionDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -1053,7 +762,7 @@ private fun RetryTr069ConfirmDialog(
  * Dialog to confirm service reactivation
  */
 @Composable
-private fun ReactivateServiceDialog(
+internal fun ReactivateServiceDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
     isLoading: Boolean = false,
@@ -1165,5 +874,39 @@ private fun ReactivateServiceDialog(
         containerColor = MaterialTheme.colorScheme.surface,
         titleContentColor = MaterialTheme.colorScheme.onSurface,
         textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+/** Asks for the date (within the current month) and the reason to defer the cut for debt. */
+@Composable
+internal fun DeferCutDialog(onDismiss: () -> Unit, onConfirm: (untilDate: String, reason: String) -> Unit) {
+    var untilDate by remember { mutableStateOf("") }
+    var reason by remember { mutableStateOf("") }
+    val validDate = Regex("\\d{4}-\\d{2}-\\d{2}").matches(untilDate.trim())
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Postergar corte") },
+        text = {
+            Column {
+                Text("No se corta hasta la fecha indicada, dentro del mes en curso. El cierre de mes cancela igual con 2 facturas impagas.")
+                OutlinedTextField(
+                    value = untilDate,
+                    onValueChange = { untilDate = it },
+                    label = { Text("No cortar hasta (AAAA-MM-DD)") },
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = { reason = it },
+                    label = { Text("Motivo") },
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = validDate && reason.isNotBlank(), onClick = { onConfirm(untilDate.trim(), reason.trim()) }) {
+                Text("Postergar corte")
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
     )
 }

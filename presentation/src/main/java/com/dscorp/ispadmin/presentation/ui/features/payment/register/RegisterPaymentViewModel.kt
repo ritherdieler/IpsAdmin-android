@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.data.repository.IRepository
 import com.dscorp.ispadmin.domain.model.Payment
+import com.dscorp.ispadmin.domain.model.PaymentMethodOption
 import com.dscorp.ispadmin.observability.ObsBreadcrumbCategory
 import com.dscorp.ispadmin.observability.ObservabilityClient
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,20 +18,25 @@ data class RegisterPaymentState(
     val isLoading: Boolean = false,
     val payment: Payment? = null,
     val electronicPayers: List<String> = emptyList(),
+    val paymentMethods: List<PaymentMethodOption> = emptyList(),
     val paymentMethod: String = "",
     val discountAmount: String = "",
     val discountReason: String = "",
     val showDiscountFields: Boolean = false,
     val errorMessages: Map<String, String> = emptyMap(),
     val isSuccess: Boolean = false,
-    val electronicPayerName: String = ""
-)
+    val electronicPayerName: String = "",
+    val amountReceived: String = "",
+) {
+    fun requiresPayerName(): Boolean = paymentMethods.any { it.name == paymentMethod && it.requiresPayerName }
+}
 
 sealed interface RegisterPaymentEvent {
     data class PaymentMethodSelected(val method: String) : RegisterPaymentEvent
     data class DiscountAmountChanged(val amount: String) : RegisterPaymentEvent
     data class DiscountReasonChanged(val reason: String) : RegisterPaymentEvent
     data class ElectronicPayerNameChanged(val name: String?) : RegisterPaymentEvent
+    data class AmountReceivedChanged(val amount: String) : RegisterPaymentEvent
     object RegisterPayment : RegisterPaymentEvent
     data class SetPayment(val payment: Payment) : RegisterPaymentEvent
     object ToggleDiscountFields : RegisterPaymentEvent
@@ -53,6 +59,17 @@ class RegisterPaymentViewModel(
 
     val user = repository.getUserSession()
 
+
+    private fun loadPaymentMethods() {
+        viewModelScope.launch {
+            try {
+                val methods = repository.getPaymentMethods()
+                _state.update { it.copy(paymentMethods = methods) }
+            } catch (e: Exception) {
+                _state.update { it.copy(errorMessages = it.errorMessages + ("general" to (e.message ?: "Error al obtener los métodos de pago"))) }
+            }
+        }
+    }
 
     fun getElectronicPayers() {
         viewModelScope.launch {
@@ -108,6 +125,10 @@ class RegisterPaymentViewModel(
                         errorMessages = it.errorMessages - "discountReason"
                     )
                 }
+            }
+
+            is RegisterPaymentEvent.AmountReceivedChanged -> {
+                _state.update { it.copy(amountReceived = event.amount, errorMessages = it.errorMessages - "amountReceived") }
             }
 
             is RegisterPaymentEvent.ElectronicPayerNameChanged -> {
@@ -175,6 +196,7 @@ class RegisterPaymentViewModel(
                             )
                         }
                         getElectronicPayers()
+                        loadPaymentMethods()
                     } catch (e: Exception) {
                         observabilityClient.reportError(
                             throwable = e,
@@ -219,7 +241,7 @@ class RegisterPaymentViewModel(
         }
 
         // Validar nombre del pagador solo para Yape o Plin
-        if ((currentState.paymentMethod == "Yape" || currentState.paymentMethod == "Plin") && currentState.electronicPayerName.isEmpty()) {
+        if (currentState.requiresPayerName() && currentState.electronicPayerName.isEmpty()) {
             errors["electronicPayerName"] = "Debe ingresar el nombre del pagador"
         }
 
@@ -280,7 +302,8 @@ class RegisterPaymentViewModel(
                         method = currentState.paymentMethod,
                         responsibleId = user!!.id!!,
                         responsibleName = user.name,
-                        electronicPayerName = currentState.electronicPayerName.takeIf { it.isNotEmpty() }
+                        electronicPayerName = currentState.electronicPayerName.takeIf { it.isNotEmpty() },
+                        amountReceived = currentState.amountReceived.trim().toDoubleOrNull(),
                     )
 
                     repository.registerPayment(paymentToRegister)

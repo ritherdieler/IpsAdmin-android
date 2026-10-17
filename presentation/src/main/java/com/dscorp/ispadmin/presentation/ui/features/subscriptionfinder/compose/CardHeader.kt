@@ -51,7 +51,8 @@ enum class SubscriptionMenu(val menuId: Int) {
     UPDATE_LOCATION(R.string.update_location),
     REBOOT_FIBER_ONU(R.string.reboot_fiber_onu),
     RETRY_TR069(R.string.retry_tr069),
-    NEW_SERVICE_FOR_CUSTOMER(R.string.new_service_for_customer);
+    NEW_SERVICE_FOR_CUSTOMER(R.string.new_service_for_customer),
+    DEFER_CUT(R.string.defer_cut);
 
     fun getTitle(context: Context): String {
         return context.getString(menuId)
@@ -119,6 +120,30 @@ fun CardHeader(
     }
 }
 
+/** Actions of a search row, opened with a long press; keeps every card action until the hub has «Más acciones». */
+@Composable
+fun SubscriptionRowMenu(
+    subscription: SubscriptionResume,
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    onMenuItemSelected: (SubscriptionMenu) -> Unit,
+    onEditHolder: () -> Unit,
+) {
+    SubscriptionDropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+        subscription = subscription,
+        onMenuItemSelected = {
+            onDismiss()
+            onMenuItemSelected(it)
+        },
+        onEditHolder = {
+            onDismiss()
+            onEditHolder()
+        },
+    )
+}
+
 /**
  * Dropdown menu for subscription actions
  */
@@ -127,7 +152,8 @@ private fun SubscriptionDropdownMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
     subscription: SubscriptionResume,
-    onMenuItemSelected: (SubscriptionMenu) -> Unit
+    onMenuItemSelected: (SubscriptionMenu) -> Unit,
+    onEditHolder: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     
@@ -159,6 +185,9 @@ private fun SubscriptionDropdownMenu(
 
             menuItem == SubscriptionMenu.NEW_SERVICE_FOR_CUSTOMER ->
                 subscription.customerId != null
+
+            menuItem == SubscriptionMenu.DEFER_CUT ->
+                subscription.serviceStatus != ServiceStatus.CANCELLED
             
             else -> true
         }
@@ -182,6 +211,14 @@ private fun SubscriptionDropdownMenu(
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
         )
         
+        onEditHolder?.let { edit ->
+            DropdownMenuItem(
+                modifier = Modifier.testTag(SubscriptionFinderTestTags.resultExpand(subscription.id)),
+                text = { Text("Editar datos del titular", style = MaterialTheme.typography.bodyMedium) },
+                onClick = edit,
+            )
+        }
+
         // Menu items
         menuItems.forEach { menuItem ->
             DropdownMenuItem(

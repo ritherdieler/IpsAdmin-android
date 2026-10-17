@@ -1,16 +1,13 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose
 
 object SubscriptionFinderTestTags {
-    const val FILTER_NAME = "subscription_search_filter_name"
-    const val FILTER_DOCUMENT = "subscription_search_filter_document"
-    const val FILTER_DATE = "subscription_search_filter_date"
-    const val FILTER_IP = "subscription_search_filter_ip"
-    const val FILTER_CODE = "subscription_search_filter_code"
-
-    const val QUERY_NAME = "subscription_search_query_name"
-    const val QUERY_DOCUMENT = "subscription_search_query_document"
-    const val QUERY_IP = "subscription_search_query_ip"
-    const val QUERY_CODE = "subscription_search_query_code"
+    /** Single box: name, DNI/RUC, IP or code. */
+    const val SMART_QUERY = "subscription_search_query"
+    /** Header button that opens the filters sheet (sign-up date). */
+    const val FILTERS = "subscription_search_filters"
+    const val CLEAR_QUERY = "subscription_search_clear"
+    const val CLEAR_RECENTS = "subscription_search_clear_recents"
+    const val RESULT_COUNT = "subscription_search_result_count"
 
     const val DATE_START = "subscription_search_date_start"
     const val DATE_END = "subscription_search_date_end"
@@ -31,6 +28,7 @@ object SubscriptionFinderTestTags {
     const val MENU_REBOOT_ONU = "reboot_onu"
     const val MENU_RETRY_TR069 = "retry_tr069"
     const val MENU_NEW_SERVICE = "new_service_for_customer"
+    const val MENU_DEFER_CUT = "subscription_menu_defer_cut"
 
     const val RETRY_TR069_DIALOG_DISMISS = "subscription_retry_tr069_dialog_dismiss"
     const val RETRY_TR069_DIALOG_CONFIRM = "subscription_retry_tr069_dialog_confirm"
@@ -57,6 +55,10 @@ object SubscriptionFinderTestTags {
 
     fun listRetryTr069(subscriptionId: Int) = "btn_list_retry_tr069_$subscriptionId"
     fun resultItem(subscriptionId: Int) = "subscription_result_item_$subscriptionId"
+    fun resultFilter(filter: ResultFilter) = "subscription_search_chip_${filter.name.lowercase()}"
+    fun quickAccess(status: com.dscorp.ispadmin.domain.model.ServiceStatus) =
+        "subscription_search_quick_${status.name.lowercase()}"
+    fun recent(subscriptionId: Int) = "subscription_search_recent_$subscriptionId"
     fun resultExpand(subscriptionId: Int) = "subscription_result_expand_$subscriptionId"
     fun resultMenu(subscriptionId: Int) = "subscription_result_menu_$subscriptionId"
     fun resultMenuItem(subscriptionId: Int, action: String) = "subscription_result_menu_${action}_$subscriptionId"
@@ -84,18 +86,14 @@ object SubscriptionFinderTestTags {
         SubscriptionMenu.REBOOT_FIBER_ONU -> MENU_REBOOT_ONU
         SubscriptionMenu.RETRY_TR069 -> MENU_RETRY_TR069
         SubscriptionMenu.NEW_SERVICE_FOR_CUSTOMER -> MENU_NEW_SERVICE
+        SubscriptionMenu.DEFER_CUT -> MENU_DEFER_CUT
     }
 
     val searchInteractive = listOf(
-        FILTER_NAME,
-        FILTER_DOCUMENT,
-        FILTER_DATE,
-        FILTER_IP,
-        FILTER_CODE,
-        QUERY_NAME,
-        QUERY_DOCUMENT,
-        QUERY_IP,
-        QUERY_CODE,
+        SMART_QUERY,
+        FILTERS,
+        CLEAR_QUERY,
+        CLEAR_RECENTS,
         DATE_START,
         DATE_END,
         DATE_SUBMIT,

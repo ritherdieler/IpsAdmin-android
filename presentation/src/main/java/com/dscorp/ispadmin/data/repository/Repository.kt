@@ -44,7 +44,6 @@ import com.dscorp.ispadmin.data.utils.SESSION_TYPE
 import com.dscorp.ispadmin.data.utils.SESSION_USER_NAME
 import com.dscorp.ispadmin.data.utils.SESSION_VERIFIED
 import com.dscorp.ispadmin.domain.model.AppVersion
-import com.dscorp.ispadmin.domain.model.Coupon
 import com.dscorp.ispadmin.domain.model.CustomerData
 import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
 import com.dscorp.ispadmin.domain.model.DeviceTokenRequest
@@ -474,13 +473,14 @@ class Repository : IRepository, KoinComponent {
         }
     }
 
-    override suspend fun registerPayment(payment: Payment): Payment {
-        val response = restApiServices.registerPayment(payment)
-        if (response.code() in 200..299) {
-            return response.body()!!
-        } else {
-            throw Exception("Error")
-        }
+    override suspend fun registerPayment(payment: Payment): Payment =
+        PaymentResponses.registeredOrThrow(restApiServices.registerPayment(payment))
+
+    override suspend fun getPaymentMethods(): List<com.dscorp.ispadmin.domain.model.PaymentMethodOption> {
+        val response = restApiServices.getPaymentMethods()
+        val body = response.body()
+        if (response.isSuccessful && body != null) return body
+        throw Exception(ApiErrorBodyParser.parse(response.errorBody()?.string(), "Error al obtener los métodos de pago"))
     }
 
     override suspend fun getNetworkDeviceTypes(): List<String> {
@@ -552,24 +552,6 @@ class Repository : IRepository, KoinComponent {
 
     override suspend fun downloadDebtorWithActiveSubscriptionsReport(): DownloadDocumentResponse {
         val response = restApiServices.downloadDebtorsWithActiveSubscriptionReportDocument()
-        if (response.code() in 200..299) {
-            return response.body()!!
-        } else {
-            throw Exception("Error")
-        }
-    }
-
-    override suspend fun downloadPaymentCommitmentSubscriptionsReport(): DownloadDocumentResponse {
-        val response = restApiServices.downloadWithPaymentCommitmentSubscriptionsReportDocument()
-        if (response.code() in 200..299) {
-            return response.body()!!
-        } else {
-            throw Exception("Error")
-        }
-    }
-
-    override suspend fun downloadSuspendedSubscriptionsReport(): DownloadDocumentResponse {
-        val response = restApiServices.downloadSuspendedSubscriptionsReportDocument()
         if (response.code() in 200..299) {
             return response.body()!!
         } else {
@@ -671,18 +653,6 @@ class Repository : IRepository, KoinComponent {
         else throw Exception("Error generico")
     }
 
-    override suspend fun applyCoupon(code: String): Coupon? {
-
-        val response = restApiServices.applyCoupon(code)
-
-        return when (response.code()) {
-            in 200..299 -> response.body()
-            404 -> null
-            else -> throw Exception("Ocurrio un error en la activacion del cupon")
-        }
-
-    }
-
     override suspend fun findSubscriptionBySubscriptionDate(
         startDate: String,
         endDate: String
@@ -709,14 +679,6 @@ class Repository : IRepository, KoinComponent {
             return response.body()!!
         } else {
             throw Exception("Ocurrio un error al registrar el plan")
-        }
-    }
-
-    override suspend fun savePaymentCommitment(id: Int) {
-        val response = restApiServices.setPaymentCommitment(id)
-        when (response.code()) {
-            in 200..299 -> {}
-            else -> throw Exception("Ocurrio un error al registrar el compromiso de pago, contacte con el administrador")
         }
     }
 
@@ -959,7 +921,7 @@ class Repository : IRepository, KoinComponent {
     override suspend fun updateCustomerData(customer: CustomerData) {
         val response = restApiServices.updateCustomerData(customer)
         if (response.code() !in 200..299)
-            throw Exception("No se pudo actualizar los datos del cliente")
+            throw Exception(ApiErrorBodyParser.parse(response.errorBody()?.string(), "No se pudo actualizar los datos del cliente"))
     }
 
     override suspend fun subscriptionById(subscriptionId: Int): SubscriptionResponse {

@@ -3,40 +3,20 @@ package com.dscorp.ispadmin.navigation
 import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -44,6 +24,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.dscorp.ispadmin.BuildConfig
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.User
@@ -67,9 +48,9 @@ import com.dscorp.ispadmin.presentation.ui.features.installationorders.Installat
 import com.dscorp.ispadmin.presentation.ui.features.installationorders.InstallationOrderListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.LocationSelectorComposeDialog
 import com.dscorp.ispadmin.presentation.ui.features.main.MainEvent
+import com.dscorp.ispadmin.presentation.ui.features.main.MainShell
 import com.dscorp.ispadmin.presentation.ui.features.main.MainViewModel
-import com.dscorp.ispadmin.presentation.ui.features.main.MainNavTestTags
-import com.dscorp.ispadmin.presentation.ui.features.main.MenuDrawerContent
+import com.dscorp.ispadmin.presentation.ui.features.more.MoreContent
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationComposeScreen
 import com.dscorp.ispadmin.presentation.ui.features.outlay.RegisterOutlayScreen
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailScreen
@@ -97,12 +78,10 @@ import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.T
 import com.dscorp.ispadmin.presentation.utils.PermissionUtils
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeatureNavGraph(
     navController: NavHostController = rememberNavController(),
@@ -116,46 +95,11 @@ fun FeatureNavGraph(
         viewModel.onEvent(MainEvent.LoadCurrentUser)
     }
 
-    var showExitDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-
-    BackHandler {
-        showExitDialog = true
-    }
-
-    if (showExitDialog) {
-        AlertDialog(
-            onDismissRequest = { showExitDialog = false },
-            title = { Text("¿Salir de la aplicación?") },
-            text = { Text("¿Estás seguro que deseas salir de la aplicación?") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showExitDialog = false
-                        (context as? Activity)?.finish()
-                    }
-                ) {
-                    Text("Sí, salir")
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { showExitDialog = false }
-                ) {
-                    Text("No, cancelar")
-                }
-            }
-        )
-    }
-
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = FeatureRoutes.FromString(currentEntry?.destination?.route)
 
     LaunchedEffect(uiState.currentUser?.id) {
-        if (uiState.currentUser == null || currentRoute is Subscription.Register) return@LaunchedEffect
+        if (!uiState.currentUser.canRegisterSubscription() || currentRoute is Subscription.Register) return@LaunchedEffect
         val pending = try {
             onuRegistrationOperationUseCase.active()
         } catch (cancelled: CancellationException) {
@@ -163,110 +107,72 @@ fun FeatureNavGraph(
         } catch (_: Exception) {
             null
         }
-        if (pending?.subscriptionId == null) {
+        if (shouldResumeOnuRegistration(uiState.currentUser, pending)) {
             runNavigationOnMainThread {
                 navController.navigate(Subscription.Register()) { launchSingleTop = true }
             }
         }
     }
-    val title = when (currentRoute) {
-        is Dashboard -> "Panel"
-        is Profile -> "Perfil"
-        is Subscription.Register -> "Registrar Suscripción"
-        is Subscription.Find -> "Buscar Suscripción"
-        is Subscription.PendingSubscriptions -> "Suscripciones pendientes"
-        is Subscription.Details -> "Suscripción #${currentRoute.subscriptionId}"
-        is Subscription.ChangePlan -> "Cambiar Plan"
-        is Subscription.Migrate -> "Migrar Suscripción"
-        is Subscription.Edit -> "Editar Suscripción"
-        is Payment.Register -> "Registrar Pago"
-        is Payment.History -> "Historial de Pagos"
-        is Payment.Detail -> "Detalle de Pago"
-        is Payment.FindPayer -> "Buscar Pagador"
-        is SupportTicket.List -> "Tickets de Soporte"
-        is SupportTicket.Create -> "Nuevo Ticket"
-        is SupportTicket.Detail -> "Detalle de Ticket"
-        is SupportTicket.Close -> "Cerrar Ticket"
-        is AsyncImageViewer -> "Imagen"
-        is Installation.Create -> "Crear Orden de Instalación"
-        is Installation.Pending -> "Órdenes Pendientes"
-        is Installation.Assigned -> "Órdenes Asignadas"
-        is Installation.InProgress -> "Órdenes en Progreso"
-        is Installation.Closed -> "Órdenes Cerradas"
-        is Installation.List -> "Órdenes de Instalación"
-        is FeatureRoutes.Plan.List -> "Planes"
-        is Outlay.Register -> "Registrar Egreso"
-        null -> "ISP Admin"
-        else -> "ISP Admin"
+
+    val userType = uiState.currentUser?.type
+    if (userType == null) {
+        // Wait for the session user: the start destination and the bar depend on the role.
+        if (!uiState.isLoading) ProfileFallback(navController, onLoggedOut)
+        return
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                MenuDrawerContent(
-                    currentUser = uiState.currentUser,
-                    drawerItems = uiState.getDrawerGroups(),
-                    navController = navController,
-                    onItemClicked = {
-                        scope.launch {
-                            drawerState.close()
-                        }
-                    }
-                )
-            }
-        }
+    val chrome = MainNavigation.shellChrome(userType, currentRoute)
+    ExitOnRootBack(enabled = !chrome.showBack)
+
+    MainShell(
+        chrome = chrome,
+        onDestinationSelected = { destination -> navController.navigateToRoot(destination.route) },
+        onBack = { navController.popBackStack() },
     ) {
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            text = title,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    drawerState.open()
-                                }
-                            },
-                            modifier = Modifier.testTag(MainNavTestTags.OPEN_DRAWER)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Menu"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        navigationIconContentColor = Color.White
-                    )
-                )
-            }
-        ) { innerPadding ->
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                val drawerStart = uiState.getDrawerGroups()
-                    .firstOrNull()?.items?.firstOrNull()?.route
-                NavGraphContent(
-                    navController,
-                    onLoggedOut = onLoggedOut,
-                    currentUser = uiState.currentUser,
-                    startDestination = drawerStart,
-                )
-            }
-        }
+        NavGraphContent(
+            navController,
+            onLoggedOut = onLoggedOut,
+            currentUser = uiState.currentUser,
+            startDestination = MainNavigation.startRouteFor(userType),
+        )
     }
+}
+
+/** Bottom-bar navigation: one copy of each root on the stack, keeping each tab's state. */
+private fun NavHostController.navigateToRoot(route: FeatureRoutes) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+@Composable
+private fun ExitOnRootBack(enabled: Boolean) {
+    var showExitDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    BackHandler(enabled = enabled) { showExitDialog = true }
+    if (!showExitDialog) return
+    AlertDialog(
+        onDismissRequest = { showExitDialog = false },
+        title = { Text("¿Salir de la aplicación?") },
+        text = { Text("Podrás volver a entrar sin iniciar sesión.") },
+        confirmButton = {
+            TextButton(onClick = {
+                showExitDialog = false
+                (context as? Activity)?.finish()
+            }) { Text("Salir") }
+        },
+        dismissButton = {
+            TextButton(onClick = { showExitDialog = false }) { Text("Volver") }
+        },
+    )
+}
+
+/** The user could not be loaded: keep the profile reachable so the session can be closed. */
+@Composable
+private fun ProfileFallback(navController: NavHostController, onLoggedOut: () -> Unit) {
+    ProfileScreen(navController = navController, onLoggedOut = onLoggedOut)
 }
 
 @SuppressLint("MissingPermission")
@@ -275,11 +181,11 @@ private fun NavGraphContent(
     navController: NavHostController,
     onLoggedOut: () -> Unit = {},
     currentUser: User?,
-    startDestination: Any?
+    startDestination: Any,
 ) {
     NavHost(
         navController = navController,
-        startDestination = startDestination ?: Profile,
+        startDestination = startDestination,
     ) {
         // Plan
         composable<FeatureRoutes.Plan.List> {
@@ -307,6 +213,14 @@ private fun NavGraphContent(
         composable<Dashboard> {
             DashBoardComposeScreen(navController = navController)
         }
+        composable<FeatureRoutes.More> {
+            val type = currentUser?.type ?: return@composable
+            MoreContent(
+                items = MainNavigation.moreItemsFor(type),
+                versionLabel = "IspAdmin ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                onItemSelected = { item -> navController.navigate(item.route) { launchSingleTop = true } },
+            )
+        }
         // Profile
         composable<Profile> {
             ProfileScreen(navController = navController, onLoggedOut = onLoggedOut)
@@ -316,11 +230,7 @@ private fun NavGraphContent(
             val route = it.toRoute<Subscription.Register>()
             val installationOrder = route.installationOrderId
             val customerId = route.customerId
-            val canRegisterSubscription = currentUser?.type in listOf(
-                User.UserType.ADMIN,
-                User.UserType.ACCOUNTANT,
-                User.UserType.TECHNICIAN
-            )
+            val canRegisterSubscription = currentUser.canRegisterSubscription()
 
             when {
                 currentUser == null -> Unit

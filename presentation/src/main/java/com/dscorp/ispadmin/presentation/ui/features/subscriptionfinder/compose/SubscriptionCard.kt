@@ -105,7 +105,9 @@ fun SubscriptionCard(
         else -> MaterialTheme.colorScheme.onSurface
     }
 
+    // The whole card opens the subscription hub, where every action lives.
     ElevatedCard(
+        onClick = { onMenuItemSelected(SubscriptionMenu.SEE_DETAILS) },
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -680,11 +682,7 @@ fun CardBody(subscriptionResume: SubscriptionResume, modifier: Modifier = Modifi
                 contentColor = statusContentColor
             ) {
                 Text(
-                    text = when (subscriptionResume.serviceStatus) {
-                        ServiceStatus.ACTIVE -> "Activo"
-                        ServiceStatus.CANCELLED -> "Cancelado"
-                        else -> "Desconocido"
-                    },
+                    text = subscriptionResume.serviceStatus.getFormattedStatus(),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                 )

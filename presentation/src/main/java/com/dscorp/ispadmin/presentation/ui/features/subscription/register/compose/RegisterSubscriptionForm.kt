@@ -183,18 +183,15 @@ fun RegisterSubscriptionForm(
                     label = "registration_step_content",
                 ) { step ->
                     Column {
+                        if (formState.preauthorizationEnabled && step in ACS_STATUS_STEPS) {
+                            AcsStatusBanner(formState)
+                        }
                         when (step) {
                             RegisterSubscriptionWizardStep.ONU_SELECTION,
                             RegisterSubscriptionWizardStep.ONU_CONFIRMATION ->
                                 OnuSelectionBlock(formState, form, onIntent)
                             RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> AcsWaitingBlock(formState)
                             RegisterSubscriptionWizardStep.CLIENT_LOCATION -> {
-                                if (formState.preauthorizationEnabled &&
-                                    formState.preauthorizationOperation?.canOpenRegistrationForm() == true
-                                ) {
-                                    EquipmentReadyBanner(formState)
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                }
                                 ClientDataFields(
                                     form = form,
                                     isLoading = formState.isLoading,
@@ -286,6 +283,16 @@ fun RegisterSubscriptionForm(
                         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp)
                     )
                 }
+                formState.submitBlockedReason?.let { reason ->
+                    Text(
+                        text = reason,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier
+                            .padding(start = 20.dp, end = 20.dp, top = 4.dp)
+                            .testTag(RegisterSubscriptionTestTags.SUBMIT_BLOCKED_REASON)
+                    )
+                }
                 WizardNavigationBar(
                     step = formState.wizardStep,
                     isLoading = formState.isLoading,
@@ -324,6 +331,60 @@ fun RegisterSubscriptionForm(
                         Text("Cancelar registro")
                     }
                 }
+            }
+        }
+    }
+}
+
+private val ACS_STATUS_STEPS = setOf(
+    RegisterSubscriptionWizardStep.CLIENT_LOCATION,
+    RegisterSubscriptionWizardStep.INSTALLATION,
+    RegisterSubscriptionWizardStep.CONFIRMATION,
+)
+
+/** ACS state shown on top of every form step: still connecting, or ready to register. */
+@Composable
+private fun AcsStatusBanner(formState: RegisterSubscriptionState) {
+    val operation = formState.preauthorizationOperation ?: return
+    when {
+        formState.acsPending -> AcsPendingBanner(operation.serial)
+        operation.canOpenRegistrationForm() -> EquipmentReadyBanner(formState)
+        else -> return
+    }
+    Spacer(modifier = Modifier.height(12.dp))
+}
+
+@Composable
+private fun AcsPendingBanner(serial: String) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(RegisterSubscriptionTestTags.ACS_PENDING_BANNER),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Spacer(modifier = Modifier.size(10.dp))
+            Column {
+                Text(
+                    text = "ONU $serial · conectando con la gestión remota…",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Text(
+                    text = "Puedes seguir llenando los datos. Podrás registrar cuando el equipo conecte.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
             }
         }
     }
@@ -1643,7 +1704,6 @@ private fun RegisterSubscriptionPreview() {
                     location = null,
                     cpeDevice = null,
                     selectedNapBox = null,
-                    coupon = "mazim",
                     note = "persequeris"
                 )
             )

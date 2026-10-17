@@ -39,11 +39,6 @@ class ReportsViewModel(
     fun downloadDebtorWithActiveSubscriptionsReport() =
         downloadReport("debtor_active") { repository.downloadDebtorWithActiveSubscriptionsReport() }
 
-    fun downloadPaymentCommitmentSubscriptionsReport() =
-        downloadReport("payment_commitment") { repository.downloadPaymentCommitmentSubscriptionsReport() }
-
-    fun downloadSuspendedSubscriptionsReport() =
-        downloadReport("suspended") { repository.downloadSuspendedSubscriptionsReport() }
 
     fun downloadCutOffSubscriptionsReport() =
         downloadReport("cut_off") { repository.downloadCutOffSubscriptionsReport() }

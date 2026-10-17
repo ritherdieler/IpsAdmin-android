@@ -591,11 +591,13 @@ private fun ClientInfoSection(order: InstallationOrder) {
     Spacer(modifier = Modifier.height(8.dp))
 
     // Fecha de creación
-    InfoRow(
-        icon = Icons.Outlined.Schedule,
-        label = "Creado: ${order.createdAt?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",
-        contentDescription = "Fecha de creación"
-    )
+    order.createdAt?.let { createdAt ->
+        InfoRow(
+            icon = Icons.Outlined.Schedule,
+            label = "Creado: ${createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",
+            contentDescription = "Fecha de creación"
+        )
+    }
 
     // Mostrar fecha programada solo si está en curso
     if (order.status == InstallationOrderStatus.EN_CURSO && order.scheduledDate != null) {

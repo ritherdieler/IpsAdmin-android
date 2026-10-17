@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tabs -->
+    <string name="dashboard_tab_financial">Financiero</string>
+    <string name="dashboard_tab_commercial">Comercial</string>
+    <string name="dashboard_tab_clients">Clientes</string>
+
+    <!-- Shared sections -->
+    <string name="dashboard_history">Historial</string>
+    <string name="dashboard_last_12_months">Últimos 12 meses</string>
+    <string name="dashboard_last_6_months">Últimos 6 meses</string>
+    <string name="dashboard_breakdown">Desglose</string>
+    <string name="dashboard_no_data">Sin datos para este período</string>
+    <string name="dashboard_unavailable">No disponible</string>
+    <string name="dashboard_vs_previous">vs %1$s</string>
+
+    <!-- Collections -->
+    <string name="collections_title">Cobranza operativa</string>
+    <string name="collections_caption">Facturas de servicio, prórrogas y cortes</string>
+    <string name="collections_due_soon">Por vencer en %1$d días</string>
+    <string name="collections_invoices">%1$s facturas</string>
+    <string name="collections_due_badge">Por vencer</string>
+    <string name="collections_active_deferrals">Prórrogas de corte activas</string>
+    <string name="collections_expiring_today">%1$s vencen hoy</string>
+    <string name="collections_kept">%1$s cumplidas · últimos %2$d días</string>
+    <string name="collections_cuts_vs_restored">Cortes por deuda vs restablecidos tras pago · este mes</string>
+    <string name="collections_cut">Cortados</string>
+    <string name="collections_restored">Restablecidos</string>
+
+    <!-- Commercial -->
+    <string name="commercial_active_subscriptions">Suscriptores activos</string>
+    <string name="commercial_active_caption">En estado activo ahora. No incluye cortados por deuda.</string>
+    <string name="commercial_new">Altas</string>
+    <string name="commercial_cancellations">Cancelaciones</string>
+    <string name="commercial_reconnections">Reconexiones</string>
+    <string name="commercial_migrations">Migraciones</string>
+    <string name="commercial_churn">Churn mensual</string>
+    <string name="commercial_churn_info">Porcentaje de clientes que cancelaron en el mes: cancelaciones ÷ suscriptores activos al inicio del mes. Más bajo es mejor.</string>
+    <string name="commercial_arpu">ARPU</string>
+    <string name="commercial_arpu_info">Ingreso promedio por cliente: lo recaudado en el mes ÷ suscriptores activos. Muestra si el negocio crece por más clientes o porque cada uno paga más.</string>
+    <string name="commercial_subscriptions_section">Suscripciones</string>
+    <string name="commercial_new_vs_cancelled">Altas vs bajas</string>
+    <string name="commercial_active_history">Suscripciones no canceladas</string>
+    <string name="commercial_active_history_subtitle">Activas + cortadas, al cierre de cada mes</string>
+    <string name="commercial_cancellation_reason">Motivo de cancelación</string>
+    <string name="commercial_cancelled_by_user">Solicitada por el cliente</string>
+    <string name="commercial_cancelled_by_system">Automática por el sistema</string>
+    <string name="commercial_monthly_evolution">Evolución mensual</string>
+    <string name="commercial_churn_chart">Tasa de cancelación (churn)</string>
+    <string name="commercial_churn_chart_subtitle">Cancelaciones ÷ activos al inicio del mes · %</string>
+    <string name="commercial_digital_payments">Pagos electrónicos por mes</string>
+    <string name="commercial_digital_payments_subtitle">% de pagos hechos por medios digitales</string>
+    <string name="commercial_total_months">Total %1$s meses: %2$s</string>
+    <string name="commercial_installations_by_type">Instalaciones activas por tipo</string>
+    <string name="commercial_fiber">Fibra</string>
+    <string name="commercial_wireless">Inalámbrico</string>
+    <string name="commercial_cable_tv">Cable TV</string>
+    <string name="commercial_initial_failed">No se pudo cargar el dashboard comercial.</string>
+
+    <!-- Clients -->
+    <string name="clients_open_tickets">Tickets abiertos</string>
+    <string name="clients_resolution_time">Resolución media</string>
+    <string name="clients_hours">%1$s h</string>
+    <string name="clients_reopen_rate">Reapertura</string>
+    <string name="clients_antiquity">Antigüedad media</string>
+    <string name="clients_months">%1$s meses</string>
+    <string name="clients_active_clients">clientes activos</string>
+    <string name="clients_debt_per_delinquent">Deuda por moroso</string>
+    <string name="clients_debt_per_delinquent_info">Deuda vencida promedio de los clientes con al menos una factura de servicio vencida: total vencido ÷ clientes morosos. No cuenta clientes al día ni facturas por vencer. Incluye suscripciones cortadas.</string>
+    <string name="clients_delinquents">%1$s suscripciones morosas</string>
+    <string name="clients_plans">Planes</string>
+    <string name="clients_plans_caption">%1$s suscripciones activas · velocidad media %2$s Mbps</string>
+    <string name="clients_plan_mix">Mezcla de planes</string>
+    <string name="clients_plan_header">Plan</string>
+    <string name="clients_subs_header">Subs</string>
+    <string name="clients_arpu_header">ARPU</string>
+    <string name="clients_top_plan">Top</string>
+    <string name="clients_tickets">Tickets de asistencia</string>
+    <string name="clients_tickets_caption">%1$s tickets en los últimos %2$d meses</string>
+    <string name="clients_tickets_by_status">Abiertos por estado</string>
+    <string name="clients_ticket_pending">Pendiente</string>
+    <string name="clients_ticket_assigned">Asignado</string>
+    <string name="clients_ticket_in_progress">En curso</string>
+    <string name="clients_priority_low">Baja · %1$s</string>
+    <string name="clients_priority_medium">Media · %1$s</string>
+    <string name="clients_priority_high">Alta · %1$s</string>
+    <string name="clients_tickets_by_priority">Por prioridad</string>
+    <string name="clients_other_plans">Otros</string>
+    <string name="clients_tickets_by_category">Por categoría</string>
+    <string name="clients_zones">Rendimiento por zona</string>
+    <string name="clients_zones_caption">Clientes, ingreso e incidencias por cada 100 clientes</string>
+    <string name="clients_zone_header">Zona</string>
+    <string name="clients_clients_header">Clientes</string>
+    <string name="clients_revenue_header">Ingreso</string>
+    <string name="clients_incidence_header">Incid./100</string>
+    <string name="clients_lifecycle">Ciclo de vida del cliente</string>
+    <string name="clients_lifecycle_caption">Desde la instalación</string>
+    <string name="clients_days_to_first_issue">Hasta 1er incidente</string>
+    <string name="clients_days_to_cancellation">Hasta cancelar</string>
+    <string name="clients_days">%1$s días</string>
+    <string name="clients_average">promedio</string>
+    <string name="clients_cancellations_by_plan">Cancelaciones por plan</string>
+    <string name="clients_cancellations_by_zone">Cancelaciones por zona</string>
+    <string name="clients_initial_failed">No se pudo cargar la información de clientes.</string>
+    <string name="clients_partial_failed">Algunas secciones no se pudieron cargar.</string>
+
+    <!-- Design audit 2026-10-12 -->
+    <string name="dashboard_month_value">%1$s: %2$s</string>
+    <string name="dashboard_history_caption">Ingresos y recaudación por mes</string>
+    <string name="dashboard_window_caption">%1$s en los últimos %2$d meses</string>
+    <string name="commercial_net_adds">%1$s netos</string>
+    <string name="commercial_in_month">en %1$s</string>
+    <string name="commercial_net_adds_info">Altas + reconexiones − cancelaciones del mes.</string>
+    <string name="commercial_bajas">Bajas</string>
+    <string name="commercial_month_of">Dato de %1$s</string>
+    <string name="commercial_churn_average">Cancelaciones ÷ activos al inicio del mes · promedio %1$s</string>
+    <string name="commercial_digital_payments_current">%% de pagos por medios digitales · %1$s: %2$s</string>
+    <string name="clients_high_priority_open">! %1$s de prioridad alta</string>
+    <string name="clients_zones_top">%1$s · %2$d de %3$d zonas con más clientes</string>
+    <string name="financial_trend">Tendencia</string>
+    <string name="financial_trend_caption">Por mes de servicio · últimos %1$d meses</string>
+    <string name="financial_trend_chart">Facturado neto vs cobrado</string>
+    <string name="financial_recovery_caption">Recuperación de servicios anteriores: %1$s</string>
+    <!-- Design audit 2: header and section links -->
+    <string name="dashboard_screen_title">Dashboard</string>
+    <string name="dashboard_updated_now">Actualizado ahora</string>
+    <string name="dashboard_updated_minutes">Actualizado hace %1$d min</string>
+    <string name="dashboard_updated_at">Actualizado a las %1$s</string>
+    <string name="dashboard_see_all">Ver todo</string>
+    <string name="dashboard_see_tickets">Ver tickets</string>
+    <string name="collections_see_debtors">Ver deudores</string>
+    <string name="collections_as_of">Al %1$s</string>
+    <string name="commercial_subscriptions_caption">Altas y bajas · últimos %1$d meses</string>
+    <string name="dashboard_last_n_months">Últimos %1$d meses</string>
+    <string name="clients_vs_last_week">vs semana pasada</string>
+    <string name="commercial_period_month">Este mes</string>
+    <string name="commercial_period_six">6 meses</string>
+    <string name="commercial_period_twelve">12 meses</string>
+    <string name="commercial_vs_previous_months">vs %1$d meses anteriores</string>
+    <string name="commercial_plan_upgrades">⇄ Plan superior: %1$s</string>
+    <string name="commercial_active_end_of_month">Suscriptores activos fin de mes</string>
+    <string name="commercial_active_end_of_month_subtitle">Solo en estado activo, sin cortados</string>
+    <string name="financial_vs_same_day">vs %1$s al día %2$d</string>
+    <string name="financial_export_short">Exportar XLSX</string>
+</resources>

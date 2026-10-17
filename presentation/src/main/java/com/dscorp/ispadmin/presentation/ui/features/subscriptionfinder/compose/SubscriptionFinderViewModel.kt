@@ -53,12 +53,29 @@ data class SubscriptionFinderUiState(
     val lastUsedFilter: SubscriptionFilter? = null,
     val rebootOnuState: RebootOnuState = RebootOnuState.Empty,
     val retryTr069State: RetryTr069State = RetryTr069State.Empty,
+    /** Result of the last cut deferral, shown once to the operator. */
+    val deferCutMessage: String? = null,
     val isSearching: Boolean = false,
     val searchError: String? = null,
     val searchPerformed: Boolean = false,
     val currentPage: Int = 0,
     val canLoadMore: Boolean = false,
-)
+    val smartQuery: String = "",
+    val resultFilter: ResultFilter = ResultFilter.ALL,
+    val quickAccess: List<QuickAccess> = emptyList(),
+    val recents: List<RecentSubscription> = emptyList(),
+) {
+    /** Loaded results narrowed by the selected chip. */
+    val results: List<SubscriptionResume>
+        get() = subscriptions.entries
+            .sortedBy { it.key == ServiceStatus.CANCELLED }
+            .flatMap { it.value }
+            .filter(resultFilter::matches)
+
+    /** Nothing typed and no list opened: show quick accesses and recents. */
+    val showStart: Boolean
+        get() = smartQuery.isBlank() && (lastUsedFilter == null || lastUsedFilter is SubscriptionFilter.BY_NAME)
+}
 
 data class CustomerFormData(
     val name: String = "",
@@ -106,12 +123,55 @@ class SubscriptionFinderViewModel(
     private val observabilityClient: ObservabilityClient,
     private val retryTr069ProvisioningUseCase: RetryTr069ProvisioningUseCase,
     private val subscriptionActionsRepository: com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository? = null,
+    private val recentSubscriptionsStore: RecentSubscriptionsStore? = null,
 ) : ViewModel() {
+
+    fun onSmartQueryChanged(text: String) {
+        _uiState.update { it.copy(smartQuery = text) }
+        val filter = SmartQuery.toFilter(text) ?: SubscriptionFilter.BY_NAME(name = "", lastName = "")
+        viewModelScope.launch { documentNumberFlow.emit(filter) }
+    }
+
+    fun onResultFilterSelected(filter: ResultFilter) {
+        _uiState.update { it.copy(resultFilter = filter) }
+    }
+
+    fun openQuickAccess(status: ServiceStatus) {
+        _uiState.update { it.copy(smartQuery = "") }
+        viewModelScope.launch { runFilter(SubscriptionFilter.BY_STATUS(status)) }
+    }
+
+    fun onSubscriptionOpened(subscription: SubscriptionResume) {
+        val row = SubscriptionRowModel.from(subscription)
+        val opened = RecentSubscription(subscription.id, row.name, row.subtitle, subscription.serviceStatus)
+        val recents = (listOf(opened) + _uiState.value.recents.filterNot { it.id == opened.id }).take(MAX_RECENTS)
+        _uiState.update { it.copy(recents = recents) }
+        recentSubscriptionsStore?.save(recents)
+    }
+
+    fun clearRecents() {
+        _uiState.update { it.copy(recents = emptyList()) }
+        recentSubscriptionsStore?.save(emptyList())
+    }
+
+    private fun loadQuickAccess() = viewModelScope.launch {
+        val quickAccess = QUICK_ACCESS_STATES.mapNotNull { (status, label) ->
+            searchSubscriptionsUseCase(query = "", status = status.name, page = 0, size = 1)
+                .getOrNull()
+                ?.let { QuickAccess(status, label, it.total) }
+        }
+        _uiState.update { it.copy(quickAccess = quickAccess) }
+    }
 
     private companion object {
         const val OBS_FEATURE = "subscription"
         const val OBS_SCREEN = "subscription_finder"
         const val PAGE_SIZE = 20
+        const val MAX_RECENTS = 5
+        val QUICK_ACCESS_STATES = listOf(
+            ServiceStatus.CUT_OFF to "Cortados",
+            ServiceStatus.CANCELLED to "Cancelados",
+        )
     }
 
     private var currentQuery: String = ""
@@ -130,6 +190,8 @@ class SubscriptionFinderViewModel(
     fun initialize() {
         if (initialized) return
         initialized = true
+        _uiState.update { it.copy(recents = recentSubscriptionsStore?.load().orEmpty()) }
+        loadQuickAccess()
         observeSubscriptions()
         findSubscription()
         getPlaces()
@@ -137,10 +199,10 @@ class SubscriptionFinderViewModel(
 
     fun observeSubscriptions() = viewModelScope.launch {
         subscriptionsFlow.map { list ->
-            list.map {
-                if (it.serviceStatus != ServiceStatus.CANCELLED) it.copy(serviceStatus = ServiceStatus.ACTIVE)
-                else it.copy(serviceStatus = ServiceStatus.CANCELLED)
-            }.groupBy { it.serviceStatus }
+            // Sections: cancelled vs everything else; each card keeps its real status.
+            list.groupBy {
+                if (it.serviceStatus == ServiceStatus.CANCELLED) ServiceStatus.CANCELLED else ServiceStatus.ACTIVE
+            }
         }.collect { groupedSubscriptions ->
             _uiState.update { it.copy(subscriptions = groupedSubscriptions) }
         }
@@ -153,19 +215,21 @@ class SubscriptionFinderViewModel(
     @OptIn(FlowPreview::class)
     fun findSubscription() = viewModelScope.launch {
         documentNumberFlow.debounce(REQUEST_DELAY)
-            .collect { filterType ->
-                _uiState.update { it.copy(lastUsedFilter = filterType) }
-                observabilityClient.addBreadcrumb(
-                    category = ObsBreadcrumbCategory.USER_ACTION,
-                    message = "$OBS_FEATURE.find",
-                    data = mapOf("feature" to OBS_FEATURE, "screen" to OBS_SCREEN, "filterType" to filterType::class.simpleName)
-                )
-                if (filterType is SubscriptionFilter.BY_NAME) {
-                    searchByName(filterType)
-                } else {
-                    legacyFind(filterType)
-                }
-            }
+            .collect { filterType -> runFilter(filterType) }
+    }
+
+    private suspend fun runFilter(filterType: SubscriptionFilter) {
+        _uiState.update { it.copy(lastUsedFilter = filterType) }
+        observabilityClient.addBreadcrumb(
+            category = ObsBreadcrumbCategory.USER_ACTION,
+            message = "$OBS_FEATURE.find",
+            data = mapOf("feature" to OBS_FEATURE, "screen" to OBS_SCREEN, "filterType" to filterType::class.simpleName)
+        )
+        when (filterType) {
+            is SubscriptionFilter.BY_NAME -> searchByName(filterType)
+            is SubscriptionFilter.BY_STATUS -> searchPaged(query = "", status = filterType.status.name, filterType = filterType)
+            else -> legacyFind(filterType)
+        }
     }
 
     private suspend fun searchByName(filterType: SubscriptionFilter.BY_NAME) {
@@ -184,7 +248,12 @@ class SubscriptionFinderViewModel(
             }
             return
         }
+        searchPaged(query = query, status = null, filterType = filterType)
+    }
+
+    private suspend fun searchPaged(query: String, status: String?, filterType: SubscriptionFilter) {
         currentQuery = query
+        currentStatus = status
         _uiState.update { it.copy(isSearching = true, searchError = null, searchPerformed = true) }
         searchSubscriptionsUseCase(query = query, status = currentStatus, page = 0, size = PAGE_SIZE).fold(
             onSuccess = { result ->
@@ -217,7 +286,9 @@ class SubscriptionFinderViewModel(
     fun loadNextPage() {
         val state = _uiState.value
         if (state.isSearching || !state.canLoadMore) return
-        if (state.lastUsedFilter !is SubscriptionFilter.BY_NAME || currentQuery.isEmpty()) return
+        val pagedSearch = (state.lastUsedFilter is SubscriptionFilter.BY_NAME && currentQuery.isNotEmpty()) ||
+            state.lastUsedFilter is SubscriptionFilter.BY_STATUS
+        if (!pagedSearch) return
 
         viewModelScope.launch {
             val nextPage = state.currentPage + 1
@@ -418,6 +489,29 @@ class SubscriptionFinderViewModel(
         _uiState.update { it.copy(reactivateServiceState = ReactivateServiceState.Empty) }
     }
 
+    /** Agrees not to cut [subscriptionId] for debt until [untilDate] (yyyy-MM-dd) of the current month. */
+    fun deferCut(subscriptionId: Int, untilDate: String, reason: String) = viewModelScope.launch {
+        val actions = subscriptionActionsRepository ?: return@launch
+        com.dscorp.ispadmin.domain.usecase.service.DeferCutUseCase(actions)(subscriptionId, untilDate, reason).fold(
+            onSuccess = {
+                _uiState.update { it.copy(deferCutMessage = "Corte postergado hasta $untilDate") }
+                reloadLastSearch()
+            },
+            onFailure = { error ->
+                observabilityClient.reportError(
+                    throwable = error,
+                    message = "Fallo al postergar el corte",
+                    tags = mapOf("feature" to OBS_FEATURE, "screen" to OBS_SCREEN, "action" to "defer_cut", "entityId" to subscriptionId)
+                )
+                _uiState.update { it.copy(deferCutMessage = error.message ?: "No se pudo postergar el corte") }
+            },
+        )
+    }
+
+    fun clearDeferCutMessage() {
+        _uiState.update { it.copy(deferCutMessage = null) }
+    }
+
     fun rebootFiberOnu(subscriptionId: Int) = viewModelScope.launch {
         _uiState.update { it.copy(rebootOnuState = RebootOnuState.Loading) }
         rebootFiberOnuUseCase(subscriptionId).fold(
@@ -529,7 +623,7 @@ class SubscriptionFinderViewModel(
         }
     }
 
-    private fun getPlaces() = viewModelScope.launch {
+    fun getPlaces() = viewModelScope.launch {
         try {
             _uiState.update { it.copy(placesState = it.placesState.copy(isLoading = true)) }
             val places = repository.getPlaces()
@@ -722,15 +816,23 @@ class SubscriptionFinderViewModel(
 
             repository.updateCustomerData(customerData)
             _uiState.update {
-
+                // Identity belongs to the customer: other services of the same customer show it too.
+                val customerId = subscriptionsFlow.value.firstOrNull { s -> s.id == formData.subscriptionId }?.customerId
                 subscriptionsFlow.value = subscriptionsFlow.value.map { subscription ->
-                    if (subscription.id == formData.subscriptionId) {
-                        subscription.copy(
+                    when {
+                        subscription.id == formData.subscriptionId -> subscription.copy(
                             customer = customerData,
                             placeId = formData.placeId.toString()
                         )
-                    } else {
-                        subscription
+                        customerId != null && subscription.customerId == customerId -> subscription.copy(
+                            customer = subscription.customer.copy(
+                                name = customerData.name,
+                                lastName = customerData.lastName,
+                                dni = customerData.dni,
+                                email = customerData.email,
+                            )
+                        )
+                        else -> subscription
                     }
                 }
 
@@ -749,7 +851,7 @@ class SubscriptionFinderViewModel(
             _uiState.update { it.copy(saveSubscriptionState = SaveSubscriptionState.Error) }
 
             // Informa a la pantalla cuando el backend no pudo guardar los cambios.
-            _customerSaveMessages.emit("No se pudieron actualizar los datos del cliente")
+            _customerSaveMessages.emit(e.message ?: "No se pudieron actualizar los datos del cliente")
         }
     }
 

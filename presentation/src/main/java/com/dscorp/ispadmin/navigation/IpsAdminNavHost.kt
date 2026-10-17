@@ -1,14 +1,17 @@
 package com.dscorp.ispadmin.navigation
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.dscorp.ispadmin.data.datasource.remote.auth.SessionEventBus
+import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.navigation.NavRoutes.Features
 import com.dscorp.ispadmin.navigation.NavRoutes.Splash
 import com.dscorp.ispadmin.observability.ObservabilityClient
@@ -30,7 +33,11 @@ fun IpsAdminNavHost(
     modifier: Modifier = Modifier,
     observabilityClient: ObservabilityClient = koinInject(),
     sessionEventBus: SessionEventBus = koinInject(),
+    onSessionStarted: (User) -> Unit = {},
+    onSessionEnded: () -> Unit = {},
 ) {
+    val context = LocalContext.current
+
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { entry ->
             val route = entry.destination.route ?: entry.destination.displayName
@@ -40,6 +47,7 @@ fun IpsAdminNavHost(
 
     LaunchedEffect(navController) {
         sessionEventBus.sessionExpired.collect {
+            onSessionEnded()
             navController.navigate(NavRoutes.Auth) {
                 popUpTo(0) { inclusive = true }
                 launchSingleTop = true
@@ -66,13 +74,14 @@ fun IpsAdminNavHost(
                     }
                 },
                 onFinishApp = {
-                    // Manejar cierre de app
+                    (context as? Activity)?.finish()
                 }
             )
         }
 
         composable<NavRoutes.Auth> {
-            AuthNavGraph(onLoginSuccess = {
+            AuthNavGraph(onLoginSuccess = { user ->
+                onSessionStarted(user)
                 navController.navigate(Features) {
                     popUpTo(0) { inclusive = true }
                     launchSingleTop = true
@@ -82,6 +91,7 @@ fun IpsAdminNavHost(
 
         composable<Features> {
             FeatureNavGraph( onLoggedOut = {
+                onSessionEnded()
                 navController.navigate(NavRoutes.Auth) {
                     popUpTo(Features) { inclusive = true }
                 }

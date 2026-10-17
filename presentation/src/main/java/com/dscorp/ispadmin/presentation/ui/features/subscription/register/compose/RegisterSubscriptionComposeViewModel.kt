@@ -125,6 +125,13 @@ class RegisterSubscriptionComposeViewModel(
         const val PREAUTH_MAX_POLLS = 100
         const val ACS_WATCH_INTERVAL_MS = 5_000L
         const val ACS_WATCH_MAX_POLLS = 72
+        const val ACS_PENDING_SUBMIT_MESSAGE =
+            "El equipo aún no conecta con la gestión remota. Te avisamos cuando esté listo para registrar."
+        val FORM_STEPS = setOf(
+            RegisterSubscriptionWizardStep.CLIENT_LOCATION,
+            RegisterSubscriptionWizardStep.INSTALLATION,
+            RegisterSubscriptionWizardStep.CONFIRMATION,
+        )
         const val OBS_WORKFLOW_NAME = "registro_suscripcion"
         const val OBS_WORKFLOW_CATEGORY = "registration"
     }
@@ -1103,8 +1110,11 @@ class RegisterSubscriptionComposeViewModel(
         var form = _uiState.value.registerSubscriptionForm.copy(
             selectedOnu = selectedOnu ?: _uiState.value.registerSubscriptionForm.selectedOnu?.takeIf { it.sn.equals(operation.serial, true) }
         )
+        val currentStep = _uiState.value.wizardStep
+        // While ACS confirms the ONU the technician may already be filling the form: keep their input.
+        val userInForm = _uiState.value.preauthorizationOperation?.id == operation.id && currentStep in FORM_STEPS
         var restoredWizardStep: RegisterSubscriptionWizardStep? = null
-        if (operation.canOpenRegistrationForm() && restoreDraft) {
+        if (operation.canOpenRegistrationForm() && restoreDraft && !userInForm) {
             useCase.draft(operation.id)?.let { draft ->
                 form = restoreRegistrationDraft(form, draft, operation.serial)
                 restoredWizardStep = draft.registrationWizardStep()
@@ -1126,10 +1136,15 @@ class RegisterSubscriptionComposeViewModel(
                 preauthorizationOperation = operation,
                 preauthorizationError = preauthorizationFailure(operation),
                 wizardStep = when {
+                    userInForm && (operation.canOpenRegistrationForm() || operation.isAwaitingAcsContact()) -> currentStep
+                    operation.isAwaitingAcsContact() -> RegisterSubscriptionWizardStep.CLIENT_LOCATION
                     !operation.canOpenRegistrationForm() -> RegisterSubscriptionWizardStep.WAITING_FOR_ACS
                     else -> restoredWizardStep ?: RegisterSubscriptionWizardStep.CLIENT_LOCATION
                 },
-                registerSubscriptionForm = form,
+                submitBlockedReason = current.submitBlockedReason.takeIf { operation.isAwaitingAcsContact() },
+                registerSubscriptionForm = if (userInForm) {
+                    current.registerSubscriptionForm.copy(selectedOnu = form.selectedOnu, onuList = form.onuList)
+                } else form,
             )
         }
         clearStoredOnuSelection()
@@ -1237,7 +1252,6 @@ class RegisterSubscriptionComposeViewModel(
             "equipmentCondition" to form.equipmentCondition.name,
             "useDifferentWifiNames" to form.useDifferentWifiNames,
             "tvCpeKind" to form.tvCpeKind?.name,
-            "coupon" to form.coupon,
             "clientIpAddress" to form.clientIpAddress,
             "accessMode" to form.accessMode.name, "wizardStep" to state.wizardStep.name,
             "registrationOperationId" to state.preauthorizationOperation?.id,
@@ -1300,7 +1314,7 @@ class RegisterSubscriptionComposeViewModel(
             equipmentCondition = condition ?: current.equipmentCondition,
             useDifferentWifiNames = draft["useDifferentWifiNames"] as? Boolean ?: current.useDifferentWifiNames,
             tvCpeKind = tvCpeKind ?: current.tvCpeKind,
-            coupon = draft.text("coupon"), clientIpAddress = draft.text("clientIpAddress"),
+            clientIpAddress = draft.text("clientIpAddress"),
             vlan = draft.text("vlan").ifBlank { current.vlan },
             wifiSsid24 = draft.text("wifiSsid24"), wifiPassword24 = draft.text("wifiPassword24"),
             wifiSsid5 = draft.text("wifiSsid5"), wifiPassword5 = draft.text("wifiPassword5"),
@@ -1897,6 +1911,11 @@ private suspend fun fetchNearbyNapBoxes(
 }
 
 fun saveSubscription(facadePhotoFile: File? = null) {
+    if (uiState.value.acsPending) {
+        _uiState.update { it.copy(submitBlockedReason = ACS_PENDING_SUBMIT_MESSAGE) }
+        uiState.value.preauthorizationOperation?.let(::ensureAcsWatch)
+        return
+    }
     val form = uiState.value.registerSubscriptionForm
     val validatedForm = form.validated()
     val hasFacadePhoto = if (uiState.value.preauthorizationOperation != null) {

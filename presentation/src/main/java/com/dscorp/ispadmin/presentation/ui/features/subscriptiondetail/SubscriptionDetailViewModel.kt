@@ -32,14 +32,13 @@ class SubscriptionDetailViewModel(
         try {
             uiState.value = uiState.value.copy(isLoading = true)
             val subscriptionResponse = repository.subscriptionById(subscriptionId)
-            val otherServices = subscriptionResponse.customerId
+            val customer = subscriptionResponse.customerId
                 ?.let { customerId -> subscriptionActionsRepository?.getCustomer(customerId) }
-                ?.subscriptions
-                .orEmpty()
-                .filter { it.id != subscriptionId }
+            val otherServices = customer?.subscriptions.orEmpty().filter { it.id != subscriptionId }
             uiState.value = uiState.value.copy(
                 subscription = subscriptionResponse,
                 otherServices = otherServices,
+                customerCredit = customer?.creditBalance ?: 0.0,
                 isLoading = false
             )
         } catch (e: Exception) {
@@ -106,6 +105,8 @@ class SubscriptionDetailViewModel(
     data class SubscriptionDetailUiState(
         val subscription: SubscriptionResponse? = null,
         val otherServices: List<com.dscorp.ispadmin.domain.model.CustomerServiceSummary> = emptyList(),
+        /** Customer credit ("saldo a favor") applied automatically to the next invoices. */
+        val customerCredit: Double = 0.0,
         val isLoading: Boolean = false,
         val error: String? = null
     )

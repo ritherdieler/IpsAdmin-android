@@ -229,7 +229,7 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-tooling:${rootProject.ext.composeVersion}"
     
     // Charts y gráficos
-    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    implementation "com.patrykandpatrick.vico:compose-m3:${rootProject.ext.vicoVersion}"
     
     // Procesamiento de imágenes
     implementation "androidx.exifinterface:exifinterface:${rootProject.ext.exifInterfaceVersion}"

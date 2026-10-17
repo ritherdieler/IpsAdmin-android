@@ -19,6 +19,12 @@ class Payment(
     var responsibleName: String? = null,
     val subscriptionId: Int? = null,
     var electronicPayerName: String? = null,
+    /** Cash received; above the total the Core keeps it as customer credit. */
+    var amountReceived: Double? = null,
+    /** SERVICE (monthly) or INSTALLATION (one-off fee). */
+    var chargeType: String? = null,
+    /** ISO local date-time from the Core, e.g. "2026-08-15T00:00:00". */
+    val dueDate: String? = null,
 ) : java.io.Serializable {
 
     //first letter of month in uppercase

@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.usecase.UserUseCase
 import com.dscorp.ispadmin.observability.ObservabilityClient
-import com.dscorp.ispadmin.presentation.navigation.DrawerGroup
-import com.dscorp.ispadmin.presentation.navigation.DrawerNavigation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,10 +19,7 @@ data class MainUiState(
     val currentUser: User? = null,
     val isLoading: Boolean = true,
     val error: String? = null
-) {
-    fun getDrawerGroups(): List<DrawerGroup> =
-        currentUser?.type?.let { DrawerNavigation.getDrawerGroupsForUser(it) } ?: emptyList()
-}
+)
 
 class MainViewModel(
     private val userUseCase: UserUseCase,

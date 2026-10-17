@@ -251,3 +251,26 @@ private fun DateFieldBox(
         shape = RoundedCornerShape(8.dp),
     )
 }
+
+/** «Filtros» from the search header; today it searches by sign-up date. */
+@Composable
+fun DateSearchDialog(onDismiss: () -> Unit, onSearch: (String, String) -> Unit) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { androidx.compose.material3.Text("Filtros") },
+        text = {
+            androidx.compose.foundation.layout.Column {
+                androidx.compose.material3.Text(
+                    text = "Fecha de alta",
+                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+                DateRangeSelector(onSearch = onSearch)
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) { androidx.compose.material3.Text("Cerrar") }
+        },
+    )
+}

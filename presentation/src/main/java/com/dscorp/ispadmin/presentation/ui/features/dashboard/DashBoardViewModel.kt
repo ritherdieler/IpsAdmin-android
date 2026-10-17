@@ -37,7 +37,7 @@ class DashBoardViewModel : ViewModel(), KoinComponent {
                 message = "$OBS_FEATURE.load_data",
                 data = mapOf("feature" to OBS_FEATURE, "screen" to OBS_SCREEN)
             )
-            _state.update { it.copy(isLoading = true) }
+            _state.update { it.copy(isLoading = true, event = null) }
             runCatching {
                 repository.getDashBoardData()
             }.fold(
@@ -45,7 +45,9 @@ class DashBoardViewModel : ViewModel(), KoinComponent {
                     _state.update { 
                         it.copy(
                             dashboardData = response,
-                            isLoading = false
+                            isLoading = false,
+                            lastUpdatedAtMillis = System.currentTimeMillis(),
+                            event = null
                         )
                     }
                 },
@@ -74,6 +76,7 @@ class DashBoardViewModel : ViewModel(), KoinComponent {
 data class DashboardState(
     val isLoading: Boolean = false,
     val dashboardData: DashBoardDataResponse? = null,
+    val lastUpdatedAtMillis: Long? = null,
     val event: DashboardEvent? = null
 )
 

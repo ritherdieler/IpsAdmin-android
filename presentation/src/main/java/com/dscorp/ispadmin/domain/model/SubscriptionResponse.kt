@@ -25,9 +25,8 @@ data class SubscriptionResponse(
     var subscriptionDate: Long? = null,
     var isMigration: Boolean,
     var price: Double? = null,
-    var paymentCommitmentDate: Long? = null,
-    var isPaymentCommitment: Boolean = false,
-    var lastCutOffDate: Date? = null,
+    /** ISO day, e.g. "2026-09-15" (Core LocalDate). */
+    var lastCutOffDate: String? = null,
     var isReactivation: Boolean = false,
     var reactivationDate: Long? = null,
     var cpeDeviceId: Int? = null,
@@ -51,6 +50,13 @@ data class SubscriptionResponse(
     val tr069ProvisionStatus: String? = null,
     val customerId: Int? = null,
     val customerSubscriptionCount: Int? = null,
+    /** LOAN or SOLD. */
+    val equipmentCondition: String? = null,
+    /** NAP box port. */
+    val borneNumber: String? = null,
+    val fiberOnuSn: String? = null,
+    val wifiSsid24: String? = null,
+    val wifiSsid5: String? = null,
 ) : java.io.Serializable {
     fun getFullName() = "$firstName $lastName"
 

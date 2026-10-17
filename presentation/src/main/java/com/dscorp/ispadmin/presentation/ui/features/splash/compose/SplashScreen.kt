@@ -15,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.style.TextAlign
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.ui.components.Loader
@@ -45,6 +47,7 @@ fun SplashScreen(
             
             // Track if update dialog is showing
             var showUpdateDialog by remember { mutableStateOf(false) }
+            val uriHandler = LocalUriHandler.current
             
             LaunchedEffect(key1 = Unit) {
                 viewModel.checkAppVersion()
@@ -94,11 +97,22 @@ fun SplashScreen(
                         )
                     },
                     onAccept = {
-                        onFinishApp()
+                        val downloadUrl = (checkVersionState as? CheckVersionState.CheckVersionSuccess)?.downloadUrl
+                        uriHandler.openDownloadUrl(downloadUrl)
                     },
-                    onDismissRequest = { } // No permitir cerrar sin actualizar
+                    // Closing without updating exits the app instead of leaving the splash stuck.
+                    onDismissRequest = onFinishApp
                 )
             }
         }
     }
 } 
+
+private fun UriHandler.openDownloadUrl(downloadUrl: String?) {
+    val url = downloadUrl?.takeIf { it.isNotBlank() } ?: return
+    try {
+        openUri(url)
+    } catch (_: IllegalArgumentException) {
+        // No app can open the link; the app still closes.
+    }
+}

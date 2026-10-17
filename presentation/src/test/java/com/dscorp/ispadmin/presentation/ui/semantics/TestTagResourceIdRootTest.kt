@@ -12,7 +12,7 @@ class TestTagResourceIdRootTest {
             "src/main/java/com/dscorp/ispadmin/presentation/ui/features/main/MainActivity.kt"
         ).readText()
         assertThat(source).contains("TestTagResourceIdRoot")
-        assertThat(source).contains("IpsAdminNavHost()")
+        assertThat(source).contains("IpsAdminNavHost(")
     }
 
     @Test

@@ -15,7 +15,6 @@ import com.dscorp.ispadmin.data.response.BaseResponse
 import com.dscorp.ispadmin.data.response.ReactivateServiceResponse
 import com.dscorp.ispadmin.data.response.RestoreInternetConnectionResponse
 import com.dscorp.ispadmin.domain.model.AppVersion
-import com.dscorp.ispadmin.domain.model.Coupon
 import com.dscorp.ispadmin.domain.model.CustomerData
 import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
 import com.dscorp.ispadmin.domain.model.DeviceTokenRequest
@@ -189,11 +188,6 @@ interface RestApiServices {
     @PUT("subscription/update-plan")
     suspend fun updateSubscriptionPlan(@Body subscription: UpdateSubscriptionPlanBody): Response<SubscriptionResponse>
 
-    @GET("subscription/with-payment-commitment-report-document")
-    suspend fun downloadWithPaymentCommitmentSubscriptionsReportDocument(): Response<DownloadDocumentResponse>
-
-    @GET("subscription/suspended-report-document")
-    suspend fun downloadSuspendedSubscriptionsReportDocument(): Response<DownloadDocumentResponse>
 
     @GET("subscription/cutoff-report-document")
     suspend fun downloadCutOffSubscriptionsReportDocument(): Response<DownloadDocumentResponse>
@@ -222,14 +216,8 @@ interface RestApiServices {
     @GET("onu/unconfigured_onus")
     suspend fun getUnconfirmedOnus(): Response<List<Onu>>
 
-    @GET("subscription/apply-coupon/{code}")
-    suspend fun applyCoupon(@Path("code") code: String): Response<Coupon?>
-
     @PUT("plan")
     suspend fun updatePlan(@Body plan: Plan): Response<PlanResponse>
-
-    @PUT("subscription/payment-commitment")
-    suspend fun setPaymentCommitment(@Query("subscriptionId") id: Int): Response<Unit>
 
     @PUT("subscription/reactivate-service")
     suspend fun reactivateService(
@@ -345,6 +333,12 @@ interface RestApiServices {
         @Part image: List<MultipartBody.Part>
     ): Response<OutlayDTO>
 
+    @POST("subscription/{id}/cut-deferral")
+    suspend fun deferCut(@Path("id") subscriptionId: Int, @Body body: CutDeferralBody): Response<Unit>
+
+    @GET("payment/methods")
+    suspend fun getPaymentMethods(): Response<List<com.dscorp.ispadmin.domain.model.PaymentMethodOption>>
+
     @GET("payment/getElectronicPayers")
     suspend fun getElectronicPayers(@Query("subscriptionId") subscriptionId: Int): BaseResponse<List<String>>
 
@@ -449,3 +443,5 @@ interface RestApiServices {
 
 }
 
+/** Body of `POST subscription/{id}/cut-deferral`: no cut for debt until [untilDate] (yyyy-MM-dd). */
+data class CutDeferralBody(val untilDate: String, val reason: String)

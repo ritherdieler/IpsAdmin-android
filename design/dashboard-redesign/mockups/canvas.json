@@ -1,0 +1,102 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "ClientesA.dc.html": {
+      "h": 2900,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Clientes · Claro",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "ClientesOscuro.dc.html": {
+      "h": 2900,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Clientes · Oscuro",
+      "w": 390,
+      "x": 940,
+      "y": 3400
+    },
+    "ComercialA.dc.html": {
+      "h": 2960,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Comercial · Claro",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "ComercialOscuro.dc.html": {
+      "h": 2960,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Comercial · Oscuro",
+      "w": 390,
+      "x": 470,
+      "y": 3400
+    },
+    "Main.dc.html": {
+      "h": 2780,
+      "radius": 28,
+      "title": "Financiero · Claro",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "MainOscuro.dc.html": {
+      "h": 2780,
+      "radius": 28,
+      "title": "Financiero · Oscuro",
+      "w": 390,
+      "x": 0,
+      "y": 3400
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-11T18:00:00Z",
+    "v": 1
+  },
+  "designSystems": [
+    {
+      "artifact": "https://claude.ai/artifact/T4ssmVpou5P4pvcFkjS6sF",
+      "copiedAt": "2026-10-11T18:00:00Z",
+      "namespace": "ispadmin",
+      "title": "IspAdmin",
+      "version": "1791730536-a4b7"
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "dark": {
+      "kind": "title1",
+      "maxW": 1800,
+      "text": "Dashboard IspAdmin · tema oscuro",
+      "w": 240,
+      "x": 0,
+      "y": 3100
+    },
+    "title": {
+      "kind": "title1",
+      "maxW": 1330,
+      "text": "Dashboard IspAdmin · tema claro",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "ComercialA.dc.html",
+    "ClientesA.dc.html",
+    "MainOscuro.dc.html",
+    "ComercialOscuro.dc.html",
+    "ClientesOscuro.dc.html"
+  ],
+  "pages": [],
+  "title": "IspAdmin Dashboard Propuestas"
+}

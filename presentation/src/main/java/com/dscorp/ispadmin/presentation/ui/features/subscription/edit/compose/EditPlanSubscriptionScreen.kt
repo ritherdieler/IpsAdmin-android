@@ -341,8 +341,6 @@ fun EditPlanSubscriptionScreenPreview() {
         subscriptionDate = 1717977600000L, // 2024-06-10
         isMigration = false,
         price = 50.0,
-        paymentCommitmentDate = null,
-        isPaymentCommitment = false,
         lastCutOffDate = null,
         isReactivation = false,
         reactivationDate = null,

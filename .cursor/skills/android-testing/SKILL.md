@@ -1,6 +1,6 @@
 ---
 name: android-testing
-description: Chooses IpsAdmin test type and doubles (unit vs Robolectric vs skip; MockK vs Fake). Use when the user asks what to test, coverage, or Fake vs Mock. Do not run the TDD cycle (android-tdd) or write ViewModelTest boilerplate (test-viewmodel).
+description: Chooses IpsAdmin test type and doubles (unit vs Robolectric vs skip; MockK vs Fake). Use when the user asks what to test, coverage, or Fake vs Mock. Do not write ViewModelTest boilerplate (test-viewmodel).
 ---
 
 # android-testing (IpsAdmin)

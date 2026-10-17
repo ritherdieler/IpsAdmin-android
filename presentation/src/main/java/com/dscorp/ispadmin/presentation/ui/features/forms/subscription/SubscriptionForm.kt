@@ -48,12 +48,6 @@ abstract class SubscriptionForm {
         validator = { it.isValidPhone() }
     )
 
-    val couponField = ReactiveFormField<String?>(
-        hintResourceId = R.string.coupon,
-        errorResourceId = R.string.fieldMustNotBeEmpty,
-        validator = { true }
-    )
-
     val priceField = ReactiveFormField<String?>(
         hintResourceId = R.string.price,
         errorResourceId = R.string.invalidPrice,

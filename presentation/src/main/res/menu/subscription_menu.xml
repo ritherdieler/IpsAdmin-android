@@ -12,10 +12,6 @@
         android:title="@string/reactivate_service" />
 
     <item
-        android:id="@+id/btn_register_payment_commitment"
-        android:visible="false"
-        android:title="@string/register_payment_commitment" />
-    <item
         android:id="@+id/btn_edit_plan_subscription"
         android:title="@string/edit_plan" />
     <item

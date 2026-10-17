@@ -24,6 +24,8 @@ object RegisterSubscriptionTestTags {
 
     const val FACADE_PHOTO = "register_facade_photo"
     const val SUBMIT = "btn_register_subscription"
+    const val SUBMIT_BLOCKED_REASON = "register_submit_blocked_reason"
+    const val ACS_PENDING_BANNER = "register_acs_pending_banner"
     /** Present only while catalog/form load finished (`!isLoading`). */
     const val FORM_READY = "register_form_ready"
 
@@ -114,5 +116,5 @@ object RegisterSubscriptionDebugActions {
 }
 
 object RegisterSubscriptionNavTestTags {
-    const val DRAWER_REGISTER = "drawer_nav_register_subscription"
+    const val MORE_REGISTER = "more_item_register_subscription"
 }

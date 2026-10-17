@@ -50,15 +50,13 @@ class SubscriptionFinderTestTagsTest {
 
     @Test
     fun `SubscriptionFinderScreen aplica testTags y ObservabilityComposeText`() {
+        // Proposal A: one box replaces the name, document, IP and code fields.
         val source = File(
-            "src/main/java/com/dscorp/ispadmin/presentation/ui/features/subscriptionfinder/compose/SubscriptionFinderScreen.kt"
+            "src/main/java/com/dscorp/ispadmin/presentation/ui/features/subscriptionfinder/compose/SubscriptionSearchContent.kt"
         ).readText()
 
         listOf(
-            "SubscriptionFinderTestTags.QUERY_NAME",
-            "SubscriptionFinderTestTags.QUERY_DOCUMENT",
-            "SubscriptionFinderTestTags.QUERY_IP",
-            "SubscriptionFinderTestTags.QUERY_CODE",
+            "SubscriptionFinderTestTags.SMART_QUERY",
             "ObservabilityComposeText.report"
         ).forEach { ref ->
             assertThat(source).contains(ref)

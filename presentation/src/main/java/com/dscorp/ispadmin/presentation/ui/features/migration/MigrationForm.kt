@@ -311,8 +311,6 @@ fun MigrationFormPreview() {
                 subscriptionDate = null,
                 isMigration = false,
                 price = null,
-                paymentCommitmentDate = null,
-                isPaymentCommitment = false,
                 lastCutOffDate = null,
                 isReactivation = false,
                 reactivationDate = null,
