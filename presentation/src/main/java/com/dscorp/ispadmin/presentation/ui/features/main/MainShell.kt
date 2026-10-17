@@ -5,12 +5,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.AccountBalanceWallet
-import androidx.compose.material.icons.rounded.ConfirmationNumber
-import androidx.compose.material.icons.rounded.GridView
-import androidx.compose.material.icons.rounded.Groups
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Handyman
+import androidx.compose.material.icons.outlined.CreditCard
+import androidx.compose.material.icons.outlined.ConfirmationNumber
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Handyman
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -103,7 +103,16 @@ private fun ShellBottomBar(
                 selected = destination == selected,
                 onClick = { onDestinationSelected(destination) },
                 icon = { Icon(destination.icon(), contentDescription = null) },
-                label = { Text(destination.label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                label = {
+                    Text(
+                        text = destination.label,
+                        fontSize = 12.sp,
+                        letterSpacing = 0.sp,
+                        fontWeight = if (destination == selected) FontWeight.SemiBold else FontWeight.Normal,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                },
                 colors = NavigationBarItemDefaults.colors(
                     indicatorColor = colors.selectedContainer,
                     selectedIconColor = colors.onSelectedContainer,
@@ -118,10 +127,10 @@ private fun ShellBottomBar(
 }
 
 private fun MainDestination.icon(): ImageVector = when (this) {
-    MainDestination.HOME -> Icons.Rounded.Home
-    MainDestination.SUBSCRIPTIONS -> Icons.Rounded.Groups
-    MainDestination.TICKETS -> Icons.Rounded.ConfirmationNumber
-    MainDestination.CASH -> Icons.Rounded.AccountBalanceWallet
-    MainDestination.INSTALLATIONS -> Icons.Rounded.Handyman
-    MainDestination.MORE -> Icons.Rounded.GridView
+    MainDestination.HOME -> Icons.Outlined.Home
+    MainDestination.SUBSCRIPTIONS -> Icons.Outlined.Group
+    MainDestination.TICKETS -> Icons.Outlined.ConfirmationNumber
+    MainDestination.CASH -> Icons.Outlined.CreditCard
+    MainDestination.INSTALLATIONS -> Icons.Outlined.Handyman
+    MainDestination.MORE -> Icons.Outlined.GridView
 }

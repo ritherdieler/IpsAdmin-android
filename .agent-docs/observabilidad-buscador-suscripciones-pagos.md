@@ -44,7 +44,7 @@
 | Tag | Control |
 |-----|---------|
 | `subscription_search_query` | Caja única: nombre, DNI/RUC, IP o código (propuesta A, 2026-10-17) |
-| `subscription_search_by_date` | Botón buscar por fecha de alta |
+| `subscription_search_filters` | Botón «Filtros» de la cabecera (hoy: fecha de alta) |
 | `subscription_search_clear` | Limpiar la caja |
 | `subscription_search_chip_{filtro}` | Chips Todos, Con deuda, Cortados, Fibra, Inalámbrico, Solo TV |
 | `subscription_search_quick_{estado}` | Accesos rápidos (cut_off, cancelled) |
@@ -62,7 +62,7 @@
 |-----|---------|
 | `subscription_result_item_{id}` | Tarjeta de resultado |
 | `subscription_result_expand_{id}` | Expandir/colapsar detalle |
-| `subscription_result_menu_{id}` | Menú de opciones |
+| `subscription_result_menu_{id}` | Menú ⋮ de la tarjeta (pendientes). En el buscador las acciones se abren con pulsación larga sobre `subscription_result_item_{id}` |
 | `subscription_result_menu_payment_history_{id}` | Ver historial de pagos |
 | `subscription_result_menu_edit_plan_{id}` | Editar plan |
 | `subscription_result_menu_see_details_{id}` | Ver detalle |

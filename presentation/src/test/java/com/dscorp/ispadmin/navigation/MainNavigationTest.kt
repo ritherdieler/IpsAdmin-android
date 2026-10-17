@@ -176,4 +176,11 @@ class MainNavigationTest {
             FeatureRoutes.FromString("${SupportTicket.Detail::class.qualifiedName}/{ticketId}"),
         )
     }
+
+    @Test
+    fun `the subscription search draws its own header like the design`() {
+        val chrome = MainNavigation.shellChrome(UserType.ADMIN, Subscription.Find)
+        assertFalse(chrome.showTopBar)
+        assertEquals(MainDestination.SUBSCRIPTIONS, chrome.selected)
+    }
 }

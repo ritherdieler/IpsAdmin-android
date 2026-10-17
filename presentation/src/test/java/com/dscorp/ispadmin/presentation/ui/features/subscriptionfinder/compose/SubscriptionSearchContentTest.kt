@@ -5,7 +5,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.material3.Text
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
@@ -26,6 +29,7 @@ class SubscriptionSearchContentTest {
     private var cleared = false
     private var opened: SubscriptionResume? = null
     private var chip: ResultFilter? = null
+    private var filtersOpened = false
 
     private fun show(state: SubscriptionFinderUiState) = compose.setContent {
         MaterialTheme {
@@ -37,8 +41,9 @@ class SubscriptionSearchContentTest {
                 onOpenSubscription = { opened = it },
                 onOpenRecent = { openedRecent = it },
                 onClearRecents = { cleared = true },
-                onSearchByDate = {},
+                onOpenFilters = { filtersOpened = true },
                 onLoadMore = {},
+                rowMenu = { subscription, expanded, _ -> if (expanded) Text("menu-${subscription.id}") },
             )
         }
     }
@@ -93,7 +98,36 @@ class SubscriptionSearchContentTest {
     fun `the box says what kind of search it understood`() {
         show(SubscriptionFinderUiState(smartQuery = "45781236", lastUsedFilter = SubscriptionFilter.BY_DOCUMENT("45781236"), searchPerformed = true))
 
-        compose.onNodeWithText("Buscando por DNI o RUC").assertExists()
+        // The design keeps one fixed hint under the box.
+        compose.onNodeWithText("Reconoce nombre, DNI, IP o código").assertExists()
+        compose.onNodeWithText("Buscando por DNI o RUC").assertDoesNotExist()
         compose.onNodeWithText("Sin resultados para «45781236»").assertExists()
+    }
+
+    @Test
+    fun `the search has its own header with the filters button`() {
+        show(SubscriptionFinderUiState())
+
+        compose.onNodeWithText("Suscripciones").assertExists()
+        compose.onNodeWithTag(SubscriptionFinderTestTags.FILTERS).performClick()
+
+        assertEquals(true, filtersOpened)
+    }
+
+    @Test
+    fun `row actions open with a long press, without a visible menu button`() {
+        show(SubscriptionFinderUiState(
+            subscriptions = mapOf(ServiceStatus.ACTIVE to listOf(row(id = 1))),
+            smartQuery = "ram",
+            lastUsedFilter = SubscriptionFilter.BY_NAME("RAM", ""),
+            searchPerformed = true,
+        ))
+
+        compose.onNodeWithTag(SubscriptionFinderTestTags.resultMenu(1)).assertDoesNotExist()
+        compose.onNodeWithText("menu-1").assertDoesNotExist()
+        compose.onNodeWithTag(SubscriptionFinderTestTags.resultItem(1)).performTouchInput { longClick() }
+
+        compose.onNodeWithText("menu-1").assertExists()
+        assertEquals(null, opened)
     }
 }

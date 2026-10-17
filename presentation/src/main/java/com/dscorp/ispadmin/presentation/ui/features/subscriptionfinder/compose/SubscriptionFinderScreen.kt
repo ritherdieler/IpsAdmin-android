@@ -223,11 +223,13 @@ fun SubscriptionFinderScreen(
                 },
                 onOpenRecent = { id -> navController.navigate(Subscription.Details(id)) },
                 onClearRecents = viewModel::clearRecents,
-                onSearchByDate = { showDateSearch = true },
+                onOpenFilters = { showDateSearch = true },
                 onLoadMore = viewModel::loadNextPage,
-                rowMenu = { subscription ->
+                rowMenu = { subscription, expanded, onDismiss ->
                     SubscriptionRowMenu(
                         subscription = subscription,
+                        expanded = expanded,
+                        onDismiss = onDismiss,
                         onMenuItemSelected = { menuItem ->
                             handleMenuAction(
                                 menuItem = menuItem,

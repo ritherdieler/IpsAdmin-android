@@ -120,35 +120,28 @@ fun CardHeader(
     }
 }
 
-/** ⋮ button of a compact search row; keeps every card action until the hub has «Más acciones». */
+/** Actions of a search row, opened with a long press; keeps every card action until the hub has «Más acciones». */
 @Composable
 fun SubscriptionRowMenu(
     subscription: SubscriptionResume,
+    expanded: Boolean,
+    onDismiss: () -> Unit,
     onMenuItemSelected: (SubscriptionMenu) -> Unit,
     onEditHolder: () -> Unit,
 ) {
-    var menuExpanded by remember { mutableStateOf(false) }
-    Box {
-        IconButton(
-            onClick = { menuExpanded = true },
-            modifier = Modifier.testTag(SubscriptionFinderTestTags.resultMenu(subscription.id))
-        ) {
-            Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Más acciones de la suscripción")
-        }
-        SubscriptionDropdownMenu(
-            expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false },
-            subscription = subscription,
-            onMenuItemSelected = {
-                menuExpanded = false
-                onMenuItemSelected(it)
-            },
-            onEditHolder = {
-                menuExpanded = false
-                onEditHolder()
-            },
-        )
-    }
+    SubscriptionDropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+        subscription = subscription,
+        onMenuItemSelected = {
+            onDismiss()
+            onMenuItemSelected(it)
+        },
+        onEditHolder = {
+            onDismiss()
+            onEditHolder()
+        },
+    )
 }
 
 /**

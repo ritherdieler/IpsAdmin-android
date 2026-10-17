@@ -3,7 +3,8 @@ package com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose
 object SubscriptionFinderTestTags {
     /** Single box: name, DNI/RUC, IP or code. */
     const val SMART_QUERY = "subscription_search_query"
-    const val SEARCH_BY_DATE = "subscription_search_by_date"
+    /** Header button that opens the filters sheet (sign-up date). */
+    const val FILTERS = "subscription_search_filters"
     const val CLEAR_QUERY = "subscription_search_clear"
     const val CLEAR_RECENTS = "subscription_search_clear_recents"
     const val RESULT_COUNT = "subscription_search_result_count"
@@ -90,7 +91,7 @@ object SubscriptionFinderTestTags {
 
     val searchInteractive = listOf(
         SMART_QUERY,
-        SEARCH_BY_DATE,
+        FILTERS,
         CLEAR_QUERY,
         CLEAR_RECENTS,
         DATE_START,

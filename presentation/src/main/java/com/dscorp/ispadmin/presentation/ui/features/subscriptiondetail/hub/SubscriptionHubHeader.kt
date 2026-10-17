@@ -91,8 +91,9 @@ fun HubBadge(badge: StatusBadge) {
         text = badge.text,
         color = content,
         fontSize = 12.sp,
+        lineHeight = 16.sp,
         fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.background(container, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 3.dp),
+        modifier = Modifier.background(container, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 2.dp),
     )
 }
 
