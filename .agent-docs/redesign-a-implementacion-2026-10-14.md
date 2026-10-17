@@ -25,7 +25,7 @@ Decisiones:
 ## Pendiente
 
 - Fase 5: correr `FiberRegisterFirstOnuE2ETest` en dispositivo con OLT real; ahora el wizard llega a Cliente antes de que ACS confirme.
-- Ficha: la tarjeta de deuda no aparece aunque la suscripción debe (la ficha no recibe la deuda; revisar `subscriptionById`), pestañas y «Más acciones».
+- Ficha: la deuda llegaba en 0 porque `GET subscription/{id}` calculaba con la colección de pagos sin cargar. Corregido en el Core (2026-10-17, `SubscriptionController.getSubscription` usa `findPaymentStatsRows`, prueba `SubscriptionControllerDebtTest`); sin commit ni deploy: staging/prod siguen sin deuda en la ficha hasta desplegar el WAR. Faltan pestañas y «Más acciones».
 - «Hoy» del técnico, Instalaciones que unen órdenes y tickets de instalación, pestañas Pagos/Red/Historial de la ficha y acciones de ⋮ filtradas por rol (siguen en la tarjeta del buscador).
 - Caja del día y desglose por método: no hay endpoint (requiere Core).
 - Unificar diálogos/cargas (`MyCustomDialog` ×2, `Loader` → skeleton) en el resto de pantallas.
