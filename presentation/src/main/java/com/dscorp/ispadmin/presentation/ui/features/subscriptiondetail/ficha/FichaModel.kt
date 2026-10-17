@@ -160,3 +160,82 @@ private fun phoneLabel(phone: String): String =
 enum class FichaTab(val label: String) {
     RESUMEN("Resumen"), PAGOS("Pagos"), RED("Red"), TICKETS("Tickets"), HISTORIAL("Historial")
 }
+
+data class PendingCard(val amount: String, val detail: String?, val chargeLabel: String)
+data class ReceiptRow(
+    val id: Int?,
+    val title: String,
+    val detail: String,
+    val badge: StatusBadge,
+    val amount: String,
+    val overdue: Boolean,
+)
+
+/** «Pagos» tab (a-sus-05): pending card, last payment and the receipts newest first. */
+data class FichaPayments(
+    val pending: PendingCard?,
+    val lastPayment: String?,
+    val dueRule: String?,
+    val receipts: List<ReceiptRow>,
+) {
+    companion object {
+        fun from(receipts: List<Payment>, totalDebt: Double, today: LocalDate): FichaPayments {
+            val unpaid = receipts.filter { !it.paid }
+            val overdue = unpaid.filter { it.dueDay()?.isBefore(today) ?: true }.sortedBy { it.billingDate }
+            val pending = if (totalDebt > 0 && unpaid.isNotEmpty()) {
+                val amount = formatSoles(totalDebt)
+                val detail = if (overdue.isNotEmpty()) {
+                    val count = if (overdue.size == 1) "1 recibo vencido" else "${overdue.size} recibos vencidos"
+                    "$count · ${debtDetail(overdue, today)}"
+                } else debtDetail(unpaid, today)
+                PendingCard(amount, detail, "Cobrar $amount")
+            } else null
+            val lastPaid = receipts.filter { it.paid && it.paymentDate > 0 }.maxByOrNull { it.paymentDate }
+            val dueDays = receipts.mapNotNull { it.dueDay()?.dayOfMonth }.distinct()
+            return FichaPayments(
+                pending = pending,
+                lastPayment = lastPaid?.let { paid ->
+                    listOfNotNull(formatSoles(paid.paidAmount()), dayMonth(paid.paidDay()), paid.method?.takeIf { it.isNotBlank() })
+                        .joinToString(" · ")
+                },
+                dueRule = dueDays.singleOrNull()?.let { "Vencen el $it de cada mes" },
+                receipts = receipts.sortedByDescending { it.billingDate }.map { it.toRow(today) },
+            )
+        }
+
+        private fun Payment.toRow(today: LocalDate): ReceiptRow {
+            val month = billingMonth()
+            val title = "${monthName(month).replaceFirstChar { it.uppercase() }} ${month.year}"
+            val due = dueDay()
+            return when {
+                paid -> ReceiptRow(
+                    id, title,
+                    listOfNotNull(
+                        "Pagado ${dayMonth(paidDay())}",
+                        method?.takeIf { it.isNotBlank() },
+                        discountAmount?.takeIf { it > 0 }?.let { "desc. ${formatSoles(it)}" },
+                    ).joinToString(" · "),
+                    StatusBadge("Pagado", BadgeTone.SUCCESS), formatSoles(paidAmount()), overdue = false,
+                )
+                due == null || due.isBefore(today) -> ReceiptRow(
+                    id, title, due?.let { "Venció ${dayMonth(it)}" } ?: "Vencido",
+                    StatusBadge("Vencido", BadgeTone.ERROR), formatSoles(amountToPay), overdue = true,
+                )
+                else -> ReceiptRow(
+                    id, title,
+                    when (due) {
+                        today -> "Vence hoy ${dayMonth(due)}"
+                        today.plusDays(1) -> "Vence mañana ${dayMonth(due)}"
+                        else -> "Vence el ${dayMonth(due)}"
+                    },
+                    StatusBadge("Pendiente", BadgeTone.WARNING), formatSoles(amountToPay), overdue = false,
+                )
+            }
+        }
+
+        private fun Payment.paidAmount(): Double =
+            amountPaid?.takeIf { it > 0 } ?: (amountToPay - (discountAmount ?: 0.0))
+
+        private fun Payment.paidDay(): LocalDate = Instant.ofEpochMilli(paymentDate).atZone(FICHA_ZONE).toLocalDate()
+    }
+}

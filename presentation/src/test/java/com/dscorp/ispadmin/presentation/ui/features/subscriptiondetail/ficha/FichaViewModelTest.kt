@@ -62,6 +62,8 @@ class FichaViewModelTest {
         assertEquals("Cortado desde 15 set", ficha?.badges?.first()?.text)
         assertEquals(DebtCard("S/ 50.00", "set 2026"), ficha?.debt)
         assertEquals(FichaTab.RESUMEN, viewModel.uiState.value.tab)
+        assertEquals("S/ 50.00", viewModel.uiState.value.payments?.pending?.amount)
+        assertEquals(listOf("Set 2026"), viewModel.uiState.value.payments?.receipts?.map { it.title })
     }
 
     @Test

@@ -2,6 +2,8 @@ package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail
 
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaAction
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaScreen
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaPaymentsTab
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTab
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -244,7 +246,16 @@ fun SubscriptionDetailScreen(
                 onUpdatePhoto = { showFacadePhotoOptionsDialog = true },
                 onOpenService = { serviceId -> navController.navigate(FeatureRoutes.Subscription.Details(serviceId)) },
                 tabContent = { tab ->
-                    Text(
+                    val payments = hubState.payments
+                    if (tab == FichaTab.PAGOS && payments != null) {
+                        FichaPaymentsTab(
+                            payments = payments,
+                            onCharge = { hubViewModel.onIntent(SubscriptionHubIntent.OpenCharge) },
+                            onSeeHistory = {
+                                navController.navigate(FeatureRoutes.Payment.History(loadedSubscription.id, loadedSubscription.serviceStatus.toString()))
+                            },
+                        )
+                    } else Text(
                         "${tab.label}: en construcción",
                         modifier = Modifier.padding(16.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

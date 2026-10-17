@@ -9,6 +9,7 @@ import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FICHA_ZONE
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaHeader
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaPayments
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTab
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.canRestore
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.restoreHint
@@ -51,8 +52,8 @@ data class SubscriptionHubUiState(
     val methods: List<PaymentMethodOption> = emptyList(),
     val charge: ChargeSheetState? = null,
     val ficha: FichaHeader? = null,
-    val tab: FichaTab =
-        FichaTab.RESUMEN,
+    val tab: FichaTab = FichaTab.RESUMEN,
+    val payments: FichaPayments? = null,
 ) {
     val unpaidReceipts: List<Payment> get() = receipts.filter { !it.paid }.sortedBy { it.billingDate }
 }
@@ -121,6 +122,7 @@ class SubscriptionHubViewModel(
                         subscription = subscription,
                         header = HubHeader.from(subscription),
                         ficha = FichaHeader.from(subscription, receipts, today()),
+                        payments = FichaPayments.from(receipts, subscription.totalDebt, today()),
                         receipts = receipts,
                         methods = methods,
                     )

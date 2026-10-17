@@ -330,3 +330,61 @@ internal fun otherServiceTitle(service: CustomerServiceSummary): String {
     return listOfNotNull(type, service.planName?.takeIf { it.isNotBlank() }?.let(::planLabel)).joinToString(" · ")
 }
 
+
+@Composable
+fun FichaPaymentsTab(payments: FichaPayments, onCharge: () -> Unit, onSeeHistory: () -> Unit) {
+    val colors = IspTheme.colors
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface, CARD).padding(16.dp)) {
+            payments.pending?.let { pending ->
+                Text("Pendiente", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(pending.amount, fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold)
+                pending.detail?.let { Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                Button(
+                    onClick = onCharge,
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp).heightIn(min = 48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                ) { Text(pending.chargeLabel, fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
+                HorizontalDivider(Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.surfaceContainer)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Último pago", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                Text(payments.lastPayment ?: "Sin pagos", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("Recibos", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            payments.dueRule?.let { Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
+        if (payments.receipts.isNotEmpty()) {
+            Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface, CARD)) {
+                payments.receipts.forEachIndexed { index, receipt ->
+                    if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer)
+                    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(receipt.title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                            Text(receipt.detail, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            HubBadge(receipt.badge)
+                            Text(
+                                receipt.amount,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (receipt.overdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        Text(
+            "Ver pagos anteriores",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = colors.accentInk,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).clickable(role = Role.Button, onClick = onSeeHistory).padding(12.dp),
+        )
+    }
+}
