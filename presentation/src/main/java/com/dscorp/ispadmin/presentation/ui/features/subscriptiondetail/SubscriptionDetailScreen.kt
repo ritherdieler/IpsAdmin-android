@@ -129,6 +129,7 @@ import androidx.compose.foundation.layout.heightIn
 @Composable
 fun SubscriptionDetailScreen(
     subscriptionId: Int,
+    openCharge: Boolean = false,
     viewModel: SubscriptionDetailViewModel = koinViewModel(),
     accessMigrationViewModel: AccessMigrationViewModel = koinViewModel(),
     hubViewModel: SubscriptionHubViewModel = koinViewModel(),
@@ -141,7 +142,7 @@ fun SubscriptionDetailScreen(
     val hubState by hubViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(subscriptionId) {
-        hubViewModel.onIntent(SubscriptionHubIntent.Load(subscriptionId))
+        hubViewModel.onIntent(SubscriptionHubIntent.Load(subscriptionId, openCharge))
     }
     LaunchedEffect(hubViewModel) {
         hubViewModel.events.collect { event ->

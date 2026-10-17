@@ -67,7 +67,7 @@ sealed class NavRoutes {
             object PendingSubscriptions : Subscription()
 
             @Serializable
-            data class Details(val subscriptionId: Int) : Subscription()
+            data class Details(val subscriptionId: Int, val openCharge: Boolean = false) : Subscription()
 
             @Serializable
             data class Provisioning(val subscriptionId: Int) : Subscription()

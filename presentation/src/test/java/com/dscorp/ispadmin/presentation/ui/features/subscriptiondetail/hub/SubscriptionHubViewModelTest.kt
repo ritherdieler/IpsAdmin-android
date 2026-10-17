@@ -58,6 +58,14 @@ class SubscriptionHubViewModelTest {
     }
 
     @Test
+    fun `opening the ficha to charge shows the charge sheet once it loads`() = runTest(dispatcher) {
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842, openCharge = true))
+        advanceUntilIdle()
+
+        assertEquals(setOf(1, 2), viewModel.uiState.value.charge?.draft?.selectedIds)
+    }
+
+    @Test
     fun `load failure keeps a retryable error`() = runTest(dispatcher) {
         coEvery { gateway.subscription(1842) } throws IllegalStateException("timeout")
 

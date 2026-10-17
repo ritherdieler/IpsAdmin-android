@@ -80,6 +80,11 @@ import com.dscorp.ispadmin.presentation.utils.PermissionUtils
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.CancellationException
+import com.dscorp.ispadmin.presentation.ui.features.home.HomeAction
+import com.dscorp.ispadmin.presentation.ui.features.home.HomeIntent
+import com.dscorp.ispadmin.presentation.ui.features.home.HomeViewModel
+import com.dscorp.ispadmin.presentation.ui.features.home.SecretaryHomeContent
+import androidx.navigation.NavBackStackEntry
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -211,8 +216,12 @@ private fun NavGraphContent(
         }
 
         // Dashboard
-        composable<Dashboard> {
-            DashBoardComposeScreen(navController = navController)
+        composable<Dashboard> { backStackEntry ->
+            if (currentUser?.type == User.UserType.SECRETARY) {
+                SecretaryHomeRoute(backStackEntry, currentUser, navController)
+            } else {
+                DashBoardComposeScreen(navController = navController)
+            }
         }
         composable<FeatureRoutes.More> {
             val type = currentUser?.type ?: return@composable
@@ -331,9 +340,10 @@ private fun NavGraphContent(
             }
         }
         composable<Subscription.Details> { backStackEntry ->
-            val subscriptionId = backStackEntry.toRoute<Subscription.Details>().subscriptionId
+            val route = backStackEntry.toRoute<Subscription.Details>()
             SubscriptionDetailScreen(
-                subscriptionId = subscriptionId,
+                subscriptionId = route.subscriptionId,
+                openCharge = route.openCharge,
                 navController = navController
             )
         }
@@ -591,4 +601,34 @@ private fun NavGraphContent(
 //            )
 //        }
     }
+}
+
+@Composable
+private fun SecretaryHomeRoute(backStackEntry: NavBackStackEntry, user: User, navController: NavHostController) {
+    val viewModel: HomeViewModel = koinViewModel()
+    val state by viewModel.uiState.collectAsState()
+    LaunchedEffect(Unit) { viewModel.onIntent(HomeIntent.Load) }
+    // Coming back from a charge or a ticket refreshes today's numbers.
+    val resumed = backStackEntry.lifecycle.currentStateAsState()
+    LaunchedEffect(resumed.value) {
+        if (resumed.value == androidx.lifecycle.Lifecycle.State.RESUMED && state.home != null) viewModel.onIntent(HomeIntent.Refresh)
+    }
+    SecretaryHomeContent(
+        state = state,
+        userInitials = listOfNotNull(user.name, user.lastName).mapNotNull { it.trim().firstOrNull()?.uppercaseChar() }.joinToString(""),
+        onRetry = { viewModel.onIntent(HomeIntent.Refresh) },
+        onAction = { action ->
+            when (action) {
+                HomeAction.Search, HomeAction.CutCandidates, HomeAction.Owing, HomeAction.NewCharge ->
+                    navController.navigateToRoot(Subscription.Find)
+                HomeAction.Tickets -> navController.navigateToRoot(SupportTicket.List)
+                HomeAction.Profile -> navController.navigate(Profile)
+                is HomeAction.OpenSubscription -> navController.navigate(Subscription.Details(action.id))
+                is HomeAction.Charge -> navController.navigate(Subscription.Details(action.id, openCharge = true))
+                HomeAction.NewTicket -> navController.navigate(SupportTicket.Create)
+                HomeAction.NewOutlay -> navController.navigate(FeatureRoutes.Outlay.Register)
+                HomeAction.NewInstallationOrder -> navController.navigate(FeatureRoutes.Installation.Create)
+            }
+        },
+    )
 }

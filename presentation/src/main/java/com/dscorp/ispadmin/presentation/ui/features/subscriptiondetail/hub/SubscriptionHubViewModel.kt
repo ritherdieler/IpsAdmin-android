@@ -80,7 +80,7 @@ data class SubscriptionHubUiState(
 }
 
 sealed interface SubscriptionHubIntent {
-    data class Load(val subscriptionId: Int) : SubscriptionHubIntent
+    data class Load(val subscriptionId: Int, val openCharge: Boolean = false) : SubscriptionHubIntent
     data object OpenCharge : SubscriptionHubIntent
     data object CloseCharge : SubscriptionHubIntent
     data class ReceiptToggled(val receiptId: Int) : SubscriptionHubIntent
@@ -121,7 +121,7 @@ class SubscriptionHubViewModel(
 
     fun onIntent(intent: SubscriptionHubIntent) {
         when (intent) {
-            is SubscriptionHubIntent.Load -> load(intent.subscriptionId)
+            is SubscriptionHubIntent.Load -> load(intent.subscriptionId, intent.openCharge)
             SubscriptionHubIntent.OpenCharge -> openCharge()
             SubscriptionHubIntent.CloseCharge -> _uiState.update { it.copy(charge = null) }
             is SubscriptionHubIntent.ReceiptToggled -> updateDraft { it.toggle(intent.receiptId) }
@@ -145,7 +145,7 @@ class SubscriptionHubViewModel(
         }
     }
 
-    private fun load(subscriptionId: Int) {
+    private fun load(subscriptionId: Int, withCharge: Boolean = false) {
         viewModelScope.launch(mainImmediate) {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
@@ -167,6 +167,7 @@ class SubscriptionHubViewModel(
                         methods = methods,
                     )
                 }
+                if (withCharge && _uiState.value.unpaidReceipts.isNotEmpty()) openCharge()
                 if (_uiState.value.tab == FichaTab.RED) loadNetwork()
                 if (_uiState.value.tab == FichaTab.HISTORIAL) loadHistory()
             } catch (cancelled: CancellationException) {
