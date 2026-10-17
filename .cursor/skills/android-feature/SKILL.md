@@ -5,7 +5,7 @@ description: Orchestrates an end-to-end IpsAdmin feature across layers (Compose/
 
 # android-feature (IpsAdmin)
 
-Pantalla Compose: orquesta este skill **y** `compose-feature`. Ruta nueva inexistente: también `create-compose-screen`. Lógica testeable: `android-tdd`.
+Pantalla Compose: orquesta este skill **y** `compose-feature`. Ruta nueva inexistente: también `create-compose-screen`.
 
 ## Checklist
 
@@ -43,9 +43,9 @@ Flujo mental: Input → Intent → Presentation → Domain → Data → State �
 
 Loading / empty / error / offline / cancelación / API 401 / lista grande. minSdk 26.
 
-## 4. TDD
+## 4. Tests
 
-Skill `android-tdd`. Test primero para VM/UseCase/mappers. Characterization si tocas legado.
+Tests para VM/UseCase/mappers. Characterization si tocas legado.
 
 ## 5. Implementación
 

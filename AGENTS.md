@@ -1,6 +1,6 @@
 # IpsAdmin Android — instrucciones para agentes
 
-**Plataforma:** aplican también las reglas de `gigafiber/AGENTS.md` (TDD, secretos, español).
+**Plataforma:** aplican también las reglas de `gigafiber/AGENTS.md` (secretos, español).
 
 **Scope:** solo el repo Android `IpsAdmin`. Si el archivo o la tarea es `wispadministrator-main` (Spring), **ignora estas instrucciones**.
 
@@ -128,7 +128,6 @@ Seguir el patrón del rincón. Código Compose nuevo: `PendingSubscriptions*`. X
 
 ### Invariantes
 
-- Para lógica nueva testeable: **RED → GREEN → REFACTOR** (obligatorio; ver `gigafiber/AGENTS.md`).
 - No crear una abstracción hasta poder explicar qué problema **real** resuelve **en este repo**.
 - Una clase extra debe **bajar** complejidad total, no mover código de sitio.
 - No UseCase passthrough (`invoke() = repository.x()`) salvo consistencia del módulo.
@@ -193,11 +192,9 @@ Canónico nuevo:
 
 ## Tests (Android)
 
-Si el usuario eligió **con TDD** (`gigafiber/AGENTS.md`), aplica el ciclo de esa regla. Detalle de stack en este repo:
+Detalle de stack en este repo:
 
 **Ámbito:** `presentation/**/*Test.kt`, `domain/**/*Test.kt`, `data/**/*Test.kt`, `observability/**/*Test.kt`, `**/*AndroidTest.kt`.
-
-El fallo RED se demuestra con Gradle. No afirmar TDD si se implementó antes.
 
 ### Stack (no cambiar)
 
@@ -209,7 +206,12 @@ Canónico: `presentation/src/test/.../pending/PendingSubscriptionsViewModelTest.
 gradlew.bat :presentation:testDevDebugUnitTest --tests "com.dscorp.ispadmin....FooTest"
 ```
 
-RED = comportamiento ausente, no test que no compile.
+### Recetas
+
+- **ViewModel:** constructor con UseCases + `mainImmediate: CoroutineDispatcher = Dispatchers.Main.immediate`. En test: `StandardTestDispatcher`, `Dispatchers.setMain`, `advanceUntilIdle`, MockK `coEvery`. Canónico: `PendingSubscriptionsViewModelTest`.
+- **UseCase:** mock del puerto de dominio, no de Retrofit.
+- **Compose UI:** Robolectric + `createComposeRule` + `testTag` en `src/test`. No hay `androidTest`.
+- **Doubles:** MockK para puertos. Fake si el colaborador tiene comportamiento (p. ej. repo in-memory). No mockear data classes.
 
 ### Pruebas largas / e2e: consola visible (obligatorio)
 
@@ -217,7 +219,7 @@ Espresso, `connected*AndroidTest`, scripts `scripts/e2e_*.sh` y cualquier Gradle
 
 ### Legacy
 
-Sin cobertura: characterization → cambio mínimo → test del bug. No reescribir para “TDD perfecto”.
+Sin cobertura: characterization → cambio mínimo → test del bug. 
 
 No testear getters, layouts cosméticos, wiring Koin.
 
