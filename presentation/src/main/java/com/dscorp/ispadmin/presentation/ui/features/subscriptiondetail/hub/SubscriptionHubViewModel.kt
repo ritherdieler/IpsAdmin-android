@@ -7,7 +7,9 @@ import com.dscorp.ispadmin.domain.model.PaymentMethodOption
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.CpeReading
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FICHA_ZONE
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaNetwork
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaHeader
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaPayments
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTab
@@ -33,6 +35,10 @@ interface SubscriptionHubGateway {
     suspend fun registerPayment(payment: Payment): Payment
     suspend fun restoreInternet(subscriptionId: Int): Result<Unit>
     fun currentUser(): User?
+    suspend fun cpeReading(subscriptionId: Int): CpeReading = error("not wired")
+    suspend fun mufaName(mufaId: Int): String? = null
+    suspend fun rebootOnu(subscriptionId: Int): Result<Unit> = Result.failure(UnsupportedOperationException())
+    suspend fun resendConfig(subscriptionId: Int): Result<Unit> = Result.failure(UnsupportedOperationException())
 }
 
 data class ChargeSheetState(
@@ -54,6 +60,7 @@ data class SubscriptionHubUiState(
     val ficha: FichaHeader? = null,
     val tab: FichaTab = FichaTab.RESUMEN,
     val payments: FichaPayments? = null,
+    val network: FichaNetwork? = null,
 ) {
     val unpaidReceipts: List<Payment> get() = receipts.filter { !it.paid }.sortedBy { it.billingDate }
 }
@@ -69,6 +76,8 @@ sealed interface SubscriptionHubIntent {
     data object SubmitCharge : SubscriptionHubIntent
     data class TabSelected(val tab: FichaTab) : SubscriptionHubIntent
     data object RestoreService : SubscriptionHubIntent
+    data object RebootOnu : SubscriptionHubIntent
+    data object ResendConfig : SubscriptionHubIntent
 }
 
 sealed interface SubscriptionHubEvent {
@@ -79,6 +88,7 @@ class SubscriptionHubViewModel(
     private val gateway: SubscriptionHubGateway,
     private val mainImmediate: CoroutineDispatcher = Dispatchers.Main.immediate,
     private val today: () -> java.time.LocalDate = { java.time.LocalDate.now(FICHA_ZONE) },
+    private val now: () -> java.time.Instant = { java.time.Instant.now() },
 ) : ViewModel() {
 
     private companion object {
@@ -104,8 +114,17 @@ class SubscriptionHubViewModel(
             is SubscriptionHubIntent.PayerNameChanged -> updateDraft { it.copy(payerName = intent.name) }
             SubscriptionHubIntent.RestoreToggled -> updateDraft { it.copy(restore = !it.restore) }
             SubscriptionHubIntent.SubmitCharge -> submitCharge()
-            is SubscriptionHubIntent.TabSelected -> _uiState.update { it.copy(tab = intent.tab) }
+            is SubscriptionHubIntent.TabSelected -> {
+                _uiState.update { it.copy(tab = intent.tab) }
+                if (intent.tab == FichaTab.RED && _uiState.value.network == null) loadNetwork()
+            }
             SubscriptionHubIntent.RestoreService -> restoreService()
+            SubscriptionHubIntent.RebootOnu -> equipmentAction("Reinicio de ONU enviado", "No se pudo reiniciar la ONU") {
+                gateway.rebootOnu(it)
+            }
+            SubscriptionHubIntent.ResendConfig -> equipmentAction("Configuración reenviada al equipo", "No se pudo reenviar la configuración") {
+                gateway.resendConfig(it)
+            }
         }
     }
 
@@ -142,6 +161,39 @@ class SubscriptionHubViewModel(
         throw cancelled
     } catch (_: Exception) {
         emptyList()
+    }
+
+    /** «Red» tab: the equipment reading may fail (Core health off); the rest of the tab still shows. */
+    private fun loadNetwork() {
+        val subscription = _uiState.value.subscription ?: return
+        viewModelScope.launch(mainImmediate) {
+            val reading = try {
+                gateway.cpeReading(subscription.id)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                null
+            }
+            val mufa = subscription.napBox?.mufaId?.let { mufaId ->
+                try {
+                    gateway.mufaName(mufaId)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    null
+                }
+            }
+            _uiState.update {
+                it.copy(network = FichaNetwork.from(subscription, reading, cpeFailed = reading == null, mufaName = mufa, now = now()))
+            }
+        }
+    }
+
+    private fun equipmentAction(done: String, failed: String, call: suspend (Int) -> Result<Unit>) {
+        val subscriptionId = _uiState.value.subscription?.id ?: return
+        viewModelScope.launch(mainImmediate) {
+            _events.emit(SubscriptionHubEvent.Message(if (call(subscriptionId).isSuccess) done else failed))
+        }
     }
 
     /** «Restablecer» quick action: only when the cut subscription keeps fewer than two pending receipts. */

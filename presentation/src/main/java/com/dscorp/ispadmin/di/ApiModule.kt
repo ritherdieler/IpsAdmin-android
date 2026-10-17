@@ -17,6 +17,7 @@ val apiModule = module {
     single { provideInstallationOrderApi(get()) }
     single { provideInstallationOrderApiDirect(get()) }
     single { provideAccessMigrationApi(get()) }
+    single { get<Retrofit>().create(com.dscorp.ispadmin.data.datasource.remote.FichaNetworkApi::class.java) }
 }
 
 fun providesApi(retrofit: Retrofit): RestApiServices {

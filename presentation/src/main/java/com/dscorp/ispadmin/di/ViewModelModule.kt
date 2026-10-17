@@ -87,7 +87,7 @@ val viewModelModule = module {
     viewModel { SubscriptionDetailViewModel(get(), get(), get()) }
     viewModel {
         SubscriptionHubViewModel(
-            gateway = RepositorySubscriptionHubGateway(get(), get()),
+            gateway = RepositorySubscriptionHubGateway(get(), get(), get(), get(), get()),
             mainImmediate = get<CoroutineDispatcher>(named("mainImmediate")),
         )
     }

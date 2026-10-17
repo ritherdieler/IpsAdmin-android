@@ -10,6 +10,9 @@ data class NapBoxResponse(
     val ports_number: Int? = null,
     val placeName: String,
     val placeId: Int,
+    val oltId: Int? = null,
+    val oltBoard: Int? = null,
+    val oltPort: Int? = null,
 ):java.io.Serializable
 {
     override fun toString(): String {

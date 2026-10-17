@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha
 
+import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
@@ -22,7 +23,7 @@ private val MONTHS = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ag
 private const val MAX_PENDING_TO_RESTORE = 1
 
 data class DebtCard(val amount: String, val detail: String?)
-data class InfoRow(val label: String, val value: String)
+data class InfoRow(val label: String, val value: String, val note: String? = null, val badge: StatusBadge? = null)
 
 /** Navy band of the ficha (a-sus-04): name, code line, state badges and the debt card. */
 data class FichaHeader(val name: String, val subtitle: String, val badges: List<StatusBadge>, val debt: DebtCard?) {
@@ -239,3 +240,88 @@ data class FichaPayments(
         private fun Payment.paidDay(): LocalDate = Instant.ofEpochMilli(paymentDate).atZone(FICHA_ZONE).toLocalDate()
     }
 }
+
+data class CpeReading(val online: Boolean, val rxDbm: Double?, val lastInform: Instant?, val model: String?)
+
+data class FichaNetwork(
+    val cutNotice: String?,
+    val equipment: List<InfoRow>,
+    val equipmentUnavailable: Boolean,
+    val access: List<InfoRow>,
+    val fiber: List<InfoRow>,
+    val wifi: List<InfoRow>,
+) {
+    companion object {
+        fun from(subscription: SubscriptionResponse, cpe: CpeReading?, cpeFailed: Boolean, mufaName: String?, now: Instant): FichaNetwork {
+            val isFiber = subscription.installationType != InstallationType.WIRELESS
+            val equipment = if (!isFiber) emptyList() else listOfNotNull(
+                subscription.fiberOnuSn?.takeIf { it.isNotBlank() }?.let { InfoRow("Serie", it) },
+                cpe?.model?.takeIf { it.isNotBlank() }?.let { InfoRow("Modelo", it) },
+                cpe?.let {
+                    InfoRow(
+                        "Estado", "",
+                        badge = if (it.online) StatusBadge("En línea", BadgeTone.SUCCESS) else StatusBadge("Sin conexión", BadgeTone.ERROR),
+                    )
+                },
+                cpe?.rxDbm?.let { InfoRow("Potencia", powerLabel(it)) },
+                cpe?.lastInform?.let { InfoRow("Último reporte", ageLabel(it, now)) },
+            )
+            val nap = subscription.napBox
+            val fiber = if (!isFiber || nap == null) emptyList() else listOfNotNull(
+                nap.code.takeIf { it.isNotBlank() }?.let { code ->
+                    InfoRow(
+                        "Caja NAP",
+                        code + subscription.borneNumber?.takeIf { it.isNotBlank() }?.let { " · puerto $it" }.orEmpty(),
+                        note = nap.address.takeIf { it.isNotBlank() },
+                    )
+                },
+                mufaName?.takeIf { it.isNotBlank() }?.let { InfoRow("Mufa", it) },
+                if (nap.oltBoard != null && nap.oltPort != null) InfoRow("OLT", "tarjeta ${nap.oltBoard} · puerto ${nap.oltPort}") else null,
+            )
+            return FichaNetwork(
+                cutNotice = if (subscription.serviceStatus == ServiceStatus.CUT_OFF) {
+                    val since = subscription.cutSince()?.let { " desde ${dayMonth(it)}" }.orEmpty()
+                    "Acceso cortado por deuda$since (lista de deudores del MikroTik). Se restablece al cobrar."
+                } else null,
+                equipment = equipment,
+                equipmentUnavailable = isFiber && cpe == null && cpeFailed,
+                access = listOfNotNull(
+                    accessLabel(subscription.accessMode)?.let { InfoRow("Modo", it) },
+                    subscription.pppoeUsername?.takeIf { it.isNotBlank() && subscription.accessMode?.startsWith("PPPOE") == true }
+                        ?.let { InfoRow("Usuario", it) },
+                    subscription.ip?.takeIf { it.isNotBlank() }?.let { InfoRow("IP", it) },
+                    subscription.hostDevice?.name?.takeIf { it.isNotBlank() }?.let { InfoRow("Router núcleo", it) },
+                ),
+                fiber = fiber,
+                wifi = listOfNotNull(
+                    subscription.wifiSsid24?.takeIf { it.isNotBlank() }?.let { InfoRow("2.4 GHz", it) },
+                    subscription.wifiSsid5?.takeIf { it.isNotBlank() }?.let { InfoRow("5 GHz", it) },
+                ),
+            )
+        }
+    }
+}
+
+/** GPON receive power: −25 dBm or better is good, down to −27 acceptable, below that low. */
+fun powerLabel(rxDbm: Double): String {
+    val quality = when {
+        rxDbm >= -25.0 -> "buena"
+        rxDbm >= -27.0 -> "aceptable"
+        else -> "baja"
+    }
+    val value = String.format(java.util.Locale.US, "%.1f", rxDbm).replace("-", "−")
+    return "$value dBm · $quality"
+}
+
+fun ageLabel(at: Instant, now: Instant): String {
+    val minutes = java.time.Duration.between(at, now).toMinutes().coerceAtLeast(0)
+    return when {
+        minutes < 1 -> "hace un momento"
+        minutes < 60 -> "hace $minutes min"
+        minutes < 24 * 60 -> "hace ${minutes / 60} h"
+        else -> "hace ${minutes / (24 * 60)} d"
+    }
+}
+
+fun mufaLabel(mufa: com.dscorp.ispadmin.domain.model.Mufa): String =
+    mufa.reference.orEmpty() + (mufa.threads?.let { " ($it hilos)" }.orEmpty())

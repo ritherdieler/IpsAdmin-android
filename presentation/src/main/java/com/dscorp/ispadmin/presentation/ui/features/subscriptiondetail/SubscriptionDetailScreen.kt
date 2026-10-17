@@ -3,6 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaAction
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaScreen
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaPaymentsTab
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaNetworkTab
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTab
 import android.content.Intent
 import android.net.Uri
@@ -44,6 +45,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -255,6 +257,16 @@ fun SubscriptionDetailScreen(
                                 navController.navigate(FeatureRoutes.Payment.History(loadedSubscription.id, loadedSubscription.serviceStatus.toString()))
                             },
                         )
+                    } else if (tab == FichaTab.RED && hubState.network != null) {
+                        FichaNetworkTab(
+                            network = hubState.network!!,
+                            isFiber = loadedSubscription.installationType != InstallationType.WIRELESS,
+                            onReboot = { hubViewModel.onIntent(SubscriptionHubIntent.RebootOnu) },
+                            onResend = { hubViewModel.onIntent(SubscriptionHubIntent.ResendConfig) },
+                            onSeeRegistration = { navController.navigate(FeatureRoutes.Subscription.Provisioning(loadedSubscription.id)) },
+                        )
+                    } else if (tab == FichaTab.RED) {
+                        Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                     } else Text(
                         "${tab.label}: en construcción",
                         modifier = Modifier.padding(16.dp),

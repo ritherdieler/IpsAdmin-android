@@ -47,7 +47,7 @@ class FichaViewModelTest {
         coEvery { gateway.recentPayments(1842, any()) } returns listOf(unpaid(9, 9))
         coEvery { gateway.paymentMethods() } returns METHODS
         every { gateway.currentUser() } returns null
-        viewModel = SubscriptionHubViewModel(gateway, mainImmediate = dispatcher, today = { today })
+        viewModel = SubscriptionHubViewModel(gateway, mainImmediate = dispatcher, today = { today }, now = { java.time.Instant.parse("2026-10-14T15:00:00Z") })
     }
 
     @After
@@ -107,6 +107,52 @@ class FichaViewModelTest {
         coVerify(exactly = 0) { gateway.restoreInternet(any()) }
         assertEquals(
             listOf(SubscriptionHubEvent.Message("Para restablecer debe quedar con menos de 2 recibos pendientes: cobra al menos 1 mes.")),
+            events,
+        )
+    }
+
+    @Test
+    fun `network tab loads the equipment reading once and survives a failing reading`() = runTest(dispatcher) {
+        coEvery { gateway.subscription(1842) } returns subscription().copy(
+            fiberOnuSn = "HWTC9A3F21B0",
+            napBox = com.dscorp.ispadmin.domain.model.NapBoxResponse(code = "LV-15-3", mufaId = 4, placeName = "La Villa", placeId = 1),
+        )
+        coEvery { gateway.cpeReading(1842) } throws IllegalStateException("500")
+        coEvery { gateway.mufaName(4) } returns "Antena Claro (96 hilos)"
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842))
+        advanceUntilIdle()
+
+        viewModel.onIntent(SubscriptionHubIntent.TabSelected(FichaTab.RED))
+        advanceUntilIdle()
+        viewModel.onIntent(SubscriptionHubIntent.TabSelected(FichaTab.RESUMEN))
+        viewModel.onIntent(SubscriptionHubIntent.TabSelected(FichaTab.RED))
+        advanceUntilIdle()
+
+        val network = viewModel.uiState.value.network
+        assertEquals(true, network?.equipmentUnavailable)
+        assertEquals("Antena Claro (96 hilos)", network?.fiber?.firstOrNull { it.label == "Mufa" }?.value)
+        coVerify(exactly = 1) { gateway.cpeReading(1842) }
+    }
+
+    @Test
+    fun `equipment actions report their result`() = runTest(dispatcher) {
+        coEvery { gateway.rebootOnu(1842) } returns Result.success(Unit)
+        coEvery { gateway.resendConfig(1842) } returns Result.failure(IllegalStateException("ACS"))
+        val events = mutableListOf<SubscriptionHubEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.collect { events += it } }
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842))
+        advanceUntilIdle()
+
+        viewModel.onIntent(SubscriptionHubIntent.RebootOnu)
+        advanceUntilIdle()
+        viewModel.onIntent(SubscriptionHubIntent.ResendConfig)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(
+                SubscriptionHubEvent.Message("Reinicio de ONU enviado"),
+                SubscriptionHubEvent.Message("No se pudo reenviar la configuración"),
+            ),
             events,
         )
     }

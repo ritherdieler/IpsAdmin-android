@@ -36,6 +36,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -258,15 +262,26 @@ fun FichaWarning(text: String) {
 @Composable
 fun InfoCard(title: String, rows: List<InfoRow>, action: Pair<String, () -> Unit>? = null) {
     if (rows.isEmpty() && action == null) return
-    FichaCard(title, action) {
-        rows.forEach { row ->
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.surfaceContainer)
-            Row(
-                Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(row.label, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(112.dp))
-                Text(row.value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
+    FichaCard(title, action) { InfoRows(rows) }
+}
+
+@Composable
+private fun InfoRows(rows: List<InfoRow>) {
+    rows.forEach { row ->
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.surfaceContainer)
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(row.label, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(112.dp))
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                row.badge?.let { HubBadge(it) }
+                if (row.value.isNotEmpty()) {
+                    Text(row.value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
+                }
+                row.note?.let {
+                    Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End)
+                }
             }
         }
     }
@@ -387,4 +402,76 @@ fun FichaPaymentsTab(payments: FichaPayments, onCharge: () -> Unit, onSeeHistory
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).clickable(role = Role.Button, onClick = onSeeHistory).padding(12.dp),
         )
     }
+}
+
+@Composable
+fun FichaNetworkTab(network: FichaNetwork, isFiber: Boolean, onReboot: () -> Unit, onResend: () -> Unit, onSeeRegistration: () -> Unit) {
+    var confirm by remember { mutableStateOf<EquipmentAction?>(null) }
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        network.cutNotice?.let { FichaWarning(it) }
+        if (isFiber) {
+            FichaCard("Equipo") {
+                InfoRows(network.equipment)
+                if (network.equipmentUnavailable) {
+                    HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.surfaceContainer)
+                    Text(
+                        "Sin lectura del equipo por ahora.",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+            }
+        }
+        InfoCard("Acceso a internet", network.access)
+        if (network.fiber.isNotEmpty()) InfoCard("Fibra", network.fiber)
+        if (network.wifi.isNotEmpty()) InfoCard("Wi-Fi", network.wifi)
+        if (isFiber) {
+            FichaCard("Acciones del equipo") {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.material3.OutlinedButton(
+                        onClick = { confirm = EquipmentAction.REBOOT },
+                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    ) { Text("Reiniciar ONU", fontWeight = FontWeight.SemiBold, maxLines = 1) }
+                    androidx.compose.material3.OutlinedButton(
+                        onClick = { confirm = EquipmentAction.RESEND },
+                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    ) { Text("Reenviar configuración", fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                }
+                Text(
+                    "Pide confirmación; el abonado pierde la conexión 1–2 minutos.",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(16.dp),
+                )
+            }
+            Text(
+                "Ver registro de la ONU",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = IspTheme.colors.accentInk,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).clickable(role = Role.Button, onClick = onSeeRegistration).padding(12.dp),
+            )
+        }
+    }
+    confirm?.let { action ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { confirm = null },
+            title = { Text(action.question) },
+            text = { Text("El abonado pierde la conexión 1–2 minutos.") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    confirm = null
+                    if (action == EquipmentAction.REBOOT) onReboot() else onResend()
+                }) { Text(action.confirm) }
+            },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { confirm = null }) { Text("Volver") } },
+        )
+    }
+}
+
+private enum class EquipmentAction(val question: String, val confirm: String) {
+    REBOOT("¿Reiniciar la ONU?", "Reiniciar"),
+    RESEND("¿Reenviar la configuración?", "Reenviar"),
 }
