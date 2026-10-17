@@ -4,6 +4,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.Fic
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaScreen
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaPaymentsTab
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaNetworkTab
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTicketsTab
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTab
 import android.content.Intent
 import android.net.Uri
@@ -240,6 +241,7 @@ fun SubscriptionDetailScreen(
                 subscription = loadedSubscription,
                 otherServices = uiState.otherServices,
                 tab = hubState.tab,
+                ticketsCount = hubState.tickets?.openCount,
                 onTab = { hubViewModel.onIntent(SubscriptionHubIntent.TabSelected(it)) },
                 onBack = { navController.popBackStack() },
                 onMore = null,
@@ -264,6 +266,12 @@ fun SubscriptionDetailScreen(
                             onReboot = { hubViewModel.onIntent(SubscriptionHubIntent.RebootOnu) },
                             onResend = { hubViewModel.onIntent(SubscriptionHubIntent.ResendConfig) },
                             onSeeRegistration = { navController.navigate(FeatureRoutes.Subscription.Provisioning(loadedSubscription.id)) },
+                        )
+                    } else if (tab == FichaTab.TICKETS) {
+                        FichaTicketsTab(
+                            tickets = hubState.tickets,
+                            onNewTicket = { navController.navigate(FeatureRoutes.SupportTicket.Create) },
+                            onOpenTicket = { ticketId -> navController.navigate(FeatureRoutes.SupportTicket.Detail(ticketId)) },
                         )
                     } else if (tab == FichaTab.RED) {
                         Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }

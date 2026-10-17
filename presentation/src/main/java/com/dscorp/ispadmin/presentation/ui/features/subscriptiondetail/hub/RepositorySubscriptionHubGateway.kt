@@ -5,7 +5,7 @@ import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.model.PaymentMethodOption
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.User
-import com.dscorp.ispadmin.data.datasource.remote.FichaNetworkApi
+import com.dscorp.ispadmin.data.datasource.remote.FichaApi
 import com.dscorp.ispadmin.domain.usecase.service.RebootFiberOnuUseCase
 import com.dscorp.ispadmin.domain.usecase.service.RestoreInternetConnectionUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.RetryTr069ProvisioningUseCase
@@ -18,10 +18,12 @@ class RepositorySubscriptionHubGateway(
     private val restoreInternetConnection: RestoreInternetConnectionUseCase,
     private val rebootFiberOnu: RebootFiberOnuUseCase? = null,
     private val retryTr069: RetryTr069ProvisioningUseCase? = null,
-    private val networkApi: FichaNetworkApi? = null,
+    private val networkApi: FichaApi? = null,
 ) : SubscriptionHubGateway {
     override suspend fun cpeReading(subscriptionId: Int): CpeReading =
         requireNotNull(networkApi) { "Network API not wired" }.cpeStatus(subscriptionId).toReading()
+    override suspend fun tickets(subscriptionId: Int) =
+        requireNotNull(networkApi) { "Ficha API not wired" }.ticketsBySubscription(subscriptionId)
     override suspend fun mufaName(mufaId: Int): String? =
         repository.getMufas().firstOrNull { it.id == mufaId }?.let(::mufaLabel)
     override suspend fun rebootOnu(subscriptionId: Int): Result<Unit> =

@@ -1,5 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha
 
+import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
+import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.model.ServiceStatus
@@ -325,3 +327,33 @@ fun ageLabel(at: Instant, now: Instant): String {
 
 fun mufaLabel(mufa: com.dscorp.ispadmin.domain.model.Mufa): String =
     mufa.reference.orEmpty() + (mufa.threads?.let { " ($it hilos)" }.orEmpty())
+
+data class TicketRow(val id: Int, val title: String, val detail: String, val badge: StatusBadge)
+
+/** «Tickets» tab: the subscription's tickets newest first; open ones label the tab. */
+data class FichaTickets(val openCount: Int, val rows: List<TicketRow>) {
+    companion object {
+        fun from(tickets: List<AssistanceTicketResponse>): FichaTickets = FichaTickets(
+            openCount = tickets.count { it.status in OPEN_TICKET_STATES },
+            rows = tickets.sortedByDescending { it.createdAt }.map { ticket ->
+                val created = ticket.createdAt.toInstant().atZone(FICHA_ZONE).toLocalDate()
+                TicketRow(
+                    id = ticket.id,
+                    title = ticket.category,
+                    detail = listOfNotNull("#${ticket.id}", "${dayMonth(created)} ${created.year}", ticket.assignedTo?.takeIf { it.isNotBlank() }?.toTitleCase())
+                        .joinToString(" · "),
+                    badge = ticket.status.ticketBadge(),
+                )
+            },
+        )
+
+        private val OPEN_TICKET_STATES = setOf(AssistanceTicketStatus.PENDING, AssistanceTicketStatus.ASSIGNED, AssistanceTicketStatus.IN_PROGRESS)
+
+        private fun AssistanceTicketStatus.ticketBadge(): StatusBadge = when (this) {
+            AssistanceTicketStatus.PENDING -> StatusBadge("Pendiente", BadgeTone.WARNING)
+            AssistanceTicketStatus.ASSIGNED, AssistanceTicketStatus.IN_PROGRESS -> StatusBadge("En curso", BadgeTone.INFO)
+            AssistanceTicketStatus.RESOLVED, AssistanceTicketStatus.CLOSED -> StatusBadge("Cerrado", BadgeTone.NEUTRAL)
+            AssistanceTicketStatus.CANCELLED -> StatusBadge("Cancelado", BadgeTone.NEUTRAL)
+        }
+    }
+}

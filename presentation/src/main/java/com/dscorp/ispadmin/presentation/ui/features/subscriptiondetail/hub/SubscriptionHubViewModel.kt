@@ -13,6 +13,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.Fic
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaHeader
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaPayments
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTab
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaTickets
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.canRestore
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.restoreHint
 import kotlinx.coroutines.CancellationException
@@ -39,6 +40,7 @@ interface SubscriptionHubGateway {
     suspend fun mufaName(mufaId: Int): String? = null
     suspend fun rebootOnu(subscriptionId: Int): Result<Unit> = Result.failure(UnsupportedOperationException())
     suspend fun resendConfig(subscriptionId: Int): Result<Unit> = Result.failure(UnsupportedOperationException())
+    suspend fun tickets(subscriptionId: Int): List<com.dscorp.ispadmin.data.response.AssistanceTicketResponse> = emptyList()
 }
 
 data class ChargeSheetState(
@@ -61,6 +63,7 @@ data class SubscriptionHubUiState(
     val tab: FichaTab = FichaTab.RESUMEN,
     val payments: FichaPayments? = null,
     val network: FichaNetwork? = null,
+    val tickets: FichaTickets? = null,
 ) {
     val unpaidReceipts: List<Payment> get() = receipts.filter { !it.paid }.sortedBy { it.billingDate }
 }
@@ -135,6 +138,7 @@ class SubscriptionHubViewModel(
                 val subscription = gateway.subscription(subscriptionId)
                 val receipts = gateway.recentPayments(subscriptionId, RECENT_RECEIPTS)
                 val methods = loadMethods()
+                val tickets = loadTickets(subscriptionId)
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -142,16 +146,28 @@ class SubscriptionHubViewModel(
                         header = HubHeader.from(subscription),
                         ficha = FichaHeader.from(subscription, receipts, today()),
                         payments = FichaPayments.from(receipts, subscription.totalDebt, today()),
+                        tickets = tickets,
+                        network = null,
                         receipts = receipts,
                         methods = methods,
                     )
                 }
+                if (_uiState.value.tab == FichaTab.RED) loadNetwork()
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = LOAD_ERROR) }
             }
         }
+    }
+
+    /** Tickets are a side panel of the ficha: if they fail the rest still loads. */
+    private suspend fun loadTickets(subscriptionId: Int): FichaTickets? = try {
+        FichaTickets.from(gateway.tickets(subscriptionId))
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Exception) {
+        null
     }
 
     /** Without the catalog the sheet still works with no method preselected. */

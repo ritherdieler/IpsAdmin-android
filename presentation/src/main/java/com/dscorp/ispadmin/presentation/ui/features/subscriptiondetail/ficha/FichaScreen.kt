@@ -26,6 +26,7 @@ fun FichaScreen(
     subscription: SubscriptionResponse,
     otherServices: List<CustomerServiceSummary>,
     tab: FichaTab,
+    ticketsCount: Int?,
     onTab: (FichaTab) -> Unit,
     onBack: () -> Unit,
     onMore: (() -> Unit)?,
@@ -45,7 +46,7 @@ fun FichaScreen(
                 else onAction(action)
             }
         }
-        FichaTabs(tab, onTab)
+        FichaTabs(tab, onTab, ticketsCount)
         when (tab) {
             FichaTab.RESUMEN -> FichaSummary(
                 restoreHint = restoreHint(subscription.serviceStatus, pending),

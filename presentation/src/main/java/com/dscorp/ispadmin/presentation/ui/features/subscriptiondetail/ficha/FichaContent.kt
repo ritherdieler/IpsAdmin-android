@@ -475,3 +475,44 @@ private enum class EquipmentAction(val question: String, val confirm: String) {
     REBOOT("¿Reiniciar la ONU?", "Reiniciar"),
     RESEND("¿Reenviar la configuración?", "Reenviar"),
 }
+
+@Composable
+fun FichaTicketsTab(tickets: FichaTickets?, onNewTicket: () -> Unit, onOpenTicket: (Int) -> Unit) {
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        androidx.compose.material3.OutlinedButton(
+            onClick = onNewTicket,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+        ) { Text("Nuevo ticket", fontWeight = FontWeight.SemiBold) }
+        when {
+            tickets == null -> EmptyNote("No se pudieron cargar los tickets.")
+            tickets.rows.isEmpty() -> EmptyNote("Esta suscripción no tiene tickets.")
+            else -> Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface, CARD)) {
+                tickets.rows.forEachIndexed { index, row ->
+                    if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer)
+                    Row(
+                        Modifier.fillMaxWidth().clickable { onOpenTicket(row.id) }.heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(row.title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(row.detail, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        HubBadge(row.badge)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyNote(text: String) {
+    Text(
+        text,
+        fontSize = 14.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().padding(24.dp),
+    )
+}

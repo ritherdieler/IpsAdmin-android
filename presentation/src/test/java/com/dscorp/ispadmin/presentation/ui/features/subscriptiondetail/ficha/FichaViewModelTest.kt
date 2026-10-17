@@ -156,4 +156,38 @@ class FichaViewModelTest {
             events,
         )
     }
+
+    @Test
+    fun `tickets load with the ficha and a failure does not break it`() = runTest(dispatcher) {
+        coEvery { gateway.tickets(1842) } returns listOf(
+            com.dscorp.ispadmin.data.response.AssistanceTicketResponse(
+                id = 3609, name = "JORGE", category = "Sin Conexión a Internet", description = "",
+                status = com.dscorp.ispadmin.data.response.AssistanceTicketStatus.PENDING, priority = "Alta", sheetImageUrl = null,
+            )
+        )
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842))
+        advanceUntilIdle()
+        assertEquals(1, viewModel.uiState.value.tickets?.openCount)
+
+        coEvery { gateway.tickets(1842) } throws IllegalStateException("404")
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842))
+        advanceUntilIdle()
+        assertEquals(null, viewModel.uiState.value.tickets)
+        assertEquals("Cortado desde 15 set", viewModel.uiState.value.ficha?.badges?.first()?.text)
+    }
+
+    @Test
+    fun `reloading while on the network tab reads the equipment again`() = runTest(dispatcher) {
+        coEvery { gateway.cpeReading(1842) } returns CpeReading(online = true, rxDbm = -20.0, lastInform = null, model = null)
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842))
+        advanceUntilIdle()
+        viewModel.onIntent(SubscriptionHubIntent.TabSelected(FichaTab.RED))
+        advanceUntilIdle()
+
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842))
+        advanceUntilIdle()
+
+        assertEquals(false, viewModel.uiState.value.network == null)
+        coVerify(exactly = 2) { gateway.cpeReading(1842) }
+    }
 }

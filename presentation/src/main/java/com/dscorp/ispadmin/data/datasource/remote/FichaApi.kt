@@ -4,10 +4,14 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.Cpe
 import retrofit2.http.GET
 import retrofit2.http.Path
 
-/** Core service-health reading of the subscriber's ONU (ADMIN/TECHNICIAN). */
-interface FichaNetworkApi {
+/** Reads the subscription ficha needs beyond the classic endpoints. */
+interface FichaApi {
+    /** Core service-health reading of the subscriber's ONU (ADMIN/TECHNICIAN). */
     @GET("subscription/{id}/cpe-status")
     suspend fun cpeStatus(@Path("id") subscriptionId: Int): CpeStatusResponse
+
+    @GET("assistanceTicket/bySubscription/{id}")
+    suspend fun ticketsBySubscription(@Path("id") subscriptionId: Int): List<com.dscorp.ispadmin.data.response.AssistanceTicketResponse>
 }
 
 data class CpeStatusResponse(
