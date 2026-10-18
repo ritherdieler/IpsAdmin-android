@@ -10,26 +10,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
-import com.dscorp.ispadmin.presentation.ui.features.locationMapView.LocationSelectorComposeDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CancelSubscriptionDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CancelSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CustomerDataForm
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.DeferCutDialog
-import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.LocationUpdateDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.ReactivateServiceDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.ReactivateServiceState
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
-import com.dscorp.ispadmin.presentation.utils.PermissionUtils
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.model.LatLng
 
 /**
  * Runs one «Más acciones» choice with the dialogs and logic the subscription search already uses,
@@ -46,10 +38,8 @@ fun FichaActionHost(
     onChanged: (message: String?) -> Unit,
     onClosed: () -> Unit,
 ) {
-    val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
     val resume = remember(subscription) { subscription.toDomain() }
-    var showMap by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.customerSaveMessages.collect { message ->
@@ -98,10 +88,7 @@ fun FichaActionHost(
                 onClosed()
             }
             MoreAction.CHANGE_NAP -> navController.navigate(FeatureRoutes.Subscription.ChangeNap(subscription.id)).also { onClosed() }
-            MoreAction.UPDATE_LOCATION -> {
-                viewModel.setSelectedSubscription(resume)
-                viewModel.toggleLocationUpdateDialog(true)
-            }
+            MoreAction.UPDATE_LOCATION -> navController.navigate(FeatureRoutes.Subscription.UpdateLocation(subscription.id)).also { onClosed() }
             MoreAction.EDIT_HOLDER -> {
                 viewModel.setSelectedSubscription(resume)
                 viewModel.getPlaces()
@@ -113,52 +100,6 @@ fun FichaActionHost(
     }
 
     when (action) {
-        MoreAction.UPDATE_LOCATION -> if (state.showLocationUpdateDialog) {
-            val locationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-            LocationUpdateDialog(
-                selectedSubscription = state.selectedSubscription,
-                saveState = state.saveSubscriptionState,
-                latitude = state.editableLatitude,
-                longitude = state.editableLongitude,
-                onShowMap = { showMap = true },
-                onGetCurrentLocationClick = {
-                    viewModel.setFetchingCurrentLocation(true)
-                    PermissionUtils.requestLocationPermissionFromContext(
-                        context = context,
-                        onPermissionGranted = {
-                            locationClient.lastLocation
-                                .addOnSuccessListener { location ->
-                                    if (location != null) viewModel.updateCurrentLocation(LatLng(location.latitude, location.longitude))
-                                    else viewModel.onLocationError()
-                                    viewModel.setFetchingCurrentLocation(false)
-                                }
-                                .addOnFailureListener {
-                                    viewModel.onLocationError()
-                                    viewModel.setFetchingCurrentLocation(false)
-                                }
-                        },
-                        onPermissionDenied = { viewModel.onLocationError() },
-                    )
-                },
-                isFetchingCurrentLocation = state.isFetchingCurrentLocation,
-                onUpdateLocation = { viewModel.updateSubscriptionLocation() },
-                onDismiss = {
-                    viewModel.toggleLocationUpdateDialog(false)
-                    onClosed()
-                    onChanged(null)
-                },
-            )
-            if (showMap) {
-                LocationSelectorComposeDialog(
-                    initialLocation = subscription.location,
-                    onLocationSelected = { latLng ->
-                        viewModel.updateCoordinatesFromMap(latLng)
-                        showMap = false
-                    },
-                    onDismiss = { showMap = false },
-                )
-            }
-        }
         MoreAction.DEFER_CUT -> DeferCutDialog(
             onDismiss = onClosed,
             onConfirm = { untilDate, reason ->

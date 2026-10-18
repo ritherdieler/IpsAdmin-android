@@ -408,6 +408,13 @@ private fun NavGraphContent(
                 onBack = { navController.popBackStack() },
             )
         }
+        composable<Subscription.UpdateLocation> { backStackEntry ->
+            com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.UpdateLocationRoute(
+                subscriptionId = backStackEntry.toRoute<Subscription.UpdateLocation>().subscriptionId,
+                onDone = { navController.returnToFicha(it) },
+                onBack = { navController.popBackStack() },
+            )
+        }
         composable<Subscription.Migrate> { backStackEntry ->
             val subscriptionId = backStackEntry.toRoute<Subscription.Migrate>().subscriptionId
             MigrationComposeScreen(
