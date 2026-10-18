@@ -467,7 +467,8 @@ class RegisterSubscriptionFormWizardTest {
         composeRule.setContent { MaterialTheme { RegisterSubscriptionForm(formState = state) } }
 
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ACS_PENDING_BANNER).assertExists()
-        composeRule.onNodeWithText("ONU VSOL0031C0B6 · conectando con la gestión remota…").assertExists()
+        composeRule.onNodeWithText("ONU VSOL0031C0B6").assertExists()
+        composeRule.onNodeWithText("Autorizada en la OLT ✓ · conectando con la gestión remota…").assertExists()
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.FIRST_NAME).assertExists()
     }
 
@@ -482,7 +483,7 @@ class RegisterSubscriptionFormWizardTest {
         composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
         composeRule.setContent { MaterialTheme { RegisterSubscriptionForm(formState = state) } }
 
-        composeRule.onNodeWithText("Equipo listo").assertExists()
+        composeRule.onNodeWithText("Equipo conectado con la gestión remota ✓").assertExists()
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ACS_PENDING_BANNER).assertDoesNotExist()
     }
 

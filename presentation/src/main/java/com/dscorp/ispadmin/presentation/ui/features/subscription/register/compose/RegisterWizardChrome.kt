@@ -272,3 +272,69 @@ internal fun OnuListBlock(
         }
     }
 }
+
+@Composable
+internal fun RegisterFieldLabel(text: String, modifier: Modifier = Modifier) {
+    Text(text, modifier, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/** a-reg field: label above, 12 dp outlined box, error or helper below. The test tag goes on the editable field. */
+@Composable
+internal fun RegisterTextField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    fieldModifier: Modifier = Modifier,
+    error: String? = null,
+    helper: String? = null,
+    enabled: Boolean = true,
+    singleLine: Boolean = true,
+    minHeight: androidx.compose.ui.unit.Dp = 52.dp,
+    keyboardOptions: androidx.compose.foundation.text.KeyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default,
+) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        RegisterFieldLabel(label)
+        androidx.compose.material3.OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = fieldModifier.fillMaxWidth().heightIn(min = minHeight),
+            enabled = enabled,
+            singleLine = singleLine,
+            maxLines = if (singleLine) 1 else 4,
+            isError = error != null,
+            shape = RoundedCornerShape(12.dp),
+            keyboardOptions = keyboardOptions,
+            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = IspTheme.colors.card,
+                unfocusedContainerColor = IspTheme.colors.card,
+                disabledContainerColor = IspTheme.colors.card,
+            ),
+        )
+        when {
+            error != null -> Text(error, fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
+            helper != null -> Text(helper, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** Tinted note with an icon tile: ACS state, ticket origin, existing customer. */
+@Composable
+internal fun RegisterNote(
+    container: androidx.compose.ui.graphics.Color,
+    iconTint: androidx.compose.ui.graphics.Color,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
+) {
+    Row(
+        modifier.fillMaxWidth().background(container, RoundedCornerShape(16.dp)).padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Box(Modifier.size(36.dp).background(IspTheme.colors.card, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(20.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp), content = content)
+    }
+}

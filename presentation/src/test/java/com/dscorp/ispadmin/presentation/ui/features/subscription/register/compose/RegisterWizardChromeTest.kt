@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.domain.model.Onu
+import com.google.android.gms.maps.model.LatLng
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionTestTags
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
@@ -94,5 +95,26 @@ class RegisterWizardChromeTest {
 
         composeRule.onNodeWithText("2 de 4").assertExists()
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.WIZARD_BACK).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the client step reads like the canvas and locates the installation`() {
+        val state = onuStep(selected = zte).copy(
+            wizardStep = RegisterSubscriptionWizardStep.CLIENT_LOCATION,
+            registerSubscriptionForm = RegisterSubscriptionFormState(location = LatLng(-11.2296, -77.3861)),
+        )
+        show(state)
+
+        listOf("Nombres *", "Apellidos *", "DNI *", "Teléfono *", "Dirección *", "Ubicación *", "Lugar *").forEach {
+            composeRule.onNodeWithText(it).assertExists()
+        }
+        composeRule.onNodeWithText("-11.229600, -77.386100", substring = true).assertExists()
+        composeRule.onNodeWithText("Usar mi ubicación").performClick()
+        composeRule.onNodeWithText("Ajustar en el mapa").performClick()
+
+        assertEquals(
+            listOf(RegisterSubscriptionIntent.UseCurrentLocationClicked, RegisterSubscriptionIntent.ChooseManualLocationClicked),
+            intents.filter { it is RegisterSubscriptionIntent.UseCurrentLocationClicked || it is RegisterSubscriptionIntent.ChooseManualLocationClicked },
+        )
     }
 }

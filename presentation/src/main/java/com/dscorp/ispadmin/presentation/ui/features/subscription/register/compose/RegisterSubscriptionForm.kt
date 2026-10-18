@@ -1,5 +1,16 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Router
 import com.dscorp.ispadmin.presentation.theme.IspTheme
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import android.content.res.Configuration
@@ -225,8 +236,7 @@ fun RegisterSubscriptionForm(
                                     onPhoneChanged = { onIntent(RegisterSubscriptionIntent.PhoneChanged(it)) },
                                     dniWarning = formState.dniWarning,
                                 )
-                                Spacer(modifier = Modifier.height(24.dp))
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
                                 AddressFields(
                                     formState = formState,
                                     form = form,
@@ -357,72 +367,26 @@ private fun AcsStatusBanner(formState: RegisterSubscriptionState) {
 
 @Composable
 private fun AcsPendingBanner(serial: String) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(RegisterSubscriptionTestTags.ACS_PENDING_BANNER),
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.primaryContainer,
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(18.dp),
-                strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-            Spacer(modifier = Modifier.size(10.dp))
-            Column {
-                Text(
-                    text = "ONU $serial · conectando con la gestión remota…",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Text(
-                    text = "Puedes seguir llenando los datos. Podrás registrar cuando el equipo conecte.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-        }
+    val colors = IspTheme.colors
+    RegisterNote(colors.infoContainer, colors.info, Icons.Outlined.Router, Modifier.testTag(RegisterSubscriptionTestTags.ACS_PENDING_BANNER)) {
+        Text("ONU $serial", fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
+        Text("Autorizada en la OLT ✓ · conectando con la gestión remota…", fontSize = 13.sp, lineHeight = 18.sp)
+        LinearProgressIndicator(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).height(4.dp).clip(RoundedCornerShape(50)),
+            color = colors.info,
+            trackColor = colors.card,
+        )
+        Text("Llena los datos mientras tanto; podrás registrar cuando el equipo conecte.", fontSize = 12.sp, lineHeight = 16.sp)
     }
 }
 
 @Composable
 private fun EquipmentReadyBanner(formState: RegisterSubscriptionState) {
     val operation = formState.preauthorizationOperation ?: return
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer,
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-            Spacer(modifier = Modifier.size(10.dp))
-            Column {
-                Text(
-                    text = "Equipo listo",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
-                Text(
-                    text = "ONU ${operation.serial} autorizada y conectada con ACS.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
-            }
-        }
+    val colors = IspTheme.colors
+    RegisterNote(colors.successContainer, colors.success, Icons.Outlined.Router) {
+        Text("Equipo conectado con la gestión remota ✓", fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
+        Text("ONU ${operation.serial} lista para registrar.", fontSize = 13.sp, lineHeight = 18.sp)
     }
 }
 
@@ -438,83 +402,48 @@ private fun ClientDataFields(
     identityLocked: Boolean = false,
     customerBanner: String? = null,
 ) {
-    SectionTitle("Datos del cliente")
-    if (customerBanner != null) {
-        Text(
-            text = customerBanner,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
+    val colors = IspTheme.colors
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        customerBanner?.let { banner ->
+            RegisterNote(colors.infoContainer, colors.info, Icons.Outlined.Person) {
+                Text(banner, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
+                Text("Sus datos de titular vienen de la suscripción existente.", fontSize = 13.sp)
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            RegisterTextField(
+                "Nombres *", form.firstName, onFirstNameChanged, Modifier.weight(1f),
+                fieldModifier = Modifier.testTag(RegisterSubscriptionTestTags.FIRST_NAME),
+                error = form.firstNameError, enabled = !isLoading && !identityLocked,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            )
+            RegisterTextField(
+                "Apellidos *", form.lastName, onLastNameChanged, Modifier.weight(1f),
+                fieldModifier = Modifier.testTag(RegisterSubscriptionTestTags.LAST_NAME),
+                error = form.lastNameError, enabled = !isLoading && !identityLocked,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f)) {
+                RegisterTextField(
+                    "DNI *", form.dni, onDniChanged,
+                    fieldModifier = Modifier.testTag(RegisterSubscriptionTestTags.DNI),
+                    error = form.dniError, enabled = !isLoading && !identityLocked,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                )
+                dniWarning?.let {
+                    Text(it, fontSize = 12.sp, color = colors.warning, modifier = Modifier.padding(top = 4.dp).testTag(RegisterSubscriptionTestTags.DNI_WARNING))
+                }
+            }
+            RegisterTextField(
+                "Teléfono *", form.phone, onPhoneChanged, Modifier.weight(1f),
+                fieldModifier = Modifier.testTag(RegisterSubscriptionTestTags.PHONE),
+                error = form.phoneError, enabled = !isLoading,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
+            )
+        }
     }
-    Text(
-        text = "Los campos marcados con * son obligatorios.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-
-    TwoFieldsRow(
-        label1 = "Nombres *",
-        value1 = form.firstName,
-        error1 = form.firstNameError,
-        onValueChange1 = onFirstNameChanged,
-        keyboardType1 = KeyboardType.Text,
-        testTag1 = RegisterSubscriptionTestTags.FIRST_NAME,
-        label2 = "Apellidos *",
-        value2 = form.lastName,
-        error2 = form.lastNameError,
-        onValueChange2 = onLastNameChanged,
-        keyboardType2 = KeyboardType.Text,
-        testTag2 = RegisterSubscriptionTestTags.LAST_NAME,
-        enabled = !isLoading && !identityLocked
-    )
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    MyOutlinedTextField(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(RegisterSubscriptionTestTags.DNI),
-        label = "DNI · 8 dígitos *",
-        value = form.dni,
-        errorMessage = form.dniError,
-        onValueChange = onDniChanged,
-        enabled = !isLoading && !identityLocked,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Number,
-            imeAction = ImeAction.Next
-        )
-    )
-
-    if (dniWarning != null) {
-        Text(
-            text = dniWarning,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.tertiary,
-            modifier = Modifier
-                .padding(top = 4.dp)
-                .testTag(RegisterSubscriptionTestTags.DNI_WARNING),
-        )
-    }
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    MyOutlinedTextField(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(RegisterSubscriptionTestTags.PHONE),
-        label = "Teléfono · 9 dígitos *",
-        value = form.phone,
-        errorMessage = form.phoneError,
-        onValueChange = onPhoneChanged,
-        enabled = !isLoading,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Phone,
-            imeAction = ImeAction.Next
-        )
-    )
 }
 
 @Composable
@@ -527,77 +456,42 @@ private fun AddressFields(
     onUseCurrentLocation: () -> Unit,
     onChooseManualLocation: () -> Unit,
 ) {
-    SectionTitle("Dirección de instalación")
-    Spacer(modifier = Modifier.height(8.dp))
-
-    MyOutlinedTextField(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(RegisterSubscriptionTestTags.ADDRESS),
-        value = form.address,
-        label = "Dirección completa *",
-        errorMessage = form.addressError,
-        onValueChange = onAddressChanged,
-        enabled = !formState.isLoading,
-        singleLine = false,
-        maxLines = 4,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-        supportingText = if (form.address.isEmpty()) {
-            { Text("Ej: Jr. Los Olivos 123, Mz A Lt 5", style = MaterialTheme.typography.bodySmall) }
-        } else null
-    )
-
-    Spacer(modifier = Modifier.height(16.dp))
-    Text(
-        text = "Indica el punto donde se instalará el servicio.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(bottom = 4.dp),
-    )
-    LocationMethodSelector(
-        selected = form.locationCaptureMethod,
-        location = form.location,
-        locationError = form.locationError,
-        onUseCurrentLocation = onUseCurrentLocation,
-        onChooseManualLocation = onChooseManualLocation,
-    )
-
-    if (formState.isLoadingLocation) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CircularProgressIndicator(modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-            Text(
-                text = "Obteniendo ubicación...",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        RegisterTextField(
+            "Dirección *", form.address, onAddressChanged,
+            fieldModifier = Modifier.testTag(RegisterSubscriptionTestTags.ADDRESS),
+            error = form.addressError,
+            helper = "Calle, número y una referencia: «Jr. Los Olivos 123, frente al parque»".takeIf { form.address.isEmpty() },
+            enabled = !formState.isLoading,
+            singleLine = false,
+            minHeight = 88.dp,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+        )
+        LocationMethodSelector(
+            selected = form.locationCaptureMethod,
+            location = form.location,
+            locationError = form.locationError,
+            loading = formState.isLoadingLocation,
+            onUseCurrentLocation = onUseCurrentLocation,
+            onChooseManualLocation = onChooseManualLocation,
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            RegisterFieldLabel("Lugar *")
+            MyAutoCompleteTextViewCompose(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(RegisterSubscriptionTestTags.PLACE),
+                items = form.placeList,
+                label = "Distrito o localidad *",
+                selectedItem = form.selectedPlace,
+                onItemSelected = onPlaceSelected,
+                onSelectionCleared = onPlaceSelectionCleared,
+                hasError = form.placeError != null,
+                enabled = !formState.isLoading,
             )
+            Text("Escribe para filtrar la lista de lugares.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
-
-    Text(
-        text = "Escribe para filtrar la lista de lugares.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
-    )
-    MyAutoCompleteTextViewCompose(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(RegisterSubscriptionTestTags.PLACE),
-        items = form.placeList,
-        label = "Distrito o localidad *",
-        selectedItem = form.selectedPlace,
-        onItemSelected = onPlaceSelected,
-        onSelectionCleared = onPlaceSelectionCleared,
-        hasError = form.placeError != null,
-        enabled = !formState.isLoading,
-    )
 }
 
 @Composable
@@ -1581,58 +1475,58 @@ private fun LocationMethodSelector(
     selected: LocationCaptureMethod,
     location: com.google.android.gms.maps.model.LatLng?,
     locationError: String?,
+    loading: Boolean,
     onUseCurrentLocation: () -> Unit,
     onChooseManualLocation: () -> Unit,
 ) {
-    Text(
-        text = "Ubicación del cliente *",
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.SemiBold
-    )
-    Spacer(modifier = Modifier.height(4.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        RadioButtonWithLabel(
-            modifier = Modifier
-                .weight(1f)
-                .testTag(RegisterSubscriptionTestTags.LOCATION_METHOD_CURRENT),
-            label = "Usar ubicación actual",
-            selected = selected == LocationCaptureMethod.CURRENT,
-            onClick = onUseCurrentLocation,
-            textStyle = MaterialTheme.typography.bodySmall,
-            labelStartPadding = 2.dp,
-        )
-        RadioButtonWithLabel(
-            modifier = Modifier
-                .weight(1f)
-                .testTag(RegisterSubscriptionTestTags.LOCATION_METHOD_MANUAL),
-            label = "Elegir en el mapa",
-            selected = selected == LocationCaptureMethod.MANUAL,
-            onClick = onChooseManualLocation,
-            textStyle = MaterialTheme.typography.bodySmall,
-            labelStartPadding = 2.dp,
-        )
-    }
-    location?.let { latLng ->
-        Text(
-            text = "Coordenadas: ${"%.6f".format(latLng.latitude)}, ${"%.6f".format(latLng.longitude)}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .padding(top = 4.dp)
-                .testTag(RegisterSubscriptionTestTags.LOCATION_COORDINATES)
-        )
-    }
-    locationError?.let { error ->
-        Text(
-            text = error,
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(top = 4.dp)
-        )
+    val colors = IspTheme.colors
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Ubicación *", fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold)
+        Row(
+            Modifier.fillMaxWidth().background(colors.card, RoundedCornerShape(16.dp)).padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.size(40.dp).background(if (location != null) colors.accent.copy(alpha = 0.14f) else colors.track, CircleShape),
+                contentAlignment = Alignment.Center) {
+                Icon(Icons.Outlined.Place, contentDescription = null, tint = if (location != null) colors.accent else MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    when {
+                        loading -> "Obteniendo ubicación…"
+                        location == null -> "Sin ubicación todavía"
+                        selected == LocationCaptureMethod.MANUAL -> "Elegida en el mapa"
+                        else -> "Ubicación actual del teléfono"
+                    },
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                location?.let { latLng ->
+                    Text(
+                        "${"%.6f".format(latLng.latitude)}, ${"%.6f".format(latLng.longitude)}",
+                        modifier = Modifier.testTag(RegisterSubscriptionTestTags.LOCATION_COORDINATES),
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } ?: Text("Usa tu ubicación en la casa del cliente o márcala en el mapa.", fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (loading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Button(
+                onClick = onUseCurrentLocation,
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(RegisterSubscriptionTestTags.LOCATION_METHOD_CURRENT),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.selectedContainer, contentColor = colors.onSelectedContainer),
+            ) { Text("Usar mi ubicación", fontWeight = FontWeight.SemiBold, maxLines = 1) }
+            OutlinedButton(
+                onClick = onChooseManualLocation,
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(RegisterSubscriptionTestTags.LOCATION_METHOD_MANUAL),
+            ) { Text("Ajustar en el mapa", fontWeight = FontWeight.SemiBold, color = colors.hero, maxLines = 1) }
+        }
+        locationError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = 12.sp) }
     }
 }
 
