@@ -54,7 +54,7 @@ class CashDayModelTest {
         val rows = CashDay.from(cashDay(), today).rows
 
         assertEquals(3, rows.size)
-        assertEquals(CashRow(1842, "11:42", "Jorge Ramos Villanueva", "Yape · ago y set · Rosa C.", "S/ 100.00"), rows[0])
+        assertEquals(CashRow(5, 1842, "11:42", "Jorge Ramos Villanueva", "Yape · ago y set · Rosa C.", "S/ 100.00"), rows[0])
         assertEquals("Yape · pagó Hilda Ccori M.", rows[1].detail)
         assertEquals("Efectivo · oct · Rosa C.", rows[2].detail)
     }

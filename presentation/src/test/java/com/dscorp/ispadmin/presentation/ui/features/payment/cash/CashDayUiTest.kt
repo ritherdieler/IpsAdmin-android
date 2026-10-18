@@ -35,7 +35,7 @@ class CashDayUiTest {
         compose.onNodeWithText("Buscar pago, titular o pagador").performClick()
         compose.onNodeWithTag(CashDayTestTags.NEW_CHARGE).performClick()
 
-        assertEquals(listOf(CashAction.OpenSubscription(1842), CashAction.Search, CashAction.NewCharge), actions)
+        assertEquals(listOf(CashAction.OpenPayment(5), CashAction.Search, CashAction.NewCharge), actions)
     }
 
     @Test

@@ -57,7 +57,6 @@ import com.dscorp.ispadmin.presentation.ui.features.outlay.RegisterOutlayScreen
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailScreen
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryComposeScreen
-import com.dscorp.ispadmin.presentation.ui.features.payment.payerFinder.FindPayerComposeScreen
 import com.dscorp.ispadmin.presentation.ui.features.payment.register.RegisterPaymentScreen
 import com.dscorp.ispadmin.presentation.ui.features.plan.PlanListScreen
 import com.dscorp.ispadmin.presentation.ui.features.plan.PlanListViewModel
@@ -440,7 +439,35 @@ private fun NavGraphContent(
             CashDayRoute(backStackEntry, navController)
         }
         composable<Payment.SearchPayers> {
-            FindPayerComposeScreen(navController = navController)
+            val viewModel: com.dscorp.ispadmin.presentation.ui.features.payment.cash.PaymentSearchViewModel = koinViewModel()
+            val state by viewModel.uiState.collectAsState()
+            LaunchedEffect(Unit) { viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.payment.cash.PaymentSearchIntent.Load) }
+            com.dscorp.ispadmin.presentation.ui.features.payment.cash.PaymentSearchContent(
+                state = state,
+                onIntent = viewModel::onIntent,
+                onOpen = { navController.navigate(Payment.Receipt(it)) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable<Payment.Receipt> { backStackEntry ->
+            val receiptId = backStackEntry.toRoute<Payment.Receipt>().receiptId
+            val viewModel: com.dscorp.ispadmin.presentation.ui.features.payment.cash.PaymentReceiptViewModel = koinViewModel()
+            val state by viewModel.uiState.collectAsState()
+            val context = androidx.compose.ui.platform.LocalContext.current
+            LaunchedEffect(receiptId) { viewModel.load(receiptId) }
+            com.dscorp.ispadmin.presentation.ui.features.payment.cash.PaymentDetailContent(
+                state = state,
+                onBack = { navController.popBackStack() },
+                onShare = {
+                    state.detail?.let { detail ->
+                        val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
+                            .putExtra(android.content.Intent.EXTRA_TEXT, detail.shareText())
+                        context.startActivity(android.content.Intent.createChooser(send, "Compartir comprobante"))
+                    }
+                },
+                onOpenSubscription = { navController.navigate(Subscription.Details(it)) },
+                onRetry = { viewModel.load(receiptId) },
+            )
         }
         // OUTLAY MODULE
         composable<Outlay.Month> { backStackEntry ->
@@ -739,7 +766,7 @@ private fun CashDayRoute(backStackEntry: NavBackStackEntry, navController: NavHo
             CashAction.Search -> navController.navigate(Payment.SearchPayers)
             CashAction.NewCharge -> navController.navigateToRoot(Subscription.Find)
             CashAction.Retry -> viewModel.onIntent(CashIntent.Refresh)
-            is CashAction.OpenSubscription -> navController.navigate(Subscription.Details(action.id))
+            is CashAction.OpenPayment -> navController.navigate(Payment.Receipt(action.receiptId))
             is CashAction.Period -> when (action.period) {
                 CashPeriod.TODAY -> viewModel.onIntent(CashIntent.SelectDate(java.time.LocalDate.now(LIMA)))
                 CashPeriod.YESTERDAY -> viewModel.onIntent(CashIntent.SelectDate(java.time.LocalDate.now(LIMA).minusDays(1)))

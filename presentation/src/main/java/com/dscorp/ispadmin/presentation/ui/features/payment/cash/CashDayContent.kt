@@ -58,7 +58,7 @@ sealed interface CashAction {
     data object NewCharge : CashAction
     data object Retry : CashAction
     data class Period(val period: CashPeriod) : CashAction
-    data class OpenSubscription(val id: Int) : CashAction
+    data class OpenPayment(val receiptId: Int) : CashAction
 }
 
 object CashDayTestTags {
@@ -125,7 +125,7 @@ fun CashDayContent(state: CashDayUiState, onAction: (CashAction) -> Unit) {
                     val shown = if (showAll) day.rows else day.rows.take(ROWS_PREVIEW)
                     Column(Modifier.padding(horizontal = 16.dp).fillMaxWidth().background(colors.card, RoundedCornerShape(16.dp))) {
                         shown.forEachIndexed { index, row ->
-                            CashRowItem(row) { row.subscriptionId?.let { onAction(CashAction.OpenSubscription(it)) } }
+                            CashRowItem(row) { onAction(CashAction.OpenPayment(row.receiptId)) }
                             if (index < shown.lastIndex) HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = colors.track)
                         }
                     }
@@ -198,7 +198,7 @@ private fun MethodsCard(methods: List<CashMethod>) {
 @Composable
 private fun CashRowItem(row: CashRow, onClick: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable(enabled = row.subscriptionId != null, role = Role.Button, onClick = onClick)
+        Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

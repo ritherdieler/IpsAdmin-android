@@ -87,6 +87,7 @@ object MainNavigation {
         is Payment.Detail -> "Detalle de pago"
         is Payment.FindPayer -> "Caja"
         is Payment.SearchPayers -> "Buscar pagos"
+        is Payment.Receipt -> "Detalle de pago"
         is SupportTicket.List -> "Tickets"
         is SupportTicket.Create -> "Nuevo ticket"
         is SupportTicket.Detail -> "Ticket"
@@ -110,6 +111,7 @@ object MainNavigation {
             // Dashboard, the subscription search and the ficha draw their own header, as in the design.
             showTopBar = route !is FeatureRoutes.Dashboard && route !is Subscription.Find && route !is Subscription.Details &&
                 route !is SupportTicket.Detail && route !is SupportTicket.Close && route !is SupportTicket.Create && route !is Subscription.Register && route !is Payment.FindPayer &&
+                route !is Payment.SearchPayers && route !is Payment.Receipt &&
                 !(type == UserType.SALES && route is Installation.List),
             bottomBar = if (isTopLevel && bar.size > 1) bar else emptyList(),
             selected = selected,

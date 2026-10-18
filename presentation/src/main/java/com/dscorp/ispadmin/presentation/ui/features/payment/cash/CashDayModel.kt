@@ -15,7 +15,7 @@ private const val TOP_COLLECTORS = 3
 private const val SAME_CHARGE_MINUTES = 2L
 
 data class CashMethod(val label: String, val amount: String, val count: String, val share: Float)
-data class CashRow(val subscriptionId: Int?, val time: String, val name: String, val detail: String, val amount: String)
+data class CashRow(val receiptId: Int, val subscriptionId: Int?, val time: String, val name: String, val detail: String, val amount: String)
 
 /** Caja (a-caj-01): what came in on one day, by method, and the charges newest first. */
 data class CashDay(
@@ -49,6 +49,7 @@ data class CashDay(
                             first.collector?.let(::shortName),
                         ).joinToString(" · ")
                     CashRow(
+                        receiptId = first.id,
                         subscriptionId = first.subscriptionId,
                         time = first.paidAt.take(16).takeLast(5),
                         name = first.subscriber.orEmpty().toTitleCase().ifBlank { "Sin titular" },

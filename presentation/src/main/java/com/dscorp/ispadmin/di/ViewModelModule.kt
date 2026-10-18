@@ -14,7 +14,6 @@ import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdminist
 import com.dscorp.ispadmin.presentation.ui.features.outlay.OutLayViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryViewModel
-import com.dscorp.ispadmin.presentation.ui.features.payment.payerFinder.PayerFinderViewmodel
 import com.dscorp.ispadmin.presentation.ui.features.payment.register.RegisterPaymentViewModel
 import com.dscorp.ispadmin.presentation.ui.features.plan.PlanListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.profile.ProfileViewModel
@@ -116,6 +115,18 @@ val viewModelModule = module {
         ) { java.time.LocalDate.now(java.time.ZoneId.of("America/Lima")) }
     }
     viewModel {
+        com.dscorp.ispadmin.presentation.ui.features.payment.cash.PaymentSearchViewModel(
+            com.dscorp.ispadmin.presentation.ui.features.payment.cash.ApiPaymentsGateway(get(), get()),
+            get<CoroutineDispatcher>(named("mainImmediate")),
+        ) { java.time.LocalDate.now(java.time.ZoneId.of("America/Lima")) }
+    }
+    viewModel {
+        com.dscorp.ispadmin.presentation.ui.features.payment.cash.PaymentReceiptViewModel(
+            com.dscorp.ispadmin.presentation.ui.features.payment.cash.ApiPaymentsGateway(get(), get()),
+            get<CoroutineDispatcher>(named("mainImmediate")),
+        )
+    }
+    viewModel {
         com.dscorp.ispadmin.presentation.ui.features.home.HomeViewModel(
             gateway = com.dscorp.ispadmin.presentation.ui.features.home.ApiHomeGateway(get()),
             mainImmediate = get<CoroutineDispatcher>(named("mainImmediate")),
@@ -161,7 +172,6 @@ val viewModelModule = module {
     viewModel { CreateInstallationOrderViewModel(get(), get(), get(), get()) }
     viewModel { SupportTicketListViewModel(get(), get(), get()) }
     viewModel { InstallationOrderListViewModel(get(), get(), get()) }
-    viewModel { PayerFinderViewmodel(get(), get()) }
     viewModel { MainViewModel(get(), get()) }
     viewModel { PlanListViewModel(get(), get(), get()) }
     viewModel {

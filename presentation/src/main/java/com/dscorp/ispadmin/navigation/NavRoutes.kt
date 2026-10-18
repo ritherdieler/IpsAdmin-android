@@ -99,6 +99,10 @@ sealed class NavRoutes {
 
             @Serializable
             object SearchPayers : Payment()
+
+            /** a-caj-05: one receipt of the cash ledger (payment_receipt id). */
+            @Serializable
+            data class Receipt(val receiptId: Int) : Payment()
         }
 
 
@@ -189,6 +193,7 @@ sealed class NavRoutes {
                     Payment.Detail::class.qualifiedName -> Payment.Detail("")
                     Payment.FindPayer::class.qualifiedName -> Payment.FindPayer
                     Payment.SearchPayers::class.qualifiedName -> Payment.SearchPayers
+                    Payment.Receipt::class.qualifiedName -> Payment.Receipt(0)
 
                     Installation.List::class.qualifiedName -> Installation.List
                     Installation.Create::class.qualifiedName -> Installation.Create

@@ -211,6 +211,10 @@ class MainNavigationTest {
         val search = MainNavigation.shellChrome(UserType.SECRETARY, Payment.SearchPayers)
         assertEquals("Buscar pagos", search.title)
         assertTrue(search.showBack)
+        // Search and payment detail draw their own header with back, as in a-caj-05/06.
+        assertFalse(search.showTopBar)
+        assertFalse(MainNavigation.shellChrome(UserType.SECRETARY, Payment.Receipt(46790)).showTopBar)
+        assertTrue(MainNavigation.shellChrome(UserType.SECRETARY, Payment.Receipt(46790)).bottomBar.isEmpty())
     }
 
     @Test
