@@ -18,7 +18,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = Application::class)
+@Config(sdk = [34], application = Application::class, qualifiers = "w390dp-h2000dp")
 class SubscriptionHubUiTest {
     @get:Rule val compose = createComposeRule()
 
@@ -71,5 +71,34 @@ class SubscriptionHubUiTest {
 
         compose.onNodeWithTag(SubscriptionHubTestTags.SUBMIT_CHARGE).assertIsEnabled()
         compose.onNodeWithText("Registrar cobro · S/ 100.00").assertExists()
+    }
+
+    @Test
+    fun `cash shows the change and a discount lowers the action`() {
+        val draft = ChargeDraft.start(listOf(receipt(1, 100), receipt(2, 200)), METHODS, ServiceStatus.ACTIVE)
+            .copy(method = "Efectivo", received = "110", discountOpen = true, discount = "10", discountReason = "Promoción")
+        compose.setContent { MaterialTheme { ChargeSheetContent(draft, holderName = "Jorge Ramos", onIntent = {}) } }
+
+        compose.onNodeWithText("Vuelto S/ 20.00").assertExists()
+        compose.onNodeWithText("Registrar cobro · S/ 90.00").assertExists()
+        compose.onNodeWithText("Quitar").assertExists()
+    }
+
+    @Test
+    fun `the receipt confirms the charge`() {
+        var done = false
+        compose.setContent {
+            MaterialTheme {
+                ChargeReceiptContent(
+                    ChargeReceipt("P-1", "Jorge Ramos Villanueva", "ago y set 2026", "Yape · Jorge Ramos V.", "S/ 100.00", "Rosa C.", "14 oct 2026 · 11:42", restored = true),
+                    onDone = { done = true }, onShare = {},
+                )
+            }
+        }
+
+        compose.onNodeWithText("Cobro registrado").assertExists()
+        compose.onNodeWithText("Servicio restablecido.").assertExists()
+        compose.onNodeWithText("Listo").performClick()
+        assertTrue(done)
     }
 }

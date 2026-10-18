@@ -1,5 +1,9 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail
 
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.shareText
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.chargeSubtitle
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.ChargeReceiptContent
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.ChargeReceipt
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaActionHost
@@ -367,7 +371,19 @@ fun SubscriptionDetailScreen(
             ChargeBottomSheet(
                 charge = charge,
                 holderName = hubState.header?.name.orEmpty(),
+                subtitle = hubState.subscription?.let(::chargeSubtitle),
                 onIntent = hubViewModel::onIntent,
+            )
+        }
+        hubState.chargeReceipt?.let { receipt ->
+            val context = LocalContext.current
+            ChargeReceiptSheet(
+                receipt = receipt,
+                onDone = { hubViewModel.onIntent(SubscriptionHubIntent.CloseReceipt) },
+                onShare = {
+                    val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, receipt.shareText())
+                    context.startActivity(Intent.createChooser(send, "Compartir comprobante"))
+                },
             )
         }
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
@@ -424,13 +440,23 @@ private fun openWhatsApp(context: Context, phoneNumber: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ChargeBottomSheet(charge: ChargeSheetState, holderName: String, onIntent: (SubscriptionHubIntent) -> Unit) {
+private fun ChargeBottomSheet(charge: ChargeSheetState, holderName: String, subtitle: String?, onIntent: (SubscriptionHubIntent) -> Unit) {
     ModalBottomSheet(
         onDismissRequest = { onIntent(SubscriptionHubIntent.CloseCharge) },
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
-            ChargeSheetContent(charge.draft, holderName, onIntent, isSubmitting = charge.isSubmitting, error = charge.error)
+            ChargeSheetContent(charge.draft, holderName, onIntent, isSubmitting = charge.isSubmitting, error = charge.error, subtitle = subtitle)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ChargeReceiptSheet(receipt: ChargeReceipt, onDone: () -> Unit, onShare: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDone, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            ChargeReceiptContent(receipt, onDone = onDone, onShare = onShare)
         }
     }
 }

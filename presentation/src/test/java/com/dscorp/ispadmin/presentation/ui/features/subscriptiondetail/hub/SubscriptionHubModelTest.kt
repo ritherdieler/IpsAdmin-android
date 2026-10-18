@@ -132,4 +132,53 @@ class SubscriptionHubModelTest {
 
         assertFalse(ChargeDraft.start(receipts, METHODS, ServiceStatus.ACTIVE).canRestore)
     }
+
+    private val fifty = listOf(receipt(1, 100, amount = 50.0), receipt(2, 200, amount = 50.0))
+
+    @Test
+    fun `cash shows the change and blocks when it does not cover the total`() {
+        val cash = ChargeDraft.start(fifty, METHODS, ServiceStatus.ACTIVE).copy(method = "Efectivo")
+
+        assertEquals(10.0, cash.copy(received = "110").change!!, 0.001)
+        assertNull(cash.copy(received = "110").blockingReason)
+        assertEquals("Lo recibido no alcanza para el total", cash.copy(received = "80").blockingReason)
+        assertNull(cash.copy(method = "Yape", payerName = "Ana", received = "80").blockingReason)
+    }
+
+    @Test
+    fun `a discount lowers the total and needs a reason`() {
+        val discounted = ChargeDraft.start(fifty, METHODS, ServiceStatus.ACTIVE).copy(method = "Efectivo", discountOpen = true, discount = "10")
+
+        assertEquals(90.0, discounted.toPay, 0.001)
+        assertEquals("Elige el motivo del descuento", discounted.blockingReason)
+        assertNull(discounted.copy(discountReason = "Promoción").blockingReason)
+        assertEquals("El descuento no puede ser mayor al total", discounted.copy(discount = "200", discountReason = "Otro").blockingReason)
+        assertEquals(100.0, discounted.copy(discountOpen = false).toPay, 0.001)
+    }
+
+    @Test
+    fun `the last method used comes first`() {
+        assertEquals("Efectivo", ChargeDraft.start(fifty, METHODS, ServiceStatus.ACTIVE, lastUsed = "Efectivo").method)
+        assertEquals("Yape", ChargeDraft.start(fifty, METHODS, ServiceStatus.ACTIVE, lastUsed = "Bitcoin").method)
+    }
+
+    @Test
+    fun `receipts say whether they are overdue`() {
+        val today = java.time.LocalDate.of(2026, 10, 14)
+        fun due(date: String?) = receiptStatus(Payment(id = 1, dueDate = date), today)
+
+        assertEquals(StatusBadge("Vencido", BadgeTone.ERROR), due("2026-10-13T00:00:00"))
+        assertEquals(StatusBadge("Vence hoy", BadgeTone.WARNING), due("2026-10-14T00:00:00"))
+        assertEquals(StatusBadge("Vence mañana", BadgeTone.WARNING), due("2026-10-15T00:00:00"))
+        assertEquals(StatusBadge("Pendiente", BadgeTone.NEUTRAL), due("2026-10-30T00:00:00"))
+        assertNull(due(null))
+    }
+
+    @Test
+    fun `the charge subtitle names the plan as the ficha does`() {
+        val withPlan = subscription().apply {
+            plan = com.dscorp.ispadmin.domain.model.PlanResponse("9", "basico_wireless 50", 50.0, "20", "20", InstallationType.WIRELESS)
+        }
+        assertEquals("Cód. 1842 · Basico wireless 50 · S/ 50.00 al mes", chargeSubtitle(withPlan))
+    }
 }

@@ -32,13 +32,19 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.dscorp.ispadmin.presentation.ui.features.home.dayMonth
+import com.dscorp.ispadmin.presentation.ui.features.payment.cash.monthsLabel
+import com.dscorp.ispadmin.presentation.ui.features.payment.cash.shortName
 
 /** What the hub needs from the data layer; keeps the view model off the monolithic repository. */
 interface SubscriptionHubGateway {
     suspend fun subscription(subscriptionId: Int): SubscriptionResponse
     suspend fun recentPayments(subscriptionId: Int, limit: Int): List<Payment>
     suspend fun paymentMethods(): List<PaymentMethodOption>
-    suspend fun registerPayment(payment: Payment): Payment
+    /** Registers the selected receipts in one Core transaction (PUT payment/batch). */
+    suspend fun registerCharge(batch: ChargeBatch): List<Payment>
+    fun lastMethod(): String?
+    fun rememberMethod(method: String)
     suspend fun restoreInternet(subscriptionId: Int): Result<Unit>
     fun currentUser(): User?
     suspend fun cpeReading(subscriptionId: Int): CpeReading = error("not wired")
@@ -65,6 +71,7 @@ data class SubscriptionHubUiState(
     val receipts: List<Payment> = emptyList(),
     val methods: List<PaymentMethodOption> = emptyList(),
     val charge: ChargeSheetState? = null,
+    val chargeReceipt: ChargeReceipt? = null,
     val ficha: FichaHeader? = null,
     val tab: FichaTab = FichaTab.RESUMEN,
     val payments: FichaPayments? = null,
@@ -87,6 +94,11 @@ sealed interface SubscriptionHubIntent {
     data class MethodSelected(val method: String) : SubscriptionHubIntent
     data class PayerNameChanged(val name: String) : SubscriptionHubIntent
     data object RestoreToggled : SubscriptionHubIntent
+    data class ReceivedChanged(val amount: String) : SubscriptionHubIntent
+    data object DiscountToggled : SubscriptionHubIntent
+    data class DiscountChanged(val amount: String) : SubscriptionHubIntent
+    data class DiscountReasonSelected(val reason: String) : SubscriptionHubIntent
+    data object CloseReceipt : SubscriptionHubIntent
     data object SubmitCharge : SubscriptionHubIntent
     data class TabSelected(val tab: FichaTab) : SubscriptionHubIntent
     data object RestoreService : SubscriptionHubIntent
@@ -128,6 +140,13 @@ class SubscriptionHubViewModel(
             is SubscriptionHubIntent.MethodSelected -> updateDraft { it.copy(method = intent.method) }
             is SubscriptionHubIntent.PayerNameChanged -> updateDraft { it.copy(payerName = intent.name) }
             SubscriptionHubIntent.RestoreToggled -> updateDraft { it.copy(restore = !it.restore) }
+            is SubscriptionHubIntent.ReceivedChanged -> updateDraft { it.copy(received = intent.amount) }
+            SubscriptionHubIntent.DiscountToggled -> updateDraft {
+                if (it.discountOpen) it.copy(discountOpen = false, discount = "", discountReason = null) else it.copy(discountOpen = true)
+            }
+            is SubscriptionHubIntent.DiscountChanged -> updateDraft { it.copy(discount = intent.amount) }
+            is SubscriptionHubIntent.DiscountReasonSelected -> updateDraft { it.copy(discountReason = intent.reason) }
+            SubscriptionHubIntent.CloseReceipt -> _uiState.update { it.copy(chargeReceipt = null) }
             SubscriptionHubIntent.SubmitCharge -> submitCharge()
             is SubscriptionHubIntent.TabSelected -> {
                 _uiState.update { it.copy(tab = intent.tab) }
@@ -266,7 +285,7 @@ class SubscriptionHubViewModel(
     private fun openCharge() {
         val state = _uiState.value
         val subscription = state.subscription ?: return
-        val draft = ChargeDraft.start(state.receipts, state.methods, subscription.serviceStatus)
+        val draft = ChargeDraft.start(state.receipts, state.methods, subscription.serviceStatus, lastUsed = gateway.lastMethod())
         _uiState.update { it.copy(charge = ChargeSheetState(draft)) }
     }
 
@@ -287,32 +306,54 @@ class SubscriptionHubViewModel(
         }
         viewModelScope.launch(mainImmediate) {
             _uiState.update { it.copy(charge = charge.copy(isSubmitting = true, error = null)) }
-            try {
-                charge.draft.selectedReceipts.forEach { receipt -> gateway.registerPayment(receipt.toCharge(charge.draft, user)) }
+            val draft = charge.draft
+            val registered = try {
+                gateway.registerCharge(draft.toBatch())
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
                 _uiState.update { it.copy(charge = charge.copy(isSubmitting = false, error = CHARGE_ERROR)) }
                 return@launch
             }
-            val restoreNote = restoreIfAsked(charge.draft, subscription.id)
-            _uiState.update { it.copy(charge = null) }
-            _events.emit(SubscriptionHubEvent.Message("Cobro registrado · ${formatSoles(charge.draft.total)}$restoreNote"))
+            gateway.rememberMethod(draft.method)
+            val restored = restoreIfAsked(draft, subscription.id)
+            val receipt = chargeReceipt(draft, registered, _uiState.value.header?.name.orEmpty(), user, restored)
+            _uiState.update { it.copy(charge = null, chargeReceipt = receipt) }
             load(subscription.id)
         }
     }
 
-    private suspend fun restoreIfAsked(draft: ChargeDraft, subscriptionId: Int): String {
-        if (!draft.restore || !draft.canRestore) return ""
-        return if (gateway.restoreInternet(subscriptionId).isSuccess) " · servicio restablecido"
-        else " · no se pudo restablecer el servicio"
+    /** null when restoring was not asked; otherwise whether it worked. */
+    private suspend fun restoreIfAsked(draft: ChargeDraft, subscriptionId: Int): Boolean? {
+        if (!draft.restore || !draft.canRestore) return null
+        return gateway.restoreInternet(subscriptionId).isSuccess
     }
 
-    private fun Payment.toCharge(draft: ChargeDraft, user: User) = Payment(
-        id = id,
-        method = draft.method,
-        responsibleId = requireNotNull(user.id) { "Charging needs a signed-in user" },
-        responsibleName = user.name,
-        electronicPayerName = draft.payerName.trim().takeIf { draft.requiresPayerName && it.isNotEmpty() },
+    private fun ChargeDraft.toBatch() = ChargeBatch(
+        paymentIds = selectedReceipts.mapNotNull { it.id },
+        method = method,
+        discountAmount = discountValue,
+        discountReason = discountReason.takeIf { discountValue > 0 },
+        electronicPayerName = payerName.trim().takeIf { requiresPayerName && it.isNotEmpty() },
     )
+
+    private fun chargeReceipt(draft: ChargeDraft, registered: List<Payment>, holder: String, user: User, restored: Boolean?): ChargeReceipt {
+        val ids = registered.mapNotNull { it.id }.ifEmpty { draft.selectedReceipts.mapNotNull { it.id } }
+        val months = draft.selectedReceipts.map { java.time.Instant.ofEpochMilli(it.billingDate).atZone(FICHA_ZONE).toLocalDate() }
+        val payer = draft.payerName.trim().takeIf { draft.requiresPayerName && it.isNotEmpty() }
+        val at = now().atZone(FICHA_ZONE)
+        return ChargeReceipt(
+            number = ids.joinToString(" · ") { "#$it" },
+            holder = holder,
+            months = listOfNotNull(
+                monthsLabel(months.map { java.time.YearMonth.from(it).toString() }).takeIf { it.isNotEmpty() },
+                months.maxOrNull()?.year?.toString(),
+            ).joinToString(" "),
+            method = listOfNotNull(draft.method, payer).joinToString(" · "),
+            amount = formatSoles(draft.toPay),
+            collector = shortName(user.name),
+            date = "${dayMonth(at.toLocalDate())} ${at.year} · ${"%02d:%02d".format(at.hour, at.minute)}",
+            restored = restored,
+        )
+    }
 }

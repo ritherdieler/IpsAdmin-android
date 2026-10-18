@@ -8,6 +8,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -40,6 +41,8 @@ class SubscriptionHubViewModelTest {
         coEvery { gateway.recentPayments(1842, any()) } returns listOf(receipt(2, 200), receipt(1, 100), receipt(0, 50, paid = true))
         coEvery { gateway.paymentMethods() } returns METHODS
         every { gateway.currentUser() } returns cashier
+        every { gateway.lastMethod() } returns null
+        every { gateway.rememberMethod(any()) } returns Unit
         viewModel = SubscriptionHubViewModel(gateway, mainImmediate = dispatcher)
     }
 
@@ -76,12 +79,11 @@ class SubscriptionHubViewModelTest {
     }
 
     @Test
-    fun `charging registers each receipt oldest first and restores the service`() = runTest(dispatcher) {
-        val registered = mutableListOf<Payment>()
-        coEvery { gateway.registerPayment(capture(registered)) } answers { firstArg() }
+    fun `charging sends one batch and shows the receipt`() = runTest(dispatcher) {
+        val batch = slot<ChargeBatch>()
+        coEvery { gateway.registerCharge(capture(batch)) } returns listOf(receipt(1, 100, paid = true), receipt(2, 200, paid = true))
         coEvery { gateway.restoreInternet(1842) } returns Result.success(Unit)
-        val events = mutableListOf<SubscriptionHubEvent>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.collect { events += it } }
+        every { gateway.rememberMethod(any()) } returns Unit
         viewModel.onIntent(SubscriptionHubIntent.Load(1842))
         advanceUntilIdle()
 
@@ -90,21 +92,19 @@ class SubscriptionHubViewModelTest {
         viewModel.onIntent(SubscriptionHubIntent.SubmitCharge)
         advanceUntilIdle()
 
-        assertEquals(listOf(1, 2), registered.map { it.id })
-        registered.forEach {
-            assertEquals("Yape", it.method)
-            assertEquals("Jorge Ramos V.", it.electronicPayerName)
-            assertEquals(7, it.responsibleId)
-        }
+        assertEquals(ChargeBatch(listOf(1, 2), "Yape", 0.0, null, "Jorge Ramos V."), batch.captured)
         coVerify(exactly = 1) { gateway.restoreInternet(1842) }
+        verify { gateway.rememberMethod("Yape") }
         assertNull(viewModel.uiState.value.charge)
-        assertEquals(listOf(SubscriptionHubEvent.Message("Cobro registrado · S/ 100.00 · servicio restablecido")), events)
+        val done = viewModel.uiState.value.chargeReceipt!!
+        assertEquals("S/ 100.00", done.amount)
+        assertEquals("Yape · Jorge Ramos V.", done.method)
+        assertEquals(true, done.restored)
     }
 
     @Test
     fun `a failed receipt stops the charge and keeps the sheet open with the error`() = runTest(dispatcher) {
-        val first = slot<Payment>()
-        coEvery { gateway.registerPayment(capture(first)) } throws IllegalStateException("500")
+        coEvery { gateway.registerCharge(any()) } throws IllegalStateException("500")
         viewModel.onIntent(SubscriptionHubIntent.Load(1842))
         advanceUntilIdle()
 
@@ -113,7 +113,7 @@ class SubscriptionHubViewModelTest {
         viewModel.onIntent(SubscriptionHubIntent.SubmitCharge)
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { gateway.registerPayment(any()) }
+        coVerify(exactly = 1) { gateway.registerCharge(any()) }
         coVerify(exactly = 0) { gateway.restoreInternet(any()) }
         val charge = viewModel.uiState.value.charge
         assertEquals("No se pudo registrar el cobro. Revisa tu conexión y vuelve a intentar.", charge?.error)
@@ -122,7 +122,7 @@ class SubscriptionHubViewModelTest {
 
     @Test
     fun `charge without restore leaves the service as it is`() = runTest(dispatcher) {
-        coEvery { gateway.registerPayment(any()) } answers { firstArg() }
+        coEvery { gateway.registerCharge(any()) } returns emptyList()
         viewModel.onIntent(SubscriptionHubIntent.Load(1842))
         advanceUntilIdle()
 
