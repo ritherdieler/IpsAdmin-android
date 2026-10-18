@@ -2572,6 +2572,23 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
+    fun `editing from review jumps back to an earlier form step only`() = runTest(testDispatcher) {
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        fillStep1()
+        advanceUntilIdle()
+        viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+        viewModel.onIntent(RegisterSubscriptionIntent.EditStepClicked(com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.CONFIRMATION))
+        viewModel.onIntent(RegisterSubscriptionIntent.EditStepClicked(com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.ONU_SELECTION))
+        assertEquals(com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.INSTALLATION, viewModel.uiState.value.wizardStep)
+
+        viewModel.onIntent(RegisterSubscriptionIntent.EditStepClicked(com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.CLIENT_LOCATION))
+        assertEquals(com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.CLIENT_LOCATION, viewModel.uiState.value.wizardStep)
+        assertEquals("JUAN", viewModel.uiState.value.registerSubscriptionForm.firstName)
+    }
+
+    @Test
     fun `WizardBack returns to previous step without clearing form`() = runTest(testDispatcher) {
         viewModel.loadScreenData(null)
         advanceUntilIdle()

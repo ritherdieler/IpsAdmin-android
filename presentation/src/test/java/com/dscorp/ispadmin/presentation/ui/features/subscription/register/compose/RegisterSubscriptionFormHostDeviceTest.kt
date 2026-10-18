@@ -100,5 +100,5 @@ class RegisterSubscriptionFormHostDeviceTest {
 }
 
 /** The wizard UI is split across these files; source checks read them together. */
-internal fun registerWizardSource(): String = listOf("RegisterSubscriptionForm.kt", "RegisterServiceStep.kt", "RegisterWizardChrome.kt")
+internal fun registerWizardSource(): String = listOf("RegisterSubscriptionForm.kt", "RegisterServiceStep.kt", "RegisterWizardChrome.kt", "RegisterReviewStep.kt")
     .joinToString("\n") { File("src/main/java/com/dscorp/ispadmin/presentation/ui/features/subscription/register/compose/$it").readText() }

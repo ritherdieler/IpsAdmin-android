@@ -54,4 +54,6 @@ sealed interface RegisterSubscriptionIntent {
     ) : RegisterSubscriptionIntent
     data object WizardContinueClicked : RegisterSubscriptionIntent
     data object WizardBackClicked : RegisterSubscriptionIntent
+    /** «Editar» in the review: back to an earlier form step. */
+    data class EditStepClicked(val step: RegisterSubscriptionWizardStep) : RegisterSubscriptionIntent
 }

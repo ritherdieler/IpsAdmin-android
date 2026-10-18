@@ -471,6 +471,7 @@ class RegisterSubscriptionComposeViewModel(
                 onLocationCoordinatesSelected(intent.latitude, intent.longitude)
             RegisterSubscriptionIntent.WizardContinueClicked -> onWizardContinueClicked()
             RegisterSubscriptionIntent.WizardBackClicked -> onWizardBackClicked()
+            is RegisterSubscriptionIntent.EditStepClicked -> onEditStepClicked(intent.step)
         }
     }
 
@@ -1357,6 +1358,13 @@ class RegisterSubscriptionComposeViewModel(
 
     private fun Any?.asLongOrNull(): Long? = when (this) { is Number -> toLong(); else -> this?.toString()?.toLongOrNull() }
     private fun Any?.asDoubleOrNull(): Double? = when (this) { is Number -> toDouble(); else -> this?.toString()?.toDoubleOrNull() }
+
+    /** Review «Editar»: only back, and only to form steps (the authorized ONU cannot change). */
+    private fun onEditStepClicked(step: RegisterSubscriptionWizardStep) {
+        _uiState.update { current ->
+            if (step in FORM_STEPS && step.ordinal < current.wizardStep.ordinal) current.copy(wizardStep = step) else current
+        }
+    }
 
     private fun onWizardBackClicked() {
         _uiState.update { current ->
