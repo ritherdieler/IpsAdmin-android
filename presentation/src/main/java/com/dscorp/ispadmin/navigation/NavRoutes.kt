@@ -85,6 +85,9 @@ sealed class NavRoutes {
             data class DeferCut(val subscriptionId: Int) : Subscription()
 
             @Serializable
+            data class EditHolder(val subscriptionId: Int) : Subscription()
+
+            @Serializable
             data class Migrate(val subscriptionId: Int) : Subscription()
 
             @Serializable
@@ -197,6 +200,7 @@ sealed class NavRoutes {
                     Subscription.ChangeNap::class.qualifiedName -> Subscription.ChangeNap(0)
                     Subscription.UpdateLocation::class.qualifiedName -> Subscription.UpdateLocation(0)
                     Subscription.DeferCut::class.qualifiedName -> Subscription.DeferCut(0)
+                    Subscription.EditHolder::class.qualifiedName -> Subscription.EditHolder(0)
                     Subscription.Migrate::class.qualifiedName -> Subscription.Migrate(0)
                     Subscription.Edit::class.qualifiedName -> Subscription.Edit(0)
 

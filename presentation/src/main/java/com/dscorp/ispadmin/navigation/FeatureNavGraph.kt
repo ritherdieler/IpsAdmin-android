@@ -424,6 +424,21 @@ private fun NavGraphContent(
                 onBack = { navController.popBackStack() },
             )
         }
+        composable<Subscription.EditHolder> { backStackEntry ->
+            val subscriptionId = backStackEntry.toRoute<Subscription.EditHolder>().subscriptionId
+            val viewModel: com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.EditHolderViewModel = koinViewModel()
+            val state by viewModel.uiState.collectAsState()
+            LaunchedEffect(subscriptionId) {
+                viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.EditHolderIntent.Load(subscriptionId))
+            }
+            LaunchedEffect(state.done) { state.done?.let { navController.returnToFicha(it) } }
+            com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.EditHolderContent(
+                state = state,
+                onIntent = viewModel::onIntent,
+                onBack = { navController.popBackStack() },
+                onRetry = { viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.EditHolderIntent.Load(subscriptionId)) },
+            )
+        }
         composable<Subscription.Migrate> { backStackEntry ->
             val subscriptionId = backStackEntry.toRoute<Subscription.Migrate>().subscriptionId
             MigrationComposeScreen(

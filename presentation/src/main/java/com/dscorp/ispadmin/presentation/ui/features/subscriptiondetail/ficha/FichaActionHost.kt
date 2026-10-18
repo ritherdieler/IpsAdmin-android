@@ -1,8 +1,5 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -11,7 +8,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
@@ -19,7 +15,6 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.C
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.CancelSubscription
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.CancelSubscriptionSheetContent
 import java.time.LocalDate
-import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CustomerDataForm
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.ReactivateServiceDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.ReactivateServiceState
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
@@ -93,11 +88,7 @@ fun FichaActionHost(
             }
             MoreAction.CHANGE_NAP -> navController.navigate(FeatureRoutes.Subscription.ChangeNap(subscription.id)).also { onClosed() }
             MoreAction.UPDATE_LOCATION -> navController.navigate(FeatureRoutes.Subscription.UpdateLocation(subscription.id)).also { onClosed() }
-            MoreAction.EDIT_HOLDER -> {
-                viewModel.setSelectedSubscription(resume)
-                viewModel.getPlaces()
-                viewModel.initCustomerFormData(resume)
-            }
+            MoreAction.EDIT_HOLDER -> navController.navigate(FeatureRoutes.Subscription.EditHolder(subscription.id)).also { onClosed() }
             MoreAction.DEFER_CUT -> navController.navigate(FeatureRoutes.Subscription.DeferCut(subscription.id)).also { onClosed() }
             MoreAction.CANCEL, MoreAction.REACTIVATE -> viewModel.setSelectedSubscription(resume)
             null -> Unit
@@ -125,21 +116,6 @@ fun FichaActionHost(
             notes = state.reactivationNotes,
             onNotesChange = viewModel::updateReactivationNotes,
         )
-        MoreAction.EDIT_HOLDER -> state.customerFormData?.takeIf { it.subscriptionId == subscription.id }?.let { form ->
-            ModalBottomSheet(onDismissRequest = onClosed, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-                Column(Modifier.verticalScroll(rememberScrollState())) {
-                    CustomerDataForm(
-                        formData = form,
-                        placesState = state.placesState,
-                        saveState = state.saveSubscriptionState,
-                        onFieldChange = viewModel::updateCustomerFormField,
-                        onPlaceSelected = viewModel::onPlaceSelected,
-                        onUpdatePlace = viewModel::updateCustomerPlaceId,
-                        onSaveClick = viewModel::saveCustomerData,
-                    )
-                }
-            }
-        }
         else -> Unit
     }
 }
