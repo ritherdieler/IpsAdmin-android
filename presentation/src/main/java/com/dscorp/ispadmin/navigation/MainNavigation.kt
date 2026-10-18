@@ -46,7 +46,7 @@ object MainNavigation {
         UserType.ACCOUNTANT -> listOf(MainDestination.HOME, MainDestination.SUBSCRIPTIONS, MainDestination.CASH, MainDestination.MORE)
         UserType.SECRETARY -> listOf(MainDestination.HOME, MainDestination.SUBSCRIPTIONS, MainDestination.CASH, MainDestination.TICKETS, MainDestination.MORE)
         UserType.TECHNICIAN -> listOf(MainDestination.TODAY, MainDestination.TICKETS, MainDestination.INSTALLATIONS, MainDestination.SUBSCRIPTIONS, MainDestination.MORE)
-        UserType.SALES -> listOf(MainDestination.INSTALLATIONS, MainDestination.MORE)
+        UserType.SALES -> listOf(MainDestination.INSTALLATIONS, MainDestination.SUBSCRIPTIONS, MainDestination.MORE)
         UserType.LOGISTIC, UserType.CLIENT -> listOf(MainDestination.MORE)
     }
 

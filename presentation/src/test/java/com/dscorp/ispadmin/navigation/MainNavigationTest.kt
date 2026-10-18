@@ -33,7 +33,7 @@ class MainNavigationTest {
             listOf(MainDestination.TODAY, MainDestination.TICKETS, MainDestination.INSTALLATIONS, MainDestination.SUBSCRIPTIONS, MainDestination.MORE),
             MainNavigation.bottomBarFor(UserType.TECHNICIAN),
         )
-        assertEquals(listOf(MainDestination.INSTALLATIONS, MainDestination.MORE), MainNavigation.bottomBarFor(UserType.SALES))
+        assertEquals(listOf(MainDestination.INSTALLATIONS, MainDestination.SUBSCRIPTIONS, MainDestination.MORE), MainNavigation.bottomBarFor(UserType.SALES))
     }
 
     @Test
