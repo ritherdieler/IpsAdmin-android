@@ -272,7 +272,11 @@ private fun NavGraphContent(
                         },
                         onNavigateToPendingSubscriptions = {
                             navController.navigate(Subscription.PendingSubscriptions)
-                        }
+                        },
+                        onViewSubscription = { subscriptionId ->
+                            navController.popBackStack()
+                            navController.navigate(Subscription.Details(subscriptionId))
+                        },
                     )
                 }
                 else -> {

@@ -1,5 +1,13 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
+import androidx.compose.material.icons.filled.Check
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTitleCase
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.foundation.shape.CircleShape
+import com.dscorp.ispadmin.presentation.theme.IspTheme
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -91,6 +99,7 @@ fun RegisterSubscriptionFormScreen(
     onNavigateToPendingSubscriptions: () -> Unit = {},
     onCancelRegistration: () -> Unit = {},
     onViewProvisioning: (Int) -> Unit = {},
+    onViewSubscription: (Int) -> Unit = {},
     installationOrderId: Int?,
     customerId: Int? = null,
 ) {
@@ -276,7 +285,15 @@ fun RegisterSubscriptionFormScreen(
                     ?.takeIf { uiState.submission is SubmissionState.ProvisioningUnknown }
                     ?.let { id -> { onViewProvisioning(id) } },
                 onDismiss = { viewModel.onIntent(RegisterSubscriptionIntent.DismissRegistrationResult) },
-                onContinue = onSubscriptionRegisterSuccess
+                onContinue = onSubscriptionRegisterSuccess,
+                onShareWhatsApp = whatsappLink(subscription.phone, installationMessage(subscription))?.let { link ->
+                    {
+                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                            .onFailure { dialogError = "No se pudo abrir WhatsApp en este teléfono." }
+                        Unit
+                    }
+                },
+                onViewSubscription = subscription.resolvedSubscriptionId()?.let { id -> { onViewSubscription(id) } },
             )
         }
 
@@ -396,6 +413,7 @@ fun RegisterSubscriptionFormScreen(
                 progressMessage = uiState.registrationProgressMessage,
                 progressCheckpoints = uiState.registrationProgressCheckpoints,
                 accessMode = uiState.registerSubscriptionForm.accessMode,
+                clientName = uiState.registerSubscriptionForm.firstName.toTitleCase().substringBefore(' '),
                 onCancel = if (uiState.preauthorizationEnabled) {
                     { viewModel.onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) }
                 } else null,
@@ -525,116 +543,79 @@ internal fun RegistrationProgressOverlay(
     onCancel: (() -> Unit)? = null,
     cancelEnabled: Boolean = true,
     onViewProgress: (() -> Unit)? = null,
+    clientName: String? = null,
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f))
-            .testTag(RegisterSubscriptionTestTags.PROGRESS_OVERLAY),
-        contentAlignment = Alignment.Center
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
-                .heightIn(max = 600.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
+    val colors = IspTheme.colors
+    Surface(Modifier.fillMaxSize().testTag(RegisterSubscriptionTestTags.PROGRESS_OVERLAY), color = MaterialTheme.colorScheme.background) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text("Registrando", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.hero)
+            Text(
+                clientName?.takeIf { it.isNotBlank() }?.let { "Activando el servicio de $it" } ?: "Activando el servicio",
+                fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.SemiBold,
             )
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CircularProgressIndicator()
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = registrationProgressStepMessage(progressMessage, progressCheckpoints, accessMode),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.testTag(RegisterSubscriptionTestTags.PROGRESS_STEP)
-                )
+            Text("Puedes salir: el registro sigue en el servidor.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(Modifier.fillMaxWidth().background(colors.card, RoundedCornerShape(16.dp)).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = colors.hero)
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = registrationProgressStepMessage(progressMessage, progressCheckpoints, accessMode),
+                        modifier = Modifier.weight(1f).testTag(RegisterSubscriptionTestTags.PROGRESS_STEP),
+                        fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                    )
+                    progressSummary(progressCheckpoints)?.let { Text(it, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
                 progressCheckpoints.forEach { checkpoint ->
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
-                        color = if (checkpoint.failure != null) {
-                            MaterialTheme.colorScheme.errorContainer
-                        } else {
-                            MaterialTheme.colorScheme.surfaceVariant
-                        },
-                    ) {
-                        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = registrationProgressStageLabel(checkpoint.stage, accessMode),
-                                    modifier = Modifier.weight(1f),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (checkpoint.failure != null) {
-                                        MaterialTheme.colorScheme.onErrorContainer
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                )
-                                Text(
-                                    text = registrationProgressStateLabel(checkpoint.state),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (checkpoint.failure != null) {
-                                        MaterialTheme.colorScheme.onErrorContainer
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                )
+                    val done = checkpoint.state == "SUCCEEDED"
+                    val failed = checkpoint.failure != null || checkpoint.state == "FAILED"
+                    val running = checkpoint.state == "RUNNING" || checkpoint.state == "WAITING"
+                    Row(verticalAlignment = Alignment.Top) {
+                        Box(
+                            Modifier.size(24.dp).background(
+                                when {
+                                    failed -> MaterialTheme.colorScheme.errorContainer
+                                    done -> colors.successContainer
+                                    running -> colors.infoContainer
+                                    else -> colors.track
+                                },
+                                CircleShape,
+                            ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            when {
+                                failed -> Text("!", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                                done -> Icon(Icons.Default.Check, contentDescription = null, tint = colors.success, modifier = Modifier.size(16.dp))
+                                running -> CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 2.dp, color = colors.info)
                             }
-                            if (checkpoint.attempts > 1) {
-                                Text(
-                                    text = "Intento ${checkpoint.attempts}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(registrationProgressStageLabel(checkpoint.stage, accessMode), fontSize = 15.sp,
+                                fontWeight = if (running) FontWeight.SemiBold else FontWeight.Normal)
+                            val state = registrationProgressStateLabel(checkpoint.state) +
+                                if (checkpoint.attempts > 1) " · intento ${checkpoint.attempts}" else ""
+                            Text(state, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             checkpoint.failure?.let { failure ->
-                                Text(
-                                    text = "${failure.message} (${failure.code})",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                )
+                                Text("${failure.message} (${failure.code})", fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Esto puede tomar hasta 2 minutos",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.testTag(RegisterSubscriptionTestTags.PROGRESS_HINT)
-                )
-                if (onViewProgress != null) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = onViewProgress,
-                        modifier = Modifier.testTag(RegisterSubscriptionTestTags.REGISTRATION_VIEW_PROGRESS),
-                    ) {
-                        Text("Ver progreso")
-                    }
+            }
+            Text("Esto puede tomar hasta 2 minutos", modifier = Modifier.testTag(RegisterSubscriptionTestTags.PROGRESS_HINT),
+                fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (onViewProgress != null) {
+                OutlinedButton(onClick = onViewProgress, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                    .testTag(RegisterSubscriptionTestTags.REGISTRATION_VIEW_PROGRESS)) {
+                    Text("Ver progreso", fontWeight = FontWeight.SemiBold, color = colors.hero)
                 }
-                if (onCancel != null) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    TextButton(
-                        onClick = onCancel,
-                        enabled = cancelEnabled,
-                        modifier = Modifier.testTag(RegisterSubscriptionTestTags.REGISTRATION_CANCEL_ACTION),
-                    ) {
-                        Text(if (cancelEnabled) "Cancelar registro" else "Cancelando…")
-                    }
+            }
+            if (onCancel != null) {
+                TextButton(onClick = onCancel, enabled = cancelEnabled, modifier = Modifier.align(Alignment.CenterHorizontally)
+                    .testTag(RegisterSubscriptionTestTags.REGISTRATION_CANCEL_ACTION)) {
+                    Text(if (cancelEnabled) "Cancelar registro" else "Cancelando…", color = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -650,15 +631,21 @@ internal fun RegisterSuccessFullScreen(
     onRetryTr069: (() -> Unit)? = null,
     onViewProgress: (() -> Unit)? = null,
     onDismiss: () -> Unit,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    onShareWhatsApp: (() -> Unit)? = null,
+    onViewSubscription: (() -> Unit)? = null,
 ) {
     val tr069Status = subscription.tr069ProvisionStatus
     val requiresManualTr069 = tr069Status == "MANUAL_REQUIRED" || subscription.tr069RequiresManualConfig
     val isPendingTr069 = tr069Status == "PENDING"
     val isFailedTr069 = tr069Status == "FAILED"
     val showRetryTr069 = (requiresManualTr069 || isPendingTr069 || isFailedTr069) && onRetryTr069 != null
+    // a-reg-09: the service already has internet; only the Wi-Fi did not reach the ONU.
+    val wifiMissing = requiresManualTr069 || isFailedTr069
     val usesPppoe = AccessMode.parse(subscription.accessMode)?.usesPppoe() == true
     val monthlyPrice = subscription.price ?: plan?.price
+    val colors = IspTheme.colors
+    val name = listOfNotNull(subscription.firstName, subscription.lastName).joinToString(" ").toTitleCase().ifBlank { "Suscriptor" }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -675,139 +662,97 @@ internal fun RegisterSuccessFullScreen(
                     modifier = Modifier
                         .weight(1f)
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 24.dp)
+                        .padding(horizontal = 16.dp, vertical = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                    val (badgeContainer, badgeTint) = when {
+                        wifiMissing -> colors.warningContainer to colors.warning
+                        isPendingTr069 -> colors.infoContainer to colors.info
+                        else -> colors.successContainer to colors.success
+                    }
+                    Box(Modifier.size(56.dp).background(badgeContainer, CircleShape), contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Éxito",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(64.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "¡Registro Exitoso!",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
+                            imageVector = if (wifiMissing) Icons.Default.Warning else Icons.Default.CheckCircle,
+                            contentDescription = if (wifiMissing) "Requiere atención" else "Éxito",
+                            tint = badgeTint,
+                            modifier = Modifier.size(32.dp),
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
                     Text(
-                        text = if (subscription.provisioningPending) {
-                            "Registrado; provisión de red pendiente de reconciliar"
-                        } else {
-                            "La suscripción se ha registrado correctamente"
+                        text = when {
+                            wifiMissing -> "Registrada, falta el Wi-Fi"
+                            isPendingTr069 -> "Registrada, Wi-Fi por confirmar"
+                            else -> "Suscripción registrada"
                         },
-                        style = MaterialTheme.typography.bodyLarge,
+                        fontSize = 24.sp,
+                        lineHeight = 30.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = name + (subscription.resolvedSubscriptionId()?.let { " · cód. $it" } ?: ""),
+                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = when {
+                            wifiMissing -> "El servicio ya tiene internet. La ONU no respondió al aplicar el Wi-Fi."
+                            isPendingTr069 -> "El servicio ya tiene internet. El Wi-Fi aún no se confirma en la ONU."
+                            subscription.provisioningPending -> "Registrado; provisión de red pendiente de reconciliar"
+                            else -> "La suscripción se ha registrado correctamente"
+                        },
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
                         modifier = Modifier.testTag("register_success_message")
                     )
 
                     if (notice != null) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag("register_result_notice"),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
-                            )
+                        Column(
+                            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(16.dp))
+                                .testTag("register_result_notice").padding(16.dp),
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = notice,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                )
-                                if (onViewProgress != null) {
-                                    TextButton(onClick = onViewProgress) { Text("Ver progreso") }
-                                }
+                            Text(notice, fontSize = 14.sp, color = MaterialTheme.colorScheme.onErrorContainer)
+                            if (onViewProgress != null) {
+                                TextButton(onClick = onViewProgress) { Text("Ver progreso") }
                             }
                         }
                     }
 
                     if (tr069RetryLoading) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag("wifi_retry_feedback"),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer
-                            )
+                        Row(
+                            Modifier.fillMaxWidth().background(colors.infoContainer, RoundedCornerShape(16.dp))
+                                .testTag("wifi_retry_feedback").padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(22.dp),
-                                    strokeWidth = 2.dp
-                                )
-                                Text(
-                                    text = "Actualizando redes Wi-Fi…",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    modifier = Modifier.testTag("wifi_retry_feedback_message")
-                                )
-                            }
+                            CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                            Text(
+                                text = "Actualizando redes Wi-Fi…",
+                                fontSize = 14.sp,
+                                modifier = Modifier.testTag("wifi_retry_feedback_message")
+                            )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    RegisterSuccessSectionCard(
-                        title = "Suscriptor",
-                        testTag = "register_success_section_subscriber"
-                    ) {
-                        Text(
-                            text = listOfNotNull(
-                                subscription.firstName?.takeIf(String::isNotBlank),
-                                subscription.lastName?.takeIf(String::isNotBlank),
-                            ).joinToString(" ").ifBlank { "Suscriptor" },
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+                    RegisterSuccessSectionCard(title = "Suscriptor", testTag = "register_success_section_subscriber") {
                         subscription.dni?.takeIf(String::isNotBlank)?.let { InfoRow("DNI", it) }
                         subscription.phone?.takeIf(String::isNotBlank)?.let { InfoRow("Teléfono", it) }
+                        if (subscription.dni.isNullOrBlank() && subscription.phone.isNullOrBlank()) Text(name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    RegisterSuccessSectionCard(
-                        title = "Plan contratado",
-                        testTag = "register_success_section_plan"
-                    ) {
+                    RegisterSuccessSectionCard(title = "Plan", testTag = "register_success_section_plan") {
                         Text(
                             text = plan?.name?.takeIf(String::isNotBlank) ?: "Plan de internet",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.SemiBold,
                         )
                         monthlyPrice?.let { price ->
                             InfoRow("Mensualidad", "S/ ${"%.2f".format(Locale.US, price)} / mes")
                         }
-                        plan?.downloadSpeed?.takeIf(String::isNotBlank)?.let { speed ->
-                            InfoRow("Bajada", "$speed Mbps")
-                        }
-                        plan?.uploadSpeed?.takeIf(String::isNotBlank)?.let { speed ->
-                            InfoRow("Subida", "$speed Mbps")
-                        }
+                        plan?.downloadSpeed?.takeIf(String::isNotBlank)?.let { speed -> InfoRow("Bajada", "$speed Mbps") }
+                        plan?.uploadSpeed?.takeIf(String::isNotBlank)?.let { speed -> InfoRow("Subida", "$speed Mbps") }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    RegisterSuccessSectionCard(
-                        title = "Acceso a internet",
-                        testTag = "register_success_section_access"
-                    ) {
+                    RegisterSuccessSectionCard(title = "Acceso a internet", testTag = "register_success_section_access") {
                         if (usesPppoe) {
                             InfoRow("Usuario PPPoE", subscription.pppoeUsername?.takeIf(String::isNotBlank) ?: "No disponible")
                             InfoRow("Contraseña PPPoE", subscription.pppoePassword?.takeIf(String::isNotBlank) ?: "No disponible")
@@ -816,61 +761,61 @@ internal fun RegisterSuccessFullScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    RegisterSuccessSectionCard(
-                        title = "Redes Wi-Fi",
-                        testTag = RegisterSubscriptionTestTags.SUCCESS_SECTION_WIFI
-                    ) {
+                    RegisterSuccessSectionCard(title = "Wi-Fi", testTag = RegisterSubscriptionTestTags.SUCCESS_SECTION_WIFI) {
                         InfoRow("SSID 2.4 GHz", subscription.wifiSsid24?.takeIf(String::isNotBlank) ?: "No disponible")
                         InfoRow("Contraseña 2.4 GHz", subscription.wifiPassword24?.takeIf(String::isNotBlank) ?: "No disponible")
-                        Spacer(modifier = Modifier.height(4.dp))
                         InfoRow("SSID 5 GHz", subscription.wifiSsid5?.takeIf(String::isNotBlank) ?: "No disponible")
                         InfoRow("Contraseña 5 GHz", subscription.wifiPassword5?.takeIf(String::isNotBlank) ?: "No disponible")
                     }
                 }
 
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                    Modifier.fillMaxWidth().background(colors.card).padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     if (showRetryTr069) {
                         Button(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag("btn_retry_wifi"),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("btn_retry_wifi"),
                             enabled = !tr069RetryLoading,
                             onClick = onRetryTr069,
+                            colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
                         ) {
                             if (tr069RetryLoading) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(18.dp),
-                                        strokeWidth = 2.dp
-                                    )
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                                     Text("Reintentando Wi-Fi…")
                                 }
                             } else {
-                                Text("Reintentar Wi-Fi")
+                                Text("Reintentar Wi-Fi", fontWeight = FontWeight.SemiBold)
                             }
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
-                    Button(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("btn_success_continue"),
-                        enabled = !tr069RetryLoading,
-                        onClick = {
-                            onDismiss()
-                            onContinue()
+                    if (onShareWhatsApp != null && !wifiMissing) {
+                        Button(
+                            onClick = onShareWhatsApp,
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                        ) { Text("Enviar datos por WhatsApp", fontWeight = FontWeight.SemiBold) }
+                    }
+                    if (onViewSubscription != null) {
+                        OutlinedButton(onClick = { onDismiss(); onViewSubscription() }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                            Text("Ir a la ficha", fontWeight = FontWeight.SemiBold, color = colors.hero)
                         }
-                    ) {
-                        Text("Finalizar instalación")
+                    }
+                    val finishLabel = if (wifiMissing) "Continuar sin Wi-Fi" else "Finalizar instalación"
+                    if (showRetryTr069 || onShareWhatsApp != null) {
+                        TextButton(
+                            modifier = Modifier.fillMaxWidth().testTag("btn_success_continue"),
+                            enabled = !tr069RetryLoading,
+                            onClick = { onDismiss(); onContinue() },
+                        ) { Text(finishLabel, fontWeight = FontWeight.SemiBold, color = colors.hero) }
+                    } else {
+                        Button(
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("btn_success_continue"),
+                            enabled = !tr069RetryLoading,
+                            onClick = { onDismiss(); onContinue() },
+                            colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                        ) { Text(finishLabel, fontWeight = FontWeight.SemiBold) }
                     }
                 }
             }
@@ -884,25 +829,12 @@ private fun RegisterSuccessSectionCard(
     testTag: String,
     content: @Composable () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(testTag),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        )
+    Column(
+        Modifier.fillMaxWidth().background(IspTheme.colors.card, RoundedCornerShape(16.dp)).testTag(testTag).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            content()
-        }
+        Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        content()
     }
 }
 

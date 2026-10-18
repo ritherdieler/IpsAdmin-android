@@ -65,3 +65,7 @@ fun registrationProgressStateLabel(value: String): String = when (value) {
     "COMPENSATED" -> "Revertido"
     else -> "Estado desconocido"
 }
+
+/** "3 de 5 listos" over the stages the Core reports; null before the first checkpoint. */
+fun progressSummary(checkpoints: List<RegistrationProgressCheckpoint>): String? =
+    checkpoints.takeIf { it.isNotEmpty() }?.let { "${it.count { checkpoint -> checkpoint.state == "SUCCEEDED" }} de ${it.size} listos" }
