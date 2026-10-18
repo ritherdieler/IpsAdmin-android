@@ -57,7 +57,7 @@ private const val ROWS_PREVIEW = 8
 
 /** a-sus-10 «Cambiar caja NAP». */
 @Composable
-fun ChangeNapContent(state: ChangeNapUiState, onIntent: (ChangeNapIntent) -> Unit, onBack: () -> Unit) {
+fun ChangeNapContent(state: ChangeNapUiState, onIntent: (ChangeNapIntent) -> Unit, onBack: () -> Unit, onRetry: () -> Unit = {}) {
     val colors = IspTheme.colors
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val model = state.model
@@ -65,7 +65,7 @@ fun ChangeNapContent(state: ChangeNapUiState, onIntent: (ChangeNapIntent) -> Uni
         ActionHeader("Cambiar caja NAP", onBack)
         Box(Modifier.weight(1f)) {
             when {
-                model == null && state.error != null -> Text(state.error, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
+                model == null && state.error != null -> ActionLoadError(state.error, onRetry)
                 model == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 else -> Column(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),

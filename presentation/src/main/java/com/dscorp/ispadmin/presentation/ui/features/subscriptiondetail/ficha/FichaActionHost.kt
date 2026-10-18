@@ -18,7 +18,6 @@ import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CancelSubscriptionDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CancelSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CustomerDataForm
-import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.DeferCutDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.ReactivateServiceDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.ReactivateServiceState
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionFinderViewModel
@@ -94,19 +93,13 @@ fun FichaActionHost(
                 viewModel.getPlaces()
                 viewModel.initCustomerFormData(resume)
             }
-            MoreAction.CANCEL, MoreAction.REACTIVATE, MoreAction.DEFER_CUT -> viewModel.setSelectedSubscription(resume)
+            MoreAction.DEFER_CUT -> navController.navigate(FeatureRoutes.Subscription.DeferCut(subscription.id)).also { onClosed() }
+            MoreAction.CANCEL, MoreAction.REACTIVATE -> viewModel.setSelectedSubscription(resume)
             null -> Unit
         }
     }
 
     when (action) {
-        MoreAction.DEFER_CUT -> DeferCutDialog(
-            onDismiss = onClosed,
-            onConfirm = { untilDate, reason ->
-                viewModel.deferCut(subscription.id, untilDate, reason)
-                onClosed()
-            },
-        )
         MoreAction.CANCEL -> CancelSubscriptionDialog(
             onDismiss = onClosed,
             onConfirm = {

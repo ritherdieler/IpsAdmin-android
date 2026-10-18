@@ -141,4 +141,16 @@ class ChangePlanTest {
         compose.onNodeWithTag(ChangePlanTestTags.SUBMIT).assertIsNotEnabled()
         compose.onNodeWithText("Elige el plan nuevo").assertExists()
     }
+
+    @Test
+    fun `a failed load offers to retry`() {
+        var retried = false
+        compose.setContent {
+            MaterialTheme { ChangePlanContent(ChangePlanUiState(error = "No se pudieron cargar los planes."), onIntent = {}, onBack = {}, onRetry = { retried = true }) }
+        }
+
+        compose.onNodeWithText("No se pudieron cargar los planes.").assertExists()
+        compose.onNodeWithText("Reintentar").performClick()
+        assertEquals(true, retried)
+    }
 }

@@ -41,7 +41,7 @@ private val CARD = RoundedCornerShape(16.dp)
 
 /** a-sus-09 «Cambiar plan». */
 @Composable
-fun ChangePlanContent(state: ChangePlanUiState, onIntent: (ChangePlanIntent) -> Unit, onBack: () -> Unit) {
+fun ChangePlanContent(state: ChangePlanUiState, onIntent: (ChangePlanIntent) -> Unit, onBack: () -> Unit, onRetry: () -> Unit = {}) {
     val colors = IspTheme.colors
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val model = state.model
@@ -50,7 +50,7 @@ fun ChangePlanContent(state: ChangePlanUiState, onIntent: (ChangePlanIntent) -> 
         ActionHeader("Cambiar plan", onBack)
         Box(Modifier.weight(1f)) {
             when {
-                model == null && state.error != null -> Text(state.error, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
+                model == null && state.error != null -> ActionLoadError(state.error, onRetry)
                 model == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 else -> Column(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),

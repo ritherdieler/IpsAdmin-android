@@ -115,6 +115,12 @@ val viewModelModule = module {
         ) { java.time.LocalDate.now(java.time.ZoneId.of("America/Lima")) }
     }
     viewModel {
+        com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.DeferCutViewModel(
+            com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.ApiDeferCutGateway(get(), get()),
+            get<CoroutineDispatcher>(named("mainImmediate")),
+        ) { java.time.LocalDate.now(java.time.ZoneId.of("America/Lima")) }
+    }
+    viewModel {
         com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.UpdateLocationViewModel(
             com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.ApiUpdateLocationGateway(get(), get()),
             get<CoroutineDispatcher>(named("mainImmediate")),

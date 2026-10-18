@@ -392,6 +392,7 @@ private fun NavGraphContent(
                 state = state,
                 onIntent = viewModel::onIntent,
                 onBack = { navController.popBackStack() },
+                onRetry = { viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.ChangePlanIntent.Load(subscriptionId)) },
             )
         }
         composable<Subscription.ChangeNap> { backStackEntry ->
@@ -406,11 +407,19 @@ private fun NavGraphContent(
                 state = state,
                 onIntent = viewModel::onIntent,
                 onBack = { navController.popBackStack() },
+                onRetry = { viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.ChangeNapIntent.Load(subscriptionId)) },
             )
         }
         composable<Subscription.UpdateLocation> { backStackEntry ->
             com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.UpdateLocationRoute(
                 subscriptionId = backStackEntry.toRoute<Subscription.UpdateLocation>().subscriptionId,
+                onDone = { navController.returnToFicha(it) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable<Subscription.DeferCut> { backStackEntry ->
+            com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.DeferCutRoute(
+                subscriptionId = backStackEntry.toRoute<Subscription.DeferCut>().subscriptionId,
                 onDone = { navController.returnToFicha(it) },
                 onBack = { navController.popBackStack() },
             )

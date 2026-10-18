@@ -79,3 +79,12 @@ internal fun ActionFooter(
         }
     }
 }
+
+/** Load failure of an action screen, with a way to try again. */
+@Composable
+internal fun ActionLoadError(message: String, onRetry: () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(message, fontSize = 14.sp, color = MaterialTheme.colorScheme.error)
+        androidx.compose.material3.OutlinedButton(onClick = onRetry) { Text("Reintentar") }
+    }
+}
