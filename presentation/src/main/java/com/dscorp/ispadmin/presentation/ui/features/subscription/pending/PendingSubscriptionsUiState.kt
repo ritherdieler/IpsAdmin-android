@@ -20,11 +20,23 @@ data class PendingSubscriptionListItem(
     val clientName: String,
     val dni: String,
     val createdAt: Long,
-    val status: PendingSubscriptionStatus
-)
+    val status: PendingSubscriptionStatus,
+    val detail: String = "",
+    val error: String? = null,
+) {
+    val statusLabel: String
+        get() = when (status) {
+            PendingSubscriptionStatus.PENDING -> "Esperando señal"
+            PendingSubscriptionStatus.SYNCING -> "Enviando…"
+            PendingSubscriptionStatus.FAILED, PendingSubscriptionStatus.CONFLICT -> "No se pudo enviar"
+        }
+
+    val failed: Boolean get() = status == PendingSubscriptionStatus.FAILED || status == PendingSubscriptionStatus.CONFLICT
+}
 
 sealed interface PendingSubscriptionsIntent {
     data object Load : PendingSubscriptionsIntent
     data object Sync : PendingSubscriptionsIntent
+    data class Discard(val localId: String) : PendingSubscriptionsIntent
     data object ClearError : PendingSubscriptionsIntent
 }

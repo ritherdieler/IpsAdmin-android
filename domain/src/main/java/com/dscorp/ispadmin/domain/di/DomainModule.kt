@@ -2,6 +2,7 @@ package com.dscorp.ispadmin.domain.di
 
 import com.dscorp.ispadmin.domain.usecase.catalog.GetRegistrationCatalogUseCase
 import com.dscorp.ispadmin.domain.usecase.catalog.RefreshRegistrationCatalogUseCase
+import com.dscorp.ispadmin.domain.usecase.subscription.DiscardPendingSubscriptionUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.EnqueuePendingSubscriptionUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.ObserveOfflineRegistrationModeUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.ObservePendingSubscriptionsUseCase
@@ -16,5 +17,6 @@ val domainModule = module {
     single { ObservePendingSubscriptionsUseCase(get()) }
     single { ObserveOfflineRegistrationModeUseCase(get(), get()) }
     single { SyncPendingSubscriptionsUseCase(get(), get(), get(), get()) }
+    single { DiscardPendingSubscriptionUseCase(get(), get()) }
     single { OnuRegistrationOperationUseCase(get()) }
 }

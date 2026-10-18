@@ -156,7 +156,8 @@ val viewModelModule = module {
         PendingSubscriptionsViewModel(
             get(),
             get(),
-            get<CoroutineDispatcher>(named("mainImmediate"))
+            get<CoroutineDispatcher>(named("mainImmediate")),
+            discardPendingSubscriptionUseCase = get(),
         )
     }
 

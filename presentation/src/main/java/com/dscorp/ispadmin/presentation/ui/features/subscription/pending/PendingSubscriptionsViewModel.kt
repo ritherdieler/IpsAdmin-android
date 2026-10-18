@@ -1,5 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.pending
 
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTitleCase
+import com.dscorp.ispadmin.domain.model.PendingSubscriptionStatus
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.domain.model.PendingSubscription
@@ -24,7 +26,8 @@ class PendingSubscriptionsViewModel(
     private val observePendingSubscriptionsUseCase: ObservePendingSubscriptionsUseCase,
     private val syncPendingSubscriptionsUseCase: SyncPendingSubscriptionsUseCase,
     private val mainImmediate: CoroutineDispatcher = Dispatchers.Main.immediate,
-    private val gson: Gson = Gson()
+    private val gson: Gson = Gson(),
+    private val discardPendingSubscriptionUseCase: com.dscorp.ispadmin.domain.usecase.subscription.DiscardPendingSubscriptionUseCase? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PendingSubscriptionsUiState())
@@ -42,6 +45,7 @@ class PendingSubscriptionsViewModel(
         when (intent) {
             PendingSubscriptionsIntent.Load -> load()
             PendingSubscriptionsIntent.Sync -> sync()
+            is PendingSubscriptionsIntent.Discard -> discard(intent.localId)
             PendingSubscriptionsIntent.ClearError -> _uiState.update {
                 it.copy(errorMessage = null, lastError = null, failedCount = 0)
             }
@@ -72,6 +76,15 @@ class PendingSubscriptionsViewModel(
                     }
                 }
             )
+        }
+    }
+
+    private fun discard(localId: String) {
+        val useCase = discardPendingSubscriptionUseCase ?: return
+        viewModelScope.launch(mainImmediate) {
+            useCase(localId).onFailure { error ->
+                _uiState.update { it.copy(errorMessage = error.message ?: "No se pudo descartar el registro") }
+            }
         }
     }
 
@@ -122,14 +135,24 @@ class PendingSubscriptionsViewModel(
         }.getOrNull()
         val clientName = listOfNotNull(snapshot?.firstName, snapshot?.lastName)
             .joinToString(" ")
-            .trim()
+            .toTitleCase()
             .ifBlank { "Sin nombre" }
+        val dni = snapshot?.dni?.takeIf { it.isNotBlank() }
+        val type = when (snapshot?.installationType) {
+            "WIRELESS" -> "Inalámbrico"
+            "FIBER" -> "Fibra"
+            "ONLY_TV_FIBER" -> "Solo TV"
+            else -> null
+        }
+        val ip = (snapshot?.ip ?: snapshot?.clientIpAddress)?.takeIf { it.isNotBlank() }
         return PendingSubscriptionListItem(
             localId = localId,
             clientName = clientName,
-            dni = snapshot?.dni?.takeIf { it.isNotBlank() } ?: "—",
+            dni = dni ?: "—",
             createdAt = createdAt,
-            status = status
+            status = status,
+            detail = listOfNotNull(type, ip?.let { "IP $it" }, dni?.let { "DNI $it" }).joinToString(" · "),
+            error = lastError?.takeIf { status == PendingSubscriptionStatus.FAILED || status == PendingSubscriptionStatus.CONFLICT },
         )
     }
 }
@@ -137,5 +160,8 @@ class PendingSubscriptionsViewModel(
 private data class PendingClientSnapshot(
     @SerializedName("firstName") val firstName: String? = null,
     @SerializedName("lastName") val lastName: String? = null,
-    @SerializedName("dni") val dni: String? = null
+    @SerializedName("dni") val dni: String? = null,
+    @SerializedName("installationType") val installationType: String? = null,
+    @SerializedName("ip") val ip: String? = null,
+    @SerializedName("clientIpAddress") val clientIpAddress: String? = null,
 )

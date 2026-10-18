@@ -33,7 +33,7 @@ class PendingSubscriptionsScreenTest {
         }
 
         composeRule.onNodeWithTag("btn_sync_pending_subscriptions").assertIsDisplayed()
-        composeRule.onNodeWithText("Sincronizar suscripciones").assertIsDisplayed()
+        composeRule.onNodeWithText("Enviar ahora").assertIsDisplayed()
     }
 
     @Test
@@ -58,8 +58,9 @@ class PendingSubscriptionsScreenTest {
         }
 
         composeRule.onNodeWithText("Ana Perez").assertIsDisplayed()
-        composeRule.onNodeWithText("DNI: 12345678").assertIsDisplayed()
-        composeRule.onNodeWithText("PENDING").assertIsDisplayed()
+        composeRule.onNodeWithText("DNI 12345678", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Esperando señal").assertIsDisplayed()
+        composeRule.onNodeWithText("Por enviar · 1").assertIsDisplayed()
     }
 
     @Test

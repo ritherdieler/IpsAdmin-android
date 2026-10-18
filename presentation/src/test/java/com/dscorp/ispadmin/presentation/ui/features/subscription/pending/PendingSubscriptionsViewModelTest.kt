@@ -33,6 +33,7 @@ class PendingSubscriptionsViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val observePendingSubscriptionsUseCase = mockk<ObservePendingSubscriptionsUseCase>()
     private val syncPendingSubscriptionsUseCase = mockk<SyncPendingSubscriptionsUseCase>()
+    private val discardPendingSubscriptionUseCase = mockk<com.dscorp.ispadmin.domain.usecase.subscription.DiscardPendingSubscriptionUseCase>()
     private lateinit var viewModel: PendingSubscriptionsViewModel
     private val pendingFlow = MutableSharedFlow<List<PendingSubscription>>(replay = 1)
 
@@ -43,7 +44,8 @@ class PendingSubscriptionsViewModelTest {
         viewModel = PendingSubscriptionsViewModel(
             observePendingSubscriptionsUseCase = observePendingSubscriptionsUseCase,
             syncPendingSubscriptionsUseCase = syncPendingSubscriptionsUseCase,
-            mainImmediate = testDispatcher
+            mainImmediate = testDispatcher,
+            discardPendingSubscriptionUseCase = discardPendingSubscriptionUseCase,
         )
     }
 
@@ -193,5 +195,43 @@ class PendingSubscriptionsViewModelTest {
 
         assertFalse(viewModel.uiState.value.isSyncing)
         assertEquals(NoConnectivity().message, viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun `queued items read like the canvas`() = runTest(testDispatcher) {
+        viewModel.onIntent(PendingSubscriptionsIntent.Load)
+        advanceUntilIdle()
+        pendingFlow.emit(
+            listOf(
+                PendingSubscription(
+                    localId = "local-1", clientRequestId = "c1", createdAt = 1_700_000_000_000L,
+                    subscriptionJson = """{"firstName":"HILDA","lastName":"CCORI MAMANI","dni":"45871236","installationType":"WIRELESS","ip":"10.0.0.5"}""",
+                    status = PendingSubscriptionStatus.PENDING,
+                ),
+                PendingSubscription(
+                    localId = "local-2", clientRequestId = "c2", createdAt = 1_700_000_000_000L,
+                    subscriptionJson = """{"firstName":"Tomas","lastName":"Vega"}""",
+                    status = PendingSubscriptionStatus.CONFLICT, lastError = "El DNI 45871236 ya tiene una suscripción activa.",
+                ),
+            )
+        )
+        advanceUntilIdle()
+
+        val (waiting, failed) = viewModel.uiState.value.items
+        assertEquals("Hilda Ccori Mamani", waiting.clientName)
+        assertEquals("Inalámbrico · IP 10.0.0.5 · DNI 45871236", waiting.detail)
+        assertEquals("Esperando señal", waiting.statusLabel)
+        assertEquals("No se pudo enviar", failed.statusLabel)
+        assertEquals("El DNI 45871236 ya tiene una suscripción activa.", failed.error)
+    }
+
+    @Test
+    fun `discard removes the queued registration`() = runTest(testDispatcher) {
+        coEvery { discardPendingSubscriptionUseCase("local-1") } returns Result.success(Unit)
+
+        viewModel.onIntent(PendingSubscriptionsIntent.Discard("local-1"))
+        advanceUntilIdle()
+
+        coVerify { discardPendingSubscriptionUseCase("local-1") }
     }
 }
