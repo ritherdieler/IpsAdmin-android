@@ -31,6 +31,15 @@ import com.dscorp.ispadmin.presentation.ui.features.dashboard.CollectionsSection
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.collectedSoles
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.billedMonths
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatPercent
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import com.dscorp.ispadmin.presentation.designsystem.components.SectionHeader
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import com.dscorp.ispadmin.presentation.ui.features.home.AdminDailyCard
+import com.dscorp.ispadmin.presentation.ui.features.home.AdminHomeHero
+import com.dscorp.ispadmin.presentation.ui.features.home.AdminHomeTiles
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.formatSoles
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.percentChange
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.shares
@@ -74,6 +83,8 @@ fun FinancialScreen(
     header: @Composable () -> Unit = {},
     data: DashboardTabData = DashboardTabData(),
     viewModel: FinancialViewModel = koinViewModel(),
+    home: com.dscorp.ispadmin.presentation.ui.features.home.AdminHome? = null,
+    onHomeAction: (com.dscorp.ispadmin.presentation.ui.features.home.AdminHomeAction) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -102,7 +113,7 @@ fun FinancialScreen(
         }
     }
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
-        Box(Modifier.padding(padding)) { FinancialContent(state, viewModel::onIntent, header, data.legacy, data.collections) }
+        Box(Modifier.padding(padding)) { FinancialContent(state, viewModel::onIntent, header, data.legacy, data.collections, home, onHomeAction) }
     }
 }
 
@@ -115,6 +126,8 @@ fun FinancialContent(
     header: @Composable () -> Unit,
     legacy: DashBoardDataResponse? = null,
     collections: CollectionSummary? = null,
+    home: com.dscorp.ispadmin.presentation.ui.features.home.AdminHome? = null,
+    onHomeAction: (com.dscorp.ispadmin.presentation.ui.features.home.AdminHomeAction) -> Unit = {},
 ) {
     var detail by remember(uiState.report?.id) { mutableStateOf<Detail?>(null) }
     val listState = rememberLazyListState()
@@ -122,17 +135,41 @@ fun FinancialContent(
     val managementAccess = report?.access == "FULL"
     val billingView = uiState.billingView && managementAccess
     val openDetail: (Detail) -> Unit = { detail = it }
-    LaunchedEffect(billingView) { listState.scrollToItem(0) }
+    // One effect: two concurrent scrollToItem calls before the first layout crash the lazy list.
+    // The summary usually arrives after the report; without this the list stays anchored to the report band below it.
+    // It arrives within a second of opening, so going back to the top then does not fight the user.
+    LaunchedEffect(billingView, home != null) { listState.scrollToItem(0) }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = 1000.dp).fillMaxSize()) {
-            FinancialHeroTop(uiState, onIntent, header, managementAccess, billingView)
+            FinancialHeroTop(uiState, onIntent, header, managementAccess, billingView, home?.subtitle)
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxWidth().weight(1f).testTag("financial_list"),
                 contentPadding = PaddingValues(bottom = IspSpacing.xl),
                 verticalArrangement = Arrangement.spacedBy(IspSpacing.md),
             ) {
-                item("hero") { FinancialHeroBody(uiState, onIntent, HeroContext(report, managementAccess, billingView, uiState.previousReport, uiState.movementsMonth), openDetail) }
+                val heroContext = HeroContext(report, managementAccess, billingView, uiState.previousReport, uiState.movementsMonth)
+                if (home == null) {
+                    item("hero") { FinancialHeroBody(uiState, onIntent, heroContext, openDetail) }
+                } else {
+                    // Home summary first (a-ini-01); the full report follows in its own band.
+                    item("home_hero") { AdminHomeHero(home) }
+                    item("home_tiles") { AdminHomeTiles(home, onHomeAction) }
+                    item("home_daily") { AdminDailyCard(home, onHomeAction) }
+                    item("report_title") {
+                        SectionHeader(stringResource(R.string.financial_report_section), Modifier.padding(horizontal = IspSpacing.lg))
+                    }
+                    item("hero") {
+                        FinancialHeroBody(
+                            uiState, onIntent, heroContext, openDetail,
+                            modifier = Modifier.padding(horizontal = IspSpacing.lg).clip(RoundedCornerShape(24.dp)),
+                        ) {
+                            report?.let { Text(stringResource(R.string.financial_cut, cutoffLabel(it.cutoff), it.revision), Modifier.testTag("financial_cut"),
+                                style = MaterialTheme.typography.bodySmall, color = IspTheme.colors.onHeroMuted) }
+                            HeroChips(viewChips(managementAccess, billingView, onIntent))
+                        }
+                    }
+                }
                 if (report != null) item("tiles") { if (billingView) BillingTiles(report, uiState, openDetail) else MovementTiles(report, openDetail) }
                 item("status") { StatusArea(uiState, report) }
                 if (report != null) {
@@ -162,11 +199,12 @@ private fun FinancialHeroTop(
     header: @Composable () -> Unit,
     managementAccess: Boolean,
     billingView: Boolean,
+    homeStatus: String? = null,
 ) {
     val report = uiState.report
-    val status = report?.let { stringResource(R.string.financial_cut, cutoffLabel(it.cutoff), it.revision) }
+    val status = homeStatus ?: report?.let { stringResource(R.string.financial_cut, cutoffLabel(it.cutoff), it.revision) }
     HeroTop {
-        DashboardTitleBar(status, statusTag = "financial_cut") {
+        DashboardTitleBar(status, statusTag = if (homeStatus == null) "financial_cut" else "home_status") {
             if (report != null) {
                 IconButton(onClick = { onIntent(FinancialIntent.Export) }, enabled = !uiState.exporting && !uiState.isLoading,
                     modifier = Modifier.size(44.dp).testTag("financial_export_header")) {
@@ -179,13 +217,22 @@ private fun FinancialHeroTop(
             }
         }
         header()
-        HeroChips(viewChips(managementAccess, billingView, onIntent))
+        // With the home summary on top, the report view selector moves down to the report band.
+        if (homeStatus == null) HeroChips(viewChips(managementAccess, billingView, onIntent))
     }
 }
 
 @Composable
-private fun FinancialHeroBody(uiState: FinancialUiState, onIntent: (FinancialIntent) -> Unit, context: HeroContext, openDetail: (Detail) -> Unit) {
-    HeroBand {
+private fun FinancialHeroBody(
+    uiState: FinancialUiState,
+    onIntent: (FinancialIntent) -> Unit,
+    context: HeroContext,
+    openDetail: (Detail) -> Unit,
+    modifier: Modifier = Modifier,
+    top: @Composable ColumnScope.() -> Unit = {},
+) {
+    HeroBand(modifier) {
+        top()
         HeroError(uiState, context.report, onIntent)
         if (context.billingView) {
             PeriodPicker(R.string.financial_service_month, uiState.serviceMonth, "service") { onIntent(FinancialIntent.SelectServiceMonth(it)) }

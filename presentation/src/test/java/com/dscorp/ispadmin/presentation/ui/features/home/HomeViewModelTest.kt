@@ -42,6 +42,7 @@ class HomeViewModelTest {
 
         val state = viewModel.uiState.value
         assertEquals("S/ 1,692.00", state.home?.todayAmount)
+        assertEquals("S/ 23,688.00", state.admin?.monthAmount)
         assertFalse(state.loading)
         coVerify(exactly = 1) { gateway.summary() }
     }

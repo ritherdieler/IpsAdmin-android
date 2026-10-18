@@ -122,7 +122,7 @@
     <string name="financial_trend_chart">Facturado neto vs cobrado</string>
     <string name="financial_recovery_caption">Recuperación de servicios anteriores: %1$s</string>
     <!-- Design audit 2: header and section links -->
-    <string name="dashboard_screen_title">Dashboard</string>
+    <string name="dashboard_screen_title">Inicio</string>
     <string name="dashboard_updated_now">Actualizado ahora</string>
     <string name="dashboard_updated_minutes">Actualizado hace %1$d min</string>
     <string name="dashboard_updated_at">Actualizado a las %1$s</string>

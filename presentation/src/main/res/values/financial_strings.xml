@@ -6,6 +6,7 @@
     <string name="financial_previous_month">Mes anterior</string>
     <string name="financial_next_month">Mes siguiente</string>
     <string name="financial_cut">Corte: %1$s · revisión %2$d</string>
+    <string name="financial_report_section">Reporte financiero</string>
     <string name="financial_cut_id">Referencia: %1$s</string>
     <string name="financial_status_complete">Completo</string>
     <string name="financial_status_observed">Observado · revisar cobertura y diferencias</string>

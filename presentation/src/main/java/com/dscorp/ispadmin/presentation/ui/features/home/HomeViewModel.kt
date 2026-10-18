@@ -16,7 +16,12 @@ interface HomeGateway {
     suspend fun summary(): HomeSummaryResponse
 }
 
-data class HomeUiState(val loading: Boolean = false, val error: String? = null, val home: SecretaryHome? = null)
+data class HomeUiState(
+    val loading: Boolean = false,
+    val error: String? = null,
+    val home: SecretaryHome? = null,
+    val admin: AdminHome? = null,
+)
 
 sealed interface HomeIntent {
     data object Load : HomeIntent
@@ -41,8 +46,8 @@ class HomeViewModel(
         viewModelScope.launch(mainImmediate) {
             _uiState.update { it.copy(loading = true) }
             try {
-                val home = SecretaryHome.from(gateway.summary())
-                _uiState.update { it.copy(loading = false, error = null, home = home) }
+                val summary = gateway.summary()
+                _uiState.update { it.copy(loading = false, error = null, home = SecretaryHome.from(summary), admin = AdminHome.from(summary)) }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {

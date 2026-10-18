@@ -1,5 +1,12 @@
 package com.dscorp.ispadmin.presentation.ui.features.dashboard
 
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
+import com.dscorp.ispadmin.presentation.ui.features.home.AdminHomeAction
+import com.dscorp.ispadmin.presentation.ui.features.home.AdminTileKind
+import com.dscorp.ispadmin.presentation.ui.features.home.HomeIntent
+import com.dscorp.ispadmin.presentation.ui.features.home.HomeViewModel
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -49,11 +56,30 @@ fun DashBoardComposeScreen(navController: NavHostController) {
         val collectionsViewModel: CollectionsViewModel = koinViewModel()
         val collections by collectionsViewModel.uiState.collectAsStateWithLifecycle()
         LaunchedEffect(collectionsViewModel) { collectionsViewModel.onIntent(CollectionsIntent.Load) }
+        // Home summary (a-ini-01) on top of the financial tab; roles without access keep the report alone.
+        val homeViewModel: HomeViewModel = koinViewModel()
+        val home by homeViewModel.uiState.collectAsStateWithLifecycle()
+        LaunchedEffect(homeViewModel) { homeViewModel.onIntent(HomeIntent.Load) }
+        val lifecycle = LocalLifecycleOwner.current.lifecycle
+        val resumed by lifecycle.currentStateAsState()
+        LaunchedEffect(resumed) { if (resumed == Lifecycle.State.RESUMED && home.admin != null) homeViewModel.onIntent(HomeIntent.Refresh) }
+        val onHomeAction: (AdminHomeAction) -> Unit = { action ->
+            val route = when (action) {
+                AdminHomeAction.Cash -> NavRoutes.FeatureRoutes.Payment.FindPayer
+                is AdminHomeAction.Tile -> when (action.kind) {
+                    AdminTileKind.WITH_SERVICE, AdminTileKind.CUT_OFF -> NavRoutes.FeatureRoutes.Subscription.Find
+                    AdminTileKind.TICKETS -> NavRoutes.FeatureRoutes.SupportTicket.List
+                    AdminTileKind.RECEIVABLE -> NavRoutes.FeatureRoutes.Payment.FindPayer
+                }
+            }
+            navController.navigate(route) { launchSingleTop = true }
+        }
         val titles = DashboardTab.entries.map { stringResource(it.title) }
         val header: @Composable () -> Unit = { HeroTabs(titles, selected, { selected = it }) }
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             when (DashboardTab.entries[selected]) {
-                DashboardTab.FINANCIAL -> FinancialScreen(header = header, data = DashboardTabData(commercial.dashboardData, collections.summary))
+                DashboardTab.FINANCIAL -> FinancialScreen(header = header, data = DashboardTabData(commercial.dashboardData, collections.summary),
+                    home = home.admin, onHomeAction = onHomeAction)
                 DashboardTab.COMMERCIAL -> CommercialContent(commercial, commercialViewModel::getDashBoardData, header)
                 DashboardTab.CLIENTS -> ClientsScreen(header, collections.summary)
             }

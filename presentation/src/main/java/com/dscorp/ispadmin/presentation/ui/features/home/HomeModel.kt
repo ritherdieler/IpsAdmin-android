@@ -11,6 +11,9 @@ import kotlin.math.abs
 private val WEEKDAYS = listOf("lun", "mar", "mié", "jue", "vie", "sáb", "dom")
 private val MONTHS = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "set", "oct", "nov", "dic")
 
+/** "oct" */
+internal fun monthShort(date: LocalDate): String = MONTHS[date.monthValue - 1]
+
 /** "14 oct" */
 internal fun dayMonth(date: LocalDate): String = "${date.dayOfMonth} ${MONTHS[date.monthValue - 1]}"
 
