@@ -67,4 +67,16 @@ class CashDayModelTest {
         assertEquals("Rosa C.", shortName("Rosa Ccori"))
         assertEquals("Ana", shortName("Ana"))
     }
+
+    @Test
+    fun `two payments for the same month stay as two rows`() {
+        val day = cashDay().copy(
+            receipts = listOf(
+                receipt(9, 2001, "NOLBERTA IBARRA VEGA", 30.0, "Efectivo", "2026-10-14T11:43:00", "2026-09"),
+                receipt(8, 2001, "NOLBERTA IBARRA VEGA", 30.0, "Efectivo", "2026-10-14T11:42:30", "2026-09"),
+            ),
+        )
+
+        assertEquals(listOf("S/ 30.00", "S/ 30.00"), CashDay.from(day, today).rows.map { it.amount })
+    }
 }

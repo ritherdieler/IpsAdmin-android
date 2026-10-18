@@ -64,7 +64,13 @@ data class CashDay(
             val groups = mutableListOf<MutableList<CashReceiptResponse>>()
             receipts.forEach { receipt ->
                 val last = groups.lastOrNull()?.last()
-                if (last != null && sameCharge(last, receipt)) groups.last() += receipt else groups += mutableListOf(receipt)
+                // A charge of several months leaves one receipt per month; two receipts of the same month are two payments.
+                val group = groups.lastOrNull()
+                if (last != null && group != null && sameCharge(last, receipt) && group.none { it.serviceMonth == receipt.serviceMonth }) {
+                    group += receipt
+                } else {
+                    groups += mutableListOf(receipt)
+                }
             }
             return groups
         }
