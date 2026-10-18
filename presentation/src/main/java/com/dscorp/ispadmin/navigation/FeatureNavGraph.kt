@@ -92,6 +92,11 @@ import com.dscorp.ispadmin.presentation.ui.features.home.SalesAgendaViewModel
 import com.dscorp.ispadmin.presentation.ui.features.home.TechnicianTodayContent
 import com.dscorp.ispadmin.presentation.ui.features.home.TechnicianTodayViewModel
 import com.dscorp.ispadmin.presentation.ui.features.home.TodayTarget
+import com.dscorp.ispadmin.presentation.ui.features.payment.cash.CashAction
+import com.dscorp.ispadmin.presentation.ui.features.payment.cash.CashDayContent
+import com.dscorp.ispadmin.presentation.ui.features.payment.cash.CashDayViewModel
+import com.dscorp.ispadmin.presentation.ui.features.payment.cash.CashIntent
+import com.dscorp.ispadmin.presentation.ui.features.payment.cash.CashPeriod
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -431,7 +436,10 @@ private fun NavGraphContent(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        composable<Payment.FindPayer> {
+        composable<Payment.FindPayer> { backStackEntry ->
+            CashDayRoute(backStackEntry, navController)
+        }
+        composable<Payment.SearchPayers> {
             FindPayerComposeScreen(navController = navController)
         }
         // OUTLAY MODULE
@@ -695,3 +703,52 @@ private fun NavHostController.onFieldAction(action: FieldAction) {
         FieldAction.NewOrder -> navigate(FeatureRoutes.Installation.Create)
     }
 }
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun CashDayRoute(backStackEntry: NavBackStackEntry, navController: NavHostController) {
+    val viewModel: CashDayViewModel = koinViewModel()
+    val state by viewModel.uiState.collectAsState()
+    var pickingDate by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { viewModel.onIntent(CashIntent.Load) }
+    // Coming back from a charge refreshes the day.
+    val resumed = backStackEntry.lifecycle.currentStateAsState()
+    LaunchedEffect(resumed.value) {
+        if (resumed.value == androidx.lifecycle.Lifecycle.State.RESUMED && state.day != null) viewModel.onIntent(CashIntent.Refresh)
+    }
+    CashDayContent(state) { action ->
+        when (action) {
+            CashAction.Search -> navController.navigate(Payment.SearchPayers)
+            CashAction.NewCharge -> navController.navigateToRoot(Subscription.Find)
+            CashAction.Retry -> viewModel.onIntent(CashIntent.Refresh)
+            is CashAction.OpenSubscription -> navController.navigate(Subscription.Details(action.id))
+            is CashAction.Period -> when (action.period) {
+                CashPeriod.TODAY -> viewModel.onIntent(CashIntent.SelectDate(java.time.LocalDate.now(LIMA)))
+                CashPeriod.YESTERDAY -> viewModel.onIntent(CashIntent.SelectDate(java.time.LocalDate.now(LIMA).minusDays(1)))
+                CashPeriod.PICK -> pickingDate = true
+            }
+        }
+    }
+    if (pickingDate) {
+        val picker = androidx.compose.material3.rememberDatePickerState(
+            selectableDates = object : androidx.compose.material3.SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis <= System.currentTimeMillis()
+            },
+        )
+        androidx.compose.material3.DatePickerDialog(
+            onDismissRequest = { pickingDate = false },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    picker.selectedDateMillis?.let { millis ->
+                        val date = java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                        viewModel.onIntent(CashIntent.SelectDate(date))
+                    }
+                    pickingDate = false
+                }) { Text("Ver") }
+            },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { pickingDate = false }) { Text("Cancelar") } },
+        ) { androidx.compose.material3.DatePicker(state = picker) }
+    }
+}
+
+private val LIMA: java.time.ZoneId = java.time.ZoneId.of("America/Lima")

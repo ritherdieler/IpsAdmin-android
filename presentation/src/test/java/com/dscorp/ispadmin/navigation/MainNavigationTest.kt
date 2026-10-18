@@ -204,4 +204,12 @@ class MainNavigationTest {
         assertTrue(MainNavigation.shellChrome(UserType.ADMIN, Installation.List).showTopBar)
         assertFalse(MainNavigation.shellChrome(UserType.TECHNICIAN, Subscription.Register()).showTopBar)
     }
+
+    @Test
+    fun `caja draws its own header and searching payments is a secondary screen`() {
+        assertFalse(MainNavigation.shellChrome(UserType.SECRETARY, Payment.FindPayer).showTopBar)
+        val search = MainNavigation.shellChrome(UserType.SECRETARY, Payment.SearchPayers)
+        assertEquals("Buscar pagos", search.title)
+        assertTrue(search.showBack)
+    }
 }

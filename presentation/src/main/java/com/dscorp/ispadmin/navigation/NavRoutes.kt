@@ -96,6 +96,9 @@ sealed class NavRoutes {
 
             @Serializable
             object FindPayer : Payment()
+
+            @Serializable
+            object SearchPayers : Payment()
         }
 
 
@@ -182,6 +185,7 @@ sealed class NavRoutes {
                     Payment.History::class.qualifiedName -> Payment.History(0, "")
                     Payment.Detail::class.qualifiedName -> Payment.Detail("")
                     Payment.FindPayer::class.qualifiedName -> Payment.FindPayer
+                    Payment.SearchPayers::class.qualifiedName -> Payment.SearchPayers
 
                     Installation.List::class.qualifiedName -> Installation.List
                     Installation.Create::class.qualifiedName -> Installation.Create
