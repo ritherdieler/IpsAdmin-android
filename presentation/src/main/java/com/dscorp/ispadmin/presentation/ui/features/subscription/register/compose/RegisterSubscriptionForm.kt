@@ -1,5 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
+import com.dscorp.ispadmin.presentation.theme.IspTheme
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -149,6 +151,7 @@ fun RegisterSubscriptionForm(
     }
 
     Surface(
+        color = MaterialTheme.colorScheme.background,
         modifier = modifier
             .fillMaxSize()
             .then(
@@ -159,19 +162,23 @@ fun RegisterSubscriptionForm(
                 }
             )
     ) {
+        val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
         Column(modifier = Modifier.fillMaxSize()) {
-            RegisterSubscriptionWizardStepper(
+            RegisterWizardHeader(
                 currentStep = formState.wizardStep,
                 preauthorizationEnabled = formState.preauthorizationEnabled,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                onClose = {
+                    // Closing an ONU-first registration goes through the cancel flow, which cleans the OLT authorization.
+                    if (formState.preauthorizationEnabled) onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
+                    else backDispatcher?.onBackPressed()
+                },
             )
 
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 16.dp)
+                    .padding(top = 12.dp)
                     .verticalScroll(scrollState)
             ) {
                 AnimatedContent(
@@ -189,7 +196,16 @@ fun RegisterSubscriptionForm(
                         when (step) {
                             RegisterSubscriptionWizardStep.ONU_SELECTION,
                             RegisterSubscriptionWizardStep.ONU_CONFIRMATION ->
-                                OnuSelectionBlock(formState, form, onIntent)
+                                OnuListBlock(
+                                    onus = form.onuList,
+                                    selected = form.selectedOnu,
+                                    error = form.onuError,
+                                    loading = formState.isLoading,
+                                    refreshIcon = {
+                                        RefreshIcon(onRefreshOnuList = { onIntent(RegisterSubscriptionIntent.RefreshOnuList) }, formState = formState)
+                                    },
+                                    onSelect = { onIntent(RegisterSubscriptionIntent.OnuSelected(it)) },
+                                )
                             RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> AcsWaitingBlock(formState)
                             RegisterSubscriptionWizardStep.CLIENT_LOCATION -> {
                                 ClientDataFields(
@@ -273,25 +289,20 @@ fun RegisterSubscriptionForm(
                 modifier = Modifier
                     .fillMaxWidth()
                     .imePadding()
-                    .background(MaterialTheme.colorScheme.surface)
+                    .background(IspTheme.colors.card)
             ) {
-                navigationHint?.let { hint ->
-                    Text(
-                        text = hint,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp)
-                    )
+                HorizontalDivider(color = IspTheme.colors.cardBorder)
+                val selectedOnu = form.selectedOnu
+                when {
+                    formState.wizardStep in ONU_STEPS && selectedOnu != null -> RegisterWizardFooterLine(selectedOnu.chosenLabel())
+                    navigationHint != null -> RegisterWizardFooterLine(navigationHint)
+                    formState.wizardStep == RegisterSubscriptionWizardStep.CONFIRMATION && formState.submitBlockedReason == null ->
+                        RegisterWizardFooterLine("Los ${registrationProgressPhases(formState.preauthorizationEnabled).size} pasos están completos", ok = true)
+                    formState.wizardStep != RegisterSubscriptionWizardStep.WAITING_FOR_ACS && formState.wizardStep !in ONU_STEPS ->
+                        RegisterWizardFooterLine("Todo listo para continuar", ok = true)
                 }
                 formState.submitBlockedReason?.let { reason ->
-                    Text(
-                        text = reason,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier
-                            .padding(start = 20.dp, end = 20.dp, top = 4.dp)
-                            .testTag(RegisterSubscriptionTestTags.SUBMIT_BLOCKED_REASON)
-                    )
+                    RegisterWizardFooterLine(reason, error = true, modifier = Modifier.testTag(RegisterSubscriptionTestTags.SUBMIT_BLOCKED_REASON))
                 }
                 WizardNavigationBar(
                     step = formState.wizardStep,
@@ -319,22 +330,12 @@ fun RegisterSubscriptionForm(
                     },
                     onCancelPreauthorization = { onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) },
                 )
-                if (formState.preauthorizationEnabled && formState.wizardStep != RegisterSubscriptionWizardStep.WAITING_FOR_ACS) {
-                    TextButton(
-                        onClick = { onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) },
-                        enabled = !formState.isLoading,
-                        modifier = Modifier
-                            .align(Alignment.End)
-                            .padding(end = 16.dp, bottom = 4.dp)
-                            .testTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL),
-                    ) {
-                        Text("Cancelar registro")
-                    }
-                }
             }
         }
     }
 }
+
+private val ONU_STEPS = setOf(RegisterSubscriptionWizardStep.ONU_SELECTION, RegisterSubscriptionWizardStep.ONU_CONFIRMATION)
 
 private val ACS_STATUS_STEPS = setOf(
     RegisterSubscriptionWizardStep.CLIENT_LOCATION,
@@ -870,59 +871,6 @@ private fun SectionTitle(title: String) {
 }
 
 @Composable
-private fun OnuSelectionBlock(
-    formState: RegisterSubscriptionState,
-    form: RegisterSubscriptionFormState,
-    onIntent: (RegisterSubscriptionIntent) -> Unit,
-) {
-    SectionTitle("Selecciona y revisa la ONU")
-    Text(
-        "Elige el equipo que se autorizará en la OLT. Sus datos aparecen aquí para que puedas verificarlos antes de autorizarlo.",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(modifier = Modifier.height(12.dp))
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        MyOutLinedDropDown(
-            modifier = Modifier.weight(1f).testTag(RegisterSubscriptionTestTags.ONU),
-            items = form.onuList,
-            selected = form.selectedOnu,
-            label = ONU_LABEL,
-            onItemSelected = { onIntent(RegisterSubscriptionIntent.OnuSelected(it)) },
-            hasError = form.onuError != null,
-            itemTestTag = { index, _ -> RegisterSubscriptionTestTags.onuItem(index) },
-        )
-        RefreshIcon(onRefreshOnuList = { onIntent(RegisterSubscriptionIntent.RefreshOnuList) }, formState = formState)
-    }
-    form.onuError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-    if (form.onuList.isEmpty() && form.onuError == null && !formState.isLoading) {
-        Text(
-            text = "No hay equipos disponibles. Actualiza la lista o comprueba la conexión.",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-    }
-    form.selectedOnu?.let { onu ->
-        Spacer(modifier = Modifier.height(16.dp))
-        SectionTitle("Datos del equipo")
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SummaryRow("Serial", onu.sn)
-                SummaryRow("OLT", onu.olt_id)
-                SummaryRow("Placa y puerto", "${onu.board} · ${onu.port}")
-                SummaryRow("Tipo", onu.onu_type_name)
-                SummaryRow("VLAN cliente", form.vlan)
-            }
-        }
-    }
-}
-
-@Composable
 private fun AcsWaitingBlock(formState: RegisterSubscriptionState) {
     SectionTitle("Conectando el equipo")
     val operation = formState.preauthorizationOperation
@@ -993,100 +941,6 @@ private fun AcsWaitingBlock(formState: RegisterSubscriptionState) {
     }
 }
 
-private data class RegistrationProgressPhase(
-    val label: String,
-    val steps: Set<RegisterSubscriptionWizardStep>,
-)
-
-private fun registrationProgressPhases(preauthorizationEnabled: Boolean): List<RegistrationProgressPhase> {
-    val formPhases = listOf(
-        RegistrationProgressPhase("Cliente", setOf(RegisterSubscriptionWizardStep.CLIENT_LOCATION)),
-        RegistrationProgressPhase("Servicio", setOf(RegisterSubscriptionWizardStep.INSTALLATION)),
-        RegistrationProgressPhase("Revisión", setOf(RegisterSubscriptionWizardStep.CONFIRMATION)),
-    )
-    if (!preauthorizationEnabled) return formPhases
-
-    return listOf(
-        RegistrationProgressPhase(
-            "Equipo",
-            setOf(
-                RegisterSubscriptionWizardStep.ONU_SELECTION,
-                RegisterSubscriptionWizardStep.ONU_CONFIRMATION,
-                RegisterSubscriptionWizardStep.WAITING_FOR_ACS,
-            ),
-        ),
-    ) + formPhases
-}
-
-@Composable
-private fun RegisterSubscriptionWizardStepper(
-    currentStep: RegisterSubscriptionWizardStep,
-    preauthorizationEnabled: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val phases = registrationProgressPhases(preauthorizationEnabled)
-    val currentPhaseIndex = phases.indexOfFirst { currentStep in it.steps }.coerceAtLeast(0)
-    val currentPhase = phases[currentPhaseIndex]
-
-    Column(
-        modifier = modifier
-            .testTag("wizard_stepper")
-            .semantics {
-                contentDescription = "Paso ${currentPhaseIndex + 1} de ${phases.size}: ${currentPhase.label}"
-            },
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "PASO ${currentPhaseIndex + 1} DE ${phases.size}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = currentPhase.label,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            phases.forEachIndexed { index, _ ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(5.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(
-                            if (index <= currentPhaseIndex) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.surfaceVariant
-                        )
-                        .testTag("wizard_step_${index + 1}"),
-                )
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            phases.forEachIndexed { index, phase ->
-                Text(
-                    text = phase.label,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (index == currentPhaseIndex) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    fontWeight = if (index == currentPhaseIndex) FontWeight.SemiBold else FontWeight.Normal,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
 @Composable
 private fun WizardNavigationBar(
     step: RegisterSubscriptionWizardStep,
@@ -1101,64 +955,36 @@ private fun WizardNavigationBar(
     onCancelPreauthorization: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 6.dp, bottom = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (step == RegisterSubscriptionWizardStep.WAITING_FOR_ACS) {
-            OutlinedButton(
-                onClick = onCancelPreauthorization,
-                enabled = !isLoading,
-                modifier = Modifier.weight(1f).testTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL),
-            ) {
-                Text("Cancelar")
+        when (step) {
+            RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> {
+                // The header close carries the cancel test tag on every step.
+                RegisterTextAction("Cancelar", enabled = !isLoading, onClick = onCancelPreauthorization)
+                Spacer(Modifier.weight(1f))
+                RegisterPrimaryButton(retryLabel, enabled = !isLoading, loading = isLoading, onClick = onRetryAcs)
             }
-            MyButton(
-                modifier = Modifier.weight(1f),
-                text = retryLabel,
-                onClick = onRetryAcs,
-                enabled = !isLoading,
-                isLoading = isLoading,
-            )
-        } else {
-            if (step != RegisterSubscriptionWizardStep.CLIENT_LOCATION && step != RegisterSubscriptionWizardStep.ONU_SELECTION) {
-                OutlinedButton(
-                    onClick = onBack,
-                    enabled = !isLoading,
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag(RegisterSubscriptionTestTags.WIZARD_BACK)
-                ) {
-                    Text("Atrás")
-                }
+            RegisterSubscriptionWizardStep.ONU_SELECTION, RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> {
+                RegisterTextAction("Cancelar", enabled = !isLoading, onClick = onCancelPreauthorization)
+                Spacer(Modifier.weight(1f))
+                RegisterPrimaryButton("Autorizar y continuar", enabled = !isLoading && canContinue, loading = isLoading,
+                    modifier = Modifier.testTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE), onClick = onContinue)
             }
-            if (step == RegisterSubscriptionWizardStep.CONFIRMATION) {
-                MyButton(
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag(RegisterSubscriptionTestTags.SUBMIT),
-                    text = "Registrar suscripción",
-                    onClick = onRegister,
-                    enabled = !isLoading && canRegister,
-                    isLoading = isLoading
-                )
-            } else {
-                val label = when (step) {
-                    RegisterSubscriptionWizardStep.ONU_SELECTION,
-                    RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> "Autorizar ONU"
-                    else -> "Continuar"
+            RegisterSubscriptionWizardStep.CONFIRMATION -> {
+                RegisterTextAction("Atrás", enabled = !isLoading, modifier = Modifier.testTag(RegisterSubscriptionTestTags.WIZARD_BACK), onClick = onBack)
+                RegisterPrimaryButton("Registrar suscripción", enabled = !isLoading && canRegister, loading = isLoading,
+                    modifier = Modifier.weight(1f).testTag(RegisterSubscriptionTestTags.SUBMIT), onClick = onRegister)
+            }
+            else -> {
+                // The ONU cannot be changed once authorized, so the client step has no way back.
+                if (step != RegisterSubscriptionWizardStep.CLIENT_LOCATION) {
+                    RegisterTextAction("Atrás", enabled = !isLoading, modifier = Modifier.testTag(RegisterSubscriptionTestTags.WIZARD_BACK), onClick = onBack)
                 }
-                MyButton(
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE),
-                    text = label,
-                    onClick = onContinue,
-                    enabled = !isLoading && canContinue,
-                    isLoading = isLoading
-                )
+                RegisterPrimaryButton("Continuar", enabled = !isLoading && canContinue, loading = isLoading,
+                    modifier = Modifier.weight(1f).padding(start = if (step == RegisterSubscriptionWizardStep.CLIENT_LOCATION) 12.dp else 0.dp)
+                        .testTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE), onClick = onContinue)
             }
         }
     }

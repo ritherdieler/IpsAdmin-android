@@ -167,7 +167,7 @@ class RegisterSubscriptionFormWizardTest {
             .assertIsEnabled()
             .performClick()
         composeRule.onNodeWithText("Cancelar").assertExists()
-        composeRule.onNodeWithText("Autorizar ONU").assertDoesNotExist()
+        composeRule.onNodeWithText("Autorizar y continuar").assertDoesNotExist()
     }
 
     @Test

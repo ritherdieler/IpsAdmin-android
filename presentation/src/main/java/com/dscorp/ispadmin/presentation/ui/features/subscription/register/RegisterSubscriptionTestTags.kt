@@ -19,6 +19,8 @@ object RegisterSubscriptionTestTags {
     const val PLAN = "register_plan_dropdown"
     const val HOST_DEVICE = "register_host_device_dropdown"
     const val ONU = "register_onu_dropdown"
+    /** The ONU list is always visible; its serial search keeps the selector tag the e2e taps. */
+    const val ONU_SEARCH = ONU
     const val VLAN = "register_vlan_dropdown"
     const val REFRESH_ONU = "btn_refresh_onu_list"
 

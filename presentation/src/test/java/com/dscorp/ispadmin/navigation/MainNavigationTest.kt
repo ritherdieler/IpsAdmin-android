@@ -202,5 +202,6 @@ class MainNavigationTest {
         assertFalse(today.showTopBar)
         assertFalse(MainNavigation.shellChrome(UserType.SALES, Installation.List).showTopBar)
         assertTrue(MainNavigation.shellChrome(UserType.ADMIN, Installation.List).showTopBar)
+        assertFalse(MainNavigation.shellChrome(UserType.TECHNICIAN, Subscription.Register()).showTopBar)
     }
 }
