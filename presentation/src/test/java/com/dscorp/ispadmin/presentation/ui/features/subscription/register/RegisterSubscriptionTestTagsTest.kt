@@ -3,6 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import java.io.File
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.registerWizardSource
 
 class RegisterSubscriptionTestTagsTest {
 
@@ -19,9 +20,7 @@ class RegisterSubscriptionTestTagsTest {
 
     @Test
     fun `formulario aplica testTags criticos del flujo fiber`() {
-        val formSource = File(
-            "src/main/java/com/dscorp/ispadmin/presentation/ui/features/subscription/register/compose/RegisterSubscriptionForm.kt"
-        ).readText()
+        val formSource = registerWizardSource()
         listOf(
             "RegisterSubscriptionTestTags.FIRST_NAME",
             "RegisterSubscriptionTestTags.LAST_NAME",

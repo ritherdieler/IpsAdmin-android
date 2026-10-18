@@ -1,5 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register
 
+import androidx.test.espresso.Espresso
+import androidx.compose.ui.semantics.SemanticsProperties
 import android.Manifest
 import android.content.Intent
 import android.view.View
@@ -595,21 +597,18 @@ class FiberRegisterFirstOnuE2ETest {
     }
 
     private fun ensureFiberPlanSelected() {
-        waitUntilTag(RegisterSubscriptionTestTags.PLAN, timeoutMs = 30_000)
-        val planText = runCatching {
-            var text = ""
-            composeRule.onNodeWithTag(RegisterSubscriptionTestTags.PLAN).performScrollTo()
-            onView(editTextUnderHint("Plan")).check { view, _ ->
-                text = (view as android.widget.EditText).text?.toString().orEmpty()
-            }
-            text
-        }.getOrDefault("")
-        if (planText.isNotBlank()) return
-        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.PLAN)
+        waitUntilTag(RegisterSubscriptionTestTags.planItem(0), timeoutMs = 30_000)
+        // Plans are a radio list: keep the selection the form restored, otherwise take the first plan.
+        var index = 0
+        while (true) {
+            val nodes = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.planItem(index)).fetchSemanticsNodes()
+            if (nodes.isEmpty()) break
+            if (nodes.first().config.getOrElse(SemanticsProperties.Selected) { false }) return
+            index++
+        }
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.planItem(0))
             .performScrollTo()
             .performClick()
-        waitUntilTag(RegisterSubscriptionTestTags.planItem(0), timeoutMs = 10_000)
-        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.planItem(0)).performClick()
     }
 
     private fun selectAccessMode() {
@@ -682,11 +681,11 @@ class FiberRegisterFirstOnuE2ETest {
     }
 
     private fun napFieldText(): String? = runCatching {
-        var text = ""
-        onView(editTextUnderHint("Caja Nap")).check { view, _ ->
-            text = (view as android.widget.EditText).text?.toString().orEmpty()
-        }
-        text
+        // The NAP card shows the chosen box code; without a selection it only invites to choose one.
+        val config = composeRule.onNodeWithTag(RegisterSubscriptionTestTags.NAP_BOX, useUnmergedTree = false)
+            .fetchSemanticsNode().config
+        val texts = config.getOrElse(SemanticsProperties.Text) { emptyList() }.map { it.text }
+        texts.firstOrNull()?.takeUnless { it.startsWith("Elige") || it.startsWith("Buscando") }.orEmpty()
     }.getOrNull()
 
     private fun napFieldHasAnySelection(): Boolean = napFieldText().orEmpty().isNotBlank()
@@ -701,43 +700,22 @@ class FiberRegisterFirstOnuE2ETest {
     private fun selectNapFromDropdown() {
         val wanted = napCode
         val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(45_000)
-        var selected = false
-        while (System.nanoTime() < deadline && !selected) {
-            selected = runCatching {
-                composeRule.onNodeWithTag(RegisterSubscriptionTestTags.NAP_BOX)
-                    .performScrollTo()
-                onView(
-                    allOf(
-                        withId(MaterialR.id.text_input_end_icon),
-                        isDescendantOfA(textInputLayoutWithHint("Caja Nap")),
-                        isDisplayed(),
-                    )
-                ).perform(click())
-                Thread.sleep(800)
-                if (wanted != null) {
-                    onData(org.hamcrest.Matchers.hasToString(org.hamcrest.Matchers.containsString(wanted)))
-                        .inRoot(RootMatchers.isPlatformPopup())
-                        .atPosition(0)
-                        .perform(click())
-                } else {
-                    onData(anything())
-                        .inRoot(RootMatchers.isPlatformPopup())
-                        .atPosition(0)
-                        .perform(click())
+        while (System.nanoTime() < deadline) {
+            composeRule.onNodeWithTag(RegisterSubscriptionTestTags.NAP_BOX).performScrollTo().performClick()
+            composeRule.waitForIdle()
+            var index = 0
+            while (true) {
+                val nodes = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.napItem(index)).fetchSemanticsNodes()
+                if (nodes.isEmpty()) break
+                val text = nodes.first().config.toString()
+                if (wanted == null || E2eNapCodeResolver.matches(text, wanted)) {
+                    composeRule.onNodeWithTag(RegisterSubscriptionTestTags.napItem(index)).performScrollTo().performClick()
+                    return
                 }
-                true
-            }.getOrDefault(false)
-            if (!selected && wanted != null) {
-                selected = runCatching {
-                    device.findObject(
-                        androidx.test.uiautomator.UiSelector().textContains(wanted)
-                    ).click()
-                    true
-                }.getOrDefault(false)
+                index++
             }
-            if (!selected) {
-                Thread.sleep(800)
-            }
+            Espresso.pressBack()
+            Thread.sleep(800)
         }
     }
 

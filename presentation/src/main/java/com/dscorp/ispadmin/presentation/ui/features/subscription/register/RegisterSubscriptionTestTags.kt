@@ -12,6 +12,7 @@ object RegisterSubscriptionTestTags {
     const val PLACE = "register_place_field"
     const val NAP_BOX = "register_nap_box_field"
     const val NEARBY_NAP_LOADING = "register_nearby_nap_loading"
+    const val NAP_SHEET = "register_nap_sheet"
     const val INSTALLATION_TYPE = "register_installation_type_dropdown"
     const val ACCESS_MODE = "register_access_mode"
     const val ACCESS_MODE_PPPOE = "register_access_mode_pppoe"
@@ -73,6 +74,7 @@ object RegisterSubscriptionTestTags {
 
     fun onuItem(index: Int): String = "$ONU_ITEM_PREFIX$index"
     fun planItem(index: Int): String = "$PLAN_ITEM_PREFIX$index"
+    fun napItem(index: Int): String = "register_nap_item_$index"
     fun installationTypeItem(index: Int): String = "$INSTALLATION_TYPE_ITEM_PREFIX$index"
     fun hostDeviceItem(index: Int): String = "$HOST_DEVICE_ITEM_PREFIX$index"
     fun vlanItem(index: Int): String = "$VLAN_ITEM_PREFIX$index"

@@ -13,9 +13,7 @@ class RegisterSubscriptionFormHostDeviceTest {
 
     @Test
     fun `InstallationBlock muestra dropdown host cuando hay mas de un core activo`() {
-        val formSource = File(
-            "src/main/java/com/dscorp/ispadmin/presentation/ui/features/subscription/register/compose/RegisterSubscriptionForm.kt"
-        ).readText()
+        val formSource = registerWizardSource()
 
         assertThat(formSource).contains("form.shouldShowHostDeviceSelector()")
         assertThat(formSource).contains("RegisterSubscriptionTestTags.HOST_DEVICE")
@@ -64,9 +62,7 @@ class RegisterSubscriptionFormHostDeviceTest {
 
     @Test
     fun `FiberOpticForm muestra dropdown VLAN solo en FIBER`() {
-        val formSource = File(
-            "src/main/java/com/dscorp/ispadmin/presentation/ui/features/subscription/register/compose/RegisterSubscriptionForm.kt"
-        ).readText()
+        val formSource = registerWizardSource()
 
         assertThat(formSource).contains("RegisterSubscriptionTestTags.VLAN")
         assertThat(formSource).contains("RegisterSubscriptionIntent.OnVlanChanged")
@@ -90,17 +86,19 @@ class RegisterSubscriptionFormHostDeviceTest {
 
     @Test
     fun `WifiFields usa un nombre de red y check para nombres distintos`() {
-        val formSource = File(
-            "src/main/java/com/dscorp/ispadmin/presentation/ui/features/subscription/register/compose/RegisterSubscriptionForm.kt"
-        ).readText()
+        val formSource = registerWizardSource()
 
         assertThat(formSource).contains("RegisterSubscriptionTestTags.WIFI_DIFFERENT_NAMES")
         assertThat(formSource).contains("UseDifferentWifiNamesChanged")
         assertThat(formSource).contains("Nombre de red")
-        assertThat(formSource).contains("Clave WiFi")
+        assertThat(formSource).contains("Clave *")
         assertThat(formSource).contains("form.useDifferentWifiNames")
         assertThat(formSource).contains("resolvedWifiSsid5()")
         assertThat(formSource).contains("RegisterSubscriptionTestTags.WIFI_SSID_5")
         assertThat(formSource).contains("contentDescription")
     }
 }
+
+/** The wizard UI is split across these files; source checks read them together. */
+internal fun registerWizardSource(): String = listOf("RegisterSubscriptionForm.kt", "RegisterServiceStep.kt", "RegisterWizardChrome.kt")
+    .joinToString("\n") { File("src/main/java/com/dscorp/ispadmin/presentation/ui/features/subscription/register/compose/$it").readText() }
