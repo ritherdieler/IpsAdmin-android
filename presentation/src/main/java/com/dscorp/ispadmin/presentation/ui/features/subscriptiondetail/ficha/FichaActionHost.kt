@@ -15,8 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
-import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CancelSubscriptionDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CancelSubscriptionState
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.CancelSubscription
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.CancelSubscriptionSheetContent
+import java.time.LocalDate
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CustomerDataForm
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.ReactivateServiceDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.ReactivateServiceState
@@ -54,7 +56,10 @@ fun FichaActionHost(
     }
     LaunchedEffect(state.cancelSubscriptionState) {
         when (state.cancelSubscriptionState) {
-            CancelSubscriptionState.Success -> onChanged("Suscripción cancelada")
+            CancelSubscriptionState.Success -> {
+                onClosed()
+                onChanged("Suscripción cancelada")
+            }
             CancelSubscriptionState.Error -> onChanged("No se pudo cancelar la suscripción")
             else -> Unit
         }
@@ -100,13 +105,19 @@ fun FichaActionHost(
     }
 
     when (action) {
-        MoreAction.CANCEL -> CancelSubscriptionDialog(
-            onDismiss = onClosed,
-            onConfirm = {
-                viewModel.cancelSubscription(subscription.id)
-                onClosed()
-            },
-        )
+        MoreAction.CANCEL -> {
+            val busy = state.cancelSubscriptionState == CancelSubscriptionState.Loading
+            ModalBottomSheet(onDismissRequest = { if (!busy) onClosed() }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+                CancelSubscriptionSheetContent(
+                    model = remember(subscription) { CancelSubscription.from(subscription, LocalDate.now(FICHA_ZONE)) },
+                    busy = busy,
+                    error = if (state.cancelSubscriptionState == CancelSubscriptionState.Error) "No se pudo cancelar la suscripción. Vuelve a intentar." else null,
+                    // Stays open until the Core answers; success closes it from the effect above.
+                    onConfirm = { viewModel.cancelSubscription(subscription.id) },
+                    onBack = onClosed,
+                )
+            }
+        }
         MoreAction.REACTIVATE -> ReactivateServiceDialog(
             onDismiss = { if (state.reactivateServiceState != ReactivateServiceState.Loading) onClosed() },
             onConfirm = { viewModel.reactivateService(subscription.id) },
