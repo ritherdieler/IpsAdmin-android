@@ -138,7 +138,9 @@ fun SubscriptionDetailScreen(
     accessMigrationViewModel: AccessMigrationViewModel = koinViewModel(),
     hubViewModel: SubscriptionHubViewModel = koinViewModel(),
     actionsViewModel: SubscriptionFinderViewModel = koinViewModel(),
-    navController: NavController
+    navController: NavController,
+    returnedMessage: String? = null,
+    onReturnedMessageShown: () -> Unit = {},
 ) {
     var showMoreActions by remember { mutableStateOf(false) }
     var moreAction by remember { mutableStateOf<MoreAction?>(null) }
@@ -147,6 +149,14 @@ fun SubscriptionDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(subscriptionId) {
         hubViewModel.onIntent(SubscriptionHubIntent.Load(subscriptionId, openCharge))
+    }
+    // An action screen (change plan, NAP, location…) finished: reload and say what changed.
+    LaunchedEffect(returnedMessage) {
+        val message = returnedMessage ?: return@LaunchedEffect
+        onReturnedMessageShown()
+        hubViewModel.onIntent(SubscriptionHubIntent.Load(subscriptionId))
+        viewModel.getSubscription(subscriptionId)
+        snackbarHostState.showSnackbar(message)
     }
     LaunchedEffect(hubViewModel) {
         hubViewModel.events.collect { event ->

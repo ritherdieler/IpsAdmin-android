@@ -111,7 +111,7 @@ object MainNavigation {
             // Dashboard, the subscription search and the ficha draw their own header, as in the design.
             showTopBar = route !is FeatureRoutes.Dashboard && route !is Subscription.Find && route !is Subscription.Details &&
                 route !is SupportTicket.Detail && route !is SupportTicket.Close && route !is SupportTicket.Create && route !is Subscription.Register && route !is Payment.FindPayer &&
-                route !is Payment.SearchPayers && route !is Payment.Receipt &&
+                route !is Payment.SearchPayers && route !is Payment.Receipt && route !is Subscription.ChangePlan &&
                 !(type == UserType.SALES && route is Installation.List),
             bottomBar = if (isTopLevel && bar.size > 1) bar else emptyList(),
             selected = selected,

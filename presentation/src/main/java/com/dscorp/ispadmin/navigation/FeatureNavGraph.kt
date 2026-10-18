@@ -361,10 +361,13 @@ private fun NavGraphContent(
         }
         composable<Subscription.Details> { backStackEntry ->
             val route = backStackEntry.toRoute<Subscription.Details>()
+            val returned by backStackEntry.savedStateHandle.getStateFlow<String?>(FICHA_RESULT, null).collectAsState()
             SubscriptionDetailScreen(
                 subscriptionId = route.subscriptionId,
                 openCharge = route.openCharge,
-                navController = navController
+                navController = navController,
+                returnedMessage = returned,
+                onReturnedMessageShown = { backStackEntry.savedStateHandle[FICHA_RESULT] = null },
             )
         }
         composable<Subscription.Provisioning> { backStackEntry ->
@@ -379,24 +382,16 @@ private fun NavGraphContent(
         }
         composable<Subscription.ChangePlan> { backStackEntry ->
             val subscriptionId = backStackEntry.toRoute<Subscription.ChangePlan>().subscriptionId
-            val viewModel = koinViewModel<EditSubscriptionViewModel>()
-            LaunchedEffect(subscriptionId) {
-                viewModel.getFormData(subscriptionId)
-            }
+            val viewModel: com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.ChangePlanViewModel = koinViewModel()
             val state by viewModel.uiState.collectAsState()
-            EditPlanSubscriptionScreen(
+            LaunchedEffect(subscriptionId) {
+                viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.ChangePlanIntent.Load(subscriptionId))
+            }
+            LaunchedEffect(state.done) { state.done?.let { navController.returnToFicha(it) } }
+            com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.ChangePlanContent(
                 state = state,
-                onPlanSelected = { plan -> viewModel.updateSelectedPlan(plan) },
-                onEditClick = {
-                    viewModel.editSubscription(subscriptionId)
-                },
-                onSuccessDialogDismiss = {
-                    viewModel.clearSuccess()
-                    navController.popBackStack()
-                },
-                onErrorDismiss = {
-                    viewModel.clearError()
-                }
+                onIntent = viewModel::onIntent,
+                onBack = { navController.popBackStack() },
             )
         }
         composable<Subscription.Migrate> { backStackEntry ->
@@ -794,6 +789,15 @@ private fun CashDayRoute(backStackEntry: NavBackStackEntry, navController: NavHo
             dismissButton = { androidx.compose.material3.TextButton(onClick = { pickingDate = false }) { Text("Cancelar") } },
         ) { androidx.compose.material3.DatePicker(state = picker) }
     }
+}
+
+/** Key the ficha action screens use to hand their result message back to the ficha. */
+private const val FICHA_RESULT = "ficha_result"
+
+/** Leaves an action screen and tells the ficha to reload and show [message]. */
+private fun NavHostController.returnToFicha(message: String) {
+    previousBackStackEntry?.savedStateHandle?.set(FICHA_RESULT, message)
+    popBackStack()
 }
 
 private val LIMA: java.time.ZoneId = java.time.ZoneId.of("America/Lima")

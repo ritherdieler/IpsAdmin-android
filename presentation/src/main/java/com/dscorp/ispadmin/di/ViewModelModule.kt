@@ -115,6 +115,12 @@ val viewModelModule = module {
         ) { java.time.LocalDate.now(java.time.ZoneId.of("America/Lima")) }
     }
     viewModel {
+        com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.ChangePlanViewModel(
+            com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.ApiChangePlanGateway(get(), get()),
+            get<CoroutineDispatcher>(named("mainImmediate")),
+        )
+    }
+    viewModel {
         com.dscorp.ispadmin.presentation.ui.features.payment.cash.PaymentSearchViewModel(
             com.dscorp.ispadmin.presentation.ui.features.payment.cash.ApiPaymentsGateway(get(), get()),
             get<CoroutineDispatcher>(named("mainImmediate")),
