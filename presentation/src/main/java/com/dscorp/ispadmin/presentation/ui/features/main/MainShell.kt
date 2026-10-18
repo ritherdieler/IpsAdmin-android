@@ -10,6 +10,7 @@ import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material.icons.outlined.Handyman
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -128,6 +129,7 @@ private fun ShellBottomBar(
 
 private fun MainDestination.icon(): ImageVector = when (this) {
     MainDestination.HOME -> Icons.Outlined.Home
+    MainDestination.TODAY -> Icons.Outlined.Today
     MainDestination.SUBSCRIPTIONS -> Icons.Outlined.Group
     MainDestination.TICKETS -> Icons.Outlined.ConfirmationNumber
     MainDestination.CASH -> Icons.Outlined.CreditCard

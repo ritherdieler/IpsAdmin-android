@@ -92,6 +92,18 @@ val viewModelModule = module {
         )
     }
     viewModel {
+        com.dscorp.ispadmin.presentation.ui.features.home.TechnicianTodayViewModel(
+            com.dscorp.ispadmin.presentation.ui.features.home.RepositoryFieldGateway(get(), get(), get()),
+            get<CoroutineDispatcher>(named("mainImmediate")),
+        ) { java.time.Instant.now() }
+    }
+    viewModel {
+        com.dscorp.ispadmin.presentation.ui.features.home.SalesAgendaViewModel(
+            com.dscorp.ispadmin.presentation.ui.features.home.RepositoryFieldGateway(get(), get(), get()),
+            get<CoroutineDispatcher>(named("mainImmediate")),
+        ) { java.time.Instant.now() }
+    }
+    viewModel {
         com.dscorp.ispadmin.presentation.ui.features.home.HomeViewModel(
             gateway = com.dscorp.ispadmin.presentation.ui.features.home.ApiHomeGateway(get()),
             mainImmediate = get<CoroutineDispatcher>(named("mainImmediate")),

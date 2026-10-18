@@ -85,6 +85,13 @@ import com.dscorp.ispadmin.presentation.ui.features.home.HomeIntent
 import com.dscorp.ispadmin.presentation.ui.features.home.HomeViewModel
 import com.dscorp.ispadmin.presentation.ui.features.home.SecretaryHomeContent
 import androidx.navigation.NavBackStackEntry
+import com.dscorp.ispadmin.presentation.ui.features.home.FieldAction
+import com.dscorp.ispadmin.presentation.ui.features.home.FieldIntent
+import com.dscorp.ispadmin.presentation.ui.features.home.SalesAgendaContent
+import com.dscorp.ispadmin.presentation.ui.features.home.SalesAgendaViewModel
+import com.dscorp.ispadmin.presentation.ui.features.home.TechnicianTodayContent
+import com.dscorp.ispadmin.presentation.ui.features.home.TechnicianTodayViewModel
+import com.dscorp.ispadmin.presentation.ui.features.home.TodayTarget
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -219,6 +226,11 @@ private fun NavGraphContent(
         composable<Dashboard> { backStackEntry ->
             if (currentUser?.type == User.UserType.SECRETARY) {
                 SecretaryHomeRoute(backStackEntry, currentUser, navController)
+            } else if (currentUser?.type == User.UserType.TECHNICIAN) {
+                val viewModel: TechnicianTodayViewModel = koinViewModel()
+                val state by viewModel.uiState.collectAsState()
+                FieldRefresh(backStackEntry, viewModel::onIntent)
+                TechnicianTodayContent(state, onAction = { navController.onFieldAction(it) }, onRetry = { viewModel.onIntent(FieldIntent.Refresh) })
             } else {
                 DashBoardComposeScreen(navController = navController)
             }
@@ -495,7 +507,19 @@ private fun NavGraphContent(
         }
 
         // INSTALLATION MODULE
-        composable<Installation.List> {
+        composable<Installation.List> { backStackEntry ->
+            if (currentUser?.type == User.UserType.SALES) {
+                val agendaViewModel: SalesAgendaViewModel = koinViewModel()
+                val agenda by agendaViewModel.uiState.collectAsState()
+                FieldRefresh(backStackEntry, agendaViewModel::onIntent)
+                SalesAgendaContent(
+                    agenda,
+                    onFilter = { agendaViewModel.onIntent(FieldIntent.Filter(it)) },
+                    onAction = { navController.onFieldAction(it) },
+                    onRetry = { agendaViewModel.onIntent(FieldIntent.Refresh) },
+                )
+                return@composable
+            }
             val viewModel: InstallationOrderListViewModel = koinViewModel()
 
             InstallationOrderListScreen(
@@ -631,4 +655,39 @@ private fun SecretaryHomeRoute(backStackEntry: NavBackStackEntry, user: User, na
             }
         },
     )
+}
+
+/** Loads once and refreshes when coming back (a closed ticket, a registration). */
+@Composable
+private fun FieldRefresh(backStackEntry: NavBackStackEntry, onIntent: (FieldIntent) -> Unit) {
+    LaunchedEffect(Unit) { onIntent(FieldIntent.Load) }
+    var seen by remember { mutableStateOf(false) }
+    val resumed = backStackEntry.lifecycle.currentStateAsState()
+    LaunchedEffect(resumed.value) {
+        if (resumed.value == androidx.lifecycle.Lifecycle.State.RESUMED) {
+            if (seen) onIntent(FieldIntent.Refresh)
+            seen = true
+        }
+    }
+}
+
+private fun NavHostController.onFieldAction(action: FieldAction) {
+    when (action) {
+        is FieldAction.Open -> when (val target = action.target) {
+            is TodayTarget.Ticket -> navigate(SupportTicket.Detail(target.id))
+            is TodayTarget.Order -> navigate(Subscription.Register(installationOrderId = target.id))
+        }
+        is FieldAction.Register -> when (val target = action.target) {
+            is TodayTarget.Ticket -> navigate(Subscription.Register())
+            is TodayTarget.Order -> navigate(Subscription.Register(installationOrderId = target.id))
+        }
+        is FieldAction.Directions -> context.startActivity(
+            android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("geo:0,0?q=" + android.net.Uri.encode(action.query)))
+                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+        is FieldAction.Filtered -> Unit
+        FieldAction.Profile -> navigate(Profile)
+        FieldAction.PendingUploads -> navigate(Subscription.PendingSubscriptions)
+        FieldAction.NewOrder -> navigate(FeatureRoutes.Installation.Create)
+    }
 }

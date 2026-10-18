@@ -10,6 +10,7 @@ import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.SupportTicket
 /** Root destinations shown in the bottom bar. Caja opens the payer finder until the cash screen exists. */
 enum class MainDestination(val label: String, val route: FeatureRoutes) {
     HOME("Inicio", FeatureRoutes.Dashboard),
+    TODAY("Hoy", FeatureRoutes.Dashboard),
     SUBSCRIPTIONS("Suscripciones", Subscription.Find),
     TICKETS("Tickets", SupportTicket.List),
     CASH("Caja", Payment.FindPayer),
@@ -44,7 +45,7 @@ object MainNavigation {
         UserType.ADMIN -> listOf(MainDestination.HOME, MainDestination.SUBSCRIPTIONS, MainDestination.TICKETS, MainDestination.CASH, MainDestination.MORE)
         UserType.ACCOUNTANT -> listOf(MainDestination.HOME, MainDestination.SUBSCRIPTIONS, MainDestination.CASH, MainDestination.MORE)
         UserType.SECRETARY -> listOf(MainDestination.HOME, MainDestination.SUBSCRIPTIONS, MainDestination.CASH, MainDestination.TICKETS, MainDestination.MORE)
-        UserType.TECHNICIAN -> listOf(MainDestination.TICKETS, MainDestination.INSTALLATIONS, MainDestination.SUBSCRIPTIONS, MainDestination.MORE)
+        UserType.TECHNICIAN -> listOf(MainDestination.TODAY, MainDestination.TICKETS, MainDestination.INSTALLATIONS, MainDestination.SUBSCRIPTIONS, MainDestination.MORE)
         UserType.SALES -> listOf(MainDestination.INSTALLATIONS, MainDestination.MORE)
         UserType.LOGISTIC, UserType.CLIENT -> listOf(MainDestination.MORE)
     }
@@ -105,7 +106,8 @@ object MainNavigation {
             showBack = !isTopLevel,
             // Dashboard, the subscription search and the ficha draw their own header, as in the design.
             showTopBar = route !is FeatureRoutes.Dashboard && route !is Subscription.Find && route !is Subscription.Details &&
-                route !is SupportTicket.Detail && route !is SupportTicket.Close && route !is SupportTicket.Create,
+                route !is SupportTicket.Detail && route !is SupportTicket.Close && route !is SupportTicket.Create &&
+                !(type == UserType.SALES && route is Installation.List),
             bottomBar = if (isTopLevel && bar.size > 1) bar else emptyList(),
             selected = selected,
         )

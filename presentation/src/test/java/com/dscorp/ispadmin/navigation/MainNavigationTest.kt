@@ -30,7 +30,7 @@ class MainNavigationTest {
             MainNavigation.bottomBarFor(UserType.SECRETARY),
         )
         assertEquals(
-            listOf(MainDestination.TICKETS, MainDestination.INSTALLATIONS, MainDestination.SUBSCRIPTIONS, MainDestination.MORE),
+            listOf(MainDestination.TODAY, MainDestination.TICKETS, MainDestination.INSTALLATIONS, MainDestination.SUBSCRIPTIONS, MainDestination.MORE),
             MainNavigation.bottomBarFor(UserType.TECHNICIAN),
         )
         assertEquals(listOf(MainDestination.INSTALLATIONS, MainDestination.MORE), MainNavigation.bottomBarFor(UserType.SALES))
@@ -65,7 +65,7 @@ class MainNavigationTest {
     @Test
     fun `start route is the first bar destination`() {
         assertEquals(FeatureRoutes.Dashboard, MainNavigation.startRouteFor(UserType.SECRETARY))
-        assertEquals(SupportTicket.List, MainNavigation.startRouteFor(UserType.TECHNICIAN))
+        assertEquals(FeatureRoutes.Dashboard, MainNavigation.startRouteFor(UserType.TECHNICIAN))
         assertEquals(Installation.List, MainNavigation.startRouteFor(UserType.SALES))
     }
 
@@ -192,5 +192,15 @@ class MainNavigationTest {
         assertFalse(MainNavigation.shellChrome(UserType.TECHNICIAN, SupportTicket.Close(3609)).showTopBar)
         assertFalse(MainNavigation.shellChrome(UserType.SECRETARY, SupportTicket.Create).showTopBar)
         assertTrue(MainNavigation.shellChrome(UserType.TECHNICIAN, SupportTicket.Detail(3609)).showBack)
+    }
+
+    @Test
+    fun `technicians start on today and sales draw their own agenda header`() {
+        val today = MainNavigation.shellChrome(UserType.TECHNICIAN, FeatureRoutes.Dashboard)
+        assertEquals("Hoy", today.title)
+        assertEquals(MainDestination.TODAY, today.selected)
+        assertFalse(today.showTopBar)
+        assertFalse(MainNavigation.shellChrome(UserType.SALES, Installation.List).showTopBar)
+        assertTrue(MainNavigation.shellChrome(UserType.ADMIN, Installation.List).showTopBar)
     }
 }
