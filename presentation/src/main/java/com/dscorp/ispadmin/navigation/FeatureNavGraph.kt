@@ -394,6 +394,20 @@ private fun NavGraphContent(
                 onBack = { navController.popBackStack() },
             )
         }
+        composable<Subscription.ChangeNap> { backStackEntry ->
+            val subscriptionId = backStackEntry.toRoute<Subscription.ChangeNap>().subscriptionId
+            val viewModel: com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.ChangeNapViewModel = koinViewModel()
+            val state by viewModel.uiState.collectAsState()
+            LaunchedEffect(subscriptionId) {
+                viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.ChangeNapIntent.Load(subscriptionId))
+            }
+            LaunchedEffect(state.done) { state.done?.let { navController.returnToFicha(it) } }
+            com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.actions.ChangeNapContent(
+                state = state,
+                onIntent = viewModel::onIntent,
+                onBack = { navController.popBackStack() },
+            )
+        }
         composable<Subscription.Migrate> { backStackEntry ->
             val subscriptionId = backStackEntry.toRoute<Subscription.Migrate>().subscriptionId
             MigrationComposeScreen(

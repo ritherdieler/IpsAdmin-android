@@ -21,7 +21,6 @@ import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
 import com.dscorp.ispadmin.presentation.ui.features.locationMapView.LocationSelectorComposeDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CancelSubscriptionDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CancelSubscriptionState
-import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.ChangeNapBoxDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.CustomerDataForm
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.DeferCutDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.LocationUpdateDialog
@@ -98,7 +97,7 @@ fun FichaActionHost(
                 onUpdatePhoto()
                 onClosed()
             }
-            MoreAction.CHANGE_NAP -> viewModel.setSelectedSubscription(resume)
+            MoreAction.CHANGE_NAP -> navController.navigate(FeatureRoutes.Subscription.ChangeNap(subscription.id)).also { onClosed() }
             MoreAction.UPDATE_LOCATION -> {
                 viewModel.setSelectedSubscription(resume)
                 viewModel.toggleLocationUpdateDialog(true)
@@ -114,17 +113,6 @@ fun FichaActionHost(
     }
 
     when (action) {
-        MoreAction.CHANGE_NAP -> ChangeNapBoxDialog(
-            viewModel = viewModel,
-            selectedSubscription = resume,
-            napBoxesState = state.napBoxesState,
-            context = context,
-            onDismiss = {
-                viewModel.resetNapBoxFlow()
-                onClosed()
-                onChanged(null)
-            },
-        )
         MoreAction.UPDATE_LOCATION -> if (state.showLocationUpdateDialog) {
             val locationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
             LocationUpdateDialog(
