@@ -1,5 +1,18 @@
 package com.dscorp.ispadmin.presentation.ui.features.outlay
 
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import com.dscorp.ispadmin.presentation.theme.IspTheme
+import com.dscorp.ispadmin.presentation.ui.features.home.monthShort
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterFieldLabel
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterTextField
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,27 +54,27 @@ import org.koin.androidx.compose.koinViewModel
 
 object OutlayConstants {
     val CATEGORIES = listOf(
+        "Otros",
         "Suministros",
-        "Mantenimiento", 
+        "Transporte",
+        "Mantenimiento",
         "Equipos",
         "Servicios",
-        "Transporte",
         "Comunicaciones",
         "Seguros",
         "Capacitación",
-        "Otros"
     )
     
     val COST_CENTERS = listOf(
         "Administración",
         "Técnico",
-        "Ventas", 
+        "Ventas",
+        "Desarrollo",
         "Marketing",
         "Recursos Humanos",
         "Finanzas",
         "Operaciones",
         "Soporte Técnico",
-        "Desarrollo",
         "Otros"
     )
 }
@@ -174,7 +187,8 @@ fun RegisterOutLayForm(
     photoList: List<Uri>,
     isLoading: Boolean,
     onIntent: (OutlayIntent) -> Unit,
-    onImageClick: (Uri) -> Unit
+    onImageClick: (Uri) -> Unit,
+    today: java.time.LocalDate = java.time.LocalDate.now(java.time.ZoneId.of("America/Lima")),
 ) {
     val configuration = LocalConfiguration.current
     val isTablet = configuration.screenWidthDp >= 600
@@ -191,113 +205,63 @@ fun RegisterOutLayForm(
         uri?.let { onIntent(OutlayIntent.TakeImage(it)) }
     }
 
-    Column(
-        modifier = modifier
-            .padding(paddingValue)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = "Registro de Egreso",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Medium
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        ClearableTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = outlay.amount ?: "",
-            label = "Monto",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            maxLength = 10,
-            regex = Regex("^[0-9]*\\.?[0-9]*$"),
-            onValueChange = { newValue ->
-                if (isValidDecimalInput(newValue)) {
-                    onIntent(OutlayIntent.UpdateAmount(newValue))
-                }
-            },
-            onClear = { onIntent(OutlayIntent.UpdateAmount("")) },
-            contentDescription = "Limpiar monto"
-        )
-
-        ClearableTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = outlay.description ?: "",
-            label = "Descripción",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            maxLength = 200,
-            singleLine = false,
-            maxLines = 3,
-            onValueChange = { onIntent(OutlayIntent.UpdateDescription(it)) },
-            onClear = { onIntent(OutlayIntent.UpdateDescription("")) },
-            contentDescription = "Limpiar descripción"
-        )
-
-        ClearableTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = outlay.document_code ?: "",
-            label = "Código de Documento",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            maxLength = 50,
-            onValueChange = { onIntent(OutlayIntent.UpdateDocumentCode(it)) },
-            onClear = { onIntent(OutlayIntent.UpdateDocumentCode("")) },
-            contentDescription = "Limpiar código de documento"
-        )
-
-        MyOutLinedDropDown(
-            modifier = Modifier.fillMaxWidth(),
-            items = OutlayConstants.CATEGORIES,
-            selected = outlay.category,
-            label = "Categoría",
-            onItemSelected = { category ->
-                onIntent(OutlayIntent.UpdateCategory(category))
-            }
-        )
-
-        MyOutLinedDropDown(
-            modifier = Modifier.fillMaxWidth(),
-            items = OutlayConstants.COST_CENTERS,
-            selected = outlay.cost_center,
-            label = "Centro de Costo",
-            onItemSelected = { costCenter ->
-                onIntent(OutlayIntent.UpdateCostCenter(costCenter))
-            }
-        )
-
-        MultiplePhotoAndGalleryPicker(
-            photoUriList = photoList,
-            onTakePhoto = requestCameraPermission,
-            onSelectGalleryImage = { galleryLauncher.launch("image/*") },
-            onImageRemoveClick = { index -> onIntent(OutlayIntent.RemoveImage(index)) },
-            onImageClick = onImageClick
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+    val colors = IspTheme.colors
+    val hasPhoto = photoList.isNotEmpty()
+    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            TextButton(
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    onIntent(OutlayIntent.UpdateAmount(""))
-                    onIntent(OutlayIntent.UpdateDescription(""))
-                    onIntent(OutlayIntent.UpdateDocumentCode(""))
-                    onIntent(OutlayIntent.UpdateCategory(""))
-                    onIntent(OutlayIntent.UpdateCostCenter(""))
-                }
-            ) {
-                Text("Limpiar")
-            }
-
-            MyButton(
-                modifier = Modifier.weight(1f),
-                text = "Registrar",
-                enabled = outlay.isValid() && photoList.isNotEmpty() && !isLoading,
-                onClick = { onIntent(OutlayIntent.RegisterOutLay) }
+            RegisterTextField(
+                "Monto *", outlay.amount ?: "",
+                { newValue -> if (isValidDecimalInput(newValue)) onIntent(OutlayIntent.UpdateAmount(newValue)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             )
+            ChipField("Categoría *", OutlayConstants.CATEGORIES, outlay.category) { onIntent(OutlayIntent.UpdateCategory(it)) }
+            ChipField("Centro de costo *", OutlayConstants.COST_CENTERS, outlay.cost_center) { onIntent(OutlayIntent.UpdateCostCenter(it)) }
+            RegisterTextField(
+                "Descripción *", outlay.description ?: "", { if (it.length <= 200) onIntent(OutlayIntent.UpdateDescription(it)) },
+                singleLine = false, minHeight = 88.dp,
+            )
+            RegisterTextField(
+                "N.º de documento", outlay.document_code ?: "", { if (it.length <= 50) onIntent(OutlayIntent.UpdateDocumentCode(it)) },
+                helper = "Opcional",
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                RegisterFieldLabel("Fecha")
+                Text("Hoy, ${today.dayOfMonth} ${monthShort(today)} ${today.year}", fontSize = 16.sp)
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                RegisterFieldLabel("Foto del comprobante *")
+                MultiplePhotoAndGalleryPicker(
+                    photoUriList = photoList,
+                    onTakePhoto = requestCameraPermission,
+                    onSelectGalleryImage = { galleryLauncher.launch("image/*") },
+                    onImageRemoveClick = { index -> onIntent(OutlayIntent.RemoveImage(index)) },
+                    onImageClick = onImageClick
+                )
+                if (!hasPhoto) Text("Falta la foto del comprobante", fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
+            }
+        }
+        Column(Modifier.fillMaxWidth().background(colors.card)) {
+            HorizontalDivider(color = colors.cardBorder)
+            Button(
+                onClick = { onIntent(OutlayIntent.RegisterOutLay) },
+                enabled = outlay.isValid() && hasPhoto && !isLoading,
+                modifier = Modifier.fillMaxWidth().padding(16.dp).heightIn(min = 52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+            ) { Text("Registrar egreso", fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ChipField(label: String, options: List<String>, selected: String?, onSelect: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        RegisterFieldLabel(label)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            options.forEach { option -> ChoiceChip(option, option == selected) { onSelect(option) } }
         }
     }
 }

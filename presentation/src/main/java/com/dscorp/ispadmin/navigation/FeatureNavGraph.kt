@@ -443,6 +443,24 @@ private fun NavGraphContent(
             FindPayerComposeScreen(navController = navController)
         }
         // OUTLAY MODULE
+        composable<Outlay.Month> { backStackEntry ->
+            val viewModel: com.dscorp.ispadmin.presentation.ui.features.outlay.OutlaysViewModel = koinViewModel()
+            val state by viewModel.uiState.collectAsState()
+            LaunchedEffect(Unit) { viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.outlay.OutlaysIntent.Load) }
+            // Coming back from a new outlay refreshes the month.
+            val resumed = backStackEntry.lifecycle.currentStateAsState()
+            LaunchedEffect(resumed.value) {
+                if (resumed.value == androidx.lifecycle.Lifecycle.State.RESUMED && state.month != null) {
+                    viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.outlay.OutlaysIntent.Refresh)
+                }
+            }
+            com.dscorp.ispadmin.presentation.ui.features.outlay.OutlaysContent(
+                state,
+                onFilter = { viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.outlay.OutlaysIntent.Filter(it)) },
+                onNew = { navController.navigate(Outlay.Register) },
+                onRetry = { viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.outlay.OutlaysIntent.Refresh) },
+            )
+        }
         composable<Outlay.Register> {
 
             RegisterOutlayScreen(

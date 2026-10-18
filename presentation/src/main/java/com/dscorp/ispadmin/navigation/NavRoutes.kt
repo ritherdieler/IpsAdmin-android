@@ -152,6 +152,9 @@ sealed class NavRoutes {
             object Register : Outlay()
 
             @Serializable
+            object Month : Outlay()
+
+            @Serializable
             data class ImageGalleryViewer(
                 val imageUrls: List<String>,
                 val selectedIndex: Int
@@ -200,6 +203,7 @@ sealed class NavRoutes {
                     SupportTicket.Close::class.qualifiedName -> SupportTicket.Close(0)
 
                     Outlay.Register::class.qualifiedName -> Outlay.Register
+                    Outlay.Month::class.qualifiedName -> Outlay.Month
                     else -> Home // Default case
                 }
             }

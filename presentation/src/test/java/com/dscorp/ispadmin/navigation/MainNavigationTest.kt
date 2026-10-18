@@ -212,4 +212,12 @@ class MainNavigationTest {
         assertEquals("Buscar pagos", search.title)
         assertTrue(search.showBack)
     }
+
+    @Test
+    fun `collection roles find the month outlays in more`() {
+        listOf(UserType.ADMIN, UserType.ACCOUNTANT, UserType.SECRETARY).forEach { type ->
+            assertTrue(type.name, MoreItem.OUTLAYS in MainNavigation.moreItemsFor(type))
+        }
+        assertEquals("Egresos", MainNavigation.shellChrome(UserType.ADMIN, Outlay.Month).title)
+    }
 }
