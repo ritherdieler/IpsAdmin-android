@@ -51,7 +51,6 @@ import com.dscorp.ispadmin.presentation.ui.features.locationMapView.LocationSele
 import com.dscorp.ispadmin.presentation.ui.features.main.MainEvent
 import com.dscorp.ispadmin.presentation.ui.features.main.MainShell
 import com.dscorp.ispadmin.presentation.ui.features.main.MainViewModel
-import com.dscorp.ispadmin.presentation.ui.features.more.MoreContent
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationComposeScreen
 import com.dscorp.ispadmin.presentation.ui.features.outlay.RegisterOutlayScreen
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailScreen
@@ -240,11 +239,13 @@ private fun NavGraphContent(
             }
         }
         composable<FeatureRoutes.More> {
-            val type = currentUser?.type ?: return@composable
-            MoreContent(
-                items = MainNavigation.moreItemsFor(type),
+            val user = currentUser ?: return@composable
+            com.dscorp.ispadmin.presentation.ui.features.more.MoreRoute(
+                user = user,
                 versionLabel = "IspAdmin ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                 onItemSelected = { item -> navController.navigate(item.route) { launchSingleTop = true } },
+                onProfile = { navController.navigate(Profile) { launchSingleTop = true } },
+                onLoggedOut = onLoggedOut,
             )
         }
         // Profile

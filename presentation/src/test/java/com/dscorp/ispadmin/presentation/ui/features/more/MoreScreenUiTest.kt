@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.navigation.MoreItem
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -13,36 +14,50 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
+private val ADMIN_ITEMS = listOf(
+    MoreItem.REGISTER_SUBSCRIPTION, MoreItem.CREATE_TICKET, MoreItem.INSTALLATION_ORDERS,
+    MoreItem.PENDING_SUBSCRIPTIONS, MoreItem.OUTLAYS, MoreItem.REGISTER_OUTLAY, MoreItem.PLANS, MoreItem.PROFILE,
+)
+
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = Application::class)
+@Config(sdk = [34], application = Application::class, qualifiers = "w390dp-h1400dp")
 class MoreScreenUiTest {
     @get:Rule val compose = createComposeRule()
 
     @Test
-    fun `lists the role items and the app version`() {
-        compose.setContent {
-            MaterialTheme {
-                MoreContent(items = listOf(MoreItem.PLANS, MoreItem.PROFILE), versionLabel = "IspAdmin 2.6.14 (66)", onItemSelected = {})
-            }
-        }
+    fun `the header names the user and items fall in their sections with counts`() {
+        val menu = MoreMenu.from(User(id = 1, name = "SERGIO CARRILLO DIESTRA", type = User.UserType.ADMIN), ADMIN_ITEMS, pending = 0, activePlans = 11)
 
-        compose.onNodeWithText("Planes").assertExists()
-        compose.onNodeWithText("Mi perfil").assertExists()
-        compose.onNodeWithText("Registrar egreso").assertDoesNotExist()
-        compose.onNodeWithText("IspAdmin 2.6.14 (66)").assertExists()
+        assertEquals(MoreHeader("SC", "Sergio C.", "Administrador"), menu.header)
+        assertEquals(listOf("Gestión", "Suscripciones", "Tickets"), menu.sections.map { it.title })
+        assertEquals(
+            listOf(MoreEntry(MoreItem.PLANS, "11 activos"), MoreEntry(MoreItem.OUTLAYS, null), MoreEntry(MoreItem.REGISTER_OUTLAY, null), MoreEntry(MoreItem.INSTALLATION_ORDERS, null)),
+            menu.sections[0].entries,
+        )
+        assertEquals(MoreEntry(MoreItem.PENDING_SUBSCRIPTIONS, "0"), menu.sections[1].entries.last())
+        assertEquals(listOf("Suscripciones"), MoreMenu.from(User(id = 2, name = "Ana", type = User.UserType.TECHNICIAN),
+            listOf(MoreItem.REGISTER_SUBSCRIPTION, MoreItem.PENDING_SUBSCRIPTIONS, MoreItem.PROFILE), pending = null, activePlans = null).sections.map { it.title })
     }
 
     @Test
-    fun `tapping an item opens it`() {
-        var opened: MoreItem? = null
+    fun `profile, items and logout respond`() {
+        val menu = MoreMenu.from(User(id = 1, name = "Sergio Carrillo", type = User.UserType.ADMIN), ADMIN_ITEMS, pending = 2, activePlans = 11)
+        val events = mutableListOf<String>()
         compose.setContent {
             MaterialTheme {
-                MoreContent(items = listOf(MoreItem.PLANS, MoreItem.PROFILE), versionLabel = "", onItemSelected = { opened = it })
+                MoreContent(menu, versionLabel = "IspAdmin 2.6.14 (66)", onItemSelected = { events += it.name }, onProfile = { events += "profile" },
+                    onLogout = { events += "logout" })
             }
         }
 
+        compose.onNodeWithText("IspAdmin 2.6.14 (66)").assertExists()
+        compose.onNodeWithText("Mi perfil").assertDoesNotExist()
+        compose.onNodeWithText("Sergio C.").performClick()
         compose.onNodeWithText("Planes").performClick()
+        compose.onNodeWithText("Cerrar sesión").performClick()
+        compose.onNodeWithText("¿Cerrar sesión?").assertExists()
+        compose.onNodeWithText("Salir").performClick()
 
-        assertEquals(MoreItem.PLANS, opened)
+        assertEquals(listOf("profile", "PLANS", "logout"), events)
     }
 }
