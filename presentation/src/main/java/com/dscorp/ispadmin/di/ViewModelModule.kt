@@ -17,7 +17,6 @@ import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHisto
 import com.dscorp.ispadmin.presentation.ui.features.payment.register.RegisterPaymentViewModel
 import com.dscorp.ispadmin.presentation.ui.features.profile.ProfileViewModel
 import com.dscorp.ispadmin.presentation.ui.features.registration.RegisterViewModel
-import com.dscorp.ispadmin.presentation.ui.features.report.ReportsViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.EditSubscriptionViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscription.pending.PendingSubscriptionsViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionComposeViewModel
@@ -78,7 +77,12 @@ val viewModelModule = module {
     viewModel { RegisterPaymentViewModel(get(), get()) }
     viewModel { ProfileViewModel() }
     viewModel { MainActivityViewModel() }
-    viewModel { ReportsViewModel(get(), get()) }
+    viewModel {
+        com.dscorp.ispadmin.presentation.ui.features.report.ReportsViewModel(
+            com.dscorp.ispadmin.presentation.ui.features.report.RepositoryReportsGateway(get()),
+            get<CoroutineDispatcher>(named("mainImmediate")),
+        ) { java.time.LocalDate.now(java.time.ZoneId.of("America/Lima")) }
+    }
     viewModel { DashBoardViewModel() }
     viewModel { MufaViewModel(get(), get()) }
     viewModel { EditSubscriptionViewModel(get(), get()) }

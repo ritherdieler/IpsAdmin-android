@@ -6,19 +6,15 @@ import android.content.Context
 import android.content.Intent
 import android.location.LocationManager
 import android.net.Uri
-import android.os.Environment
 import android.provider.Settings
-import android.util.Base64
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import com.dscorp.ispadmin.CrossDialogFragment
 import com.dscorp.ispadmin.presentation.ui.features.formvalidation.ReactiveFormField
 import com.dscorp.ispadmin.presentation.util.IDialogFactory
-import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
 import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationRequest
@@ -31,8 +27,6 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.Task
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import org.koin.android.ext.android.inject
-import java.io.File
-import java.io.FileOutputStream
 import java.util.Calendar
 
 fun NavController.navigateSafe(destinationId: Int) {
@@ -96,18 +90,6 @@ fun Activity.showErrorDialog(error: String = "error desconocido") {
 }
 
 
-// Kotlin
-
-fun Activity.getDownloadedFileUri(document: DownloadDocumentResponse): Uri {
-    val data = Base64.decode(document.base64, Base64.DEFAULT)
-    val directory = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
-    val outputFile = File(directory, document.getNameWithExtension())
-    val outputStream = FileOutputStream(outputFile)
-    outputStream.write(data)
-    outputStream.close()
-
-    return FileProvider.getUriForFile(this, "com.dscorp.ispadmin.fileprovider", outputFile)
-}
 
 
 fun <T> MaterialAutoCompleteTextView.populate(data: List<T>, onItemSelected: (T) -> Unit) {

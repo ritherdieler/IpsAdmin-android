@@ -202,6 +202,9 @@ private fun NavGraphContent(
         startDestination = startDestination,
     ) {
         // Plan
+        composable<FeatureRoutes.Reports> {
+            com.dscorp.ispadmin.presentation.ui.features.report.ReportsRoute()
+        }
         composable<FeatureRoutes.Plan.List> {
             com.dscorp.ispadmin.presentation.ui.features.plan.PlanCatalogRoute()
         }

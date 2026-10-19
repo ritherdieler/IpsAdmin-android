@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dscorp.ispadmin.presentation.ui.components.ConsumeOnce
 import org.koin.androidx.compose.koinViewModel
 
 /** «Planes» with the editor as a bottom sheet over the list. */
@@ -27,12 +28,7 @@ fun PlanCatalogRoute() {
     val state by viewModel.uiState.collectAsState()
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(Unit) { viewModel.onIntent(PlanCatalogIntent.Load) }
-    LaunchedEffect(state.message) {
-        state.message?.let {
-            viewModel.onIntent(PlanCatalogIntent.MessageShown)
-            snackbar.showSnackbar(it)
-        }
-    }
+    ConsumeOnce(state.message, onConsumed = { viewModel.onIntent(PlanCatalogIntent.MessageShown) }) { snackbar.showSnackbar(it) }
     Box(Modifier.fillMaxSize()) {
         PlanCatalogContent(state, viewModel::onIntent)
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))

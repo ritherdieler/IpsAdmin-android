@@ -28,6 +28,7 @@ enum class MoreItem(val label: String, val route: FeatureRoutes) {
     OUTLAYS("Egresos", FeatureRoutes.Outlay.Month),
     REGISTER_OUTLAY("Registrar egreso", FeatureRoutes.Outlay.Register),
     PLANS("Planes", FeatureRoutes.Plan.List),
+    REPORTS("Reportes", FeatureRoutes.Reports),
     PROFILE("Mi perfil", FeatureRoutes.Profile),
 }
 
@@ -54,11 +55,11 @@ object MainNavigation {
     fun moreItemsFor(type: UserType): List<MoreItem> = when (type) {
         UserType.ADMIN -> listOf(
             MoreItem.REGISTER_SUBSCRIPTION, MoreItem.CREATE_TICKET, MoreItem.INSTALLATION_ORDERS,
-            MoreItem.PENDING_SUBSCRIPTIONS, MoreItem.OUTLAYS, MoreItem.REGISTER_OUTLAY, MoreItem.PLANS, MoreItem.PROFILE,
+            MoreItem.PENDING_SUBSCRIPTIONS, MoreItem.OUTLAYS, MoreItem.REGISTER_OUTLAY, MoreItem.PLANS, MoreItem.REPORTS, MoreItem.PROFILE,
         )
         UserType.ACCOUNTANT -> listOf(
             MoreItem.REGISTER_SUBSCRIPTION, MoreItem.SUPPORT_TICKETS, MoreItem.CREATE_TICKET, MoreItem.INSTALLATION_ORDERS,
-            MoreItem.PENDING_SUBSCRIPTIONS, MoreItem.OUTLAYS, MoreItem.REGISTER_OUTLAY, MoreItem.PROFILE,
+            MoreItem.PENDING_SUBSCRIPTIONS, MoreItem.OUTLAYS, MoreItem.REGISTER_OUTLAY, MoreItem.REPORTS, MoreItem.PROFILE,
         )
         UserType.SECRETARY -> listOf(
             MoreItem.CREATE_TICKET, MoreItem.INSTALLATION_ORDERS, MoreItem.PENDING_SUBSCRIPTIONS,
@@ -102,6 +103,7 @@ object MainNavigation {
         is FeatureRoutes.Plan.List -> "Planes"
         is FeatureRoutes.Outlay.Register -> "Registrar egreso"
         is FeatureRoutes.Outlay.Month -> "Egresos"
+        is FeatureRoutes.Reports -> "Reportes"
         else -> DEFAULT_TITLE
     }
 

@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail
 
+import com.dscorp.ispadmin.presentation.ui.components.ConsumeOnce
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.shareText
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.chargeSubtitle
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.ChargeReceiptContent
@@ -151,9 +152,7 @@ fun SubscriptionDetailScreen(
         hubViewModel.onIntent(SubscriptionHubIntent.Load(subscriptionId, openCharge))
     }
     // An action screen (change plan, NAP, location…) finished: reload and say what changed.
-    LaunchedEffect(returnedMessage) {
-        val message = returnedMessage ?: return@LaunchedEffect
-        onReturnedMessageShown()
+    ConsumeOnce(returnedMessage, onConsumed = onReturnedMessageShown) { message ->
         hubViewModel.onIntent(SubscriptionHubIntent.Load(subscriptionId))
         viewModel.getSubscription(subscriptionId)
         snackbarHostState.showSnackbar(message)

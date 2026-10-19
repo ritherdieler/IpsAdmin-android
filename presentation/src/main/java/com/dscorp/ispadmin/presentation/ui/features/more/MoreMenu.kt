@@ -12,7 +12,7 @@ data class MoreSection(val title: String, val entries: List<MoreEntry>)
 data class MoreMenu(val header: MoreHeader, val sections: List<MoreSection>, val hasProfile: Boolean) {
     companion object {
         private val SECTIONS = listOf(
-            "Gestión" to listOf(MoreItem.PLANS, MoreItem.OUTLAYS, MoreItem.REGISTER_OUTLAY, MoreItem.INSTALLATION_ORDERS),
+            "Gestión" to listOf(MoreItem.PLANS, MoreItem.OUTLAYS, MoreItem.REGISTER_OUTLAY, MoreItem.REPORTS, MoreItem.INSTALLATION_ORDERS),
             "Suscripciones" to listOf(MoreItem.REGISTER_SUBSCRIPTION, MoreItem.PENDING_SUBSCRIPTIONS),
             "Tickets" to listOf(MoreItem.SUPPORT_TICKETS, MoreItem.CREATE_TICKET),
         )

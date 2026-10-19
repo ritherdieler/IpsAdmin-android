@@ -224,4 +224,12 @@ class MainNavigationTest {
         }
         assertEquals("Egresos", MainNavigation.shellChrome(UserType.ADMIN, Outlay.Month).title)
     }
+
+    @Test
+    fun `reports are for admins and accountants`() {
+        assertTrue(MoreItem.REPORTS in MainNavigation.moreItemsFor(UserType.ADMIN))
+        assertTrue(MoreItem.REPORTS in MainNavigation.moreItemsFor(UserType.ACCOUNTANT))
+        assertFalse(MoreItem.REPORTS in MainNavigation.moreItemsFor(UserType.SECRETARY))
+        assertEquals("Reportes", MainNavigation.shellChrome(UserType.ADMIN, com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Reports).title)
+    }
 }
