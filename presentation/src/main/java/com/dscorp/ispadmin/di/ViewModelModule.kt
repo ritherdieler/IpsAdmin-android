@@ -15,7 +15,6 @@ import com.dscorp.ispadmin.presentation.ui.features.outlay.OutLayViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.register.RegisterPaymentViewModel
-import com.dscorp.ispadmin.presentation.ui.features.plan.PlanListViewModel
 import com.dscorp.ispadmin.presentation.ui.features.profile.ProfileViewModel
 import com.dscorp.ispadmin.presentation.ui.features.registration.RegisterViewModel
 import com.dscorp.ispadmin.presentation.ui.features.report.ReportsViewModel
@@ -203,7 +202,12 @@ val viewModelModule = module {
     viewModel { SupportTicketListViewModel(get(), get(), get()) }
     viewModel { InstallationOrderListViewModel(get(), get(), get()) }
     viewModel { MainViewModel(get(), get()) }
-    viewModel { PlanListViewModel(get(), get(), get()) }
+    viewModel {
+        com.dscorp.ispadmin.presentation.ui.features.plan.PlanCatalogViewModel(
+            com.dscorp.ispadmin.presentation.ui.features.plan.ApiPlanCatalogGateway(get()),
+            get<CoroutineDispatcher>(named("mainImmediate")),
+        )
+    }
     viewModel {
         PendingSubscriptionsViewModel(
             get(),
