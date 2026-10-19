@@ -112,7 +112,7 @@ fun MoreContent(
         AlertDialog(
             onDismissRequest = { confirmLogout = false },
             title = { Text("¿Cerrar sesión?") },
-            text = { Text("Tendrás que volver a ingresar con tu usuario.") },
+            text = { Text("Dejarás de recibir avisos de tickets en este teléfono hasta que vuelvas a ingresar.") },
             confirmButton = {
                 TextButton(onClick = { confirmLogout = false; onLogout() }) { Text("Salir", color = MaterialTheme.colorScheme.error) }
             },

@@ -44,7 +44,8 @@ fun ProfileScreen(
             },
             onClearError = {
                 viewModel.clearError()
-            }
+            },
+            versionLabel = "${com.dscorp.ispadmin.BuildConfig.VERSION_NAME} (${com.dscorp.ispadmin.BuildConfig.VERSION_CODE})",
         )
     }
 }
