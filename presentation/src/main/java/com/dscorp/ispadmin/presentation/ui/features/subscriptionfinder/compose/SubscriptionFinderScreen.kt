@@ -225,6 +225,7 @@ fun SubscriptionFinderScreen(
                 onClearRecents = viewModel::clearRecents,
                 onOpenFilters = { showDateSearch = true },
                 onLoadMore = viewModel::loadNextPage,
+                onRetry = viewModel::reloadLastSearch,
                 rowMenu = { subscription, expanded, onDismiss ->
                     SubscriptionRowMenu(
                         subscription = subscription,

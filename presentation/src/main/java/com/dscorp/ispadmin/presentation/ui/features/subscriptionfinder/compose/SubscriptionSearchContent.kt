@@ -70,6 +70,8 @@ import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.observability.ObservabilityComposeText
 import com.dscorp.ispadmin.presentation.theme.IspTheme
+import com.dscorp.ispadmin.presentation.designsystem.components.ErrorState
+import com.dscorp.ispadmin.presentation.designsystem.components.StaleBanner
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.HubBadge
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.badge
 
@@ -85,6 +87,7 @@ fun SubscriptionSearchContent(
     onClearRecents: () -> Unit,
     onOpenFilters: () -> Unit,
     onLoadMore: () -> Unit,
+    onRetry: () -> Unit = {},
     rowMenu: @Composable (SubscriptionResume, expanded: Boolean, onDismiss: () -> Unit) -> Unit = { _, _, _ -> },
     rowExpansion: @Composable (SubscriptionResume) -> Unit = {},
 ) {
@@ -94,7 +97,7 @@ fun SubscriptionSearchContent(
         if (state.showStart) {
             StartContent(state, onQuickAccess, onOpenRecent, onClearRecents)
         } else {
-            ResultsContent(state, onFilterSelected, onOpenSubscription, onLoadMore, rowMenu, rowExpansion)
+            ResultsContent(state, onFilterSelected, onOpenSubscription, onLoadMore, onRetry, rowMenu, rowExpansion)
         }
     }
 }
@@ -283,6 +286,7 @@ private fun ResultsContent(
     onFilterSelected: (ResultFilter) -> Unit,
     onOpenSubscription: (SubscriptionResume) -> Unit,
     onLoadMore: () -> Unit,
+    onRetry: () -> Unit,
     rowMenu: @Composable (SubscriptionResume, Boolean, () -> Unit) -> Unit,
     rowExpansion: @Composable (SubscriptionResume) -> Unit,
 ) {
@@ -317,7 +321,16 @@ private fun ResultsContent(
         }
     }
     val loadedAny = state.subscriptions.values.any { it.isNotEmpty() }
+    // A failed refresh keeps what was found before, with a way to try again.
+    if (state.searchError != null && loadedAny && !state.isSearching) {
+        StaleBanner("No se pudo actualizar", onRetry, Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp))
+    }
     when {
+        state.searchError != null && !loadedAny && !state.isSearching -> ErrorState(
+            title = "No se pudo buscar",
+            message = "Revisa tu conexión y vuelve a intentar.",
+            onRetry = onRetry,
+        )
         state.isSearching && !loadedAny -> Column(Modifier.padding(horizontal = 16.dp)) {
             Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
                 Column { repeat(3) { SkeletonRow() } }

@@ -62,6 +62,38 @@ class TicketInboxUiTest {
     @Test
     fun `an empty tab says so`() {
         compose.setContent { MaterialTheme { TicketInboxContent(TicketInboxUiState(summary = "0 en curso", tab = TicketTab.IN_PROGRESS), {}, {}, {}) } }
-        compose.onNodeWithText("No hay tickets en esta pestaña.").assertExists()
+        compose.onNodeWithText("No hay tickets en curso").assertExists()
+    }
+
+    @Test
+    fun `an empty tab points to the pending tickets`() {
+        val intents = mutableListOf<TicketInboxIntent>()
+        compose.setContent {
+            MaterialTheme {
+                TicketInboxContent(
+                    state = TicketInboxUiState(tab = TicketTab.IN_PROGRESS, counts = mapOf(TicketTab.PENDING to 4L, TicketTab.IN_PROGRESS to 0L)),
+                    onIntent = { intents += it }, onOpen = {}, onNew = {},
+                )
+            }
+        }
+
+        compose.onNodeWithText("No hay tickets en curso").assertExists()
+        compose.onNodeWithText("Los tickets que tomes aparecen aquí.").assertExists()
+        compose.onNodeWithText("Ver pendientes (4)").performClick()
+        assertEquals(listOf<TicketInboxIntent>(TicketInboxIntent.TabSelected(TicketTab.PENDING)), intents)
+    }
+
+    @Test
+    fun `a failed load shows the error state`() {
+        val intents = mutableListOf<TicketInboxIntent>()
+        compose.setContent {
+            MaterialTheme {
+                TicketInboxContent(state = TicketInboxUiState(error = "HTTP 500"), onIntent = { intents += it }, onOpen = {}, onNew = {})
+            }
+        }
+
+        compose.onNodeWithText("No se pudieron cargar los tickets").assertExists()
+        compose.onNodeWithText("Reintentar").performClick()
+        assertEquals(listOf<TicketInboxIntent>(TicketInboxIntent.Refresh), intents)
     }
 }

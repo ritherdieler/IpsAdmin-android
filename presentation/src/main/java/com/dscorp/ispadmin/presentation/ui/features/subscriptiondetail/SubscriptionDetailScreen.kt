@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail
 
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaSkeleton
 import com.dscorp.ispadmin.presentation.ui.components.ConsumeOnce
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.shareText
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.chargeSubtitle
@@ -251,7 +252,9 @@ fun SubscriptionDetailScreen(
         val loadedSubscription = uiState.subscription
         val loadError = uiState.error
         when {
-            uiState.isLoading -> Loader()
+            // The ficha's shape until both the subscription and its hub data are in (a-est-02).
+            uiState.isLoading || (loadError == null && hubState.isLoading && hubState.ficha == null) ->
+                FichaSkeleton(onBack = { navController.popBackStack() })
 
             loadError != null -> {
                 ErrorView(

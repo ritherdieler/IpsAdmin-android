@@ -1,5 +1,9 @@
 package com.dscorp.ispadmin.presentation.ui.features.supportTicket.inbox
 
+import androidx.compose.material.icons.rounded.ConfirmationNumber
+import com.dscorp.ispadmin.presentation.designsystem.components.ListSkeleton
+import com.dscorp.ispadmin.presentation.designsystem.components.ErrorState
+import com.dscorp.ispadmin.presentation.designsystem.components.EmptyState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -62,15 +66,13 @@ fun TicketInboxContent(state: TicketInboxUiState, onIntent: (TicketInboxIntent) 
             Chips(state, onIntent)
             Text(state.summary, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
             when {
-                state.loading && state.rows.isEmpty() -> Box(Modifier.fillMaxWidth().padding(48.dp), Alignment.Center) { CircularProgressIndicator() }
-                state.error != null && state.rows.isEmpty() -> Column(Modifier.fillMaxWidth().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(state.error, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    TextButton(onClick = { onIntent(TicketInboxIntent.Refresh) }) { Text("Reintentar") }
-                }
-                state.rows.isEmpty() -> Text(
-                    "No hay tickets en esta pestaña.", color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                state.loading && state.rows.isEmpty() -> ListSkeleton(6, Modifier.padding(horizontal = 16.dp), label = "Cargando tickets…")
+                state.error != null && state.rows.isEmpty() -> ErrorState(
+                    title = "No se pudieron cargar los tickets",
+                    message = "Revisa tu conexión y vuelve a intentar.",
+                    onRetry = { onIntent(TicketInboxIntent.Refresh) },
                 )
+                state.rows.isEmpty() -> EmptyTab(state, onIntent)
                 else -> LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp)) {
                     itemsIndexed(state.rows, key = { _, row -> row.id }) { index, row ->
                         val first = index == 0
@@ -189,5 +191,18 @@ private fun TicketRowItem(row: TicketInboxRow, onClick: () -> Unit) {
             Icon(Icons.Outlined.Person, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(row.assignment, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+}
+
+@Composable
+private fun EmptyTab(state: TicketInboxUiState, onIntent: (TicketInboxIntent) -> Unit) {
+    val pending = state.counts[TicketTab.PENDING] ?: 0L
+    when (state.tab) {
+        TicketTab.PENDING -> EmptyState(Icons.Rounded.ConfirmationNumber, "No hay tickets pendientes", "Todo atendido por ahora.")
+        TicketTab.IN_PROGRESS -> EmptyState(
+            Icons.Rounded.ConfirmationNumber, "No hay tickets en curso", "Los tickets que tomes aparecen aquí.",
+            actionLabel = if (pending > 0) "Ver pendientes ($pending)" else null,
+        ) { onIntent(TicketInboxIntent.TabSelected(TicketTab.PENDING)) }
+        TicketTab.CLOSED -> EmptyState(Icons.Rounded.ConfirmationNumber, "No hay tickets cerrados", "Los tickets que se cierren aparecen aquí.")
     }
 }

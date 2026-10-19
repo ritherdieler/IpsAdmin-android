@@ -30,6 +30,7 @@ class SubscriptionSearchContentTest {
     private var opened: SubscriptionResume? = null
     private var chip: ResultFilter? = null
     private var filtersOpened = false
+    private var retried = 0
 
     private fun show(state: SubscriptionFinderUiState) = compose.setContent {
         MaterialTheme {
@@ -43,6 +44,7 @@ class SubscriptionSearchContentTest {
                 onClearRecents = { cleared = true },
                 onOpenFilters = { filtersOpened = true },
                 onLoadMore = {},
+                onRetry = { retried++ },
                 rowMenu = { subscription, expanded, _ -> if (expanded) Text("menu-${subscription.id}") },
             )
         }
@@ -129,5 +131,28 @@ class SubscriptionSearchContentTest {
 
         compose.onNodeWithText("menu-1").assertExists()
         assertEquals(null, opened)
+    }
+
+    @Test
+    fun `a failed search says so and retries`() {
+        show(SubscriptionFinderUiState(smartQuery = "ram", searchPerformed = true, searchError = "timeout"))
+
+        compose.onNodeWithText("No se pudo buscar").assertExists()
+        compose.onNodeWithText("Revisa tu conexión y vuelve a intentar.").assertExists()
+        compose.onNodeWithText("Reintentar").performClick()
+        assertEquals(1, retried)
+    }
+
+    @Test
+    fun `a failed refresh keeps the results with a banner`() {
+        show(SubscriptionFinderUiState(
+            subscriptions = mapOf(ServiceStatus.CUT_OFF to listOf(row(id = 1))),
+            smartQuery = "ram", searchPerformed = true, searchError = "timeout",
+        ))
+
+        compose.onNodeWithText("Jorge Ramos Villanueva").assertExists()
+        compose.onNodeWithText("No se pudo actualizar").assertExists()
+        compose.onNodeWithText("Reintentar").performClick()
+        assertEquals(1, retried)
     }
 }
