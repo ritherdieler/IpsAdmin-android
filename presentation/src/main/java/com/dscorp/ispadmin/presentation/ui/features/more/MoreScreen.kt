@@ -35,6 +35,7 @@ import androidx.compose.material.icons.rounded.ConfirmationNumber
 import androidx.compose.material.icons.rounded.Handyman
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.ReceiptLong
+import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.TableChart
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.HorizontalDivider
@@ -160,5 +161,6 @@ private fun MoreItem.icon(): ImageVector = when (this) {
     MoreItem.REGISTER_OUTLAY -> Icons.AutoMirrored.Rounded.TrendingDown
     MoreItem.PLANS -> Icons.Rounded.Wifi
     MoreItem.REPORTS -> Icons.Rounded.TableChart
+    MoreItem.NETWORK_MAP -> Icons.Rounded.Map
     MoreItem.PROFILE -> Icons.Rounded.Person
 }

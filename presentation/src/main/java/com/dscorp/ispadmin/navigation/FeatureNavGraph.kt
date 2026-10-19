@@ -202,6 +202,17 @@ private fun NavGraphContent(
         startDestination = startDestination,
     ) {
         // Plan
+        composable<FeatureRoutes.NetworkMap> {
+            com.dscorp.ispadmin.presentation.ui.features.networkmap.NetworkMapRoute(
+                onOpenBox = { navController.navigate(FeatureRoutes.NapDetail(it)) },
+            )
+        }
+        composable<FeatureRoutes.NapDetail> { backStackEntry ->
+            com.dscorp.ispadmin.presentation.ui.features.networkmap.NapDetailRoute(
+                napId = backStackEntry.toRoute<FeatureRoutes.NapDetail>().napId,
+                onOpenSubscription = { navController.navigate(Subscription.Details(it)) },
+            )
+        }
         composable<FeatureRoutes.Reports> {
             com.dscorp.ispadmin.presentation.ui.features.report.ReportsRoute()
         }

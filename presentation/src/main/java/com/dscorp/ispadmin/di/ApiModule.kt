@@ -26,6 +26,7 @@ val apiModule = module {
     single { get<Retrofit>().create(com.dscorp.ispadmin.data.datasource.remote.NapMoveApi::class.java) }
     single { get<Retrofit>().create(com.dscorp.ispadmin.data.datasource.remote.LocationApi::class.java) }
     single { get<Retrofit>().create(com.dscorp.ispadmin.data.datasource.remote.CutDeferralApi::class.java) }
+    single { get<Retrofit>().create(com.dscorp.ispadmin.data.datasource.remote.NetworkMapApi::class.java) }
 }
 
 fun providesApi(retrofit: Retrofit): RestApiServices {

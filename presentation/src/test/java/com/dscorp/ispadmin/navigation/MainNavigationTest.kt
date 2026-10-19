@@ -232,4 +232,12 @@ class MainNavigationTest {
         assertFalse(MoreItem.REPORTS in MainNavigation.moreItemsFor(UserType.SECRETARY))
         assertEquals("Reportes", MainNavigation.shellChrome(UserType.ADMIN, com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Reports).title)
     }
+
+    @Test
+    fun `the network map is for admins and technicians`() {
+        assertTrue(MoreItem.NETWORK_MAP in MainNavigation.moreItemsFor(UserType.ADMIN))
+        assertTrue(MoreItem.NETWORK_MAP in MainNavigation.moreItemsFor(UserType.TECHNICIAN))
+        assertFalse(MoreItem.NETWORK_MAP in MainNavigation.moreItemsFor(UserType.SALES))
+        assertEquals("Caja NAP", MainNavigation.shellChrome(UserType.ADMIN, com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.NapDetail(13)).title)
+    }
 }

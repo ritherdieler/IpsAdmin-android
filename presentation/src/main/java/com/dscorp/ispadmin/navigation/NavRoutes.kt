@@ -49,6 +49,12 @@ sealed class NavRoutes {
         object Reports : FeatureRoutes()
 
         @Serializable
+        object NetworkMap : FeatureRoutes()
+
+        @Serializable
+        data class NapDetail(val napId: Int) : FeatureRoutes()
+
+        @Serializable
         object More : FeatureRoutes()
 
         @Serializable
@@ -186,6 +192,8 @@ sealed class NavRoutes {
                     Dashboard::class.qualifiedName -> Dashboard
                     Profile::class.qualifiedName -> Profile
                     Reports::class.qualifiedName -> Reports
+                    NetworkMap::class.qualifiedName -> NetworkMap
+                    NapDetail::class.qualifiedName -> NapDetail(0)
                     More::class.qualifiedName -> More
                     Plan.List::class.qualifiedName -> Plan.List
                     AsyncImageViewer::class.qualifiedName -> AsyncImageViewer("")

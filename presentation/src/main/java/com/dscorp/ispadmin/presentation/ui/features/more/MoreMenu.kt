@@ -15,6 +15,7 @@ data class MoreMenu(val header: MoreHeader, val sections: List<MoreSection>, val
             "Gestión" to listOf(MoreItem.PLANS, MoreItem.OUTLAYS, MoreItem.REGISTER_OUTLAY, MoreItem.REPORTS, MoreItem.INSTALLATION_ORDERS),
             "Suscripciones" to listOf(MoreItem.REGISTER_SUBSCRIPTION, MoreItem.PENDING_SUBSCRIPTIONS),
             "Tickets" to listOf(MoreItem.SUPPORT_TICKETS, MoreItem.CREATE_TICKET),
+            "Red" to listOf(MoreItem.NETWORK_MAP),
         )
 
         fun from(user: User, items: List<MoreItem>, pending: Int?, activePlans: Int?): MoreMenu {
