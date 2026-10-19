@@ -10,7 +10,6 @@ import com.dscorp.ispadmin.presentation.ui.features.main.MainViewModel
 import com.dscorp.ispadmin.presentation.ui.features.migration.MigrationViewModel
 import com.dscorp.ispadmin.presentation.ui.features.mufas.MufaViewModel
 import com.dscorp.ispadmin.presentation.ui.features.napbox.NapBoxViewModel
-import com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltAdministrationViewModel
 import com.dscorp.ispadmin.presentation.ui.features.outlay.OutLayViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.detail.PaymentDetailViewModel
 import com.dscorp.ispadmin.presentation.ui.features.payment.history.PaymentHistoryViewModel
@@ -205,7 +204,12 @@ val viewModelModule = module {
     viewModel { SupportTicketViewModel(get(), get(), get()) }
     viewModel { CreateSupportTicketViewModel(get(), get()) }
     viewModel { MigrationViewModel(get(), get()) }
-    viewModel { OltAdministrationViewModel(get(), get()) }
+    viewModel {
+        com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltToolsViewModel(
+            com.dscorp.ispadmin.presentation.ui.features.oltadministrator.ApiOltToolsGateway(get()),
+            get<CoroutineDispatcher>(named("mainImmediate")),
+        )
+    }
     viewModel { OutLayViewModel(get(), get()) }
     viewModel {
         SubscriptionFinderViewModel(

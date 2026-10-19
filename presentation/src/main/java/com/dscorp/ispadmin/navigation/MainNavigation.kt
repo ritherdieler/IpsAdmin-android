@@ -30,6 +30,7 @@ enum class MoreItem(val label: String, val route: FeatureRoutes) {
     PLANS("Planes", FeatureRoutes.Plan.List),
     REPORTS("Reportes", FeatureRoutes.Reports),
     NETWORK_MAP("Mapa de red", FeatureRoutes.NetworkMap),
+    OLT_TOOLS("Herramientas OLT", FeatureRoutes.OltTools),
     PROFILE("Mi perfil", FeatureRoutes.Profile),
 }
 
@@ -56,7 +57,7 @@ object MainNavigation {
     fun moreItemsFor(type: UserType): List<MoreItem> = when (type) {
         UserType.ADMIN -> listOf(
             MoreItem.REGISTER_SUBSCRIPTION, MoreItem.CREATE_TICKET, MoreItem.INSTALLATION_ORDERS,
-            MoreItem.PENDING_SUBSCRIPTIONS, MoreItem.OUTLAYS, MoreItem.REGISTER_OUTLAY, MoreItem.PLANS, MoreItem.REPORTS, MoreItem.NETWORK_MAP, MoreItem.PROFILE,
+            MoreItem.PENDING_SUBSCRIPTIONS, MoreItem.OUTLAYS, MoreItem.REGISTER_OUTLAY, MoreItem.PLANS, MoreItem.REPORTS, MoreItem.NETWORK_MAP, MoreItem.OLT_TOOLS, MoreItem.PROFILE,
         )
         UserType.ACCOUNTANT -> listOf(
             MoreItem.REGISTER_SUBSCRIPTION, MoreItem.SUPPORT_TICKETS, MoreItem.CREATE_TICKET, MoreItem.INSTALLATION_ORDERS,
@@ -106,6 +107,7 @@ object MainNavigation {
         is FeatureRoutes.Outlay.Month -> "Egresos"
         is FeatureRoutes.Reports -> "Reportes"
         is FeatureRoutes.NetworkMap -> "Mapa de red"
+        is FeatureRoutes.OltTools -> "Herramientas OLT"
         is FeatureRoutes.NapDetail -> "Caja NAP"
         else -> DEFAULT_TITLE
     }

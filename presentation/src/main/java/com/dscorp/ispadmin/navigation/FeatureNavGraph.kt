@@ -202,6 +202,9 @@ private fun NavGraphContent(
         startDestination = startDestination,
     ) {
         // Plan
+        composable<FeatureRoutes.OltTools> {
+            com.dscorp.ispadmin.presentation.ui.features.oltadministrator.OltToolsRoute()
+        }
         composable<FeatureRoutes.NetworkMap> {
             com.dscorp.ispadmin.presentation.ui.features.networkmap.NetworkMapRoute(
                 onOpenBox = { navController.navigate(FeatureRoutes.NapDetail(it)) },

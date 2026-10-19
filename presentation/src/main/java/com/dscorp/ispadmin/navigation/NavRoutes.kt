@@ -52,6 +52,9 @@ sealed class NavRoutes {
         object NetworkMap : FeatureRoutes()
 
         @Serializable
+        object OltTools : FeatureRoutes()
+
+        @Serializable
         data class NapDetail(val napId: Int) : FeatureRoutes()
 
         @Serializable
@@ -193,6 +196,7 @@ sealed class NavRoutes {
                     Profile::class.qualifiedName -> Profile
                     Reports::class.qualifiedName -> Reports
                     NetworkMap::class.qualifiedName -> NetworkMap
+                    OltTools::class.qualifiedName -> OltTools
                     NapDetail::class.qualifiedName -> NapDetail(0)
                     More::class.qualifiedName -> More
                     Plan.List::class.qualifiedName -> Plan.List

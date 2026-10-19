@@ -240,4 +240,10 @@ class MainNavigationTest {
         assertFalse(MoreItem.NETWORK_MAP in MainNavigation.moreItemsFor(UserType.SALES))
         assertEquals("Caja NAP", MainNavigation.shellChrome(UserType.ADMIN, com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.NapDetail(13)).title)
     }
+
+    @Test
+    fun `OLT tools are only for admins`() {
+        assertTrue(MoreItem.OLT_TOOLS in MainNavigation.moreItemsFor(UserType.ADMIN))
+        UserType.entries.filter { it != UserType.ADMIN }.forEach { assertFalse(it.name, MoreItem.OLT_TOOLS in MainNavigation.moreItemsFor(it)) }
+    }
 }
