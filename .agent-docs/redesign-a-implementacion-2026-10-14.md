@@ -65,11 +65,29 @@ Decisiones:
 
 ## Pendiente
 
-- Fase 5: correr `FiberRegisterFirstOnuE2ETest` en dispositivo con OLT real; ahora el wizard llega a Cliente antes de que ACS confirme.
 - Ficha: requiere el WAR del Core con los 3 cambios de `ispadmin-backend/.agent-docs/ficha-app-endpoints-2026-10-17.md` (deuda real, tickets por suscripción, historial). Sin datos en Core/app: contraseñas PPPoE y Wi-Fi, VLAN, nombre de la OLT, fecha de la foto, precio y lugar de otros servicios. «Más acciones» no filtra por rol (igual que el menú del buscador): falta decidir la matriz de roles. Datos previos: la deuda llegaba en 0 porque `GET subscription/{id}` calculaba con la colección de pagos sin cargar. Corregido en el Core (2026-10-17, `SubscriptionController.getSubscription` usa `findPaymentStatsRows`, prueba `SubscriptionControllerDebtTest`); sin commit ni deploy: staging/prod siguen sin deuda en la ficha hasta desplegar el WAR. Faltan pestañas y «Más acciones».
 - «Hoy» del técnico, Instalaciones que unen órdenes y tickets de instalación, pestañas Pagos/Red/Historial de la ficha y acciones de ⋮ filtradas por rol (siguen en la tarjeta del buscador).
 - Caja del día y desglose por método: no hay endpoint (requiere Core).
 - Unificar diálogos/cargas (`MyCustomDialog` ×2, `Loader` → skeleton) en el resto de pantallas.
+
+## Pruebas reales en staging (2026-10-19, ONU de laboratorio VSOL00324576)
+
+| Prueba | Resultado |
+|--------|-----------|
+| `FiberRegisterFirstOnuE2ETest` (wrapper `e2e_register_fiber_staging_espresso.sh`) | PASS, suscripción 2428, MikroTik/OLT/TR-069 COMPLETE |
+| Herramientas OLT: búsqueda con resultado | PASS (suscripción ligada, en línea, potencia) |
+| Ficha: cambiar plan, postergar corte, mover NAP con puerto, cancelar con motivo | PASS (readback en Core; motivo en `cancellation_reason`) |
+| Herramientas OLT: eliminar | PASS tras corregir (ver abajo) |
+| Ficha: cobrar (efectivo, vuelto) y Caja «Cobrado hoy» | PASS en la suscripción 2429 con un recibo creado por `POST /payment/invoice`; luego revertido (`POST /payment/{id}/reverse`) para poder hacer el hard cleanup |
+
+Correcciones salidas de estas pruebas:
+
+- El e2e esperaba un único texto con «autorizada» y el serial; el wizard rediseñado los muestra en textos separados («ONU X» + «Autorizada en la OLT ✓» o «ONU X lista para registrar.»). `E2eOnuSnResolver.isAuthorizationConfirmed` lee todos los textos.
+- Herramientas OLT borraba con `DELETE onu?onuExternalId=`; desde staging el Gateway rechaza escrituras sin serial (`403 lab_sn_required`). Ahora borra con `DELETE onu/configured/by-sn/{sn}`.
+- Mover NAP ejecuta `ont delete` + `ont add` en el puerto OLT de la caja destino. Las cajas de 9 De Octubre no están en 1/6, donde está físicamente la ONU de laboratorio, así que tras moverla queda offline hasta el cleanup.
+- Antes de reusar el serial hubo que cancelar la suscripción 2426 (prueba de staging del 2026-10-17 que retenía VSOL00324576 sin ONU en la OLT).
+
+- Historial: el Core ahora guarda `detail` (motivo de cancelación, caja NAP origen → destino) y la ficha lo muestra bajo el título. Herramientas OLT muestra el motivo cuando el Core rechaza un borrado (`OltToolsRefusal`). Core: `ispadmin-backend/.agent-docs/history-detail-olt-delete-errors-2026-10-19.md` (V91).
 
 ## Verificación
 

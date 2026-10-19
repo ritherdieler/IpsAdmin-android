@@ -790,11 +790,18 @@ class FiberRegisterFirstOnuE2ETest {
     private fun waitUntilOnuAuthorized(wantedSn: String, timeoutMs: Long) {
         val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs)
         while (System.nanoTime() < deadline) {
-            val confirmed = composeRule.onAllNodesWithText("autorizada", substring = true)
-                .fetchSemanticsNodes()
-                .any { node ->
-                    E2eOnuSnResolver.matchesAuthorizedOnuText(node.config.toString(), wantedSn)
-                }
+            val texts = (listOf("Serial:", "ONU ") + E2eOnuSnResolver.CONFIRMATION_FRAGMENTS).flatMap { fragment ->
+                runCatching {
+                    composeRule.onAllNodesWithText(fragment, substring = true)
+                        .fetchSemanticsNodes()
+                        .flatMap { node ->
+                            node.config.getOrElseNullable(SemanticsProperties.Text) { null }
+                                .orEmpty()
+                                .map { it.text }
+                        }
+                }.getOrDefault(emptyList())
+            }
+            val confirmed = E2eOnuSnResolver.isAuthorizationConfirmed(texts, wantedSn)
             if (confirmed) return
             Thread.sleep(400)
         }

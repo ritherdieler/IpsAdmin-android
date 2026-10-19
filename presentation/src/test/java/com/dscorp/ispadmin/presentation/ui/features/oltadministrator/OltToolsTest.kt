@@ -8,6 +8,10 @@ import androidx.compose.ui.test.performClick
 import com.dscorp.ispadmin.data.datasource.remote.OnuLinkedSubscriptionResponse
 import com.dscorp.ispadmin.data.datasource.remote.OnuLiveStatusResponse
 import com.dscorp.ispadmin.data.datasource.remote.OnuLookupResponse
+import com.dscorp.ispadmin.data.datasource.remote.OltToolsApi
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
+import retrofit2.Response
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -28,7 +32,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-private val LOOSE = OnuLookupResponse("HWTC7B21C0D4", "HWTC7B21C0D4", "HG8145V5", "OLT-01", "0/1/2", "14", "2025-03-12 10:20:00", null)
+private val LOOSE = OnuLookupResponse("HWTC7B21C0D4", "olt-01_1_2_14", "HG8145V5", "OLT-01", "0/1/2", "14", "2025-03-12 10:20:00", null)
 private val USED = LOOSE.copy(subscription = OnuLinkedSubscriptionResponse(1842, "JORGE RAMOS VILLANUEVA", "CUT_OFF"))
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -61,7 +65,7 @@ class OltToolsTest {
     @Test
     fun `searching finds the ONU even when the live status fails`() = runTest(dispatcher) {
         coEvery { gateway.lookup("HWTC7B21C0D4") } returns LOOSE
-        coEvery { gateway.liveStatus("HWTC7B21C0D4") } throws IllegalStateException("gateway off")
+        coEvery { gateway.liveStatus("olt-01_1_2_14") } throws IllegalStateException("gateway off")
         val viewModel = OltToolsViewModel(gateway, dispatcher)
 
         viewModel.onIntent(OltToolsIntent.QueryChanged(" hwtc7b21c0d4 "))
@@ -73,10 +77,10 @@ class OltToolsTest {
     }
 
     @Test
-    fun `deleting removes the ONU and clears the card`() = runTest(dispatcher) {
+    fun `deleting removes the ONU by serial and clears the card`() = runTest(dispatcher) {
         coEvery { gateway.lookup(any()) } returns LOOSE
         coEvery { gateway.liveStatus(any()) } returns OnuLiveStatusResponse()
-        coEvery { gateway.delete("HWTC7B21C0D4") } returns Unit
+        coEvery { gateway.deleteBySn("HWTC7B21C0D4") } returns Unit
         val viewModel = OltToolsViewModel(gateway, dispatcher)
         viewModel.onIntent(OltToolsIntent.QueryChanged("HWTC7B21C0D4"))
         viewModel.onIntent(OltToolsIntent.Search)
@@ -85,7 +89,8 @@ class OltToolsTest {
         viewModel.onIntent(OltToolsIntent.Delete)
         advanceUntilIdle()
 
-        coVerify { gateway.delete("HWTC7B21C0D4") }
+        // Staging only lets lab serials be written, so the delete must carry the SN, not the external id.
+        coVerify { gateway.deleteBySn("HWTC7B21C0D4") }
         assertNull(viewModel.uiState.value.card)
         assertEquals("ONU HWTC7B21C0D4 eliminada de la OLT", viewModel.uiState.value.message)
     }
@@ -117,5 +122,39 @@ class OltToolsTest {
         assertEquals(false, deleted)
         compose.onNodeWithText("Eliminar ONU").performClick()
         assertEquals(true, deleted)
+    }
+
+    @Test
+    fun `a refused delete shows the reason and keeps the card`() = runTest(dispatcher) {
+        coEvery { gateway.lookup(any()) } returns LOOSE
+        coEvery { gateway.liveStatus(any()) } returns OnuLiveStatusResponse()
+        coEvery { gateway.deleteBySn("HWTC7B21C0D4") } throws OltToolsRefusal("En staging solo se pueden borrar ONUs de laboratorio.")
+        val viewModel = OltToolsViewModel(gateway, dispatcher)
+        viewModel.onIntent(OltToolsIntent.QueryChanged("HWTC7B21C0D4"))
+        viewModel.onIntent(OltToolsIntent.Search)
+        advanceUntilIdle()
+
+        viewModel.onIntent(OltToolsIntent.Delete)
+        advanceUntilIdle()
+
+        assertEquals("En staging solo se pueden borrar ONUs de laboratorio.", viewModel.uiState.value.error)
+        assertEquals("HWTC7B21C0D4", viewModel.uiState.value.card?.sn)
+    }
+
+    @Test
+    fun `the api gateway reads the Core reason of a refused delete`() = runTest(dispatcher) {
+        val api = mockk<OltToolsApi>()
+        coEvery { api.deleteBySn("HWTC7B21C0D4") } returns Response.error(
+            403,
+            """{"status":403,"error":"Forbidden","message":"En staging solo se pueden borrar ONUs de laboratorio."}"""
+                .toResponseBody("application/json".toMediaType()),
+        )
+        coEvery { api.deleteBySn("HWTC00000000") } returns Response.error(502, "".toResponseBody(null))
+
+        val refusal = runCatching { ApiOltToolsGateway(api).deleteBySn("HWTC7B21C0D4") }.exceptionOrNull()
+        val silent = runCatching { ApiOltToolsGateway(api).deleteBySn("HWTC00000000") }.exceptionOrNull()
+
+        assertEquals("En staging solo se pueden borrar ONUs de laboratorio.", (refusal as OltToolsRefusal).message)
+        assertEquals(false, silent is OltToolsRefusal)
     }
 }

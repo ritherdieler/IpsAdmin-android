@@ -401,6 +401,8 @@ data class HistoryLog(
     val planPrice: Double? = null,
     val previousPlanPrice: Double? = null,
     val responsibleName: String? = null,
+    /** Ready-to-show line from the Core, e.g. the cancellation reason or the NAP move. */
+    val detail: String? = null,
 )
 
 enum class HistoryKind { PAYMENT, TICKET, NETWORK, CHANGE }
@@ -491,9 +493,10 @@ class FichaHistory private constructor(private val events: List<Pair<Long, Histo
                     "Suscripción cancelada" to HistoryKind.CHANGE
                 else -> actionType.lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() } to HistoryKind.CHANGE
             }
-            val detail = if (actionType == "CHANGE_PLAN" && planPrice != null && previousPlanPrice != null) {
-                "${formatSoles(previousPlanPrice)} → ${formatSoles(planPrice)} al mes"
-            } else null
+            val detail = detail?.takeIf { it.isNotBlank() }
+                ?: if (actionType == "CHANGE_PLAN" && planPrice != null && previousPlanPrice != null) {
+                    "${formatSoles(previousPlanPrice)} → ${formatSoles(planPrice)} al mes"
+                } else null
             return HistoryItem(dayOf(date), title, detail, responsibleName?.takeIf { it.isNotBlank() } ?: "Sistema", kind)
         }
     }

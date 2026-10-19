@@ -15,13 +15,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import org.json.JSONObject
 import java.util.Locale
 
 interface OltToolsGateway {
     /** Null when the OLT does not know the serial. */
     suspend fun lookup(sn: String): OnuLookupResponse?
     suspend fun liveStatus(externalId: String): OnuLiveStatusResponse
-    suspend fun delete(externalId: String)
+    suspend fun deleteBySn(sn: String)
 }
 
 class ApiOltToolsGateway(private val api: OltToolsApi) : OltToolsGateway {
@@ -34,15 +35,22 @@ class ApiOltToolsGateway(private val api: OltToolsApi) : OltToolsGateway {
         }
     }
     override suspend fun liveStatus(externalId: String) = api.liveStatus(externalId)
-    override suspend fun delete(externalId: String) {
-        val response = api.delete(externalId)
-        if (!response.isSuccessful) throw HttpException(response)
+    override suspend fun deleteBySn(sn: String) {
+        val response = api.deleteBySn(sn)
+        if (response.isSuccessful) return
+        val reason = runCatching {
+            JSONObject(response.errorBody()?.string().orEmpty()).optString("message")
+        }.getOrNull()?.takeIf { it.isNotBlank() }
+        throw reason?.let(::OltToolsRefusal) ?: HttpException(response)
     }
 
     private companion object {
         const val NOT_FOUND = 404
     }
 }
+
+/** The Core refused the change and said why (e.g. staging only writes lab ONUs). */
+class OltToolsRefusal(override val message: String) : Exception(message)
 
 /** a-mas-08: one ONU as the OLT has it, with what deleting it would affect. */
 data class OnuCard(
@@ -141,10 +149,12 @@ class OltToolsViewModel(private val gateway: OltToolsGateway, private val mainIm
         viewModelScope.launch(mainImmediate) {
             _uiState.update { it.copy(deleting = true, error = null) }
             try {
-                gateway.delete(card.externalId)
+                gateway.deleteBySn(card.sn)
                 _uiState.update { it.copy(deleting = false, card = null, message = "ONU ${card.sn} eliminada de la OLT") }
             } catch (cancelled: CancellationException) {
                 throw cancelled
+            } catch (refused: OltToolsRefusal) {
+                _uiState.update { it.copy(deleting = false, error = refused.message) }
             } catch (_: Exception) {
                 _uiState.update { it.copy(deleting = false, error = DELETE_ERROR) }
             }

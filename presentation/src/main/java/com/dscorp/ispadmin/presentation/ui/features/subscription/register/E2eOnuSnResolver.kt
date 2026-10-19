@@ -9,6 +9,27 @@ object E2eOnuSnResolver {
     fun matchesAuthorizedOnuText(displayedText: String, wanted: String): Boolean =
         displayedText.contains("autorizada", ignoreCase = true) && matches(displayedText, wanted)
 
+    /**
+     * Registration banners render the serial and the status as separate texts ("Serial: …" or
+     * "ONU …"); the authorization is confirmed once the OLT step passed, before or after ACS.
+     */
+    fun isAuthorizationConfirmed(displayedTexts: List<String>, wanted: String): Boolean {
+        val serialShown = displayedTexts.any { text ->
+            SERIAL_LABELS.any { label ->
+                val token = text.substringAfter(label, "").substringBefore(" ")
+                text.contains(label) && token.length >= MIN_SERIAL_LENGTH && matches(token, wanted)
+            }
+        }
+        val confirmed = displayedTexts.any { text ->
+            CONFIRMATION_FRAGMENTS.any { text.contains(it, ignoreCase = true) }
+        }
+        return serialShown && confirmed
+    }
+
+    val CONFIRMATION_FRAGMENTS = listOf("autorizada", "respondió a ACS", "lista para registrar")
+    private val SERIAL_LABELS = listOf("Serial: ", "ONU ")
+    private const val MIN_SERIAL_LENGTH = 8
+
     fun matches(displayedSn: String, wanted: String): Boolean {
         val wantedCompact = compact(wanted)
         if (wantedCompact.isEmpty()) return false
