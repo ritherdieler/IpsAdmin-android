@@ -56,4 +56,46 @@ class E2eOnuSnResolverTest {
             ),
         ).isFalse()
     }
+
+    @Test
+    fun `confirms authorization when banner and serial are separate nodes`() {
+        val waitingForAcs = listOf(
+            "Esperando conexión con ACS",
+            "La ONU fue autorizada. El formulario estará listo cuando ACS reciba su primer mensaje TR-069.",
+            "Serial: VSOL00324576",
+        )
+        val acsReady = listOf(
+            "Equipo conectado",
+            "La ONU ya respondió a ACS. Ya puedes completar los datos de la suscripción.",
+            "Serial: VSOL00324576",
+        )
+        assertThat(E2eOnuSnResolver.isAuthorizationConfirmed(waitingForAcs, "VSOL00324576")).isTrue()
+        assertThat(E2eOnuSnResolver.isAuthorizationConfirmed(acsReady, "VSOL00324576")).isTrue()
+        assertThat(E2eOnuSnResolver.isAuthorizationConfirmed(acsReady, "VSOL00999999")).isFalse()
+    }
+
+    @Test
+    fun `does not confirm authorization while the OLT check is pending`() {
+        val pending = listOf(
+            "Comprobando autorización en OLT",
+            "La autorización todavía no se confirma. Puedes volver a comprobarla o cancelar y limpiar el intento.",
+            "Serial: VSOL00324576",
+        )
+        assertThat(E2eOnuSnResolver.isAuthorizationConfirmed(pending, "VSOL00324576")).isFalse()
+    }
+
+    @Test
+    fun `confirms authorization from the client step banners`() {
+        val pending = listOf(
+            "ONU VSOL00324576",
+            "Autorizada en la OLT ✓ · conectando con la gestión remota…",
+        )
+        val ready = listOf(
+            "Equipo conectado con la gestión remota ✓",
+            "ONU VSOL00324576 lista para registrar.",
+        )
+        assertThat(E2eOnuSnResolver.isAuthorizationConfirmed(pending, "VSOL00324576")).isTrue()
+        assertThat(E2eOnuSnResolver.isAuthorizationConfirmed(ready, "VSOL00324576")).isTrue()
+        assertThat(E2eOnuSnResolver.isAuthorizationConfirmed(ready, "VSOL00999999")).isFalse()
+    }
 }

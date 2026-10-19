@@ -14,9 +14,12 @@ interface OltToolsApi {
     @GET("onu/configured/{externalId}/status")
     suspend fun liveStatus(@Path("externalId") externalId: String): OnuLiveStatusResponse
 
-    /** Irreversible: removes the ONU configuration from the OLT. */
-    @DELETE("onu")
-    suspend fun delete(@Query("onuExternalId") externalId: String): Response<Unit>
+    /**
+     * Irreversible: removes the ONU configuration from the OLT. By serial, because staging may
+     * only write lab serials and the Gateway cannot check that from an external id.
+     */
+    @DELETE("onu/configured/by-sn/{sn}")
+    suspend fun deleteBySn(@Path("sn") sn: String): Response<Unit>
 }
 
 data class OnuLinkedSubscriptionResponse(val id: Int = 0, val name: String = "", val status: String = "")

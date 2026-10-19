@@ -70,4 +70,24 @@ class FichaHistoryModelTest {
             HistoryFilter.entries.map { it.label },
         )
     }
+
+    @Test
+    fun `the Core detail shows under the title`() {
+        val history = FichaHistory.from(
+            listOf(
+                HistoryLog(at(2026, 10, 19, 11), "CANCEL_SUBSCRIPTION", responsibleName = "Sergio Carrillo", detail = "Motivo: Mudanza"),
+                HistoryLog(at(2026, 10, 19, 10), "CHANGE_NAP_BOX", responsibleName = "Sergio Carrillo", detail = "NO-001 · puerto 2 → NO-002 · puerto 4"),
+            ),
+            emptyList(),
+            emptyList(),
+        )
+
+        assertEquals(
+            listOf(
+                HistoryItem("19 oct", "Suscripción cancelada", "Motivo: Mudanza", "Sergio Carrillo", HistoryKind.CHANGE),
+                HistoryItem("19 oct", "Cambio de caja NAP", "NO-001 · puerto 2 → NO-002 · puerto 4", "Sergio Carrillo", HistoryKind.NETWORK),
+            ),
+            history.months(HistoryFilter.ALL).single().items,
+        )
+    }
 }
