@@ -69,8 +69,8 @@ internal fun ActionFooter(
                 enabled = enabled && !busy,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag(tag),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (destructive) MaterialTheme.colorScheme.error else colors.hero,
-                    contentColor = if (destructive) MaterialTheme.colorScheme.onError else colors.onHero,
+                    containerColor = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    contentColor = if (destructive) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary,
                 ),
             ) {
                 if (busy) CircularProgressIndicator(Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)

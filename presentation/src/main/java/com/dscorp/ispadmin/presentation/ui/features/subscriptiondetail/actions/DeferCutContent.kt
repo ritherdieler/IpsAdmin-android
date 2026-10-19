@@ -134,7 +134,7 @@ private fun DateTile(title: String, hint: String, selected: Boolean, modifier: M
     val colors = IspTheme.colors
     Row(
         modifier.heightIn(min = 60.dp)
-            .border(if (selected) 2.dp else 1.dp, if (selected) colors.hero else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+            .border(if (selected) 2.dp else 1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
             .background(if (selected) colors.selectedContainer else colors.card, RoundedCornerShape(12.dp))
             .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 8.dp),

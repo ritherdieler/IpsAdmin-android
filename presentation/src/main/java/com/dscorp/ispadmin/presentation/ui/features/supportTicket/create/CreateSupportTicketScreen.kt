@@ -183,7 +183,7 @@ fun CreateSupportTicketScreen(
                     onClick = onCreateTicket,
                     enabled = !uiState.isLoading,
                     modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 16.dp).heightIn(min = 52.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                 ) {
                     if (uiState.isLoading) {
                         CircularProgressIndicator(Modifier.size(20.dp), color = colors.onHero, strokeWidth = 2.dp)

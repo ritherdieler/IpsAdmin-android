@@ -86,9 +86,9 @@ fun OltToolsContent(state: OltToolsUiState, onIntent: (OltToolsIntent) -> Unit) 
                 onClick = { onIntent(OltToolsIntent.Search) },
                 enabled = state.query.isNotBlank() && !state.searching,
                 modifier = Modifier.heightIn(min = 56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
             ) {
-                if (state.searching) CircularProgressIndicator(Modifier.size(18.dp), color = colors.onHero, strokeWidth = 2.dp)
+                if (state.searching) CircularProgressIndicator(Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                 else Icon(Icons.Rounded.Search, contentDescription = "Buscar")
             }
         }

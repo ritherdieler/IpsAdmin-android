@@ -1,5 +1,10 @@
 package com.dscorp.ispadmin.presentation.ui.features.profile
 
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.RadioButton
+import androidx.compose.foundation.selection.selectable
+import com.dscorp.ispadmin.presentation.theme.ThemeMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -53,7 +58,13 @@ fun ProfileContent(
     onLogout: () -> Unit,
     onClearError: () -> Unit,
     versionLabel: String = "",
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    onThemeSelected: (ThemeMode) -> Unit = {},
 ) {
+    var choosingTheme by remember { mutableStateOf(false) }
+    if (choosingTheme) {
+        ThemeDialog(themeMode, onSelect = { choosingTheme = false; onThemeSelected(it) }, onDismiss = { choosingTheme = false })
+    }
     val colors = IspTheme.colors
     var confirmLogout by remember { mutableStateOf(false) }
     if (confirmLogout) {
@@ -88,7 +99,21 @@ fun ProfileContent(
                 InfoCard(profileRows(user))
             }
             Section("App")
-            InfoCard(listOf("Versión" to versionLabel))
+            Column(Modifier.fillMaxWidth().background(colors.card, CARD).padding(horizontal = 16.dp)) {
+                Row(Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Versión", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                    Text(versionLabel, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
+                HorizontalDivider(color = colors.track)
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(role = Role.Button) { choosingTheme = true },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Tema", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                    Text(themeMode.label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
             Row(
                 Modifier.fillMaxWidth().padding(top = 16.dp).heightIn(min = 52.dp)
                     .border(1.dp, MaterialTheme.colorScheme.error, RoundedCornerShape(26.dp))
@@ -135,4 +160,27 @@ private fun InfoCard(rows: List<Pair<String, String>>) {
             }
         }
     }
+}
+
+@Composable
+private fun ThemeDialog(current: ThemeMode, onSelect: (ThemeMode) -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Tema") },
+        text = {
+            Column {
+                ThemeMode.entries.forEach { mode ->
+                    Row(
+                        Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected = mode == current, role = Role.RadioButton) { onSelect(mode) },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = mode == current, onClick = null)
+                        Spacer(Modifier.width(12.dp))
+                        Text(mode.label, fontSize = 16.sp)
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Cerrar") } },
+    )
 }

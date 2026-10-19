@@ -249,7 +249,7 @@ fun RegisterOutLayForm(
                 onClick = { onIntent(OutlayIntent.RegisterOutLay) },
                 enabled = outlay.isValid() && hasPhoto && !isLoading,
                 modifier = Modifier.fillMaxWidth().padding(16.dp).heightIn(min = 52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
             ) { Text("Registrar egreso", fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
         }
     }

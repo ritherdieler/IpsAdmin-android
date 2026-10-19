@@ -9,4 +9,5 @@ val localDataModule = module {
     single<SharedPreferences>{
           androidContext().getSharedPreferences("my_prefs", Context.MODE_PRIVATE)
     }
+    single { com.dscorp.ispadmin.presentation.theme.ThemePreferences(get()) }
 }

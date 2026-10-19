@@ -112,7 +112,7 @@ fun PlanCatalogContent(state: PlanCatalogUiState, onIntent: (PlanCatalogIntent) 
                 Button(
                     onClick = { onIntent(PlanCatalogIntent.New) },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag(PlanCatalogTestTags.NEW),
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                 ) {
                     Icon(Icons.Rounded.Add, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
@@ -190,9 +190,9 @@ fun PlanEditorContent(
                 onClick = onSave,
                 enabled = !saving && editor.changed && editor.blockingReason == null,
                 modifier = Modifier.weight(1f).heightIn(min = 52.dp).testTag(PlanCatalogTestTags.SAVE),
-                colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
             ) {
-                if (saving) CircularProgressIndicator(color = colors.onHero, strokeWidth = 2.dp, modifier = Modifier.padding(2.dp))
+                if (saving) CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp, modifier = Modifier.padding(2.dp))
                 else Text(if (editor.isNew) "Crear" else "Guardar", fontWeight = FontWeight.SemiBold)
             }
         }

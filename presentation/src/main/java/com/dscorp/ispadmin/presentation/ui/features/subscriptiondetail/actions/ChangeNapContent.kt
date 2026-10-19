@@ -140,7 +140,7 @@ private fun NapRowItem(row: NapRow, selected: Boolean, onClick: () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RadioButton(selected = selected, onClick = null, enabled = row.enabled, colors = RadioButtonDefaults.colors(selectedColor = colors.hero))
+        RadioButton(selected = selected, onClick = null, enabled = row.enabled, colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary))
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -172,7 +172,7 @@ private fun PortGrid(model: ChangeNap, napId: Int, chosen: Int?, onSelect: (Int)
                 val (background, content) = when (cell.state) {
                     PortState.TAKEN -> colors.track to muted
                     PortState.FREE -> colors.card to MaterialTheme.colorScheme.onSurface
-                    PortState.CHOSEN -> colors.hero to colors.onHero
+                    PortState.CHOSEN -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
                 }
                 Box(
                     Modifier.weight(1f).aspectRatio(1f)
@@ -189,7 +189,7 @@ private fun PortGrid(model: ChangeNap, napId: Int, chosen: Int?, onSelect: (Int)
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Legend(colors.track, "Ocupado")
             Legend(colors.card, "Libre", border = MaterialTheme.colorScheme.outlineVariant)
-            Legend(colors.hero, "Elegido")
+            Legend(MaterialTheme.colorScheme.primary, "Elegido")
         }
     }
 }

@@ -25,6 +25,8 @@ fun ProfileScreen(
 
     // Observamos el estado
     val uiState by viewModel.uiState.collectAsState()
+    val themePreferences: com.dscorp.ispadmin.presentation.theme.ThemePreferences = org.koin.compose.koinInject()
+    val themeMode by themePreferences.mode.collectAsState()
 
     // Manejamos la navegación cuando el usuario cierra sesión (solo en navegación Compose)
     if (navController != null) {
@@ -46,6 +48,8 @@ fun ProfileScreen(
                 viewModel.clearError()
             },
             versionLabel = "${com.dscorp.ispadmin.BuildConfig.VERSION_NAME} (${com.dscorp.ispadmin.BuildConfig.VERSION_CODE})",
+            themeMode = themeMode,
+            onThemeSelected = themePreferences::set,
         )
     }
 }

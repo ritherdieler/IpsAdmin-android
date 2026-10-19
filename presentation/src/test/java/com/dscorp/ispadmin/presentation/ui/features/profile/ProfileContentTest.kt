@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import com.dscorp.ispadmin.domain.model.User
 import org.junit.Rule
 import org.junit.Test
@@ -37,5 +38,23 @@ class ProfileContentTest {
         compose.onNodeWithText("Sin email").assertExists()
         compose.onNodeWithText("999 111 222").assertExists()
         compose.onNodeWithText("2.6.14 (66)").assertExists()
+    }
+
+    @Test
+    fun `the theme is chosen from the profile`() {
+        var chosen: com.dscorp.ispadmin.presentation.theme.ThemeMode? = null
+        compose.setContent {
+            MaterialTheme {
+                ProfileContent(
+                    uiState = MyProfileUiState(user = User(id = 1, name = "Rosa", type = User.UserType.SECRETARY)),
+                    onLogout = {}, onClearError = {}, themeMode = com.dscorp.ispadmin.presentation.theme.ThemeMode.SYSTEM,
+                    onThemeSelected = { chosen = it },
+                )
+            }
+        }
+
+        compose.onNodeWithText("Según el sistema").performClick()
+        compose.onNodeWithText("Oscuro").performClick()
+        org.junit.Assert.assertEquals(com.dscorp.ispadmin.presentation.theme.ThemeMode.DARK, chosen)
     }
 }

@@ -778,7 +778,7 @@ internal fun RegisterSuccessFullScreen(
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("btn_retry_wifi"),
                             enabled = !tr069RetryLoading,
                             onClick = onRetryTr069,
-                            colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                         ) {
                             if (tr069RetryLoading) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -794,7 +794,7 @@ internal fun RegisterSuccessFullScreen(
                         Button(
                             onClick = onShareWhatsApp,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                         ) { Text("Enviar datos por WhatsApp", fontWeight = FontWeight.SemiBold) }
                     }
                     if (onViewSubscription != null) {
@@ -814,7 +814,7 @@ internal fun RegisterSuccessFullScreen(
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("btn_success_continue"),
                             enabled = !tr069RetryLoading,
                             onClick = { onDismiss(); onContinue() },
-                            colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                         ) { Text(finishLabel, fontWeight = FontWeight.SemiBold) }
                     }
                 }

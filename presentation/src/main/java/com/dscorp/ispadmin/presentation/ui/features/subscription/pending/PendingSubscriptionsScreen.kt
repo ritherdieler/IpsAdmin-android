@@ -90,7 +90,7 @@ fun PendingSubscriptionsScreen(
                         onClick = { onIntent(PendingSubscriptionsIntent.Sync) },
                         enabled = !uiState.isSyncing && uiState.items.isNotEmpty(),
                         modifier = Modifier.fillMaxWidth().padding(16.dp).heightIn(min = 52.dp).testTag("btn_sync_pending_subscriptions"),
-                        colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                     ) {
                         if (uiState.isSyncing) {
                             CircularProgressIndicator(Modifier.size(18.dp), color = colors.onHero, strokeWidth = 2.dp)

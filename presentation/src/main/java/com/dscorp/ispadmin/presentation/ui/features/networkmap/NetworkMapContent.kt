@@ -132,7 +132,7 @@ fun NetworkMapContent(
                             onClick = { onDirections(selected) },
                             enabled = selected.latitude != null,
                             modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                         ) {
                             Icon(Icons.Rounded.Directions, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(6.dp))
@@ -219,21 +219,21 @@ fun NapDetailContent(
                             val taken = port.initials != null
                             Box(
                                 Modifier.weight(1f).aspectRatio(1f)
-                                    .background(if (taken) colors.hero else colors.card, RoundedCornerShape(8.dp))
+                                    .background(if (taken) MaterialTheme.colorScheme.primary else colors.card, RoundedCornerShape(8.dp))
                                     .border(1.dp, if (taken) Color.Transparent else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp)),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     // Tight line heights so number and initials fit an eighth of the row.
-                                    Text("${port.number}", fontSize = 10.sp, lineHeight = 11.sp, color = if (taken) colors.onHero.copy(alpha = 0.7f) else muted)
-                                    port.initials?.let { Text(it, fontSize = 11.sp, lineHeight = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.onHero) }
+                                    Text("${port.number}", fontSize = 10.sp, lineHeight = 11.sp, color = if (taken) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else muted)
+                                    port.initials?.let { Text(it, fontSize = 11.sp, lineHeight = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimary) }
                                 }
                             }
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         LegendDot(colors.card, "Libre", border = MaterialTheme.colorScheme.outlineVariant)
-                        LegendDot(colors.hero, "Ocupado (iniciales del titular)")
+                        LegendDot(MaterialTheme.colorScheme.primary, "Ocupado (iniciales del titular)")
                     }
                 }
                 Text("Abonados en esta caja (${detail.holders.size})", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
@@ -265,7 +265,7 @@ fun NapDetailContent(
                     onClick = { onDirections(detail) },
                     enabled = detail.latitude != null,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                 ) {
                     Icon(Icons.Rounded.Directions, contentDescription = null)
                     Spacer(Modifier.width(8.dp))

@@ -17,6 +17,11 @@ import com.dscorp.ispadmin.navigation.IpsAdminNavHost
 import com.dscorp.ispadmin.presentation.fcm.FcmTopics
 import com.dscorp.ispadmin.presentation.fcm.updateFcmToken
 import com.dscorp.ispadmin.presentation.theme.MyTheme
+import com.dscorp.ispadmin.presentation.theme.LocalThemeMode
+import com.dscorp.ispadmin.presentation.theme.ThemePreferences
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.dscorp.ispadmin.presentation.ui.features.main.permissions.FcmTopicManager
 import com.dscorp.ispadmin.presentation.ui.semantics.TestTagResourceIdRoot
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -30,6 +35,7 @@ class MainActivity : FragmentActivity() {
     private val viewModel: MainActivityViewModel by inject()
     private val firebaseAnalytics: FirebaseAnalytics by inject()
     private val updateDeviceTokenUseCase: UpdateDeviceTokenUseCase by inject()
+    private val themePreferences: ThemePreferences by inject()
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,12 +47,15 @@ class MainActivity : FragmentActivity() {
         updateFcmToken()
 
         setContent {
-            MyTheme {
-                TestTagResourceIdRoot {
-                    IpsAdminNavHost(
-                        onSessionStarted = ::onSessionStarted,
-                        onSessionEnded = fcmTopicManager::unsubscribeFromRoleTopics,
-                    )
+            val themeMode by themePreferences.mode.collectAsState()
+            CompositionLocalProvider(LocalThemeMode provides themeMode) {
+                MyTheme {
+                    TestTagResourceIdRoot {
+                        IpsAdminNavHost(
+                            onSessionStarted = ::onSessionStarted,
+                            onSessionEnded = fcmTopicManager::unsubscribeFromRoleTopics,
+                        )
+                    }
                 }
             }
         }

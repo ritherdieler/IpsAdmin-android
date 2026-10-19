@@ -192,7 +192,7 @@ private fun NowCard(job: NowJob, onAction: (FieldAction) -> Unit) {
             Button(
                 onClick = { onAction(if (job.registers) FieldAction.Register(job.target) else FieldAction.Open(job.target)) },
                 modifier = Modifier.weight(1f).height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
             ) { Text(if (job.registers) "Registrar suscripción" else "Abrir ticket", fontWeight = FontWeight.SemiBold, maxLines = 1) }
         }
     }

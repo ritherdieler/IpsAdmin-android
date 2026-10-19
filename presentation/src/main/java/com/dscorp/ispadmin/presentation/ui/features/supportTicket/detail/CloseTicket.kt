@@ -180,7 +180,7 @@ fun CloseTicketContent(state: CloseTicketUiState, onIntent: (CloseTicketIntent) 
             onClick = { onIntent(CloseTicketIntent.Submit) },
             enabled = state.photo != null && !state.submitting,
             modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp).heightIn(min = 52.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
         ) { Text("Cerrar ticket", fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
     }
 }

@@ -61,7 +61,7 @@ fun UpdateLocationContent(
             Icon(
                 Icons.Rounded.Place,
                 contentDescription = null,
-                tint = colors.hero,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.align(Alignment.Center).size(44.dp).offset(y = (-22).dp),
             )
             SmallFloatingActionButton(

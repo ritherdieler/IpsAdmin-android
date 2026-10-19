@@ -135,7 +135,7 @@ fun FichaHeaderBand(header: FichaHeader, compact: Boolean, onBack: () -> Unit, o
                     Button(
                         onClick = onCharge,
                         modifier = Modifier.heightIn(min = 48.dp).testTag(SubscriptionHubTestTags.CHARGE),
-                        colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                     ) { Text("Cobrar", fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
                 }
             }
@@ -369,7 +369,7 @@ fun FichaPaymentsTab(payments: FichaPayments, onCharge: () -> Unit, onSeeHistory
                 Button(
                     onClick = onCharge,
                     modifier = Modifier.fillMaxWidth().padding(top = 12.dp).heightIn(min = 48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                 ) { Text(pending.chargeLabel, fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
                 HorizontalDivider(Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.surfaceContainer)
             }

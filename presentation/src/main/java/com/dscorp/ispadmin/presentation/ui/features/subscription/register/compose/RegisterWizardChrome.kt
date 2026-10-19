@@ -159,7 +159,7 @@ internal fun RegisterPrimaryButton(text: String, enabled: Boolean, loading: Bool
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.heightIn(min = 48.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = colors.hero, contentColor = colors.onHero),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
     ) {
         if (loading) {
             CircularProgressIndicator(Modifier.size(18.dp), color = colors.onHero, strokeWidth = 2.dp)
