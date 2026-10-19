@@ -253,7 +253,8 @@ interface RestApiServices {
     @PUT("subscription/cancel-subscription")
     suspend fun cancelSubscription(
         @Query("subscriptionId") subscriptionId: Int,
-        @Query("responsibleId") responsibleId: Int
+        @Query("responsibleId") responsibleId: Int,
+        @Query("reason") reason: String? = null,
     ): Response<Unit>
 
     @PUT("subscription/update-subscription-data")

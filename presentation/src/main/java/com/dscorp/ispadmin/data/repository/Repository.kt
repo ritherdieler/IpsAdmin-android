@@ -757,8 +757,8 @@ class Repository : IRepository, KoinComponent {
         }
     }
 
-    override suspend fun cancelSubscription(subscriptionId: Int, responsibleId: Int) {
-        val response = restApiServices.cancelSubscription(subscriptionId, responsibleId)
+    override suspend fun cancelSubscription(subscriptionId: Int, responsibleId: Int, reason: String?) {
+        val response = restApiServices.cancelSubscription(subscriptionId, responsibleId, reason)
         when (response.code()) {
             in 200..299 -> {}
             else -> throw Exception("No se pudo cancelar el servicio, vuelva a intentarlos mas tarde")

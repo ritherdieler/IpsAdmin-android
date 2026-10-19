@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
@@ -97,14 +99,17 @@ fun FichaActionHost(
 
     when (action) {
         MoreAction.CANCEL -> {
+            var reason by remember(subscription.id) { mutableStateOf<String?>(null) }
             val busy = state.cancelSubscriptionState == CancelSubscriptionState.Loading
             ModalBottomSheet(onDismissRequest = { if (!busy) onClosed() }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
                 CancelSubscriptionSheetContent(
                     model = remember(subscription) { CancelSubscription.from(subscription, LocalDate.now(FICHA_ZONE)) },
+                    reason = reason,
+                    onReason = { reason = it },
                     busy = busy,
                     error = if (state.cancelSubscriptionState == CancelSubscriptionState.Error) "No se pudo cancelar la suscripción. Vuelve a intentar." else null,
                     // Stays open until the Core answers; success closes it from the effect above.
-                    onConfirm = { viewModel.cancelSubscription(subscription.id) },
+                    onConfirm = { chosen -> viewModel.cancelSubscription(subscription.id, chosen) },
                     onBack = onClosed,
                 )
             }

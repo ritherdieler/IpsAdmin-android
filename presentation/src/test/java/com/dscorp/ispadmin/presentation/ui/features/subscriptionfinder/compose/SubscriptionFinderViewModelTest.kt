@@ -336,4 +336,16 @@ class SubscriptionFinderViewModelTest {
         assertEquals("Tienda", byId.getValue(2).customer.address)
         assertEquals("JUAN", byId.getValue(3).customer.name)
     }
+
+    @Test
+    fun `cancelling sends the chosen reason`() = runTest(testDispatcher) {
+        io.mockk.every { repository.getUserSession() } returns com.dscorp.ispadmin.domain.model.User(id = 7, name = "Rosa")
+        io.mockk.coEvery { repository.cancelSubscription(1842, 7, "Mudanza") } returns Unit
+
+        viewModel.cancelSubscription(1842, "Mudanza")
+        advanceUntilIdle()
+
+        io.mockk.coVerify { repository.cancelSubscription(1842, 7, "Mudanza") }
+        assertEquals(CancelSubscriptionState.Success, viewModel.uiState.value.cancelSubscriptionState)
+    }
 }
