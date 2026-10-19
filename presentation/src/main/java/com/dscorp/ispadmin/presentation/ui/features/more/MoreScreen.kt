@@ -6,13 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.automirrored.rounded.Logout
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.dscorp.ispadmin.presentation.theme.IspTheme
+import com.dscorp.ispadmin.presentation.ui.features.profile.LogoutDialog
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.BadgeTone
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.HubBadge
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.StatusBadge
@@ -112,15 +112,7 @@ fun MoreContent(
         )
     }
     if (confirmLogout) {
-        AlertDialog(
-            onDismissRequest = { confirmLogout = false },
-            title = { Text("¿Cerrar sesión?") },
-            text = { Text("Dejarás de recibir avisos de tickets en este teléfono hasta que vuelvas a ingresar.") },
-            confirmButton = {
-                TextButton(onClick = { confirmLogout = false; onLogout() }) { Text("Salir", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = { TextButton(onClick = { confirmLogout = false }) { Text("Volver") } },
-        )
+        LogoutDialog(onConfirm = { confirmLogout = false; onLogout() }, onDismiss = { confirmLogout = false })
     }
 }
 

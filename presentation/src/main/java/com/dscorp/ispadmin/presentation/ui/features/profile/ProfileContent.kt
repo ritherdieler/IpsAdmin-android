@@ -57,18 +57,7 @@ fun ProfileContent(
     val colors = IspTheme.colors
     var confirmLogout by remember { mutableStateOf(false) }
     if (confirmLogout) {
-        AlertDialog(
-            onDismissRequest = { confirmLogout = false },
-            title = { Text("¿Cerrar sesión?") },
-            text = { Text("Dejarás de recibir avisos de tickets en este teléfono hasta que vuelvas a ingresar.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmLogout = false
-                    onLogout()
-                }) { Text("Cerrar sesión", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = { TextButton(onClick = { confirmLogout = false }) { Text("Volver") } },
-        )
+        LogoutDialog(onConfirm = { confirmLogout = false; onLogout() }, onDismiss = { confirmLogout = false })
     }
     uiState.error?.let { error ->
         AlertDialog(

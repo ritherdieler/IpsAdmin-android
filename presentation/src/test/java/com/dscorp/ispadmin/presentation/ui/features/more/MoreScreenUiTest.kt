@@ -3,7 +3,9 @@ package com.dscorp.ispadmin.presentation.ui.features.more
 import android.app.Application
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import com.dscorp.ispadmin.presentation.ui.features.profile.LogoutDialogTags
 import androidx.compose.ui.test.performClick
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.navigation.MoreItem
@@ -56,7 +58,8 @@ class MoreScreenUiTest {
         compose.onNodeWithText("Planes").performClick()
         compose.onNodeWithText("Cerrar sesión").performClick()
         compose.onNodeWithText("¿Cerrar sesión?").assertExists()
-        compose.onNodeWithText("Salir").performClick()
+        compose.onNodeWithText("Dejarás de recibir avisos de tickets en este teléfono hasta que vuelvas a ingresar.").assertExists()
+        compose.onNodeWithTag(LogoutDialogTags.CONFIRM).performClick()
 
         assertEquals(listOf("profile", "PLANS", "logout"), events)
     }
