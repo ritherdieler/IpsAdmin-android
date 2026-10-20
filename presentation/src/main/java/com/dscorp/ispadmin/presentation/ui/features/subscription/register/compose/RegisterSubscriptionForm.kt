@@ -136,6 +136,7 @@ fun RegisterSubscriptionForm(
 ) {
     val form = formState.registerSubscriptionForm
     val missingFields = when (formState.wizardStep) {
+        RegisterSubscriptionWizardStep.SERVICE_TYPE -> if (formState.serviceTypeChosen) 0 else 1
         RegisterSubscriptionWizardStep.ONU_SELECTION,
         RegisterSubscriptionWizardStep.ONU_CONFIRMATION ->
             if (form.selectedOnu == null) 1 else 0
@@ -148,6 +149,7 @@ fun RegisterSubscriptionForm(
     val navigationHint = when {
         formState.wizardStep == RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> null
         missingFields == 0 -> null
+        formState.wizardStep == RegisterSubscriptionWizardStep.SERVICE_TYPE -> "Elige un tipo de servicio"
         formState.wizardStep == RegisterSubscriptionWizardStep.ONU_SELECTION ->
             "Selecciona una ONU para autorizarla en la OLT."
         formState.wizardStep == RegisterSubscriptionWizardStep.ONU_CONFIRMATION ->
@@ -180,10 +182,11 @@ fun RegisterSubscriptionForm(
         Column(modifier = Modifier.fillMaxSize()) {
             RegisterWizardHeader(
                 currentStep = formState.wizardStep,
-                preauthorizationEnabled = formState.preauthorizationEnabled,
+                usesPreauthorization = formState.usesPreauthorization,
                 onClose = {
                     // Closing an ONU-first registration goes through the cancel flow, which cleans the OLT authorization.
-                    if (formState.preauthorizationEnabled) onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
+                    // The type step authorizes nothing, so it just leaves, whatever tile is chosen.
+                    if (formState.usesPreauthorization && formState.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE) onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
                     else backDispatcher?.onBackPressed()
                 },
             )
@@ -204,10 +207,11 @@ fun RegisterSubscriptionForm(
                     label = "registration_step_content",
                 ) { step ->
                     Column {
-                        if (formState.preauthorizationEnabled && step in ACS_STATUS_STEPS) {
+                        if (formState.usesPreauthorization && step in ACS_STATUS_STEPS) {
                             AcsStatusBanner(formState)
                         }
                         when (step) {
+                            RegisterSubscriptionWizardStep.SERVICE_TYPE -> ServiceTypeStepContent(formState, onIntent)
                             RegisterSubscriptionWizardStep.ONU_SELECTION,
                             RegisterSubscriptionWizardStep.ONU_CONFIRMATION ->
                                 OnuListBlock(
@@ -299,8 +303,10 @@ fun RegisterSubscriptionForm(
                 when {
                     formState.wizardStep in ONU_STEPS && selectedOnu != null -> RegisterWizardFooterLine(selectedOnu.chosenLabel())
                     navigationHint != null -> RegisterWizardFooterLine(navigationHint)
+                    formState.wizardStep == RegisterSubscriptionWizardStep.SERVICE_TYPE ->
+                        RegisterWizardFooterLine(chosenServiceTypeLabel(form.installationType))
                     formState.wizardStep == RegisterSubscriptionWizardStep.CONFIRMATION && formState.submitBlockedReason == null ->
-                        RegisterWizardFooterLine("Los ${registrationProgressPhases(formState.preauthorizationEnabled).size} pasos están completos", ok = true)
+                        RegisterWizardFooterLine("Los ${registrationProgressPhases(formState.usesPreauthorization).size} pasos están completos", ok = true)
                     formState.wizardStep != RegisterSubscriptionWizardStep.WAITING_FOR_ACS && formState.wizardStep !in ONU_STEPS ->
                         RegisterWizardFooterLine("Todo listo para continuar", ok = true)
                 }
@@ -310,15 +316,20 @@ fun RegisterSubscriptionForm(
                 WizardNavigationBar(
                     step = formState.wizardStep,
                     isLoading = formState.isLoading,
-                    canContinue = if (formState.wizardStep == RegisterSubscriptionWizardStep.ONU_SELECTION ||
-                        formState.wizardStep == RegisterSubscriptionWizardStep.ONU_CONFIRMATION
-                    ) form.selectedOnu != null else canAdvanceWizardStep(formState.wizardStep, form),
+                    canContinue = when (formState.wizardStep) {
+                        RegisterSubscriptionWizardStep.SERVICE_TYPE -> formState.serviceTypeChosen
+                        RegisterSubscriptionWizardStep.ONU_SELECTION,
+                        RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> form.selectedOnu != null
+                        else -> canAdvanceWizardStep(formState.wizardStep, form)
+                    },
                     canRegister = form.isValid() && if (formState.preauthorizationOperation != null) {
                         !form.facadePhotoUrl.isNullOrBlank()
                     } else {
                         form.facadePhotoUri != null || !form.facadePhotoUrl.isNullOrBlank()
                     },
+                    showClientBack = formState.preauthorizationEnabled && !formState.usesPreauthorization,
                     onBack = { onIntent(RegisterSubscriptionIntent.WizardBackClicked) },
+                    onLeave = { backDispatcher?.onBackPressed() },
                     onContinue = { onIntent(RegisterSubscriptionIntent.WizardContinueClicked) },
                     onRegister = { onIntent(RegisterSubscriptionIntent.RegisterClick()) },
                     retryLabel = when (formState.preauthorizationOperation?.state) {
@@ -577,13 +588,18 @@ private fun AcsWaitingBlock(formState: RegisterSubscriptionState) {
     }
 }
 
+private fun chosenServiceTypeLabel(type: InstallationType): String =
+    "Elegido: ${type.serviceTypeTitle()}" + if (type == InstallationType.FIBER) "" else " · sin ONU"
+
 @Composable
 private fun WizardNavigationBar(
     step: RegisterSubscriptionWizardStep,
     isLoading: Boolean,
     canContinue: Boolean,
     canRegister: Boolean,
+    showClientBack: Boolean,
     onBack: () -> Unit,
+    onLeave: () -> Unit,
     onContinue: () -> Unit,
     onRegister: () -> Unit,
     retryLabel: String,
@@ -596,6 +612,12 @@ private fun WizardNavigationBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         when (step) {
+            RegisterSubscriptionWizardStep.SERVICE_TYPE -> {
+                RegisterTextAction("Cancelar", enabled = !isLoading, onClick = onLeave)
+                Spacer(Modifier.weight(1f))
+                RegisterPrimaryButton("Continuar", enabled = !isLoading && canContinue, loading = isLoading,
+                    modifier = Modifier.testTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE), onClick = onContinue)
+            }
             RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> {
                 // The header close carries the cancel test tag on every step.
                 RegisterTextAction("Cancelar", enabled = !isLoading, onClick = onCancelPreauthorization)
@@ -614,8 +636,8 @@ private fun WizardNavigationBar(
                     modifier = Modifier.weight(1f).testTag(RegisterSubscriptionTestTags.SUBMIT), onClick = onRegister)
             }
             else -> {
-                // The ONU cannot be changed once authorized, so the client step has no way back.
-                if (step != RegisterSubscriptionWizardStep.CLIENT_LOCATION) {
+                // The ONU cannot be changed once authorized; without ONU the client step goes back to the type.
+                if (step != RegisterSubscriptionWizardStep.CLIENT_LOCATION || showClientBack) {
                     RegisterTextAction("Atrás", enabled = !isLoading, modifier = Modifier.testTag(RegisterSubscriptionTestTags.WIZARD_BACK), onClick = onBack)
                 }
                 RegisterPrimaryButton("Continuar", enabled = !isLoading && canContinue, loading = isLoading,

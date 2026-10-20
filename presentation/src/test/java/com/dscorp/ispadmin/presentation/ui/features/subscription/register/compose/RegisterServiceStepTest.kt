@@ -44,7 +44,7 @@ class RegisterServiceStepTest {
     private val far = NapBoxResponse(code = "LV-1-7", address = "caja poste madera", latitude = -11.2256, longitude = -77.3861,
         placeName = "La Villa", placeId = 1)
 
-    private fun show(form: RegisterSubscriptionFormState) {
+    private fun show(form: RegisterSubscriptionFormState, preauthorizationEnabled: Boolean = true) {
         composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
         composeRule.setContent {
             MaterialTheme {
@@ -52,7 +52,7 @@ class RegisterServiceStepTest {
                     formState = RegisterSubscriptionState(
                         registerSubscriptionForm = form,
                         wizardStep = RegisterSubscriptionWizardStep.INSTALLATION,
-                        preauthorizationEnabled = true,
+                        preauthorizationEnabled = preauthorizationEnabled,
                     ),
                     onIntent = { intents += it },
                 )
@@ -90,7 +90,7 @@ class RegisterServiceStepTest {
 
     @Test
     fun `type, plan and access are chosen on the page`() {
-        show(fiber)
+        show(fiber, preauthorizationEnabled = false)
 
         composeRule.onNodeWithText("Plan · Fibra (2 activos)").assertExists()
         composeRule.onNodeWithText("S/ 80.00").assertExists()
@@ -106,6 +106,14 @@ class RegisterServiceStepTest {
             ),
             intents,
         )
+    }
+
+    @Test
+    fun `the installation type is read-only after the first step`() {
+        show(fiber, preauthorizationEnabled = true)
+
+        composeRule.onNodeWithText("Elegido al inicio").assertExists()
+        composeRule.onNodeWithText("Inalámbrico").assertDoesNotExist()
     }
 
     @Test

@@ -47,8 +47,9 @@ WiFi del alta (defaults): `E2E_WIFI_SSID` / `E2E_WIFI_PASS` (5 GHz = `{ssid} - 5
 
 ## Flujo UI (wizard)
 
-Alineado a `feature/manual-location-selection`:
+Alineado a `feature/manual-location-selection`; el asistente de fibra empieza en el paso de tipo de servicio y luego autoriza la ONU (`ONU_SELECTION`, `ONU_CONFIRMATION`, `WAITING_FOR_ACS`):
 
+0. **Tipo de servicio** — toca `register_service_type_fiber` y `wizard_continue` (el E2E lo hace en `ensureLocationReady`, antes de elegir la ONU); si hay una ONU u operación recuperada, el paso no aparece y se omite
 1. **Cliente + ubicación** — datos, lugar, dirección, `location_method_manual` (coords del polígono) → `wizard_continue`
 2. **Instalación** — FIBER, plan, ONU `register_onu_item_0`, WiFi, NAP y foto de fachada (broadcast DEBUG, ver abajo) → `wizard_continue`
 3. **Confirmación** — revisión → `btn_register_subscription`

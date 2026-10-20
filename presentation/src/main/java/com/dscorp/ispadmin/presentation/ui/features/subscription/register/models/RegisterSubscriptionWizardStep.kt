@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 
 enum class RegisterSubscriptionWizardStep {
+    SERVICE_TYPE,
     ONU_SELECTION,
     ONU_CONFIRMATION,
     WAITING_FOR_ACS,
@@ -10,6 +11,7 @@ enum class RegisterSubscriptionWizardStep {
     ;
 
     fun next(): RegisterSubscriptionWizardStep? = when (this) {
+        SERVICE_TYPE -> null
         ONU_SELECTION -> ONU_CONFIRMATION
         ONU_CONFIRMATION -> WAITING_FOR_ACS
         WAITING_FOR_ACS -> null
@@ -19,6 +21,7 @@ enum class RegisterSubscriptionWizardStep {
     }
 
     fun previous(): RegisterSubscriptionWizardStep? = when (this) {
+        SERVICE_TYPE -> null
         ONU_SELECTION -> null
         ONU_CONFIRMATION -> ONU_SELECTION
         WAITING_FOR_ACS -> null
@@ -37,6 +40,7 @@ fun wizardFieldsFor(
     step: RegisterSubscriptionWizardStep,
     form: RegisterSubscriptionFormState,
 ): List<FormFieldKey> = when (step) {
+    RegisterSubscriptionWizardStep.SERVICE_TYPE -> emptyList()
     RegisterSubscriptionWizardStep.ONU_SELECTION -> listOf(FormFieldKey.ONU)
     RegisterSubscriptionWizardStep.ONU_CONFIRMATION,
     RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> emptyList()

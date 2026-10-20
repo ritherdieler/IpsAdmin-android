@@ -32,6 +32,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTit
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.TvCpeKind
 import java.util.Locale
 
 /** "987 111 222" for 9-digit mobiles; anything else as typed. */
@@ -49,10 +50,10 @@ internal fun ReviewStepContent(formState: RegisterSubscriptionState, onIntent: (
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Revisa antes de registrar", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.SemiBold)
         if (onu != null || formState.preauthorizationOperation != null) {
-            ReviewCard("Equipo", trailing = "Autorizada en la OLT".takeIf { formState.preauthorizationEnabled }, rows = listOfNotNull(
+            ReviewCard("Equipo", trailing = "Autorizada en la OLT".takeIf { formState.usesPreauthorization }, rows = listOfNotNull(
                 ReviewRow("ONU", onu?.sn ?: formState.preauthorizationOperation?.serial.orEmpty(), mono = true),
                 onu?.let { ReviewRow("Modelo · puerto", "${it.onu_type_name} · OLT ${it.olt_id} · ${it.portLabel()}") },
-                ReviewRow("VLAN", form.vlan).takeIf { !formState.preauthorizationEnabled && form.requiresOnu() },
+                ReviewRow("VLAN", form.vlan).takeIf { !formState.usesPreauthorization && form.requiresOnu() },
             ))
         }
         ReviewCard("Cliente", editLabel = "Editar cliente", onEdit = { onIntent(RegisterSubscriptionIntent.EditStepClicked(RegisterSubscriptionWizardStep.CLIENT_LOCATION)) },
@@ -79,6 +80,9 @@ internal fun ReviewStepContent(formState: RegisterSubscriptionState, onIntent: (
                 ReviewRow("Acceso a internet", form.accessMode.registerLabel()).takeIf { form.shouldShowAccessModeSelector() },
                 ReviewRow("Caja NAP", form.selectedNapBox?.code.orEmpty(), mono = true).takeIf { form.requiresNapBox() },
                 ReviewRow("IP del cliente", form.clientIpAddress).takeIf { form.requiresClientIpAddress },
+                ReviewRow("Conexión", "Receptor CATV · sin ONU").takeIf {
+                    form.installationType == InstallationType.ONLY_TV_FIBER && form.tvCpeKind == TvCpeKind.OPTICAL_RECEIVER
+                },
                 ReviewRow("Equipo", if (form.equipmentCondition == EquipmentCondition.LOAN) "En préstamo" else "Vendido"),
                 ReviewRow("Observaciones", form.note).takeIf { form.note.isNotBlank() },
             ))
@@ -92,7 +96,11 @@ internal fun ReviewStepContent(formState: RegisterSubscriptionState, onIntent: (
             onEdit = { onIntent(RegisterSubscriptionIntent.EditStepClicked(RegisterSubscriptionWizardStep.INSTALLATION)) },
             rows = wifiRows + ReviewRow("Foto de fachada", if (photoReady) "✓ Lista" else "Falta"))
         Text(
-            "Al registrar se configura el acceso a internet y el Wi-Fi. Tarda hasta 2 minutos y puedes salir de esta pantalla.",
+            if (form.installationType == InstallationType.ONLY_TV_FIBER && form.tvCpeKind == TvCpeKind.OPTICAL_RECEIVER) {
+                "Al registrar se reserva el puerto en la caja NAP y se activa el servicio de TV. No se autoriza ninguna ONU."
+            } else {
+                "Al registrar se configura el acceso a internet y el Wi-Fi. Tarda hasta 2 minutos y puedes salir de esta pantalla."
+            },
             fontSize = 13.sp,
             lineHeight = 18.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

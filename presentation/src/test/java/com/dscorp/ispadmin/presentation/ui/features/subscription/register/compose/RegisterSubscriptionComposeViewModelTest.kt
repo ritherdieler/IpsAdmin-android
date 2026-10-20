@@ -40,6 +40,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.FormFieldKey
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.TvCpeKind
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.SubmissionState
 import io.mockk.coEvery
@@ -235,6 +236,11 @@ class RegisterSubscriptionComposeViewModelTest {
         savedStateHandle = savedStateHandle,
     )
 
+    private fun RegisterSubscriptionComposeViewModel.chooseFiberService() {
+        onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.FIBER))
+        onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+    }
+
     @After
     fun tearDown() {
         E2eAccessModeResolver.override = null
@@ -279,6 +285,7 @@ class RegisterSubscriptionComposeViewModelTest {
 
         viewModel.loadScreenData(null)
         advanceUntilIdle()
+        viewModel.chooseFiberService()
         viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
 
         viewModel = viewModelWithPreauthorization(
@@ -293,6 +300,7 @@ class RegisterSubscriptionComposeViewModelTest {
             viewModel.uiState.value.wizardStep,
         )
         assertEquals(serial, viewModel.uiState.value.registerSubscriptionForm.selectedOnu?.sn)
+        assertTrue(viewModel.uiState.value.serviceTypeChosen)
     }
 
     @Test
@@ -314,6 +322,7 @@ class RegisterSubscriptionComposeViewModelTest {
 
         viewModel.loadScreenData(null)
         advanceUntilIdle()
+        viewModel.chooseFiberService()
         assertEquals(
             com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep.ONU_SELECTION,
             viewModel.uiState.value.wizardStep,
@@ -355,6 +364,7 @@ class RegisterSubscriptionComposeViewModelTest {
 
         viewModel.loadScreenData(null)
         advanceUntilIdle()
+        viewModel.chooseFiberService()
         viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
         viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
         advanceUntilIdle()
@@ -390,6 +400,7 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel = viewModelWithPreauthorization(operationUseCase)
         viewModel.loadScreenData(null)
         advanceUntilIdle()
+        viewModel.chooseFiberService()
         viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
         viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
         testScheduler.runCurrent()
@@ -422,6 +433,7 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel = viewModelWithPreauthorization(operationUseCase)
         viewModel.loadScreenData(null)
         advanceUntilIdle()
+        viewModel.chooseFiberService()
         viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
         viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
         testScheduler.runCurrent()
@@ -477,6 +489,7 @@ class RegisterSubscriptionComposeViewModelTest {
 
         viewModel.loadScreenData(null)
         advanceUntilIdle()
+        viewModel.chooseFiberService()
         viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
         viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
         testScheduler.runCurrent()
@@ -537,6 +550,7 @@ class RegisterSubscriptionComposeViewModelTest {
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.isPreauthorizationRequestInProgress)
 
+        viewModel.chooseFiberService()
         viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
         viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
         testScheduler.runCurrent()
@@ -613,6 +627,7 @@ class RegisterSubscriptionComposeViewModelTest {
 
         viewModel.loadScreenData(null)
         advanceUntilIdle()
+        viewModel.chooseFiberService()
         viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
         viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
         advanceUntilIdle()
@@ -641,6 +656,7 @@ class RegisterSubscriptionComposeViewModelTest {
 
         viewModel.loadScreenData(null)
         advanceUntilIdle()
+        viewModel.chooseFiberService()
         viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
         viewModel.refreshOnuList()
         advanceUntilIdle()
@@ -1213,6 +1229,7 @@ class RegisterSubscriptionComposeViewModelTest {
 
         viewModel.loadScreenData(null)
         advanceUntilIdle()
+        viewModel.chooseFiberService()
         viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
         viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
         testScheduler.runCurrent()
@@ -3020,6 +3037,7 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel.loadScreenData(null)
         advanceUntilIdle()
 
+        viewModel.chooseFiberService()
         viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
         viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
         advanceUntilIdle()
@@ -3031,4 +3049,499 @@ class RegisterSubscriptionComposeViewModelTest {
             viewModel.uiState.value.wizardStep,
         )
     }
+
+    private fun catalogWithAllTypes() = sampleCatalog(
+        plans = listOf(
+            CatalogPlan(id = "p1", name = "Plan", price = 10.0, downloadSpeed = "100", uploadSpeed = "100", type = "FIBER"),
+            CatalogPlan(id = "tv1", name = "TV Cable", price = 20.0, downloadSpeed = "0", uploadSpeed = "0", type = "ONLY_TV_FIBER"),
+            CatalogPlan(id = "w1", name = "Wireless", price = 30.0, downloadSpeed = "50", uploadSpeed = "20", type = "WIRELESS"),
+        ),
+        napBoxes = listOf(fiberNap()),
+        onus = listOf(fiberOnu()),
+    )
+
+    private suspend fun kotlinx.coroutines.test.TestScope.serviceTypeViewModel(
+        operationUseCase: OnuRegistrationOperationUseCase,
+        catalog: RegistrationCatalog = catalogWithAllTypes(),
+    ): RegisterSubscriptionComposeViewModel {
+        coEvery { operationUseCase.active() } returns null
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalog)
+        val model = viewModelWithPreauthorization(operationUseCase)
+        viewModel = model
+        model.loadScreenData(null)
+        advanceUntilIdle()
+        return model
+    }
+
+    @Test
+    fun `the wizard starts at SERVICE_TYPE and does not continue without a type`() = runTest(testDispatcher) {
+        val model = serviceTypeViewModel(mockk())
+
+        assertEquals(RegisterSubscriptionWizardStep.SERVICE_TYPE, model.uiState.value.wizardStep)
+        assertFalse(model.uiState.value.serviceTypeChosen)
+
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+
+        assertEquals(RegisterSubscriptionWizardStep.SERVICE_TYPE, model.uiState.value.wizardStep)
+    }
+
+    @Test
+    fun `fiber continues to ONU_SELECTION`() = runTest(testDispatcher) {
+        val model = serviceTypeViewModel(mockk())
+
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.FIBER))
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+
+        assertEquals(RegisterSubscriptionWizardStep.ONU_SELECTION, model.uiState.value.wizardStep)
+        assertTrue(model.uiState.value.usesPreauthorization)
+    }
+
+    @Test
+    fun `solo TV continues to CLIENT_LOCATION with the optical receiver and sends no onu, vlan or operation id`() =
+        runTest(testDispatcher) {
+            val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+            val model = serviceTypeViewModel(operationUseCase)
+            coEvery {
+                registerSubscriptionUseCase(any(), any(), facadePhotoFile = any())
+            } answers {
+                val sent = firstArg<Subscription>()
+                assertEquals(InstallationType.ONLY_TV_FIBER, sent.installationType)
+                assertNull(sent.onu)
+                assertNull(sent.vlan)
+                assertNull(sent.registrationOperationId)
+                Result.success(RegisterSubscriptionResult.Registered(Subscription(subscriptionId = 4)))
+            }
+
+            model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+            model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+            advanceUntilIdle()
+
+            val state = model.uiState.value
+            assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, state.wizardStep)
+            assertEquals(TvCpeKind.OPTICAL_RECEIVER, state.registerSubscriptionForm.tvCpeKind)
+            assertFalse(state.usesPreauthorization)
+
+            fillValidTvCustomerFields()
+            model.onIntent(RegisterSubscriptionIntent.NapBoxSelected(NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)))
+            model.saveSubscription(facadePhotoFile)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) }
+            coVerify(exactly = 0) { operationUseCase.start(any()) }
+        }
+
+    @Test
+    fun `wireless continues to CLIENT_LOCATION without preauthorization`() = runTest(testDispatcher) {
+        val model = serviceTypeViewModel(mockk())
+
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.WIRELESS))
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+
+        val state = model.uiState.value
+        assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, state.wizardStep)
+        assertEquals(InstallationType.WIRELESS, state.registerSubscriptionForm.installationType)
+        assertNull(state.registerSubscriptionForm.tvCpeKind)
+        assertFalse(state.usesPreauthorization)
+    }
+
+    @Test
+    fun `a type without active plans shows the error and stays`() = runTest(testDispatcher) {
+        val model = serviceTypeViewModel(mockk(), sampleCatalog())
+
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+        advanceUntilIdle()
+
+        val state = model.uiState.value
+        assertEquals("No hay planes activos de Solo TV.", state.serviceTypeError)
+        assertEquals(InstallationType.FIBER, state.registerSubscriptionForm.installationType)
+        assertFalse(state.serviceTypeChosen)
+    }
+
+    @Test
+    fun `back from CLIENT_LOCATION returns to SERVICE_TYPE only without preauthorization`() = runTest(testDispatcher) {
+        val model = serviceTypeViewModel(mockk())
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        model.onIntent(RegisterSubscriptionIntent.FirstNameChanged("Lucía"))
+        advanceUntilIdle()
+        assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, model.uiState.value.wizardStep)
+
+        model.onIntent(RegisterSubscriptionIntent.WizardBackClicked)
+        advanceUntilIdle()
+
+        assertEquals(RegisterSubscriptionWizardStep.SERVICE_TYPE, model.uiState.value.wizardStep)
+        assertEquals("LUCÍA", model.uiState.value.registerSubscriptionForm.firstName)
+    }
+
+    @Test
+    fun `back from CLIENT_LOCATION stays put on the fiber path with an active operation`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val ready = OnuRegistrationOperation(
+            id = "preauth-back", serial = "VSOL0031C0B6", subscriptionId = null,
+            phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 4,
+        )
+        coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.draft(ready.id) } returns null
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalogWithAllTypes())
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, viewModel.uiState.value.wizardStep)
+
+        viewModel.onIntent(RegisterSubscriptionIntent.WizardBackClicked)
+        advanceUntilIdle()
+
+        assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, viewModel.uiState.value.wizardStep)
+    }
+
+    @Test
+    fun `changing from solo TV to wireless clears plan, nap box and wifi`() = runTest(testDispatcher) {
+        val model = serviceTypeViewModel(mockk())
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        model.onIntent(RegisterSubscriptionIntent.FirstNameChanged("Lucía"))
+        model.onIntent(RegisterSubscriptionIntent.PlanSelected(sampleTvPlan))
+        model.onIntent(RegisterSubscriptionIntent.NapBoxSelected(NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)))
+        model.onIntent(RegisterSubscriptionIntent.WifiSsid24Changed("CasaTv"))
+        model.onIntent(RegisterSubscriptionIntent.WizardBackClicked)
+        advanceUntilIdle()
+        assertEquals(RegisterSubscriptionWizardStep.SERVICE_TYPE, model.uiState.value.wizardStep)
+
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.WIRELESS))
+        advanceUntilIdle()
+
+        val form = model.uiState.value.registerSubscriptionForm
+        assertEquals(InstallationType.WIRELESS, form.installationType)
+        assertNull(form.selectedNapBox)
+        assertEquals("w1", form.selectedPlan?.id)
+        assertEquals("", form.wifiSsid24)
+        assertEquals("", form.wifiPassword24)
+        assertEquals("", form.wifiSsid5)
+        assertEquals("", form.wifiPassword5)
+        assertNull(form.tvCpeKind)
+        assertEquals("LUCÍA", form.firstName)
+    }
+
+    @Test
+    fun `an active operation recovered at startup skips SERVICE_TYPE`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val waiting = OnuRegistrationOperation(
+            id = "preauth-startup", serial = "VSOL0031C0B6", subscriptionId = null,
+            phase = "WAITING_FOR_ACS", state = "WAITING", revision = 2,
+        )
+        coEvery { operationUseCase.active() } returns waiting
+        coEvery { operationUseCase.draft(any()) } returns null
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalogWithAllTypes())
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.serviceTypeChosen)
+        assertTrue(viewModel.uiState.value.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE)
+    }
+
+    @Test
+    fun `offline mode follows the chosen type`() = runTest(testDispatcher) {
+        offlineModeFlow.value = true
+        val model = serviceTypeViewModel(mockk())
+
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.FIBER))
+        assertFalse(model.uiState.value.isOfflineMode)
+        assertFalse(model.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
+
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+        assertTrue(model.uiState.value.isOfflineMode)
+        assertTrue(model.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
+
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.WIRELESS))
+        assertTrue(model.uiState.value.isOfflineMode)
+        assertTrue(model.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
+    }
+
+    @Test
+    fun `a recovered operation fixes the offline state computed before it was known`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val ready = OnuRegistrationOperation(
+            id = "preauth-offline", serial = "VSOL0031C0B6", subscriptionId = null,
+            phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 4,
+        )
+        val activeGate = CompletableDeferred<OnuRegistrationOperation?>()
+        coEvery { operationUseCase.active() } coAnswers { activeGate.await() }
+        coEvery { operationUseCase.draft(any()) } returns null
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalogWithAllTypes())
+        offlineModeFlow.value = true
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        testScheduler.runCurrent()
+        // The offline value was collected before any operation was known.
+        assertTrue(viewModel.uiState.value.isOfflineMode)
+        assertTrue(viewModel.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
+
+        activeGate.complete(ready)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.usesPreauthorization)
+        assertFalse(viewModel.uiState.value.isOfflineMode)
+        assertFalse(viewModel.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
+    }
+
+    @Test
+    fun `a restored ONU selection fixes the offline state computed before it was known`() = runTest(testDispatcher) {
+        val serial = "VSOL0031C0B6"
+        val selectionStore = InMemoryOnuRegistrationSelectionStore()
+        selectionStore.saveSelectedOnuSerial(sampleUser.id!!.toLong(), serial)
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val catalogGate = CompletableDeferred<Result<RegistrationCatalog>>()
+        coEvery { operationUseCase.active() } returns null
+        coEvery { getRegistrationCatalogUseCase() } coAnswers { catalogGate.await() }
+        offlineModeFlow.value = true
+        viewModel = viewModelWithPreauthorization(
+            useCase = operationUseCase,
+            onuRegistrationSelectionStore = selectionStore,
+        )
+
+        viewModel.loadScreenData(null)
+        testScheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.isOfflineMode)
+
+        catalogGate.complete(Result.success(sampleCatalog(onus = listOf(fiberOnu().copy(sn = serial)))))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.usesPreauthorization)
+        assertFalse(viewModel.uiState.value.isOfflineMode)
+        assertFalse(viewModel.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
+    }
+
+    @Test
+    fun `a recovered cancellation intent does not show SERVICE_TYPE`() = runTest(testDispatcher) {
+        val intentStore = InMemoryCancellationIntentStore()
+        val serial = "ZTEGDC47BFFD"
+        val requestKey = "request-key-step"
+        intentStore.save(OnuRegistrationCancellationIntent(1, requestKey, serial))
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val active = OnuRegistrationOperation(
+            id = "operation-intent-step", serial = serial, subscriptionId = null,
+            phase = "OLT_AUTHORIZATION", state = "RUNNING", revision = 11, registrationRequestKey = requestKey,
+        )
+        val cancelling = active.copy(state = "CANCEL_REQUESTED", revision = 12)
+        val getGate = CompletableDeferred<OnuRegistrationOperation>()
+        coEvery { operationUseCase.active() } returns active
+        coEvery { operationUseCase.cancel(active.id, active.revision) } returns cancelling
+        coEvery { operationUseCase.get(active.id) } coAnswers { getGate.await() }
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(sampleCatalog())
+        viewModel = viewModelWithPreauthorization(operationUseCase, intentStore)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.cancellationInProgress)
+        assertTrue(viewModel.uiState.value.serviceTypeChosen)
+        assertTrue(viewModel.uiState.value.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE)
+        getGate.cancel()
+    }
+
+    @Test
+    fun `a recovered linked operation does not show SERVICE_TYPE`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val linked = OnuRegistrationOperation(
+            id = "linked-step", serial = "VSOL0031C0B6", subscriptionId = 84,
+            phase = "PROVISIONING", state = "RUNNING", revision = 5,
+        )
+        coEvery { operationUseCase.active() } returns linked
+        coEvery { operationUseCase.get(linked.id) } returns linked
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(sampleCatalog())
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isRegistering)
+        assertTrue(viewModel.uiState.value.serviceTypeChosen)
+        assertTrue(viewModel.uiState.value.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE)
+    }
+
+    @Test
+    fun `a recovered unlinked cancellation does not show SERVICE_TYPE`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val cancelling = OnuRegistrationOperation(
+            id = "cancelling-step", serial = "ZTEGDC47BFFD", subscriptionId = null,
+            phase = "WAITING_FOR_ACS", state = "CANCEL_REQUESTED", revision = 6,
+        )
+        val getGate = CompletableDeferred<OnuRegistrationOperation>()
+        coEvery { operationUseCase.active() } returns cancelling
+        coEvery { operationUseCase.get(cancelling.id) } coAnswers { getGate.await() }
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(sampleCatalog())
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.cancellationInProgress)
+        assertTrue(viewModel.uiState.value.serviceTypeChosen)
+        assertTrue(viewModel.uiState.value.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE)
+        getGate.cancel()
+    }
+
+    @Test
+    fun `offline solo TV cannot leave INSTALLATION without a valid client IP`() = runTest(testDispatcher) {
+        offlineModeFlow.value = true
+        val model = serviceTypeViewModel(mockk())
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        fillValidTvCustomerFields()
+        model.onIntent(RegisterSubscriptionIntent.NapBoxSelected(NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)))
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+        assertEquals(RegisterSubscriptionWizardStep.INSTALLATION, model.uiState.value.wizardStep)
+        assertTrue(model.uiState.value.registerSubscriptionForm.blockingFields().contains(FormFieldKey.CLIENT_IP_ADDRESS))
+
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+        assertEquals(RegisterSubscriptionWizardStep.INSTALLATION, model.uiState.value.wizardStep)
+        assertNotNull(model.uiState.value.registerSubscriptionForm.clientIpAddressError)
+
+        model.onIntent(RegisterSubscriptionIntent.ClientIpAddressChanged("192.168.25.10"))
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+        assertEquals(RegisterSubscriptionWizardStep.CONFIRMATION, model.uiState.value.wizardStep)
+    }
+
+    private fun catalogWithTwoPlansPerType() = sampleCatalog(
+        plans = listOf(
+            CatalogPlan(id = "f1", name = "Fibra 1", price = 10.0, downloadSpeed = "100", uploadSpeed = "100", type = "FIBER"),
+            CatalogPlan(id = "f2", name = "Fibra 2", price = 15.0, downloadSpeed = "200", uploadSpeed = "200", type = "FIBER"),
+            CatalogPlan(id = "tv1", name = "TV 1", price = 20.0, downloadSpeed = "0", uploadSpeed = "0", type = "ONLY_TV_FIBER"),
+            CatalogPlan(id = "tv2", name = "TV 2", price = 25.0, downloadSpeed = "0", uploadSpeed = "0", type = "ONLY_TV_FIBER"),
+            CatalogPlan(id = "w1", name = "Wireless 1", price = 30.0, downloadSpeed = "50", uploadSpeed = "20", type = "WIRELESS"),
+            CatalogPlan(id = "w2", name = "Wireless 2", price = 35.0, downloadSpeed = "60", uploadSpeed = "30", type = "WIRELESS"),
+        ),
+        napBoxes = listOf(fiberNap()),
+        onus = listOf(fiberOnu()),
+    )
+
+    private suspend fun kotlinx.coroutines.test.TestScope.assertTypeAndPlanSurviveReload(
+        type: InstallationType,
+        chosenPlanId: String,
+    ) {
+        val model = serviceTypeViewModel(mockk(), catalogWithTwoPlansPerType())
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(type))
+        val chosen = model.uiState.value.registerSubscriptionForm.planList.first { it.id == chosenPlanId }
+        model.onIntent(RegisterSubscriptionIntent.PlanSelected(chosen))
+
+        model.loadScreenData(null)
+        advanceUntilIdle()
+
+        val form = model.uiState.value.registerSubscriptionForm
+        assertEquals(type, form.installationType)
+        assertEquals(2, form.planList.size)
+        assertTrue(form.planList.all { it.type == type })
+        assertEquals(chosenPlanId, form.selectedPlan?.id)
+    }
+
+    @Test
+    fun `reloading the screen data keeps the solo TV plan list and selection`() = runTest(testDispatcher) {
+        assertTypeAndPlanSurviveReload(InstallationType.ONLY_TV_FIBER, "tv2")
+    }
+
+    @Test
+    fun `reloading the screen data keeps the wireless plan list and selection`() = runTest(testDispatcher) {
+        assertTypeAndPlanSurviveReload(InstallationType.WIRELESS, "w2")
+    }
+
+    @Test
+    fun `reloading the screen data keeps the fiber plan list and selection`() = runTest(testDispatcher) {
+        assertTypeAndPlanSurviveReload(InstallationType.FIBER, "f2")
+    }
+
+    @Test
+    fun `system back on INSTALLATION without an ONU walks back to CLIENT_LOCATION`() = runTest(testDispatcher) {
+        val model = serviceTypeViewModel(mockk())
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        fillValidTvCustomerFields()
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+        assertEquals(RegisterSubscriptionWizardStep.INSTALLATION, model.uiState.value.wizardStep)
+
+        model.onIntent(RegisterSubscriptionIntent.WizardBackClicked)
+        advanceUntilIdle()
+
+        assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, model.uiState.value.wizardStep)
+        assertEquals("JUAN", model.uiState.value.registerSubscriptionForm.firstName)
+    }
+
+    @Test
+    fun `a draft can never restore the SERVICE_TYPE step`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val ready = OnuRegistrationOperation(
+            id = "preauth-draft-type", serial = "VSOL0031C0B6", subscriptionId = null,
+            phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 3,
+        )
+        coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.draft(ready.id) } returns mapOf(
+            "firstName" to "CLIENTE", "wizardStep" to "SERVICE_TYPE",
+        )
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalogWithAllTypes())
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, viewModel.uiState.value.wizardStep)
+    }
+
+    @Test
+    fun `choosing fiber with no fiber plans shows the error and does not mark the type as chosen`() =
+        runTest(testDispatcher) {
+            val tvOnly = sampleCatalog(
+                plans = listOf(
+                    CatalogPlan(id = "tv1", name = "TV", price = 20.0, downloadSpeed = "0", uploadSpeed = "0", type = "ONLY_TV_FIBER"),
+                ),
+            )
+            val model = serviceTypeViewModel(mockk(), tvOnly)
+            assertEquals(InstallationType.FIBER, model.uiState.value.registerSubscriptionForm.installationType)
+
+            model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.FIBER))
+            advanceUntilIdle()
+
+            assertEquals("No hay planes activos de Fibra.", model.uiState.value.serviceTypeError)
+            assertFalse(model.uiState.value.serviceTypeChosen)
+        }
+
+    @Test
+    fun `a restored ONU selection does not bounce the wizard back once the type step was passed`() =
+        runTest(testDispatcher) {
+            val serial = "VSOL0031C0B6"
+            val selectionStore = InMemoryOnuRegistrationSelectionStore()
+            val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+            coEvery { operationUseCase.active() } returns null
+            coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+                catalogWithAllTypes().copy(onus = listOf(fiberOnu().copy(sn = serial)))
+            )
+            viewModel = viewModelWithPreauthorization(
+                useCase = operationUseCase,
+                onuRegistrationSelectionStore = selectionStore,
+            )
+            viewModel.loadScreenData(null)
+            advanceUntilIdle()
+            viewModel.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.WIRELESS))
+            viewModel.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+            advanceUntilIdle()
+            assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, viewModel.uiState.value.wizardStep)
+
+            selectionStore.saveSelectedOnuSerial(sampleUser.id!!.toLong(), serial)
+            viewModel.loadScreenData(null)
+            advanceUntilIdle()
+
+            assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, viewModel.uiState.value.wizardStep)
+        }
 }

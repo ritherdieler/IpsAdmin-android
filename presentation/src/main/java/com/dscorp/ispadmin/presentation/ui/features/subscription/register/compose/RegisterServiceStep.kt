@@ -134,7 +134,11 @@ internal fun ServiceStepContent(
     val enabled = !formState.isLoading
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text("Servicio y plan", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.SemiBold)
-        InstallationTypeSelector(form.installationType, { onIntent(RegisterSubscriptionIntent.InstallationTypeSelected(it)) }, enabled)
+        if (formState.preauthorizationEnabled) {
+            InstallationTypeReadOnly(form.installationType)
+        } else {
+            InstallationTypeSelector(form.installationType, { onIntent(RegisterSubscriptionIntent.InstallationTypeSelected(it)) }, enabled)
+        }
         PlanList(form, enabled, onIntent)
         if (form.shouldShowAccessModeSelector()) {
             WanAccessModeSelector(form.accessMode, { onIntent(RegisterSubscriptionIntent.AccessModeSelected(it)) }, enabled = enabled)
@@ -163,6 +167,31 @@ internal fun ServiceStepContent(
             minHeight = 88.dp,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         )
+    }
+}
+
+/** The type is chosen on the first step; here it is only shown. */
+@Composable
+private fun InstallationTypeReadOnly(type: InstallationType) {
+    val colors = IspTheme.colors
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        RegisterFieldLabel("Tipo de instalación")
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                .background(colors.card, RoundedCornerShape(12.dp))
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                .testTag(RegisterSubscriptionTestTags.INSTALLATION_TYPE)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                if (type == InstallationType.ONLY_TV_FIBER) "Solo TV · receptor CATV" else type.label(),
+                Modifier.weight(1f),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text("Elegido al inicio", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 

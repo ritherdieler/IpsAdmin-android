@@ -25,6 +25,7 @@ sealed interface RegisterSubscriptionIntent {
     data object PlaceSelectionCleared : RegisterSubscriptionIntent
     data object NapBoxSelectionCleared : RegisterSubscriptionIntent
     data class InstallationTypeSelected(val type: InstallationType) : RegisterSubscriptionIntent
+    data class ServiceTypeSelected(val type: InstallationType) : RegisterSubscriptionIntent
     data class AccessModeSelected(val mode: AccessMode) : RegisterSubscriptionIntent
     data object RefreshOnuList : RegisterSubscriptionIntent
     data class NoteChanged(val value: String) : RegisterSubscriptionIntent
