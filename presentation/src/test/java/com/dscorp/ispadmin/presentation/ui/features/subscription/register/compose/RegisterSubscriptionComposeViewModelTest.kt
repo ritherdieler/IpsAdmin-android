@@ -3193,6 +3193,65 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
+    fun `a type without active plans does not let Continue advance`() = runTest(testDispatcher) {
+        val model = serviceTypeViewModel(mockk(), sampleCatalog())
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+        advanceUntilIdle()
+        assertEquals("No hay planes activos de Solo TV.", model.uiState.value.serviceTypeError)
+
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+
+        assertEquals(RegisterSubscriptionWizardStep.SERVICE_TYPE, model.uiState.value.wizardStep)
+        assertFalse(model.uiState.value.serviceTypeChosen)
+    }
+
+    @Test
+    fun `ServiceTypeSelected is ignored outside the type step`() = runTest(testDispatcher) {
+        val model = serviceTypeViewModel(mockk())
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+        assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, model.uiState.value.wizardStep)
+        val before = model.uiState.value.registerSubscriptionForm
+
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.WIRELESS))
+        advanceUntilIdle()
+
+        val after = model.uiState.value.registerSubscriptionForm
+        assertEquals(InstallationType.ONLY_TV_FIBER, after.installationType)
+        assertEquals(before.planList, after.planList)
+        assertEquals(before.selectedPlan, after.selectedPlan)
+        assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, model.uiState.value.wizardStep)
+    }
+
+    @Test
+    fun `ServiceTypeSelected is ignored while a preauthorization operation exists`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val ready = OnuRegistrationOperation(
+            id = "preauth-type-ignored", serial = "VSOL0031C0B6", subscriptionId = null,
+            phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 4,
+        )
+        coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.draft(ready.id) } returns null
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalogWithAllTypes())
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        val before = viewModel.uiState.value.registerSubscriptionForm
+
+        viewModel.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.WIRELESS))
+        advanceUntilIdle()
+
+        val after = viewModel.uiState.value.registerSubscriptionForm
+        assertEquals(before.installationType, after.installationType)
+        assertEquals(before.planList, after.planList)
+        assertEquals(before.selectedPlan, after.selectedPlan)
+        assertNull(viewModel.uiState.value.serviceTypeError)
+    }
+
+    @Test
     fun `back from CLIENT_LOCATION returns to SERVICE_TYPE only without preauthorization`() = runTest(testDispatcher) {
         val model = serviceTypeViewModel(mockk())
         model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))

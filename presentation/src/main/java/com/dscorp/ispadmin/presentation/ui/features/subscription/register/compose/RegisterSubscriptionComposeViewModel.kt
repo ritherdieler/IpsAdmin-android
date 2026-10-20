@@ -1746,6 +1746,9 @@ private fun onNapBoxSelectionCleared() {
 }
 
 private fun onServiceTypeSelected(type: InstallationType) {
+    // The type is only chosen on its own step, before any ONU is authorized.
+    val current = currentUiState()
+    if (current.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE || current.preauthorizationOperation != null) return
     if (getFilteredPlansForInstallationType(type).isEmpty()) {
         _uiState.update { it.copy(serviceTypeError = "No hay planes activos de ${type.planTypeLabel()}.") }
         return

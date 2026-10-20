@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
@@ -27,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -41,7 +43,6 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 
 private data class ServiceTypeOption(
     val type: InstallationType,
-    val title: String,
     val subtitle: String,
     val icon: ImageVector,
     val tag: String,
@@ -49,22 +50,25 @@ private data class ServiceTypeOption(
 
 private val SERVICE_TYPE_OPTIONS = listOf(
     ServiceTypeOption(
-        InstallationType.FIBER, "Fibra con internet", "Empiezas autorizando una ONU",
+        InstallationType.FIBER, "Empiezas autorizando una ONU",
         Icons.Outlined.Router, RegisterSubscriptionTestTags.SERVICE_TYPE_FIBER,
     ),
     ServiceTypeOption(
-        InstallationType.ONLY_TV_FIBER, "Solo TV con receptor CATV", "Splitter, sin ONU ni internet",
+        InstallationType.ONLY_TV_FIBER, "Splitter, sin ONU ni internet",
         Icons.Outlined.Tv, RegisterSubscriptionTestTags.SERVICE_TYPE_TV,
     ),
     ServiceTypeOption(
-        InstallationType.WIRELESS, "Inalámbrico", "Internet por antena, sin ONU",
+        InstallationType.WIRELESS, "Internet por antena, sin ONU",
         Icons.Outlined.Wifi, RegisterSubscriptionTestTags.SERVICE_TYPE_WIRELESS,
     ),
 )
 
 /** Name of the service type as the first step shows it. */
-internal fun InstallationType.serviceTypeTitle(): String =
-    SERVICE_TYPE_OPTIONS.first { it.type == this }.title
+internal fun InstallationType.serviceTypeTitle(): String = when (this) {
+    InstallationType.FIBER -> "Fibra con internet"
+    InstallationType.ONLY_TV_FIBER -> "Solo TV con receptor CATV"
+    InstallationType.WIRELESS -> "Inalámbrico"
+}
 
 /** a-reg-00-tipo (step 0): the service type decides whether the wizard authorizes an ONU first. */
 @Composable
@@ -84,7 +88,7 @@ internal fun ServiceTypeStepContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             SERVICE_TYPE_OPTIONS.forEach { option ->
                 ServiceTypeTile(
                     option = option,
@@ -115,6 +119,7 @@ private fun ServiceTypeTile(option: ServiceTypeOption, selected: Boolean, enable
         Modifier.fillMaxWidth().heightIn(min = 72.dp)
             .border(if (selected) 2.dp else 1.dp, if (selected) colors.hero else MaterialTheme.colorScheme.outline, shape)
             .background(colors.card, shape)
+            .clip(shape)
             .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
             .testTag(option.tag)
             .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -135,7 +140,7 @@ private fun ServiceTypeTile(option: ServiceTypeOption, selected: Boolean, enable
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f).padding(vertical = 2.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(option.title, fontSize = 15.sp, lineHeight = 20.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium)
+            Text(option.type.serviceTypeTitle(), fontSize = 15.sp, lineHeight = 20.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium)
             Text(option.subtitle, fontSize = 13.sp, lineHeight = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
