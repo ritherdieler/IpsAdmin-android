@@ -57,9 +57,29 @@ class MainNavigationTest {
     // Migrated from DrawerNavigationPendingSubscriptionsTest.
     @Test
     fun `technician reaches pending subscriptions and registration`() {
-        val items = MainNavigation.moreItemsFor(UserType.TECHNICIAN)
+        val items = MainNavigation.moreItemsFor(UserType.TECHNICIAN, pendingCount = 1)
         assertEquals(Subscription.PendingSubscriptions, items.first { it.label == "Pendientes de envío" }.route)
         assertTrue(items.any { it.route == Subscription.Register() })
+    }
+
+    @Test
+    fun `pending subscriptions entry is hidden with zero pending`() {
+        UserType.entries.forEach { type ->
+            assertFalse(type.name, MoreItem.PENDING_SUBSCRIPTIONS in MainNavigation.moreItemsFor(type, pendingCount = 0))
+        }
+        // The rest of the role's entries are untouched.
+        assertEquals(
+            MainNavigation.moreItemsFor(UserType.TECHNICIAN) - MoreItem.PENDING_SUBSCRIPTIONS,
+            MainNavigation.moreItemsFor(UserType.TECHNICIAN, pendingCount = 0),
+        )
+    }
+
+    @Test
+    fun `pending subscriptions entry is shown with its count when there are pending`() {
+        listOf(UserType.ADMIN, UserType.ACCOUNTANT, UserType.SECRETARY, UserType.TECHNICIAN).forEach { type ->
+            assertTrue(type.name, MoreItem.PENDING_SUBSCRIPTIONS in MainNavigation.moreItemsFor(type, pendingCount = 2))
+        }
+        assertEquals(MainNavigation.moreItemsFor(UserType.TECHNICIAN), MainNavigation.moreItemsFor(UserType.TECHNICIAN, pendingCount = 2))
     }
 
     @Test

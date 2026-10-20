@@ -90,9 +90,14 @@ class TechnicianTodayModelTest {
     }
 
     @Test
-    fun `uploads banner says whether everything was sent`() {
-        assertEquals(UploadBanner("Todo enviado", "sin pendientes de envío", allSent = true), today().uploads)
-        assertEquals(UploadBanner("2 registros sin enviar", "se envían al volver la conexión", allSent = false), today(pendingUploads = 2).uploads)
+    fun `no pending uploads gives no banner`() {
+        assertNull(today(pendingUploads = 0).uploads)
+    }
+
+    @Test
+    fun `pending uploads give a banner that says to tap to send them`() {
+        assertEquals(UploadBanner("2 registros sin enviar", "toca para enviarlos"), today(pendingUploads = 2).uploads)
+        assertEquals("1 registro sin enviar", today(pendingUploads = 1).uploads?.title)
     }
 
     @Test

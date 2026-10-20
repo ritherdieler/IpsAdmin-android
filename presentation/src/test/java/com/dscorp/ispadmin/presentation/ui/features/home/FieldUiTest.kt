@@ -43,7 +43,8 @@ class FieldUiTest {
 
         compose.onNodeWithText("Hoy").assertExists()
         compose.onNodeWithText("mié 14 oct · 2 trabajos").assertExists()
-        compose.onNodeWithText("Todo enviado", substring = true).assertExists()
+        compose.onNodeWithText("Todo enviado", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("sin enviar", substring = true).assertDoesNotExist()
         compose.onNodeWithText("Cómo llegar").performClick()
         compose.onNodeWithText("Registrar suscripción").performClick()
         compose.onNodeWithText("Sin conexión a internet").performClick()
@@ -56,6 +57,16 @@ class FieldUiTest {
             ),
             actions,
         )
+    }
+
+    @Test
+    fun `the uploads banner opens the pending screen`() {
+        val withPending = today.copy(uploads = UploadBanner("2 registros sin enviar", "toca para enviarlos"))
+        compose.setContent { MaterialTheme { TechnicianTodayContent(FieldUiState(today = withPending, initials = "MS"), onAction = { actions += it }, onRetry = {}) } }
+
+        compose.onNodeWithText("2 registros sin enviar · toca para enviarlos").performClick()
+
+        assertEquals(listOf<FieldAction>(FieldAction.PendingUploads), actions)
     }
 
     @Test

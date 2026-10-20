@@ -28,7 +28,7 @@ data class MoreMenu(val header: MoreHeader, val sections: List<MoreSection>, val
                     role = roleLabel(user.type),
                 ),
                 sections = SECTIONS.mapNotNull { (title, order) ->
-                    val entries = order.filter { it in items }.map { item ->
+                    val entries = order.filter { it in items && (it != MoreItem.PENDING_SUBSCRIPTIONS || (pending ?: 0) > 0) }.map { item ->
                         MoreEntry(item, when (item) {
                             MoreItem.PLANS -> activePlans?.let { "$it ${if (it == 1) "activo" else "activos"}" }
                             MoreItem.PENDING_SUBSCRIPTIONS -> pending?.toString()

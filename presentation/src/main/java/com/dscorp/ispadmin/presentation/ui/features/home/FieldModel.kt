@@ -23,7 +23,7 @@ sealed interface TodayTarget {
     data class Order(val id: Int) : TodayTarget
 }
 
-data class UploadBanner(val title: String, val detail: String, val allSent: Boolean)
+data class UploadBanner(val title: String, val detail: String)
 data class NowJob(
     val target: TodayTarget, val label: String, val priority: StatusBadge?, val time: String?, val title: String,
     val name: String, val address: String, val registers: Boolean, val mapsQuery: String,
@@ -34,7 +34,7 @@ data class TodayRow(
 )
 
 /** Technician home «Hoy» (a-ini-03): my jobs today, the open tickets and what I closed. */
-data class TechnicianToday(val subtitle: String, val uploads: UploadBanner, val now: NowJob?, val pending: List<TodayRow>, val done: List<TodayRow>) {
+data class TechnicianToday(val subtitle: String, val uploads: UploadBanner?, val now: NowJob?, val pending: List<TodayRow>, val done: List<TodayRow>) {
     companion object {
         fun from(
             user: User, open: List<AssistanceTicketResponse>, closed: List<AssistanceTicketResponse>,
@@ -60,10 +60,8 @@ data class TechnicianToday(val subtitle: String, val uploads: UploadBanner, val 
                     1 -> "1 trabajo"
                     else -> "${jobs.size} trabajos"
                 },
-                uploads = if (pendingUploads == 0) {
-                    UploadBanner("Todo enviado", "sin pendientes de envío", allSent = true)
-                } else {
-                    UploadBanner("$pendingUploads ${if (pendingUploads == 1) "registro" else "registros"} sin enviar", "se envían al volver la conexión", allSent = false)
+                uploads = pendingUploads.takeIf { it > 0 }?.let {
+                    UploadBanner("$it ${if (it == 1) "registro" else "registros"} sin enviar", "toca para enviarlos")
                 },
                 now = jobs.firstOrNull()?.toNow(),
                 pending = jobs.drop(1).map { it.toRow() } + others.map { it.toRow(now) },

@@ -64,6 +64,47 @@ class PendingSubscriptionsScreenTest {
     }
 
     @Test
+    fun `the header explains that sending is manual`() {
+        composeRule.setContent {
+            MaterialTheme {
+                PendingSubscriptionsScreen(
+                    uiState = PendingSubscriptionsUiState(
+                        items = listOf(
+                            PendingSubscriptionListItem(
+                                localId = "local-1",
+                                clientName = "Ana Perez",
+                                dni = "12345678",
+                                createdAt = 1_700_000_000_000L,
+                                status = PendingSubscriptionStatus.PENDING
+                            )
+                        )
+                    ),
+                    onIntent = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Envíalos con “Enviar ahora” cuando tengas señal").assertIsDisplayed()
+        composeRule.onNodeWithText("Se envían solos al volver la señal").assertDoesNotExist()
+    }
+
+    @Test
+    fun `sending the last pending item leaves an empty state`() {
+        composeRule.setContent {
+            MaterialTheme {
+                PendingSubscriptionsScreen(
+                    uiState = PendingSubscriptionsUiState(items = emptyList()),
+                    onIntent = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("No hay registros por enviar.").assertIsDisplayed()
+        composeRule.onNodeWithText("Por enviar · 0").assertIsDisplayed()
+        composeRule.onNodeWithText("Envíalos con “Enviar ahora” cuando tengas señal").assertDoesNotExist()
+    }
+
+    @Test
     fun `shows success snackbar when ShowSuccessSnackbar event is collected`() {
         val events = kotlinx.coroutines.flow.MutableSharedFlow<PendingSubscriptionsUiEvent>(
             extraBufferCapacity = 1

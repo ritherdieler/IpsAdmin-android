@@ -57,7 +57,7 @@ import java.util.Locale
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
-/** a-reg-10: registrations saved without signal, waiting to be sent. */
+/** a-reg-10: registrations queued earlier without signal; they are sent or discarded by hand. */
 @Composable
 fun PendingSubscriptionsScreen(
     uiState: PendingSubscriptionsUiState,
@@ -117,7 +117,7 @@ fun PendingSubscriptionsScreen(
                         ) {
                             Icon(Icons.Outlined.CloudOff, contentDescription = null, tint = colors.warning, modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(10.dp))
-                            Text("Se envían solos al volver la señal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Envíalos con “Enviar ahora” cuando tengas señal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                     uiState.errorMessage?.let { error ->
@@ -138,7 +138,7 @@ fun PendingSubscriptionsScreen(
                             Icon(Icons.Outlined.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                "Sin señal solo se pueden guardar instalaciones inalámbricas: las de fibra necesitan la OLT.",
+                                "Ya no se guardan registros sin señal: aquí solo quedan los que se guardaron antes.",
                                 fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
