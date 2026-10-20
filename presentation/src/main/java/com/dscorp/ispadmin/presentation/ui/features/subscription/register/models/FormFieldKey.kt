@@ -14,7 +14,6 @@ enum class FormFieldKey {
     FACADE_PHOTO,
     HOST_DEVICE,
     EQUIPMENT_CONDITION,
-    CLIENT_IP_ADDRESS,
     WIFI_SSID_24,
     WIFI_PASSWORD_24,
     WIFI_SSID_5,
@@ -26,7 +25,6 @@ enum class FormFieldKey {
         val blockingForSubmit: List<FormFieldKey> =
             entries.filter {
                 it != EQUIPMENT_CONDITION &&
-                    it != CLIENT_IP_ADDRESS &&
                     it != WIFI_SSID_5 &&
                     it != WIFI_PASSWORD_5 &&
                     it != TV_CPE_KIND

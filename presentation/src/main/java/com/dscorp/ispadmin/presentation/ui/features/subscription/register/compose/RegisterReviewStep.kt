@@ -79,7 +79,6 @@ internal fun ReviewStepContent(formState: RegisterSubscriptionState, onIntent: (
                 ReviewRow("Plan", "$typeLabel · ${plan?.name.orEmpty()}", detail = planDetail.ifBlank { null }),
                 ReviewRow("Acceso a internet", form.accessMode.registerLabel()).takeIf { form.shouldShowAccessModeSelector() },
                 ReviewRow("Caja NAP", form.selectedNapBox?.code.orEmpty(), mono = true).takeIf { form.requiresNapBox() },
-                ReviewRow("IP del cliente", form.clientIpAddress).takeIf { form.requiresClientIpAddress },
                 ReviewRow("Conexión", "Receptor CATV · sin ONU").takeIf {
                     form.installationType == InstallationType.ONLY_TV_FIBER && form.tvCpeKind == TvCpeKind.OPTICAL_RECEIVER
                 },

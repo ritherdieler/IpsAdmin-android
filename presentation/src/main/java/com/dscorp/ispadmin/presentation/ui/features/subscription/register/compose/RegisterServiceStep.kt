@@ -147,14 +147,6 @@ internal fun ServiceStepContent(
         if (form.requiresNapBox()) NapCard(formState, onOpenNapPicker)
         legacyFiberFields()
         EquipmentConditionSelector(form.equipmentCondition, { onIntent(RegisterSubscriptionIntent.EquipmentConditionChanged(it)) }, enabled)
-        if (form.requiresClientIpAddress) {
-            RegisterTextField(
-                "IP del cliente *", form.clientIpAddress, { onIntent(RegisterSubscriptionIntent.ClientIpAddressChanged(it)) },
-                fieldModifier = Modifier.testTag(RegisterSubscriptionTestTags.CLIENT_IP),
-                error = form.clientIpAddressError, enabled = enabled,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
-            )
-        }
         if (form.installationType == InstallationType.FIBER) WifiSection(form, enabled, onIntent)
         FacadePhoto(formState, onFacadePhotoClick)
         RegisterTextField(

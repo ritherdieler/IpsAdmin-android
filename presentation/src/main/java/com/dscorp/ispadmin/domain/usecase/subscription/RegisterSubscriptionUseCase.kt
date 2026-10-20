@@ -1,46 +1,27 @@
 package com.dscorp.ispadmin.domain.usecase.subscription
 
-import com.dscorp.ispadmin.domain.connectivity.MikrotikReachabilityMonitor
-import com.dscorp.ispadmin.domain.connectivity.NetworkConnectivityMonitor
 import com.dscorp.ispadmin.domain.model.Subscription
-import com.dscorp.ispadmin.domain.model.subscription.subscriptionClientIpAddressError
 import com.dscorp.ispadmin.domain.repository.SubscriptionWriteRepository
-import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import java.io.File
 import java.util.UUID
 
 class RegisterSubscriptionUseCase(
     private val subscriptionWriteRepository: SubscriptionWriteRepository,
-    private val enqueuePendingSubscriptionUseCase: EnqueuePendingSubscriptionUseCase,
-    private val connectivityMonitor: NetworkConnectivityMonitor,
-    private val mikrotikReachabilityMonitor: MikrotikReachabilityMonitor,
-    private val uuidGenerator: () -> String = { UUID.randomUUID().toString() },
-    private val gson: Gson = Gson()
+    private val uuidGenerator: () -> String = { UUID.randomUUID().toString() }
 ) {
     suspend operator fun invoke(
         subscription: Subscription,
         orderId: Int?,
         facadePhotoFile: File? = null
     ): Result<RegisterSubscriptionResult> = try {
-        Result.success(
-            if (!subscription.registrationOperationId.isNullOrBlank()) {
-                registerOnline(subscription, orderId, null)
-            } else if (canRegisterOnline()) {
-                registerOnline(subscription, orderId, facadePhotoFile)
-            } else {
-                enqueueOffline(subscription, orderId, facadePhotoFile)
-            }
-        )
+        // A preauthorized registration already carries its photo URL, so no file is uploaded.
+        val photo = facadePhotoFile.takeIf { subscription.registrationOperationId.isNullOrBlank() }
+        Result.success(registerOnline(subscription, orderId, photo))
     } catch (cancelled: CancellationException) {
         throw cancelled
     } catch (error: Exception) {
         Result.failure(error)
-    }
-
-    private suspend fun canRegisterOnline(): Boolean {
-        if (!connectivityMonitor.isConnected()) return false
-        return mikrotikReachabilityMonitor.isMikrotikReachable()
     }
 
     private suspend fun registerOnline(
@@ -63,33 +44,5 @@ class RegisterSubscriptionUseCase(
             subscriptionWriteRepository.registerSubscription(payload)
         }
         return RegisterSubscriptionResult.Registered(registered)
-    }
-
-    private suspend fun enqueueOffline(
-        subscription: Subscription,
-        orderId: Int?,
-        facadePhotoFile: File?
-    ): RegisterSubscriptionResult.QueuedOffline {
-        val photo = facadePhotoFile
-            ?: error("La foto de fachada es obligatoria para guardar la suscripción en modo offline")
-        val clientIp = subscription.clientIpAddress?.trim().orEmpty()
-        if (clientIp.isEmpty()) {
-            error("La IP del cliente es obligatoria en modo offline")
-        }
-        val clientIpError = subscriptionClientIpAddressError(clientIp, required = true)
-        if (clientIpError != null) {
-            error(clientIpError)
-        }
-        val payload = subscription.copy(
-            installationOrderId = orderId,
-            ip = clientIp,
-            clientIpAddress = clientIp
-        )
-        val pending = enqueuePendingSubscriptionUseCase(
-            subscriptionJson = gson.toJson(payload),
-            facadePhotoFile = photo,
-            installationOrderId = orderId
-        ).getOrThrow()
-        return RegisterSubscriptionResult.QueuedOffline(pending)
     }
 }

@@ -138,33 +138,6 @@ class RegisterSubscriptionWizardStepTest {
         )
     }
 
-    @Test
-    fun `step 2 offline requires client ip`() {
-        val fiber = validClientAndAddress().copy(
-            planList = listOf(plan),
-            selectedPlan = plan,
-            napBoxList = listOf(nap),
-            selectedNapBox = nap,
-            onuList = listOf(onu),
-            selectedOnu = onu,
-            coreDeviceList = listOf(core),
-            selectedHostDevice = core,
-            wifiSsid24 = "CasaFibra",
-            wifiPassword24 = "clave24xx",
-            installationType = InstallationType.FIBER,
-            requiresClientIpAddress = true,
-        )
-        assertFalse(
-            canAdvanceWizardStep(RegisterSubscriptionWizardStep.INSTALLATION, fiber),
-        )
-        assertTrue(
-            canAdvanceWizardStep(
-                RegisterSubscriptionWizardStep.INSTALLATION,
-                fiber.copy(clientIpAddress = "192.168.1.10"),
-            ),
-        )
-    }
-
     private fun validClientAndAddress() = RegisterSubscriptionFormState(
         firstName = "Juan",
         lastName = "Perez",

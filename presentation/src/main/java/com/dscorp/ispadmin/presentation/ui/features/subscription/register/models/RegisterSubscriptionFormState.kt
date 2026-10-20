@@ -10,7 +10,6 @@ import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionAddressError
-import com.dscorp.ispadmin.domain.model.subscription.subscriptionClientIpAddressError
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionDniError
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionFacadePhotoError
 import com.dscorp.ispadmin.domain.model.subscription.subscriptionFirstNameError
@@ -70,9 +69,6 @@ data class RegisterSubscriptionFormState(
     val installationType: InstallationType = InstallationType.FIBER,
     val accessMode: AccessMode = AccessMode.PPPOE_DYNAMIC,
     val equipmentCondition: EquipmentCondition = EquipmentCondition.LOAN,
-    val clientIpAddress: String = "",
-    val clientIpAddressError: String? = null,
-    val requiresClientIpAddress: Boolean = false,
     val vlan: String = DEFAULT_REGISTRATION_VLAN,
     val wifiSsid24: String = "",
     val wifiSsid24Error: String? = null,
@@ -140,10 +136,6 @@ data class RegisterSubscriptionFormState(
                 coreDeviceList
             )
             FormFieldKey.EQUIPMENT_CONDITION -> null
-            FormFieldKey.CLIENT_IP_ADDRESS -> subscriptionClientIpAddressError(
-                clientIpAddress,
-                requiresClientIpAddress
-            )
             FormFieldKey.WIFI_SSID_24 -> subscriptionWifiSsid24Error(
                 wifiSsid24,
                 requiresWifiConfig(),
@@ -169,7 +161,6 @@ data class RegisterSubscriptionFormState(
 
     fun blockingFields(): List<FormFieldKey> {
         val extra = buildList {
-            if (requiresClientIpAddress) add(FormFieldKey.CLIENT_IP_ADDRESS)
             if (requiresWifiConfig() && useDifferentWifiNames) add(FormFieldKey.WIFI_SSID_5)
             if (requiresTvCpeKind()) add(FormFieldKey.TV_CPE_KIND)
         }
@@ -208,7 +199,6 @@ private fun RegisterSubscriptionFormState.withFieldError(
         FormFieldKey.NOTE -> copy(noteError = message)
         FormFieldKey.HOST_DEVICE -> copy(hostDeviceError = message)
         FormFieldKey.EQUIPMENT_CONDITION -> this
-        FormFieldKey.CLIENT_IP_ADDRESS -> copy(clientIpAddressError = message)
         FormFieldKey.WIFI_SSID_24 -> copy(wifiSsid24Error = message)
         FormFieldKey.WIFI_PASSWORD_24 -> copy(wifiPassword24Error = message)
         FormFieldKey.WIFI_SSID_5 -> copy(wifiSsid5Error = message)

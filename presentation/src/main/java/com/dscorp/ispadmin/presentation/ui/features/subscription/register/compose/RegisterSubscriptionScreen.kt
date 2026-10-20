@@ -96,7 +96,6 @@ fun RegisterSubscriptionFormScreen(
     viewModel: RegisterSubscriptionComposeViewModel,
     context: Context = LocalContext.current,
     onSubscriptionRegisterSuccess: () -> Unit = {},
-    onNavigateToPendingSubscriptions: () -> Unit = {},
     onCancelRegistration: () -> Unit = {},
     onViewProvisioning: (Int) -> Unit = {},
     onViewSubscription: (Int) -> Unit = {},
@@ -110,7 +109,6 @@ fun RegisterSubscriptionFormScreen(
 
     var dialogError by remember { mutableStateOf<String?>(null) }
     var showLeaveDialog by remember { mutableStateOf(false) }
-    var showQueuedOfflineDialog by remember { mutableStateOf(false) }
 
     BackHandler(enabled = uiState.isRegistering && !uiState.cancellationInProgress) {
         showLeaveDialog = true
@@ -143,7 +141,6 @@ fun RegisterSubscriptionFormScreen(
                 when (event) {
                     is RegisterSubscriptionUiEvent.Error -> dialogError = event.message
                     is RegisterSubscriptionUiEvent.Success -> Unit
-                    RegisterSubscriptionUiEvent.QueuedOffline -> showQueuedOfflineDialog = true
                     RegisterSubscriptionUiEvent.RequestCurrentLocation -> {
                         val setup = locationSetupLatest.value
                         showCurrentLocationGate = !setup.hasPermission || !setup.isReady
@@ -325,19 +322,6 @@ fun RegisterSubscriptionFormScreen(
                 dismissButton = {
                     Button(onClick = { showLeaveDialog = false }) { Text("Quedarme") }
                 },
-            )
-        }
-
-        if (showQueuedOfflineDialog) {
-            QueuedOfflineDialog(
-                onDismiss = {
-                    showQueuedOfflineDialog = false
-                    onSubscriptionRegisterSuccess()
-                },
-                onViewPending = {
-                    showQueuedOfflineDialog = false
-                    onNavigateToPendingSubscriptions()
-                }
             )
         }
 
@@ -863,50 +847,6 @@ internal fun SuccessDialog(
         onRetryTr069 = onRetryTr069,
         onDismiss = onDismiss,
         onContinue = onContinue
-    )
-}
-
-@Composable
-private fun QueuedOfflineDialog(
-    onDismiss: () -> Unit,
-    onViewPending: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Guardado en modo offline",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Text(
-                text = "Suscripción guardada localmente en modo Offline. Sincronízala cuando tengas conexión.",
-                style = MaterialTheme.typography.bodyLarge
-            )
-        },
-        confirmButton = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Button(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("queued_offline_dialog_view_pending"),
-                    onClick = onViewPending
-                ) {
-                    Text("Ver suscripciones pendientes")
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("queued_offline_dialog_continue"),
-                    onClick = onDismiss
-                ) {
-                    Text("Entendido")
-                }
-            }
-        }
     )
 }
 

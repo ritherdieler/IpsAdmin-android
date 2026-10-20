@@ -63,7 +63,6 @@ fun wizardFieldsFor(
             add(FormFieldKey.WIFI_PASSWORD_24)
             if (form.useDifferentWifiNames) add(FormFieldKey.WIFI_SSID_5)
         }
-        if (form.requiresClientIpAddress) add(FormFieldKey.CLIENT_IP_ADDRESS)
     }
     RegisterSubscriptionWizardStep.CONFIRMATION -> emptyList()
 }

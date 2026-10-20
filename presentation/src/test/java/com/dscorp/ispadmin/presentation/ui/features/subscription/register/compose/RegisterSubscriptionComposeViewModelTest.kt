@@ -13,7 +13,6 @@ import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.OnuRegistrationOperation
 import com.dscorp.ispadmin.domain.model.OnuRegistrationCleanupReport
 import com.dscorp.ispadmin.domain.model.OnuRegistrationCancellationIntent
-import com.dscorp.ispadmin.domain.model.PendingSubscription
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.RegistrationCatalog
@@ -26,7 +25,6 @@ import com.dscorp.ispadmin.domain.usecase.subscription.GetNearNapBoxesUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetPlaceFromLocationUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetUserSessionUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.OnuRegistrationOperationUseCase
-import com.dscorp.ispadmin.domain.usecase.subscription.ObserveOfflineRegistrationModeUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionResult
 import com.dscorp.ispadmin.domain.usecase.subscription.RegisterSubscriptionUseCase
 import com.dscorp.ispadmin.domain.model.RegistrationProgress
@@ -46,11 +44,11 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -81,10 +79,8 @@ class RegisterSubscriptionComposeViewModelTest {
     private lateinit var getUserSessionUseCase: GetUserSessionUseCase
     private lateinit var getNearNapBoxesUseCase: GetNearNapBoxesUseCase
     private lateinit var installationOrderUseCase: InstallationOrderUseCase
-    private lateinit var observeOfflineRegistrationModeUseCase: ObserveOfflineRegistrationModeUseCase
     private lateinit var retryTr069ProvisioningUseCase: RetryTr069ProvisioningUseCase
     private lateinit var pollRegistrationProgressUseCase: PollRegistrationProgressUseCase
-    private val offlineModeFlow = MutableStateFlow(false)
 
     private lateinit var viewModel: RegisterSubscriptionComposeViewModel
 
@@ -179,11 +175,9 @@ class RegisterSubscriptionComposeViewModelTest {
         getUserSessionUseCase = mockk()
         getNearNapBoxesUseCase = mockk()
         installationOrderUseCase = mockk(relaxed = true)
-        observeOfflineRegistrationModeUseCase = mockk()
         retryTr069ProvisioningUseCase = mockk()
         pollRegistrationProgressUseCase = mockk()
         coEvery { pollRegistrationProgressUseCase(any(), any()) } coAnswers { kotlinx.coroutines.awaitCancellation() }
-        every { observeOfflineRegistrationModeUseCase() } returns Result.success(offlineModeFlow)
 
         coEvery { getAvailableOnuListUseCase() } returns Result.success(emptyList())
         coEvery { getRegistrationCatalogUseCase() } returns Result.success(sampleCatalog())
@@ -197,7 +191,6 @@ class RegisterSubscriptionComposeViewModelTest {
             getUserSessionUseCase = getUserSessionUseCase,
             getNearNapBoxesUseCase = getNearNapBoxesUseCase,
             installationOrderUseCase = installationOrderUseCase,
-            observeOfflineRegistrationModeUseCase = observeOfflineRegistrationModeUseCase,
             retryTr069ProvisioningUseCase = retryTr069ProvisioningUseCase,
             pollRegistrationProgressUseCase = pollRegistrationProgressUseCase,
             observabilityClient = mockk(relaxed = true),
@@ -219,7 +212,6 @@ class RegisterSubscriptionComposeViewModelTest {
         getUserSessionUseCase = getUserSessionUseCase,
         getNearNapBoxesUseCase = getNearNapBoxesUseCase,
         installationOrderUseCase = installationOrderUseCase,
-        observeOfflineRegistrationModeUseCase = observeOfflineRegistrationModeUseCase,
         retryTr069ProvisioningUseCase = retryTr069ProvisioningUseCase,
         pollRegistrationProgressUseCase = pollRegistrationProgressUseCase,
         observabilityClient = observabilityClient,
@@ -698,6 +690,39 @@ class RegisterSubscriptionComposeViewModelTest {
         assertEquals("https://storage.example/photo.jpg", viewModel.uiState.value.registerSubscriptionForm.facadePhotoUrl)
         assertNull(viewModel.uiState.value.registerSubscriptionForm.validate(FormFieldKey.FACADE_PHOTO))
         coVerify(exactly = 1) { operationUseCase.draft(ready.id) }
+    }
+
+    @Test
+    fun `a draft saved by an older version with a clientIpAddress key restores without error`() = runTest(testDispatcher) {
+        val serial = "VSOL0031C0B6"
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val ready = OnuRegistrationOperation(
+            id = "preauth-old-draft", serial = serial, subscriptionId = null,
+            phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 1,
+        )
+        coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.get(ready.id) } returns ready
+        coEvery { operationUseCase.draft(ready.id) } returns mapOf(
+            "firstName" to "CLIENTE ANTIGUO", "dni" to "12345678", "clientIpAddress" to "192.168.25.10",
+            "wizardStep" to "INSTALLATION",
+        )
+        val savedDrafts = mutableListOf<Map<String, Any?>>()
+        coEvery { operationUseCase.saveDraft(any(), capture(savedDrafts)) } returns Unit
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(onus = listOf(fiberOnu().copy(sn = serial)))
+        )
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.preauthorizationError)
+        assertEquals("CLIENTE ANTIGUO", viewModel.uiState.value.registerSubscriptionForm.firstName)
+        viewModel.onIntent(RegisterSubscriptionIntent.LastNameChanged("Perez"))
+        advanceTimeBy(2_001)
+        advanceUntilIdle()
+        assertTrue(savedDrafts.isNotEmpty())
+        assertTrue(savedDrafts.none { it.containsKey("clientIpAddress") })
     }
 
     @Test
@@ -1426,54 +1451,6 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
-    fun `saveSubscription emits QueuedOffline when register is queued locally`() = runTest(testDispatcher) {
-        val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
-        val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
-        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
-            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu()))
-        )
-
-        viewModel.loadScreenData(null)
-        advanceUntilIdle()
-
-        val pending = PendingSubscription(
-            localId = "local-1",
-            clientRequestId = "client-1",
-            subscriptionJson = "{}",
-            createdAt = 1L
-        )
-        coEvery {
-            registerSubscriptionUseCase(any(), any(), facadePhotoFile = any())
-        } returns Result.success(RegisterSubscriptionResult.QueuedOffline(pending))
-
-        viewModel.onIntent(RegisterSubscriptionIntent.FirstNameChanged("Juan"))
-        viewModel.onIntent(RegisterSubscriptionIntent.LastNameChanged("Perez"))
-        viewModel.onIntent(RegisterSubscriptionIntent.DniChanged("12345678"))
-        viewModel.onIntent(RegisterSubscriptionIntent.AddressChanged("Calle larga 12345"))
-        viewModel.onIntent(RegisterSubscriptionIntent.PhoneChanged("987654321"))
-        viewModel.onIntent(RegisterSubscriptionIntent.PlanSelected(samplePlan))
-        viewModel.onIntent(RegisterSubscriptionIntent.PlaceSelected(Place(id = "1", name = "P")))
-        viewModel.onIntent(RegisterSubscriptionIntent.NapBoxSelected(nap))
-        viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
-        fillWifiFields()
-        selectValidLocation()
-
-        val events = mutableListOf<RegisterSubscriptionUiEvent>()
-        val job = launch {
-            viewModel.uiEvent.collect { events.add(it) }
-        }
-
-        viewModel.saveSubscription(facadePhotoFile)
-        advanceUntilIdle()
-
-        assertEquals(1, events.size)
-        assertEquals(RegisterSubscriptionUiEvent.QueuedOffline, events[0])
-        assertEquals(false, viewModel.uiState.value.isLoading)
-
-        job.cancel()
-    }
-
-    @Test
     fun `saveSubscription emits error when register fails`() = runTest(testDispatcher) {
         val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
         val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
@@ -1719,72 +1696,6 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
-    fun `loadScreenData marks form offline when MikroTik is unreachable`() = runTest(testDispatcher) {
-        offlineModeFlow.value = true
-
-        viewModel.loadScreenData(null)
-        advanceUntilIdle()
-
-        assertTrue(viewModel.uiState.value.isOfflineMode)
-        assertTrue(viewModel.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
-    }
-
-    @Test
-    fun `ClientIpAddressChanged stores value on form`() = runTest(testDispatcher) {
-        viewModel.loadScreenData(null)
-        advanceUntilIdle()
-
-        viewModel.onIntent(RegisterSubscriptionIntent.ClientIpAddressChanged("10.1.1.20"))
-        advanceUntilIdle()
-
-        assertEquals("10.1.1.20", viewModel.uiState.value.registerSubscriptionForm.clientIpAddress)
-    }
-
-    @Test
-    fun `saveSubscription sends clientIpAddress when offline`() = runTest(testDispatcher) {
-        offlineModeFlow.value = true
-        val nap = NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)
-        val onu = Onu("b", "olt", "1", "t", "type", "pon", "p", "sn1")
-        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
-            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu()))
-        )
-        viewModel.loadScreenData(null)
-        advanceUntilIdle()
-
-        val pending = PendingSubscription(
-            localId = "local-1",
-            clientRequestId = "client-1",
-            subscriptionJson = "{}",
-            createdAt = 1L
-        )
-        coEvery {
-            registerSubscriptionUseCase(any(), any(), facadePhotoFile = any())
-        } answers {
-            assertEquals("192.168.25.10", firstArg<Subscription>().clientIpAddress)
-            assertEquals("192.168.25.10", firstArg<Subscription>().ip)
-            Result.success(RegisterSubscriptionResult.QueuedOffline(pending))
-        }
-
-        viewModel.onIntent(RegisterSubscriptionIntent.FirstNameChanged("Juan"))
-        viewModel.onIntent(RegisterSubscriptionIntent.LastNameChanged("Perez"))
-        viewModel.onIntent(RegisterSubscriptionIntent.DniChanged("12345678"))
-        viewModel.onIntent(RegisterSubscriptionIntent.AddressChanged("Calle larga 12345"))
-        viewModel.onIntent(RegisterSubscriptionIntent.PhoneChanged("987654321"))
-        viewModel.onIntent(RegisterSubscriptionIntent.PlanSelected(samplePlan))
-        viewModel.onIntent(RegisterSubscriptionIntent.PlaceSelected(Place(id = "1", name = "P")))
-        viewModel.onIntent(RegisterSubscriptionIntent.NapBoxSelected(nap))
-        viewModel.onIntent(RegisterSubscriptionIntent.OnuSelected(onu))
-        viewModel.onIntent(RegisterSubscriptionIntent.ClientIpAddressChanged("192.168.25.10"))
-        fillWifiFields()
-        selectValidLocation()
-
-        viewModel.saveSubscription(facadePhotoFile)
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) }
-    }
-
-    @Test
     fun `form defaults vlan to 100`() = runTest(testDispatcher) {
         viewModel.loadScreenData(null)
         advanceUntilIdle()
@@ -1952,7 +1863,6 @@ class RegisterSubscriptionComposeViewModelTest {
             getUserSessionUseCase = getUserSessionUseCase,
             getNearNapBoxesUseCase = getNearNapBoxesUseCase,
             installationOrderUseCase = installationOrderUseCase,
-            observeOfflineRegistrationModeUseCase = observeOfflineRegistrationModeUseCase,
             retryTr069ProvisioningUseCase = retryTr069ProvisioningUseCase,
             pollRegistrationProgressUseCase = pollRegistrationProgressUseCase,
             observabilityClient = mockk(relaxed = true),
@@ -2904,7 +2814,6 @@ class RegisterSubscriptionComposeViewModelTest {
             getUserSessionUseCase = getUserSessionUseCase,
             getNearNapBoxesUseCase = getNearNapBoxesUseCase,
             installationOrderUseCase = installationOrderUseCase,
-            observeOfflineRegistrationModeUseCase = observeOfflineRegistrationModeUseCase,
             retryTr069ProvisioningUseCase = retryTr069ProvisioningUseCase,
             pollRegistrationProgressUseCase = pollRegistrationProgressUseCase,
             observabilityClient = mockk(relaxed = true),
@@ -2970,7 +2879,6 @@ class RegisterSubscriptionComposeViewModelTest {
             getUserSessionUseCase = getUserSessionUseCase,
             getNearNapBoxesUseCase = getNearNapBoxesUseCase,
             installationOrderUseCase = installationOrderUseCase,
-            observeOfflineRegistrationModeUseCase = observeOfflineRegistrationModeUseCase,
             retryTr069ProvisioningUseCase = retryTr069ProvisioningUseCase,
             pollRegistrationProgressUseCase = pollRegistrationProgressUseCase,
             observabilityClient = mockk(relaxed = true),
@@ -3000,6 +2908,75 @@ class RegisterSubscriptionComposeViewModelTest {
         assertNotNull(sent[0].clientRequestId)
         assertEquals(sent[0].clientRequestId, sent[1].clientRequestId)
         assertTrue(viewModel.uiState.value.submission is SubmissionState.Uncertain)
+    }
+
+    @Test
+    fun `a network failure on submit keeps the form in the uncertain state and the retry reuses the same clientRequestId`() =
+        runTest(testDispatcher) {
+            val model = serviceTypeViewModel(mockk())
+            val sent = mutableListOf<Subscription>()
+            coEvery { registerSubscriptionUseCase(capture(sent), any(), facadePhotoFile = any()) } returnsMany listOf(
+                Result.failure(java.io.IOException("no route to host")),
+                Result.success(RegisterSubscriptionResult.Registered(Subscription(subscriptionId = 7))),
+            )
+            model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+            model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+            advanceUntilIdle()
+            fillValidTvCustomerFields()
+            model.onIntent(RegisterSubscriptionIntent.NapBoxSelected(NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)))
+
+            model.saveSubscription(facadePhotoFile)
+            advanceUntilIdle()
+
+            assertEquals(1, sent.size)
+            assertTrue(model.uiState.value.submission is SubmissionState.Uncertain)
+            assertEquals("JUAN", model.uiState.value.registerSubscriptionForm.firstName)
+            assertFalse(model.uiState.value.isRegistering)
+
+            model.saveSubscription(facadePhotoFile)
+            advanceUntilIdle()
+
+            assertEquals(2, sent.size)
+            assertNotNull(sent[0].clientRequestId)
+            assertEquals(sent[0].clientRequestId, sent[1].clientRequestId)
+            assertNull(sent[0].clientIpAddress)
+            assertNull(sent[0].ip)
+            assertTrue(model.uiState.value.submission is SubmissionState.Completed)
+        }
+
+    @Test
+    fun `a preauthorized fiber registration still registers online with its operation id`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val onu = Onu("b", "olt", "1", "t", "VSOLVA74", "gpon", "p", "VSOL0031C0B6")
+        val ready = OnuRegistrationOperation(
+            id = "preauth-online-submit", serial = onu.sn, subscriptionId = null,
+            phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 4,
+        )
+        coEvery { operationUseCase.active() } returns ready
+        coEvery { operationUseCase.draft(ready.id) } returns mapOf("facadePhotoUrl" to "https://storage.example/photo.jpg")
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { getAvailableOnuListUseCase() } returns Result.success(listOf(onu))
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+            sampleCatalog(napBoxes = listOf(fiberNap()), onus = listOf(fiberOnu().copy(sn = onu.sn)))
+        )
+        val sent = slot<Subscription>()
+        coEvery { registerSubscriptionUseCase(capture(sent), any(), facadePhotoFile = any()) } returns
+            Result.success(RegisterSubscriptionResult.Registered(Subscription(subscriptionId = 90, tr069ProvisionStatus = "COMPLETE")))
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        fillValidFiberForm(NapBoxResponse(id = "n1", placeName = "P1", placeId = 1), onu)
+        fillWifiFields()
+
+        viewModel.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        assertEquals(ready.id, sent.captured.registrationOperationId)
+        assertEquals(ready.id, sent.captured.clientRequestId)
+        assertNull(sent.captured.clientIpAddress)
+        assertNull(sent.captured.ip)
+        coVerify(exactly = 1) { registerSubscriptionUseCase(any(), any(), facadePhotoFile = any()) }
+        assertTrue(viewModel.uiState.value.submission is SubmissionState.Completed)
     }
 
     @Test
@@ -3256,80 +3233,6 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
-    fun `offline mode follows the chosen type`() = runTest(testDispatcher) {
-        offlineModeFlow.value = true
-        val model = serviceTypeViewModel(mockk())
-
-        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.FIBER))
-        assertFalse(model.uiState.value.isOfflineMode)
-        assertFalse(model.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
-
-        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
-        assertTrue(model.uiState.value.isOfflineMode)
-        assertTrue(model.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
-
-        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.WIRELESS))
-        assertTrue(model.uiState.value.isOfflineMode)
-        assertTrue(model.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
-    }
-
-    @Test
-    fun `a recovered operation fixes the offline state computed before it was known`() = runTest(testDispatcher) {
-        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
-        val ready = OnuRegistrationOperation(
-            id = "preauth-offline", serial = "VSOL0031C0B6", subscriptionId = null,
-            phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 4,
-        )
-        val activeGate = CompletableDeferred<OnuRegistrationOperation?>()
-        coEvery { operationUseCase.active() } coAnswers { activeGate.await() }
-        coEvery { operationUseCase.draft(any()) } returns null
-        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
-        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalogWithAllTypes())
-        offlineModeFlow.value = true
-        viewModel = viewModelWithPreauthorization(operationUseCase)
-
-        viewModel.loadScreenData(null)
-        testScheduler.runCurrent()
-        // The offline value was collected before any operation was known.
-        assertTrue(viewModel.uiState.value.isOfflineMode)
-        assertTrue(viewModel.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
-
-        activeGate.complete(ready)
-        advanceUntilIdle()
-
-        assertTrue(viewModel.uiState.value.usesPreauthorization)
-        assertFalse(viewModel.uiState.value.isOfflineMode)
-        assertFalse(viewModel.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
-    }
-
-    @Test
-    fun `a restored ONU selection fixes the offline state computed before it was known`() = runTest(testDispatcher) {
-        val serial = "VSOL0031C0B6"
-        val selectionStore = InMemoryOnuRegistrationSelectionStore()
-        selectionStore.saveSelectedOnuSerial(sampleUser.id!!.toLong(), serial)
-        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
-        val catalogGate = CompletableDeferred<Result<RegistrationCatalog>>()
-        coEvery { operationUseCase.active() } returns null
-        coEvery { getRegistrationCatalogUseCase() } coAnswers { catalogGate.await() }
-        offlineModeFlow.value = true
-        viewModel = viewModelWithPreauthorization(
-            useCase = operationUseCase,
-            onuRegistrationSelectionStore = selectionStore,
-        )
-
-        viewModel.loadScreenData(null)
-        testScheduler.runCurrent()
-        assertTrue(viewModel.uiState.value.isOfflineMode)
-
-        catalogGate.complete(Result.success(sampleCatalog(onus = listOf(fiberOnu().copy(sn = serial)))))
-        advanceUntilIdle()
-
-        assertTrue(viewModel.uiState.value.usesPreauthorization)
-        assertFalse(viewModel.uiState.value.isOfflineMode)
-        assertFalse(viewModel.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
-    }
-
-    @Test
     fun `a recovered cancellation intent does not show SERVICE_TYPE`() = runTest(testDispatcher) {
         val intentStore = InMemoryCancellationIntentStore()
         val serial = "ZTEGDC47BFFD"
@@ -3397,30 +3300,6 @@ class RegisterSubscriptionComposeViewModelTest {
         assertTrue(viewModel.uiState.value.serviceTypeChosen)
         assertTrue(viewModel.uiState.value.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE)
         getGate.cancel()
-    }
-
-    @Test
-    fun `offline solo TV cannot leave INSTALLATION without a valid client IP`() = runTest(testDispatcher) {
-        offlineModeFlow.value = true
-        val model = serviceTypeViewModel(mockk())
-        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
-        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
-        fillValidTvCustomerFields()
-        model.onIntent(RegisterSubscriptionIntent.NapBoxSelected(NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)))
-        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
-        advanceUntilIdle()
-        assertEquals(RegisterSubscriptionWizardStep.INSTALLATION, model.uiState.value.wizardStep)
-        assertTrue(model.uiState.value.registerSubscriptionForm.blockingFields().contains(FormFieldKey.CLIENT_IP_ADDRESS))
-
-        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
-        advanceUntilIdle()
-        assertEquals(RegisterSubscriptionWizardStep.INSTALLATION, model.uiState.value.wizardStep)
-        assertNotNull(model.uiState.value.registerSubscriptionForm.clientIpAddressError)
-
-        model.onIntent(RegisterSubscriptionIntent.ClientIpAddressChanged("192.168.25.10"))
-        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
-        advanceUntilIdle()
-        assertEquals(RegisterSubscriptionWizardStep.CONFIRMATION, model.uiState.value.wizardStep)
     }
 
     private fun catalogWithTwoPlansPerType() = sampleCatalog(

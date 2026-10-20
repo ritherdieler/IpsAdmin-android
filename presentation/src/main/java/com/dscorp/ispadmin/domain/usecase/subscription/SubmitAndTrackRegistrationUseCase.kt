@@ -1,6 +1,5 @@
 package com.dscorp.ispadmin.domain.usecase.subscription
 
-import com.dscorp.ispadmin.domain.model.PendingSubscription
 import com.dscorp.ispadmin.domain.model.RegistrationConflictException
 import com.dscorp.ispadmin.domain.model.Subscription
 import kotlinx.coroutines.CancellationException
@@ -9,7 +8,6 @@ import java.io.IOException
 
 sealed interface RegistrationSubmission {
     data class Accepted(val subscription: Subscription, val reconciled: Boolean = false) : RegistrationSubmission
-    data class Queued(val pending: PendingSubscription) : RegistrationSubmission
     data class Uncertain(val error: Throwable) : RegistrationSubmission
     data class Rejected(val error: Throwable) : RegistrationSubmission
 }
@@ -27,7 +25,6 @@ class SubmitAndTrackRegistrationUseCase(
         onSuccess = { outcome ->
             when (outcome) {
                 is RegisterSubscriptionResult.Registered -> RegistrationSubmission.Accepted(outcome.subscription)
-                is RegisterSubscriptionResult.QueuedOffline -> RegistrationSubmission.Queued(outcome.pending)
             }
         },
         onFailure = { error ->
