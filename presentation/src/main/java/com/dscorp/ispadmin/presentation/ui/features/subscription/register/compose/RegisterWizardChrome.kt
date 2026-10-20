@@ -85,25 +85,32 @@ internal fun Onu.portLabel(): String = "$board/$port"
 
 internal fun Onu.chosenLabel(): String = "ONU elegida: $sn · OLT $olt_id · puerto ${portLabel()}"
 
-/** a-reg header: close, title, "N de 4", progress bars and step names. */
+/** a-reg header: close, title, "N de M", progress bars and step names; the type step shows "Antes de empezar" only. */
 @Composable
 internal fun RegisterWizardHeader(
     currentStep: RegisterSubscriptionWizardStep,
-    preauthorizationEnabled: Boolean,
+    usesPreauthorization: Boolean,
     onClose: () -> Unit,
 ) {
     val colors = IspTheme.colors
-    val phases = registrationProgressPhases(preauthorizationEnabled)
+    val phases = registrationProgressPhases(usesPreauthorization)
+    val choosingType = currentStep == RegisterSubscriptionWizardStep.SERVICE_TYPE
     val current = phases.indexOfFirst { currentStep in it.steps }.coerceAtLeast(0)
     Column(Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
         Row(Modifier.fillMaxWidth().height(64.dp).padding(start = 4.dp, end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(
                 onClick = onClose,
-                modifier = if (preauthorizationEnabled) Modifier.testTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL) else Modifier,
+                modifier = if (usesPreauthorization) Modifier.testTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL) else Modifier,
             ) { Icon(Icons.Rounded.Close, contentDescription = "Cerrar registro") }
             Text("Nueva suscripción", Modifier.weight(1f), fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-            Text("${current + 1} de ${phases.size}", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.hero)
+            Text(
+                if (choosingType) "Antes de empezar" else "${current + 1} de ${phases.size}",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.hero,
+            )
         }
+        if (choosingType) return@Column
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("wizard_stepper")
                 .semantics { contentDescription = "Paso ${current + 1} de ${phases.size}: ${phases[current].label}" },

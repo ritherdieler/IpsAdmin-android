@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import com.dscorp.ispadmin.R
+import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.Onu
 import com.google.android.gms.maps.model.LatLng
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionTestTags
@@ -46,6 +47,14 @@ class RegisterWizardChromeTest {
         registerSubscriptionForm = RegisterSubscriptionFormState(onuList = listOf(zte, huawei), selectedOnu = selected),
         wizardStep = RegisterSubscriptionWizardStep.ONU_SELECTION,
         preauthorizationEnabled = true,
+        serviceTypeChosen = true,
+    )
+
+    private fun solo(step: RegisterSubscriptionWizardStep) = RegisterSubscriptionState(
+        registerSubscriptionForm = RegisterSubscriptionFormState(installationType = InstallationType.ONLY_TV_FIBER),
+        wizardStep = step,
+        preauthorizationEnabled = true,
+        serviceTypeChosen = true,
     )
 
     @Test
@@ -116,5 +125,37 @@ class RegisterWizardChromeTest {
             listOf(RegisterSubscriptionIntent.UseCurrentLocationClicked, RegisterSubscriptionIntent.ChooseManualLocationClicked),
             intents.filter { it is RegisterSubscriptionIntent.UseCurrentLocationClicked || it is RegisterSubscriptionIntent.ChooseManualLocationClicked },
         )
+    }
+
+    @Test
+    fun `the sin-ONU path counts three steps`() {
+        show(solo(RegisterSubscriptionWizardStep.CLIENT_LOCATION))
+
+        composeRule.onNodeWithText("1 de 3").assertExists()
+        composeRule.onNodeWithContentDescription("Paso 1 de 3: Cliente").assertExists()
+    }
+
+    @Test
+    fun `the type step has no counter`() {
+        show(
+            RegisterSubscriptionState(
+                wizardStep = RegisterSubscriptionWizardStep.SERVICE_TYPE,
+                preauthorizationEnabled = true,
+            ),
+        )
+
+        composeRule.onNodeWithText("Antes de empezar").assertExists()
+        composeRule.onNodeWithText("1 de 4").assertDoesNotExist()
+        composeRule.onNodeWithText("1 de 3").assertDoesNotExist()
+        composeRule.onNodeWithTag("wizard_stepper").assertDoesNotExist()
+    }
+
+    @Test
+    fun `closing without preauthorization does not ask for OLT cleanup`() {
+        show(solo(RegisterSubscriptionWizardStep.CLIENT_LOCATION))
+
+        composeRule.onNodeWithContentDescription("Cerrar registro").performClick()
+
+        assertTrue(RegisterSubscriptionIntent.CancelOnuRegistration !in intents)
     }
 }

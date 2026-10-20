@@ -180,10 +180,10 @@ fun RegisterSubscriptionForm(
         Column(modifier = Modifier.fillMaxSize()) {
             RegisterWizardHeader(
                 currentStep = formState.wizardStep,
-                preauthorizationEnabled = formState.preauthorizationEnabled,
+                usesPreauthorization = formState.usesPreauthorization,
                 onClose = {
                     // Closing an ONU-first registration goes through the cancel flow, which cleans the OLT authorization.
-                    if (formState.preauthorizationEnabled) onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
+                    if (formState.usesPreauthorization) onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
                     else backDispatcher?.onBackPressed()
                 },
             )
@@ -204,7 +204,7 @@ fun RegisterSubscriptionForm(
                     label = "registration_step_content",
                 ) { step ->
                     Column {
-                        if (formState.preauthorizationEnabled && step in ACS_STATUS_STEPS) {
+                        if (formState.usesPreauthorization && step in ACS_STATUS_STEPS) {
                             AcsStatusBanner(formState)
                         }
                         when (step) {
@@ -302,7 +302,7 @@ fun RegisterSubscriptionForm(
                     formState.wizardStep in ONU_STEPS && selectedOnu != null -> RegisterWizardFooterLine(selectedOnu.chosenLabel())
                     navigationHint != null -> RegisterWizardFooterLine(navigationHint)
                     formState.wizardStep == RegisterSubscriptionWizardStep.CONFIRMATION && formState.submitBlockedReason == null ->
-                        RegisterWizardFooterLine("Los ${registrationProgressPhases(formState.preauthorizationEnabled).size} pasos están completos", ok = true)
+                        RegisterWizardFooterLine("Los ${registrationProgressPhases(formState.usesPreauthorization).size} pasos están completos", ok = true)
                     formState.wizardStep != RegisterSubscriptionWizardStep.WAITING_FOR_ACS && formState.wizardStep !in ONU_STEPS ->
                         RegisterWizardFooterLine("Todo listo para continuar", ok = true)
                 }

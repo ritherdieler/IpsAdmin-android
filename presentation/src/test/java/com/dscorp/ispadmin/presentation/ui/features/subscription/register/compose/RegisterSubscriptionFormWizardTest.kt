@@ -28,6 +28,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.SubmissionState
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.TvCpeKind
 import com.google.android.gms.maps.model.LatLng
 import io.mockk.every
 import io.mockk.mockk
@@ -199,6 +200,7 @@ class RegisterSubscriptionFormWizardTest {
             RegisterSubscriptionState(
                 wizardStep = RegisterSubscriptionWizardStep.CLIENT_LOCATION,
                 preauthorizationEnabled = true,
+                serviceTypeChosen = true,
             )
         )
 
@@ -241,6 +243,7 @@ class RegisterSubscriptionFormWizardTest {
                 isLoading = true,
                 wizardStep = RegisterSubscriptionWizardStep.ONU_SELECTION,
                 preauthorizationEnabled = true,
+                serviceTypeChosen = true,
             )
         )
         val viewModel = mockk<RegisterSubscriptionComposeViewModel>(relaxed = true)
@@ -421,6 +424,39 @@ class RegisterSubscriptionFormWizardTest {
 
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ONU)
             .assertExists()
+    }
+
+    @Test
+    fun `the review of solo TV has no equipment card and says it has no ONU`() {
+        val plan = PlanResponse(
+            id = "plan-tv",
+            name = "Cable basico",
+            price = 30.0,
+            downloadSpeed = null,
+            uploadSpeed = null,
+            type = InstallationType.ONLY_TV_FIBER,
+        )
+        val state = RegisterSubscriptionState(
+            registerSubscriptionForm = RegisterSubscriptionFormState(
+                installationType = InstallationType.ONLY_TV_FIBER,
+                tvCpeKind = TvCpeKind.OPTICAL_RECEIVER,
+                planList = listOf(plan),
+                selectedPlan = plan,
+                firstName = "Juan",
+                lastName = "Perez",
+            ),
+            wizardStep = RegisterSubscriptionWizardStep.CONFIRMATION,
+            preauthorizationEnabled = true,
+            serviceTypeChosen = true,
+        )
+
+        composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        composeRule.setContent { MaterialTheme { RegisterSubscriptionForm(formState = state) } }
+
+        composeRule.onNodeWithText("Receptor CATV · sin ONU").assertExists()
+        composeRule.onNodeWithText("No se autoriza ninguna ONU.", substring = true).assertExists()
+        composeRule.onNodeWithText("Autorizada en la OLT").assertDoesNotExist()
+        composeRule.onNodeWithText("Acceso a internet").assertDoesNotExist()
     }
 
     private fun validFiberInstallationForm(onu: Onu) = RegisterSubscriptionFormState(
