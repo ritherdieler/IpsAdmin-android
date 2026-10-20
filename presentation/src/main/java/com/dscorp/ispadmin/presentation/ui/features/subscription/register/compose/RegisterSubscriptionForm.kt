@@ -208,6 +208,8 @@ fun RegisterSubscriptionForm(
                             AcsStatusBanner(formState)
                         }
                         when (step) {
+                            // Placeholder until the service type selector is built.
+                            RegisterSubscriptionWizardStep.SERVICE_TYPE -> Unit
                             RegisterSubscriptionWizardStep.ONU_SELECTION,
                             RegisterSubscriptionWizardStep.ONU_CONFIRMATION ->
                                 OnuListBlock(

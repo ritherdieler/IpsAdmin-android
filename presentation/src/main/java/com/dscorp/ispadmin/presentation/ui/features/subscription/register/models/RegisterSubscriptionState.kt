@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 
+import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.User
@@ -29,6 +30,8 @@ data class RegisterSubscriptionState(
     val preauthorizationEnabled: Boolean = false,
     val preauthorizationOperation: OnuRegistrationOperation? = null,
     val preauthorizationError: String? = null,
+    val serviceTypeChosen: Boolean = false,
+    val serviceTypeError: String? = null,
     val showCancelConfirmation: Boolean = false,
     val cancellationInProgress: Boolean = false,
     val registrationCancelled: Boolean = false,
@@ -38,6 +41,13 @@ data class RegisterSubscriptionState(
     val dniWarning: String? = null,
     val submitBlockedReason: String? = null,
 ) {
+    /** True for the fiber path (ONU authorized first) or while an operation is active; false for solo TV and wireless. */
+    val usesPreauthorization: Boolean
+        get() = preauthorizationEnabled && (
+            preauthorizationOperation != null ||
+                (serviceTypeChosen && registerSubscriptionForm.installationType == InstallationType.FIBER)
+            )
+
     /** The ONU is authorized on the OLT but ACS has not confirmed it yet; the form stays usable. */
     val acsPending: Boolean
         get() = preauthorizationOperation?.let { it.phase == "WAITING_FOR_ACS" && it.state == "WAITING" } == true &&

@@ -61,13 +61,13 @@ internal data class RegistrationProgressPhase(
 )
 
 /** Visible steps, in the app order: the ONU is authorized first so ACS connects while the client is filled in. */
-internal fun registrationProgressPhases(preauthorizationEnabled: Boolean): List<RegistrationProgressPhase> {
+internal fun registrationProgressPhases(usesPreauthorization: Boolean): List<RegistrationProgressPhase> {
     val formPhases = listOf(
         RegistrationProgressPhase("Cliente", setOf(RegisterSubscriptionWizardStep.CLIENT_LOCATION)),
         RegistrationProgressPhase("Servicio", setOf(RegisterSubscriptionWizardStep.INSTALLATION)),
         RegistrationProgressPhase("Revisión", setOf(RegisterSubscriptionWizardStep.CONFIRMATION)),
     )
-    if (!preauthorizationEnabled) return formPhases
+    if (!usesPreauthorization) return formPhases
     return listOf(
         RegistrationProgressPhase(
             "Equipo",
