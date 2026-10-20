@@ -214,6 +214,7 @@ class RegisterSubscriptionComposeViewModelTest {
         onuRegistrationSelectionStore: OnuRegistrationSelectionStore? = null,
         savedStateHandle: androidx.lifecycle.SavedStateHandle = androidx.lifecycle.SavedStateHandle(),
         observabilityClient: com.dscorp.ispadmin.observability.ObservabilityClient = mockk(relaxed = true),
+        subscriptionActionsRepository: com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository? = null,
     ) = RegisterSubscriptionComposeViewModel(
         getAvailableOnuListUseCase = getAvailableOnuListUseCase,
         getRegistrationCatalogUseCase = getRegistrationCatalogUseCase,
@@ -230,6 +231,7 @@ class RegisterSubscriptionComposeViewModelTest {
         cancellationIntentStore = cancellationIntentStore,
         onuRegistrationSelectionStore = onuRegistrationSelectionStore,
         savedStateHandle = savedStateHandle,
+        subscriptionActionsRepository = subscriptionActionsRepository,
     )
 
     private fun RegisterSubscriptionComposeViewModel.chooseFiberService() {
@@ -925,6 +927,7 @@ class RegisterSubscriptionComposeViewModelTest {
         assertEquals("ZTEGDC47BFFD", state.registerSubscriptionForm.selectedOnu?.sn)
         assertTrue(state.registerSubscriptionForm.onuList.any { it.sn == ready.serial })
         assertNull(state.preauthorizationError)
+        assertNull(state.catalogLoadError)
     }
 
     @Test
@@ -1408,6 +1411,32 @@ class RegisterSubscriptionComposeViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { installationOrderUseCase.getInstallationOrderByIdResult(42) }
+    }
+
+    @Test
+    fun `RetryCatalogLoad reuses the customer id of the last load`() = runTest(testDispatcher) {
+        val actions = mockk<com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository>()
+        coEvery { actions.getCustomer(40) } returns com.dscorp.ispadmin.domain.model.CustomerDetail(
+            id = 40, firstName = "Ana", lastName = "Perez", dni = "45678912",
+        )
+        coEvery { getRegistrationCatalogUseCase() } returnsMany listOf(
+            Result.failure(java.io.IOException("offline")),
+            Result.success(catalogWithAllTypes()),
+        )
+        viewModel = viewModelWithPreauthorization(
+            mockk<OnuRegistrationOperationUseCase>(relaxed = true),
+            subscriptionActionsRepository = actions,
+        )
+        viewModel.loadScreenData(null, customerId = 40)
+        advanceUntilIdle()
+        coVerify(exactly = 0) { actions.getCustomer(any()) }
+
+        viewModel.onIntent(RegisterSubscriptionIntent.RetryCatalogLoad)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { actions.getCustomer(40) }
+        assertEquals(40, viewModel.uiState.value.customerId)
+        assertTrue(viewModel.uiState.value.identityLocked)
     }
 
     @Test

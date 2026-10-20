@@ -4,6 +4,10 @@ import android.app.Application
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -67,6 +71,15 @@ class RegisterCatalogErrorTest {
         composeRule.onNodeWithText("Reintentar").assertIsDisplayed()
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SERVICE_TYPE_FIBER).assertDoesNotExist()
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the message is announced as a polite live region`() {
+        show("catalog unavailable")
+
+        composeRule.onNodeWithText("catalog unavailable").assert(
+            SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite),
+        )
     }
 
     @Test

@@ -139,3 +139,20 @@ Prueba manual obligatoria antes de proponer versión: en el laboratorio de stagi
 ## 8. Despliegue y reversión
 
 Solo requiere nueva versión de la app (distribución como las anteriores); el backend de producción no cambia. Reversión: reinstalar la versión previa; no hay migraciones ni datos nuevos. No se hace commit ni despliegue sin petición explícita.
+
+## 9. Pendientes cerrados el 2026-10-20
+
+Plan: `pendientes-registro-offline-limpieza-plan-2026-10-20.md` (rama `fix/pendientes-registro-offline`, parte de `develop` 6a4854c5). Verificado con las pruebas unitarias de `:domain`, `:data` y `:presentation` y con `:presentation:compileDevDebugAndroidTestKotlin`.
+
+**Hecho en esta ola**
+- Paso de tipo de servicio y cabecera: `ServiceTypeSelected` se ignora fuera de `SERVICE_TYPE` y con una operación de preautorización; un tipo sin planes activos no deja avanzar con «Continuar»; la cabecera oculta el progreso con un `if` en lugar de un `return`; las tarjetas de tipo forman un grupo de selección y recortan el ripple con su forma; `serviceTypeTitle()` es un `when` exhaustivo; el pie dice «Elegido: …»; la fila de solo lectura de Solo TV se lee como un solo elemento; el E2E de fibra deja una línea de registro cuando el paso de tipo se omite; pruebas de salida y de cancelación de la OLT ajustadas.
+- Cola de pendientes y telemetría: el estado «Esperando señal» pasa a «Por enviar»; la nota final de la pantalla de pendientes solo aparece con pendientes; la regla «pendientes > 0» vive solo en `MainNavigation.moreItemsFor` (`MoreMenu.from` solo pone la insignia con el conteo); `MoreRoute` ya no reinicia la petición de planes al cruzar el conteo por cero; `PendingSubscriptionsTelemetry.resetForTest()` y su prueba de cancelación; `MainActivityViewModel` reutiliza el usuario ya leído; las pruebas de cancelación del repositorio de catálogo (ONU y equipos de core); el texto exacto del fallo de red al enviar; ajustes de documentación (taxonomía de eventos, `AGENTS.md`, este spec).
+- Carga del catálogo: el fallo ya no abre un diálogo; el asistente muestra el mensaje con un botón «Reintentar» (`RetryCatalogLoad`, que reutiliza el pedido de instalación y el cliente de la última carga), el mensaje se anuncia como región activa cortés y un fallo de carga no deja elegir tipo con listas vacías. `PlanResponse.equals` es seguro ante `null` y otros tipos, y `hashCode` se basa en `id`.
+- Pruebas: con el catálogo de OLT vacío y una preautorización lista no queda `catalogLoadError`; el reintento reutiliza también el `customerId`; en `MoreScreenUiTest` se quitó la entrada de pendientes de las pruebas donde no demostraba nada.
+
+**Decidido fuera**
+- Registrar fallos de los endpoints opcionales del catálogo (ONU, equipos de core): exige conectar observabilidad con el módulo `:data`; el síntoma ya se ve («No hay routers core disponibles»).
+- La prueba del ViewModel que fije «sin foto» con preautorización: ya la fija `RegisterSubscriptionUseCaseTest`.
+- La tarjeta «Equipo» con una serie de ONU guardada en un tipo no fibra: inalcanzable (la guarda se borra al cancelar la fibra).
+- Mostrar la entrada de pendientes cuando falla la lectura de Room, y el banner del técnico desactualizado tras una recarga fallida: casos improbables e inofensivos.
+- `GetRegistrationCatalogUseCase` como paso directo: lo exige el plan de la entrega 1.

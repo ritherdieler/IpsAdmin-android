@@ -28,7 +28,7 @@ class MoreScreenUiTest {
 
     @Test
     fun `the header names the user and items fall in their sections with counts`() {
-        val menu = MoreMenu.from(User(id = 1, name = "SERGIO CARRILLO DIESTRA", type = User.UserType.ADMIN), ADMIN_ITEMS, pending = 0, activePlans = 11)
+        val menu = MoreMenu.from(User(id = 1, name = "SERGIO CARRILLO DIESTRA", type = User.UserType.ADMIN), ADMIN_ITEMS, pending = null, activePlans = 11)
 
         assertEquals(MoreHeader("SC", "Sergio C.", "Administrador"), menu.header)
         assertEquals(listOf("Gestión", "Suscripciones", "Tickets"), menu.sections.map { it.title })
@@ -37,7 +37,7 @@ class MoreScreenUiTest {
             menu.sections[0].entries,
         )
         assertEquals(listOf("Suscripciones"), MoreMenu.from(User(id = 2, name = "Ana", type = User.UserType.TECHNICIAN),
-            listOf(MoreItem.REGISTER_SUBSCRIPTION, MoreItem.PENDING_SUBSCRIPTIONS, MoreItem.PROFILE), pending = null, activePlans = null).sections.map { it.title })
+            listOf(MoreItem.REGISTER_SUBSCRIPTION, MoreItem.PROFILE), pending = null, activePlans = null).sections.map { it.title })
     }
 
     @Test
@@ -49,7 +49,7 @@ class MoreScreenUiTest {
 
     @Test
     fun `profile, items and logout respond`() {
-        val menu = MoreMenu.from(User(id = 1, name = "Sergio Carrillo", type = User.UserType.ADMIN), ADMIN_ITEMS + MoreItem.PENDING_SUBSCRIPTIONS, pending = 2, activePlans = 11)
+        val menu = MoreMenu.from(User(id = 1, name = "Sergio Carrillo", type = User.UserType.ADMIN), ADMIN_ITEMS, pending = null, activePlans = 11)
         val events = mutableListOf<String>()
         compose.setContent {
             MaterialTheme {
