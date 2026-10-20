@@ -16,9 +16,11 @@ class MainActivityViewModel : ViewModel() {
 
     init {
         if (getCurrentUser() != null) {
-            viewModelScope.launch { pendingTelemetry.reportOncePerProcess() }
+            viewModelScope.launch { reportPendingTelemetry() }
         }
     }
+
+    suspend fun reportPendingTelemetry() = pendingTelemetry.reportOncePerProcess()
 
     fun getCurrentUser(): User? {
         return repository.getUserSession()

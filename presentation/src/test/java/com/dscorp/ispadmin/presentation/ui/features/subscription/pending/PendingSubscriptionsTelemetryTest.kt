@@ -6,6 +6,7 @@ import com.dscorp.ispadmin.observability.ObservabilityClient
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -79,6 +80,19 @@ class PendingSubscriptionsTelemetryTest {
     @Test
     fun `does not report and allows a later attempt when the queue cannot be read`() = runTest {
         every { observePending() } returns Result.failure(IllegalStateException("db unavailable"))
+        val telemetry = PendingSubscriptionsTelemetry(observePending, observability)
+
+        telemetry.reportOncePerProcess()
+        verify(exactly = 0) { observability.reportLog(any(), any(), any()) }
+
+        queued(1)
+        telemetry.reportOncePerProcess()
+        verify(exactly = 1) { observability.reportLog(any(), any(), any()) }
+    }
+
+    @Test
+    fun `a flow that throws while collecting does not crash and allows a later attempt`() = runTest {
+        every { observePending() } returns Result.success(flow { throw IllegalStateException("disk full") })
         val telemetry = PendingSubscriptionsTelemetry(observePending, observability)
 
         telemetry.reportOncePerProcess()

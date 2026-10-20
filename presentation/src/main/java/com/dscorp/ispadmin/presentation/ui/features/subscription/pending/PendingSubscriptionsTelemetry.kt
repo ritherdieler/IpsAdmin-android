@@ -2,6 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.pending
 
 import com.dscorp.ispadmin.domain.usecase.subscription.ObservePendingSubscriptionsUseCase
 import com.dscorp.ispadmin.observability.ObservabilityClient
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -25,8 +26,12 @@ class PendingSubscriptionsTelemetry(
                 tags = mapOf("count" to count),
             )
             sent = true
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            // Room can throw while the query runs; telemetry must never crash the app.
         } finally {
-            // Cancelled or unreadable: allow a later attempt in this process.
+            // Cancelled, failed or unreadable: allow a later attempt in this process.
             if (!sent) reported.set(false)
         }
     }
