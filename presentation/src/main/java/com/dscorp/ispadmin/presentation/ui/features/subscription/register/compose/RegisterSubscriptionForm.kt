@@ -327,6 +327,7 @@ fun RegisterSubscriptionForm(
                     } else {
                         form.facadePhotoUri != null || !form.facadePhotoUrl.isNullOrBlank()
                     },
+                    showClientBack = formState.preauthorizationEnabled && !formState.usesPreauthorization,
                     onBack = { onIntent(RegisterSubscriptionIntent.WizardBackClicked) },
                     onLeave = { backDispatcher?.onBackPressed() },
                     onContinue = { onIntent(RegisterSubscriptionIntent.WizardContinueClicked) },
@@ -596,6 +597,7 @@ private fun WizardNavigationBar(
     isLoading: Boolean,
     canContinue: Boolean,
     canRegister: Boolean,
+    showClientBack: Boolean,
     onBack: () -> Unit,
     onLeave: () -> Unit,
     onContinue: () -> Unit,
@@ -634,8 +636,8 @@ private fun WizardNavigationBar(
                     modifier = Modifier.weight(1f).testTag(RegisterSubscriptionTestTags.SUBMIT), onClick = onRegister)
             }
             else -> {
-                // The ONU cannot be changed once authorized, so the client step has no way back.
-                if (step != RegisterSubscriptionWizardStep.CLIENT_LOCATION) {
+                // The ONU cannot be changed once authorized; without ONU the client step goes back to the type.
+                if (step != RegisterSubscriptionWizardStep.CLIENT_LOCATION || showClientBack) {
                     RegisterTextAction("Atrás", enabled = !isLoading, modifier = Modifier.testTag(RegisterSubscriptionTestTags.WIZARD_BACK), onClick = onBack)
                 }
                 RegisterPrimaryButton("Continuar", enabled = !isLoading && canContinue, loading = isLoading,

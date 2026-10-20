@@ -115,6 +115,14 @@ fun RegisterSubscriptionFormScreen(
     BackHandler(enabled = uiState.isRegistering && !uiState.cancellationInProgress) {
         showLeaveDialog = true
     }
+    // Without an ONU there is no remote draft: system Back walks the wizard back instead of discarding the form.
+    BackHandler(
+        enabled = uiState.preauthorizationEnabled && !uiState.usesPreauthorization &&
+            uiState.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE && !uiState.isRegistering &&
+            uiState.submission.resultSubscription() == null
+    ) {
+        viewModel.onIntent(RegisterSubscriptionIntent.WizardBackClicked)
+    }
     var showFacadePhotoOptionsDialog by remember { mutableStateOf(false) }
     var showCurrentLocationGate by remember { mutableStateOf(false) }
 

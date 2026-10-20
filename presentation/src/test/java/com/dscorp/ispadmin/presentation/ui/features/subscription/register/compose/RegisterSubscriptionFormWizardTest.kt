@@ -34,6 +34,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -538,5 +539,85 @@ class RegisterSubscriptionFormWizardTest {
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SUBMIT_BLOCKED_REASON)
             .assertTextEquals("El equipo aún no conecta con la gestión remota.")
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SUBMIT).assertExists()
+    }
+
+    @Test
+    fun `solo TV on CLIENT_LOCATION offers Atras and sends WizardBackClicked`() {
+        val state = RegisterSubscriptionState(
+            registerSubscriptionForm = RegisterSubscriptionFormState(
+                installationType = InstallationType.ONLY_TV_FIBER,
+                tvCpeKind = TvCpeKind.OPTICAL_RECEIVER,
+            ),
+            wizardStep = RegisterSubscriptionWizardStep.CLIENT_LOCATION,
+            preauthorizationEnabled = true,
+            serviceTypeChosen = true,
+        )
+        val intents = mutableListOf<RegisterSubscriptionIntent>()
+
+        composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        composeRule.setContent {
+            MaterialTheme { RegisterSubscriptionForm(formState = state, onIntent = { intents += it }) }
+        }
+
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.WIZARD_BACK).assertExists().performClick()
+
+        composeRule.runOnIdle { assertEquals(listOf(RegisterSubscriptionIntent.WizardBackClicked), intents) }
+    }
+
+    @Test
+    fun `fiber with an operation has no Atras on CLIENT_LOCATION`() {
+        val state = RegisterSubscriptionState(
+            wizardStep = RegisterSubscriptionWizardStep.CLIENT_LOCATION,
+            preauthorizationEnabled = true,
+            serviceTypeChosen = true,
+            preauthorizationOperation = acsOperation("READY_FOR_FORM", "READY_FOR_FORM"),
+        )
+
+        composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        composeRule.setContent { MaterialTheme { RegisterSubscriptionForm(formState = state) } }
+
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.WIZARD_BACK).assertDoesNotExist()
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.WIZARD_CONTINUE).assertExists()
+    }
+
+    private fun reviewState(type: InstallationType, tvCpeKind: TvCpeKind?): RegisterSubscriptionState {
+        val plan = PlanResponse(
+            id = "plan-x", name = "Plan X", price = 30.0, downloadSpeed = null, uploadSpeed = null, type = type,
+        )
+        return RegisterSubscriptionState(
+            registerSubscriptionForm = RegisterSubscriptionFormState(
+                installationType = type,
+                tvCpeKind = tvCpeKind,
+                planList = listOf(plan),
+                selectedPlan = plan,
+                firstName = "Juan",
+                lastName = "Perez",
+            ),
+            wizardStep = RegisterSubscriptionWizardStep.CONFIRMATION,
+            preauthorizationEnabled = true,
+            serviceTypeChosen = true,
+        )
+    }
+
+    @Test
+    fun `the review of wireless shows neither the CATV connection row nor the TV note`() {
+        composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        composeRule.setContent {
+            MaterialTheme { RegisterSubscriptionForm(formState = reviewState(InstallationType.WIRELESS, null)) }
+        }
+
+        composeRule.onNodeWithText("Conexión").assertDoesNotExist()
+        composeRule.onNodeWithText("No se autoriza ninguna ONU.", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the review of solo TV with an ONU shows neither the CATV connection row nor the no-ONU note`() {
+        composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        composeRule.setContent {
+            MaterialTheme { RegisterSubscriptionForm(formState = reviewState(InstallationType.ONLY_TV_FIBER, TvCpeKind.ONU)) }
+        }
+
+        composeRule.onNodeWithText("Conexión").assertDoesNotExist()
+        composeRule.onNodeWithText("No se autoriza ninguna ONU.", substring = true).assertDoesNotExist()
     }
 }
