@@ -37,9 +37,11 @@ class RegisterWizardChromeTest {
     private val zte = Onu("1", "1", "1", "t", "ZTE F670L", "GPON", "5", "ZTEGC8F01A22")
     private val huawei = Onu("1", "1", "1", "t", "HG8145V5", "GPON", "2", "HWTC7B21C0D4")
     private val intents = mutableListOf<RegisterSubscriptionIntent>()
+    private val backPresses = BackPressCounter()
 
     private fun show(state: RegisterSubscriptionState) {
         composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        backPresses.installOn(composeRule)
         composeRule.setContent { MaterialTheme { RegisterSubscriptionForm(formState = state, onIntent = { intents += it }) } }
     }
 
@@ -156,6 +158,15 @@ class RegisterWizardChromeTest {
 
         composeRule.onNodeWithContentDescription("Cerrar registro").performClick()
 
+        assertEquals(1, backPresses.count)
         assertTrue(RegisterSubscriptionIntent.CancelOnuRegistration !in intents)
+    }
+
+    @Test
+    fun `the header close of a solo TV state has no OLT cancel tag`() {
+        show(solo(RegisterSubscriptionWizardStep.CONFIRMATION))
+
+        composeRule.onNodeWithContentDescription("Cerrar registro").assertExists()
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL).assertDoesNotExist()
     }
 }

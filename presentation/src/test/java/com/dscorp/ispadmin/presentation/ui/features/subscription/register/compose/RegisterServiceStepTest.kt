@@ -3,6 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compo
 import android.app.Application
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -114,6 +115,15 @@ class RegisterServiceStepTest {
 
         composeRule.onNodeWithText("Elegido al inicio").assertExists()
         composeRule.onNodeWithText("Inalámbrico").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the solo TV type row reads as one element`() {
+        show(fiber.copy(installationType = InstallationType.ONLY_TV_FIBER), preauthorizationEnabled = true)
+
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.INSTALLATION_TYPE, useUnmergedTree = false)
+            .assertTextContains("Solo TV · receptor CATV")
+            .assertTextContains("Elegido al inicio")
     }
 
     @Test

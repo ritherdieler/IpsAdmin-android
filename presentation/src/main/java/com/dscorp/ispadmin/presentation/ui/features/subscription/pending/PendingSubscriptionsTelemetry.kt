@@ -1,5 +1,6 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.pending
 
+import androidx.annotation.VisibleForTesting
 import com.dscorp.ispadmin.domain.usecase.subscription.ObservePendingSubscriptionsUseCase
 import com.dscorp.ispadmin.observability.ObservabilityClient
 import kotlinx.coroutines.CancellationException
@@ -39,6 +40,7 @@ class PendingSubscriptionsTelemetry(
     companion object {
         private val reported = AtomicBoolean(false)
 
+        @VisibleForTesting
         internal fun resetForTest() = reported.set(false)
     }
 }

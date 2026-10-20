@@ -331,7 +331,10 @@ class FiberRegisterFirstOnuE2ETest {
         while (System.nanoTime() < entryDeadline) {
             if (isTagVisible(RegisterSubscriptionTestTags.FIRST_NAME) ||
                 isTagVisible(RegisterSubscriptionTestTags.INSTALLATION_TYPE) ||
-                isTagVisible(RegisterSubscriptionTestTags.SUBMIT)) return
+                isTagVisible(RegisterSubscriptionTestTags.SUBMIT)) {
+                logTypeStepSkippedIf(!serviceTypePicked)
+                return
+            }
             // The wizard starts at SERVICE_TYPE; a resumed ONU or operation skips it.
             if (!serviceTypePicked && isTagVisible(RegisterSubscriptionTestTags.SERVICE_TYPE_FIBER)) {
                 composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SERVICE_TYPE_FIBER).performClick()
@@ -349,6 +352,7 @@ class FiberRegisterFirstOnuE2ETest {
             }
             Thread.sleep(500)
         }
+        logTypeStepSkippedIf(!serviceTypePicked)
         if (isTagVisible(RegisterSubscriptionTestTags.INSTALLATION_TYPE) ||
             isTagVisible(RegisterSubscriptionTestTags.SUBMIT)) return
         if (composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.ONU)
@@ -362,6 +366,16 @@ class FiberRegisterFirstOnuE2ETest {
         selectOnu()
         clickWizardContinue()
         waitForClientFormAfterAcsContact()
+    }
+
+    /** A wizard that skips the type step without a recovered operation would otherwise pass silently. */
+    private fun logTypeStepSkippedIf(skipped: Boolean) {
+        if (skipped) {
+            android.util.Log.i(
+                "FiberRegisterFirstOnuE2E",
+                "SERVICE_TYPE step skipped: the wizard resumed past it (expected only with a recovered ONU or operation)",
+            )
+        }
     }
 
     private fun isTagVisible(tag: String): Boolean = composeRule.onAllNodesWithTag(tag)

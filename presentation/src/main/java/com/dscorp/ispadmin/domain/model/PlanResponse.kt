@@ -12,9 +12,9 @@ data class PlanResponse(
         return "${name?.capitalize()} / Precio: ${priceToString()}"
     }
 
-    override fun equals(other: Any?): Boolean {
-        return id == (other as PlanResponse).id
-    }
+    override fun equals(other: Any?): Boolean = other is PlanResponse && id == other.id
+
+    override fun hashCode(): Int = id.hashCode()
 
     fun priceToString(): String {
         return "S/$price"

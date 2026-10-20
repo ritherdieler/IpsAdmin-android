@@ -44,12 +44,12 @@ Retirar el soporte offline para registrar suscripciones y su sincronización, en
 - Se eliminan: `RegisterSubscriptionResult.QueuedOffline`, `RegistrationSubmission.Queued`, `RegisterSubscriptionUiEvent.QueuedOffline` y su diálogo, `EnqueuePendingSubscriptionUseCase`, `isOfflineMode`, `requiresClientIpAddress`, `FormFieldKey.CLIENT_IP_ADDRESS`, `RegisterSubscriptionIntent.ClientIpAddressChanged`, la etiqueta de prueba `CLIENT_IP`, `ClientIpAddressValidation`, la fila «IP del cliente» de la revisión y la rama de IP de `wizardFieldsFor`.
 - `withOfflineState` y `deviceOffline` del ViewModel desaparecen con lo anterior.
 - Los campos `clientIpAddress` e `ip` del modelo `Subscription` dejan de llenarse desde el formulario (se envían nulos; el backend ya acepta el campo ausente). Los campos se quitan del modelo, si procede, en la entrega 2.
-- Se eliminan los monitores de conectividad y el ping: `ObserveOfflineRegistrationModeUseCase`, `NetworkConnectivityMonitor`/`Impl` y `MikrotikReachabilityMonitor`/`Impl`, con su cableado en Koin y los parámetros del constructor de `RegisterSubscriptionUseCase` y del ViewModel.
+- Se eliminan los monitores de conectividad y el ping: `ObserveOfflineRegistrationModeUseCase`, `NetworkConnectivityMonitor`/`Impl` (ver Desviaciones: se conserva hasta la entrega 2) y `MikrotikReachabilityMonitor`/`Impl`, con su cableado en Koin y los parámetros del constructor de `RegisterSubscriptionUseCase` y del ViewModel.
 
 ### 4.2 Catálogo directo
 - `GetRegistrationCatalogUseCase()` pasa a devolver `Result<RegistrationCatalog>` pidiendo a la API los cinco endpoints existentes (`plan`, `place`, `napbox`, `onu/unconfigured_onus`, `networkDevice/coreTypes`), sin persistir. Se conserva que los DTO de equipos de core blanqueen usuario y clave.
 - `RefreshRegistrationCatalogUseCase` se elimina y `applyInitialCatalogData` llama una sola vez al caso de uso. `CatalogNotAvailableOffline` se elimina.
-- Si falla la carga, el asistente muestra el error de carga inicial y no abre el formulario. Cuando la causa es de red (`IOException`, también como causa encadenada) el mensaje es «No se pudo cargar el catálogo de registro. Revisa tu conexión y vuelve a intentar.»; cualquier otro fallo conserva su mensaje. A observabilidad se reporta siempre la excepción original. No hay botón de reintento (decisión del usuario para más adelante).
+- Si falla la carga, el asistente muestra el error de carga inicial y no abre el formulario. Cuando la causa es de red (`IOException`, también como causa encadenada) el mensaje es «No se pudo cargar el catálogo de registro. Revisa tu conexión y vuelve a intentar.»; cualquier otro fallo conserva su mensaje. A observabilidad se reporta siempre la excepción original. La vista de error ofrece el botón «Reintentar», que repite la carga con los mismos parámetros (añadido el 2026-10-20, ver §10).
 - Las clases `catalog_*` de Room (entidades y DAOs) NO se tocan en esta entrega, para no cambiar el esquema de la base ni arriesgar la cola; quedan sin uso con un comentario que remite a la entrega 2.
 
 ### 4.3 Cola existente: solo vaciarla
@@ -58,7 +58,7 @@ Retirar el soporte offline para registrar suscripciones y su sincronización, en
 - Se corrigen los textos que prometen envío automático («Se envían solos al volver la señal», «se envían al volver la conexión»): pasan a decir que se envían al pulsar «Enviar ahora».
 
 ### 4.4 Telemetría para decidir la entrega 2
-- Una vez por proceso, la app envía a observabilidad el evento `pending_subscriptions.count` con el número de pendientes. Se envía cuando arranca la Activity/ViewModel con una sesión ya existente y también cuando se inicia una sesión (inicio de sesión nuevo, mediante `onSessionStarted` de `MainActivity`, porque ese flujo no recrea la Activity); la guarda por proceso evita el doble envío. Un fallo al leer la cola nunca cierra la app: no se envía nada y se reintenta en la siguiente oportunidad. Se documenta en `observabilidad-taxonomia-eventos.md`.
+- Una vez por proceso, la app envía a observabilidad el evento `pending_subscriptions.count` con el número de pendientes. Se envía al iniciar la actividad con una sesión existente y, tras un login nuevo, al iniciar la sesión (una vez por proceso; `onSessionStarted` de `MainActivity`, porque ese flujo no recrea la Activity); la guarda por proceso evita el doble envío. Un fallo al leer la cola nunca cierra la app: no se envía nada y se reintenta en la siguiente oportunidad. Se documenta en `observabilidad-taxonomia-eventos.md`.
 
 ### 4.5 Lo que no cambia
 Backend; esquema de Room; WorkManager y `ACCESS_NETWORK_STATE`; preautorización; `SubmitAndTrackRegistrationUseCase` (la reconciliación por `registrationOperationId` sigue igual); verificación de versión.
@@ -113,3 +113,20 @@ Backend; esquema de Room; WorkManager y `ACCESS_NETWORK_STATE`; preautorización
 - **`CatalogMapper.kt` se borró**: solo lo usaba el repositorio anterior, que leía y guardaba el catálogo en Room.
 - **Textos de la cola, tal como quedaron**: banner superior de la pantalla de pendientes (solo se muestra con pendientes) «Envíalos con “Enviar ahora” cuando tengas señal»; nota final de esa pantalla «Ya no se guardan registros sin señal: aquí solo quedan los que se guardaron antes.»; banner del inicio del técnico «N registro(s) sin enviar · toca para enviarlos», que ya no existe con 0 pendientes (se quitó el estado «Todo enviado»).
 - **La guarda de telemetría se libera sola** si la cola no se puede leer o si la corrutina se cancela antes de enviar, de modo que se reintenta en la siguiente apertura del proceso.
+
+## 10. Pendientes cerrados el 2026-10-20
+
+Plan: `pendientes-registro-offline-limpieza-plan-2026-10-20.md` (rama `fix/pendientes-registro-offline`, parte de `develop` 6a4854c5). Verificado con las pruebas unitarias de `:domain`, `:data` y `:presentation` y con `:presentation:compileDevDebugAndroidTestKotlin`.
+
+**Hecho en esta ola**
+- Paso de tipo de servicio y cabecera: `ServiceTypeSelected` se ignora fuera de `SERVICE_TYPE` y con una operación de preautorización; un tipo sin planes activos no deja avanzar con «Continuar»; la cabecera oculta el progreso con un `if` en lugar de un `return`; las tarjetas de tipo forman un grupo de selección y recortan el ripple con su forma; `serviceTypeTitle()` es un `when` exhaustivo; el pie dice «Elegido: …»; la fila de solo lectura de Solo TV se lee como un solo elemento; el E2E de fibra deja una línea de registro cuando el paso de tipo se omite; pruebas de salida y de cancelación de la OLT ajustadas.
+- Cola de pendientes y telemetría: el estado «Esperando señal» pasa a «Por enviar»; la nota final de la pantalla de pendientes solo aparece con pendientes; la regla «pendientes > 0» vive solo en `MainNavigation.moreItemsFor` (`MoreMenu.from` solo pone la insignia con el conteo); `MoreRoute` ya no reinicia la petición de planes al cruzar el conteo por cero; `PendingSubscriptionsTelemetry.resetForTest()` y su prueba de cancelación; `MainActivityViewModel` reutiliza el usuario ya leído; las pruebas de cancelación del repositorio de catálogo (ONU y equipos de core); el texto exacto del fallo de red al enviar; ajustes de documentación (taxonomía de eventos, `AGENTS.md`, este spec).
+- Carga del catálogo: el fallo ya no abre un diálogo; el asistente muestra el mensaje con un botón «Reintentar» (`RetryCatalogLoad`, que reutiliza el pedido de instalación y el cliente de la última carga), el mensaje se anuncia como región activa cortés y un fallo de carga no deja elegir tipo con listas vacías. `PlanResponse.equals` es seguro ante `null` y otros tipos, y `hashCode` se basa en `id`.
+- Pruebas: con el catálogo de OLT vacío y una preautorización lista no queda `catalogLoadError`; el reintento reutiliza también el `customerId`; en `MoreScreenUiTest` se quitó la entrada de pendientes de las pruebas donde no demostraba nada.
+
+**Decidido fuera**
+- Registrar fallos de los endpoints opcionales del catálogo (ONU, equipos de core): exige conectar observabilidad con el módulo `:data`; el síntoma ya se ve («No hay routers core disponibles»).
+- La prueba del ViewModel que fije «sin foto» con preautorización: ya la fija `RegisterSubscriptionUseCaseTest`.
+- La tarjeta «Equipo» con una serie de ONU guardada en un tipo no fibra: inalcanzable (la guarda se borra al cancelar la fibra).
+- Mostrar la entrada de pendientes cuando falla la lectura de Room, y el banner del técnico desactualizado tras una recarga fallida: casos improbables e inofensivos.
+- `GetRegistrationCatalogUseCase` como paso directo: lo exige el plan de la entrega 1.

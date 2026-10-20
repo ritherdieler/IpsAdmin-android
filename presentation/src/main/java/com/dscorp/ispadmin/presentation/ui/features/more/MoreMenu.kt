@@ -18,6 +18,7 @@ data class MoreMenu(val header: MoreHeader, val sections: List<MoreSection>, val
             "Red" to listOf(MoreItem.NETWORK_MAP, MoreItem.OLT_TOOLS),
         )
 
+        /** [items] arrive already filtered by role and queue state; [pending] only feeds the count badge. */
         fun from(user: User, items: List<MoreItem>, pending: Int?, activePlans: Int?): MoreMenu {
             val fullName = listOf(user.name, user.lastName).joinToString(" ").trim()
             val words = fullName.split(Regex("\\s+")).filter { it.isNotEmpty() }
@@ -28,7 +29,7 @@ data class MoreMenu(val header: MoreHeader, val sections: List<MoreSection>, val
                     role = roleLabel(user.type),
                 ),
                 sections = SECTIONS.mapNotNull { (title, order) ->
-                    val entries = order.filter { it in items && (it != MoreItem.PENDING_SUBSCRIPTIONS || (pending ?: 0) > 0) }.map { item ->
+                    val entries = order.filter { it in items }.map { item ->
                         MoreEntry(item, when (item) {
                             MoreItem.PLANS -> activePlans?.let { "$it ${if (it == 1) "activo" else "activos"}" }
                             MoreItem.PENDING_SUBSCRIPTIONS -> pending?.toString()

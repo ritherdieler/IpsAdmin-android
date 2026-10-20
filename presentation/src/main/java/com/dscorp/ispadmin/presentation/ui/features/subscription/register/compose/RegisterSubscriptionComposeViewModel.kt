@@ -194,6 +194,10 @@ class RegisterSubscriptionComposeViewModel(
     private var locationPipelineJob: Job? = null
 
     private var loadScreenJob: Job? = null
+    private var lastLoadOrderId: Int? = null
+    // True once a catalog load let the wizard run; later failures must not hide the usable form.
+    private var catalogLoadedOnce = false
+    private var lastLoadCustomerId: Int? = null
     private var refreshOnuJob: Job? = null
     private var registerSubscriptionJob: Job? = null
     private var acsWatchJob: Job? = null
@@ -234,6 +238,9 @@ class RegisterSubscriptionComposeViewModel(
     }
 
     fun loadScreenData(installationOrderId: Int?, customerId: Int? = null) {
+        lastLoadOrderId = installationOrderId
+        lastLoadCustomerId = customerId
+        _uiState.update { it.copy(catalogLoadError = null) }
         loadScreenJob?.cancel()
         observabilityClient.addBreadcrumb(
             category = ObsBreadcrumbCategory.NAVIGATION,
@@ -241,6 +248,7 @@ class RegisterSubscriptionComposeViewModel(
             data = mapOf("feature" to OBS_FEATURE, "orderId" to installationOrderId)
         )
         loadScreenJob = viewModelScope.launch(mainImmediate) {
+            val hadCatalog = catalogLoadedOnce
             try {
                 _uiState.update { it.copy(isLoading = true) }
                 val catalogFailure = applyInitialCatalogData().exceptionOrNull()
@@ -248,9 +256,10 @@ class RegisterSubscriptionComposeViewModel(
                 if (catalogFailure != null &&
                     !(missingCoreCatalog && onuRegistrationOperationUseCase != null)
                 ) {
-                    emitInitialCatalogError(catalogFailure, installationOrderId)
+                    emitInitialCatalogError(catalogFailure, installationOrderId, hadCatalog)
                     return@launch
                 }
+                if (!missingCoreCatalog) catalogLoadedOnce = true
                 if (installationOrderId != null) {
                     _uiState.update { it.copy(orderId = installationOrderId) }
                     mergeInstallationOrderData(installationOrderId).exceptionOrNull()
@@ -293,9 +302,11 @@ class RegisterSubscriptionComposeViewModel(
                     emitInitialCatalogError(
                         requireNotNull(catalogFailure) { NO_ACTIVE_CORE_DEVICES_ERROR },
                         installationOrderId,
+                        hadCatalog,
                     )
                     return@launch
                 }
+                catalogLoadedOnce = true
                 _uiState.update { it.copy(isLoading = false) }
             } catch (e: CancellationException) {
                 _uiState.update { it.copy(isLoading = false) }
@@ -306,8 +317,20 @@ class RegisterSubscriptionComposeViewModel(
         }
     }
 
-    private suspend fun emitInitialCatalogError(error: Throwable, installationOrderId: Int?) {
-        _uiState.update { it.copy(isLoading = false) }
+    private fun retryCatalogLoad() {
+        loadScreenData(lastLoadOrderId, lastLoadCustomerId)
+    }
+
+    private suspend fun emitInitialCatalogError(
+        error: Throwable,
+        installationOrderId: Int?,
+        hadCatalog: Boolean,
+    ) {
+        val message = initialCatalogErrorMessage(error)
+        // A reload that fails after a good load keeps the form and reports through the dismissible dialog.
+        _uiState.update {
+            it.copy(isLoading = false, catalogLoadError = if (hadCatalog) null else message)
+        }
         observabilityClient.reportError(
             throwable = error,
             message = "Fallo al cargar catálogos iniciales",
@@ -318,7 +341,7 @@ class RegisterSubscriptionComposeViewModel(
                 "orderId" to installationOrderId
             )
         )
-        _uiEvent.emit(RegisterSubscriptionUiEvent.Error(initialCatalogErrorMessage(error)))
+        if (hadCatalog) _uiEvent.emit(RegisterSubscriptionUiEvent.Error(message))
     }
 
     private fun initialCatalogErrorMessage(error: Throwable): String =
@@ -444,6 +467,7 @@ class RegisterSubscriptionComposeViewModel(
             is RegisterSubscriptionIntent.AccessModeSelected ->
                 onAccessModeSelected(intent.mode)
             RegisterSubscriptionIntent.RefreshOnuList -> refreshOnuList()
+            RegisterSubscriptionIntent.RetryCatalogLoad -> retryCatalogLoad()
             is RegisterSubscriptionIntent.NoteChanged -> onNoteChanged(intent.value)
             is RegisterSubscriptionIntent.EquipmentConditionChanged ->
                 onEquipmentConditionChanged(intent.value)
@@ -1746,6 +1770,11 @@ private fun onNapBoxSelectionCleared() {
 }
 
 private fun onServiceTypeSelected(type: InstallationType) {
+    // The type is only chosen on its own step, before any ONU is authorized.
+    val current = currentUiState()
+    if (current.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE || current.preauthorizationOperation != null) return
+    // The plan lists are empty because the load failed, not because there are no plans.
+    if (current.catalogLoadError != null) return
     if (getFilteredPlansForInstallationType(type).isEmpty()) {
         _uiState.update { it.copy(serviceTypeError = "No hay planes activos de ${type.planTypeLabel()}.") }
         return

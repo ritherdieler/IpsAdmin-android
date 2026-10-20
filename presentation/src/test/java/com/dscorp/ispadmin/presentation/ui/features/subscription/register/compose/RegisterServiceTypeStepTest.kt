@@ -3,10 +3,14 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compo
 import android.app.Application
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -35,6 +39,7 @@ class RegisterServiceTypeStepTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     private val intents = mutableListOf<RegisterSubscriptionIntent>()
+    private val backPresses = BackPressCounter()
 
     private fun show(
         chosen: Boolean = false,
@@ -42,6 +47,7 @@ class RegisterServiceTypeStepTest {
         error: String? = null,
     ) {
         composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        backPresses.installOn(composeRule)
         composeRule.setContent {
             MaterialTheme {
                 RegisterSubscriptionForm(
@@ -94,6 +100,35 @@ class RegisterServiceTypeStepTest {
     }
 
     @Test
+    fun `the footer names a wireless choice without ONU`() {
+        show(chosen = true, type = InstallationType.WIRELESS)
+
+        composeRule.onNodeWithText("Elegido: Inalámbrico · sin ONU").assertExists()
+    }
+
+    @Test
+    fun `the option cards are announced as one selection group`() {
+        show()
+
+        val inGroup = hasAnyAncestor(SemanticsMatcher.keyIsDefined(SemanticsProperties.SelectableGroup))
+        listOf(
+            RegisterSubscriptionTestTags.SERVICE_TYPE_FIBER,
+            RegisterSubscriptionTestTags.SERVICE_TYPE_TV,
+            RegisterSubscriptionTestTags.SERVICE_TYPE_WIRELESS,
+        ).forEach { composeRule.onNode(hasTestTag(it) and inGroup).assertExists() }
+    }
+
+    @Test
+    fun `the cancel action leaves the screen`() {
+        show()
+
+        composeRule.onNodeWithText("Cancelar").performClick()
+
+        assertEquals(1, backPresses.count)
+        assertTrue(intents.none { it is RegisterSubscriptionIntent.CancelOnuRegistration })
+    }
+
+    @Test
     fun `no option is selected before choosing`() {
         show(chosen = false, type = InstallationType.FIBER)
 
@@ -115,6 +150,7 @@ class RegisterServiceTypeStepTest {
         composeRule.onNodeWithContentDescription("Cerrar registro").performClick()
         composeRule.onNodeWithText("Cancelar").performClick()
 
+        assertEquals(2, backPresses.count)
         assertTrue(intents.none { it is RegisterSubscriptionIntent.CancelOnuRegistration })
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL).assertDoesNotExist()
     }

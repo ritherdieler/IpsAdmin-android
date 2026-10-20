@@ -26,7 +26,7 @@ data class PendingSubscriptionListItem(
 ) {
     val statusLabel: String
         get() = when (status) {
-            PendingSubscriptionStatus.PENDING -> "Esperando señal"
+            PendingSubscriptionStatus.PENDING -> "Por enviar"
             PendingSubscriptionStatus.SYNCING -> "Enviando…"
             PendingSubscriptionStatus.FAILED, PendingSubscriptionStatus.CONFLICT -> "No se pudo enviar"
         }

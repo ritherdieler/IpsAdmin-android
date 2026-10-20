@@ -14,6 +14,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
+private const val NO_OFFLINE_SAVE_NOTE =
+    "Ya no se guardan registros sin señal: aquí solo quedan los que se guardaron antes."
+
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class PendingSubscriptionsScreenTest {
@@ -59,8 +62,9 @@ class PendingSubscriptionsScreenTest {
 
         composeRule.onNodeWithText("Ana Perez").assertIsDisplayed()
         composeRule.onNodeWithText("DNI 12345678", substring = true).assertIsDisplayed()
-        composeRule.onNodeWithText("Esperando señal").assertIsDisplayed()
+        composeRule.onNodeWithText("Por enviar").assertIsDisplayed()
         composeRule.onNodeWithText("Por enviar · 1").assertIsDisplayed()
+        composeRule.onNodeWithText(NO_OFFLINE_SAVE_NOTE).assertExists()
     }
 
     @Test
@@ -102,6 +106,7 @@ class PendingSubscriptionsScreenTest {
         composeRule.onNodeWithText("No hay registros por enviar.").assertIsDisplayed()
         composeRule.onNodeWithText("Por enviar · 0").assertIsDisplayed()
         composeRule.onNodeWithText("Envíalos con “Enviar ahora” cuando tengas señal").assertDoesNotExist()
+        composeRule.onNodeWithText(NO_OFFLINE_SAVE_NOTE).assertDoesNotExist()
     }
 
     @Test

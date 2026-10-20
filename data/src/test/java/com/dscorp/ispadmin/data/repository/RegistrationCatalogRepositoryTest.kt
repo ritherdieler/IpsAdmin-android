@@ -127,6 +127,32 @@ class RegistrationCatalogRepositoryTest {
         }
     }
 
+    @Test
+    fun `cancellation in the onu fetch is rethrown`() = runTest {
+        stubRemoteCatalog()
+        coEvery { remote.fetchOnus() } throws CancellationException("cancelled")
+
+        try {
+            repository.fetchCatalog()
+            fail("Expected CancellationException")
+        } catch (expected: CancellationException) {
+            // expected
+        }
+    }
+
+    @Test
+    fun `cancellation in the core devices fetch is rethrown`() = runTest {
+        stubRemoteCatalog()
+        coEvery { remote.fetchCoreDevices() } throws CancellationException("cancelled")
+
+        try {
+            repository.fetchCatalog()
+            fail("Expected CancellationException")
+        } catch (expected: CancellationException) {
+            // expected
+        }
+    }
+
     private fun stubRemoteCatalog() {
         coEvery { remote.fetchPlans() } returns listOf(
             CatalogPlan(id = "plan-1", name = "100 Mbps", price = 80.0, type = "FIBER")

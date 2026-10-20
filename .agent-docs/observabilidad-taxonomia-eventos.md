@@ -216,7 +216,7 @@ Notas de diseño Fase 2 y 3:
 
 | message | Severidad | Tag | Cuándo se envía |
 |---------|-----------|-----|-----------------|
-| `pending_subscriptions.count` | `info` | `count` (entero ≥ 0) | Al iniciar la actividad con una sesión existente y al iniciar una sesión nueva (`onSessionStarted` de `MainActivity`); una vez por proceso (`MainActivityViewModel.reportPendingTelemetry`) |
+| `pending_subscriptions.count` | `info` | `count` (entero ≥ 0) | Al iniciar la actividad con una sesión existente y, tras un login nuevo, al iniciar la sesión (`onSessionStarted` de `MainActivity`); una vez por proceso (`MainActivityViewModel.reportPendingTelemetry`) |
 
 - Emisor: `PendingSubscriptionsTelemetry.reportOncePerProcess()` (`reportLog` directo, sin `obsTags`: es un dato de inventario, no una acción de pantalla).
 - `count` es la cantidad de registros de suscripción que siguen encolados en el teléfono.

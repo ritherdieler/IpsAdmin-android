@@ -111,33 +111,34 @@ internal fun RegisterWizardHeader(
                 color = colors.hero,
             )
         }
-        if (choosingType) return@Column
-        Column(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("wizard_stepper")
-                .semantics { contentDescription = "Paso ${current + 1} de ${phases.size}: ${phases[current].label}" },
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                phases.forEachIndexed { index, _ ->
-                    Box(
-                        Modifier.weight(1f).height(4.dp)
-                            .background(if (index <= current) colors.hero else colors.track, CircleShape)
-                            .testTag("wizard_step_${index + 1}"),
-                    )
+        if (!choosingType) {
+            Column(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("wizard_stepper")
+                    .semantics { contentDescription = "Paso ${current + 1} de ${phases.size}: ${phases[current].label}" },
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    phases.forEachIndexed { index, _ ->
+                        Box(
+                            Modifier.weight(1f).height(4.dp)
+                                .background(if (index <= current) colors.hero else colors.track, CircleShape)
+                                .testTag("wizard_step_${index + 1}"),
+                        )
+                    }
                 }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                phases.forEachIndexed { index, phase ->
-                    Text(
-                        phase.label,
-                        Modifier.weight(1f),
-                        fontSize = 11.sp,
-                        lineHeight = 14.sp,
-                        fontWeight = if (index == current) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (index == current) colors.hero else MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    phases.forEachIndexed { index, phase ->
+                        Text(
+                            phase.label,
+                            Modifier.weight(1f),
+                            fontSize = 11.sp,
+                            lineHeight = 14.sp,
+                            fontWeight = if (index == current) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (index == current) colors.hero else MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         }

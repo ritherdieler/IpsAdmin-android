@@ -172,6 +172,7 @@ private fun InstallationTypeReadOnly(type: InstallationType) {
             Modifier.fillMaxWidth().heightIn(min = 48.dp)
                 .background(colors.card, RoundedCornerShape(12.dp))
                 .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                .semantics(mergeDescendants = true) {}
                 .testTag(RegisterSubscriptionTestTags.INSTALLATION_TYPE)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,

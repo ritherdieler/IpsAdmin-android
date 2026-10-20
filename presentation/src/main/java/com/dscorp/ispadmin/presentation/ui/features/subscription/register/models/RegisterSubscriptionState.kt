@@ -29,6 +29,8 @@ data class RegisterSubscriptionState(
     val preauthorizationEnabled: Boolean = false,
     val preauthorizationOperation: OnuRegistrationOperation? = null,
     val preauthorizationError: String? = null,
+    /** Set when the initial catalog load fails; the screen offers «Reintentar» instead of the wizard. */
+    val catalogLoadError: String? = null,
     val serviceTypeChosen: Boolean = false,
     val serviceTypeError: String? = null,
     val showCancelConfirmation: Boolean = false,

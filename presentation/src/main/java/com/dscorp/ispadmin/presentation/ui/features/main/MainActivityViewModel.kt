@@ -15,7 +15,7 @@ class MainActivityViewModel : ViewModel() {
     val user = repository.getUserSession()
 
     init {
-        if (getCurrentUser() != null) {
+        if (user != null) {
             viewModelScope.launch { reportPendingTelemetry() }
         }
     }

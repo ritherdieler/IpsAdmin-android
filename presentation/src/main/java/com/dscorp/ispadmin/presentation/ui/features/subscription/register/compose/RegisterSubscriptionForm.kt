@@ -78,7 +78,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -191,159 +193,167 @@ fun RegisterSubscriptionForm(
                 },
             )
 
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 12.dp)
-                    .verticalScroll(scrollState)
-            ) {
-                AnimatedContent(
-                    targetState = formState.wizardStep,
-                    transitionSpec = {
-                        (androidx.compose.animation.fadeIn(tween(180)) + slideInHorizontally { it / 18 }) togetherWith
-                            (androidx.compose.animation.fadeOut(tween(120)) + slideOutHorizontally { -it / 18 })
-                    },
-                    label = "registration_step_content",
-                ) { step ->
-                    Column {
-                        if (formState.usesPreauthorization && step in ACS_STATUS_STEPS) {
-                            AcsStatusBanner(formState)
-                        }
-                        when (step) {
-                            RegisterSubscriptionWizardStep.SERVICE_TYPE -> ServiceTypeStepContent(formState, onIntent)
-                            RegisterSubscriptionWizardStep.ONU_SELECTION,
-                            RegisterSubscriptionWizardStep.ONU_CONFIRMATION ->
-                                OnuListBlock(
-                                    onus = form.onuList,
-                                    selected = form.selectedOnu,
-                                    error = form.onuError,
-                                    loading = formState.isLoading,
-                                    refreshIcon = {
-                                        RefreshIcon(onRefreshOnuList = { onIntent(RegisterSubscriptionIntent.RefreshOnuList) }, formState = formState)
-                                    },
-                                    onSelect = { onIntent(RegisterSubscriptionIntent.OnuSelected(it)) },
-                                )
-                            RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> AcsWaitingBlock(formState)
-                            RegisterSubscriptionWizardStep.CLIENT_LOCATION -> {
-                                ClientDataFields(
-                                    form = form,
-                                    isLoading = formState.isLoading,
-                                    identityLocked = formState.identityLocked,
-                                    customerBanner = formState.customerServiceNumber?.let { number ->
-                                        "Cliente: ${form.firstName} ${form.lastName} · servicio $number"
-                                    },
-                                    onFirstNameChanged = {
-                                        onIntent(RegisterSubscriptionIntent.FirstNameChanged(it))
-                                    },
-                                    onLastNameChanged = {
-                                        onIntent(RegisterSubscriptionIntent.LastNameChanged(it))
-                                    },
-                                    onDniChanged = { onIntent(RegisterSubscriptionIntent.DniChanged(it)) },
-                                    onPhoneChanged = { onIntent(RegisterSubscriptionIntent.PhoneChanged(it)) },
-                                    dniWarning = formState.dniWarning,
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                AddressFields(
-                                    formState = formState,
-                                    form = form,
-                                    onPlaceSelected = {
-                                        onIntent(RegisterSubscriptionIntent.PlaceSelected(it))
-                                    },
-                                    onPlaceSelectionCleared = {
-                                        onIntent(RegisterSubscriptionIntent.PlaceSelectionCleared)
-                                    },
-                                    onAddressChanged = {
-                                        onIntent(RegisterSubscriptionIntent.AddressChanged(it))
-                                    },
-                                    onUseCurrentLocation = {
-                                        onIntent(RegisterSubscriptionIntent.UseCurrentLocationClicked)
-                                    },
-                                    onChooseManualLocation = {
-                                        onIntent(RegisterSubscriptionIntent.ChooseManualLocationClicked)
-                                    },
-                                )
+            if (formState.catalogLoadError != null) {
+                CatalogLoadError(
+                    message = formState.catalogLoadError,
+                    onRetry = { onIntent(RegisterSubscriptionIntent.RetryCatalogLoad) },
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 12.dp)
+                        .verticalScroll(scrollState)
+                ) {
+                    AnimatedContent(
+                        targetState = formState.wizardStep,
+                        transitionSpec = {
+                            (androidx.compose.animation.fadeIn(tween(180)) + slideInHorizontally { it / 18 }) togetherWith
+                                (androidx.compose.animation.fadeOut(tween(120)) + slideOutHorizontally { -it / 18 })
+                        },
+                        label = "registration_step_content",
+                    ) { step ->
+                        Column {
+                            if (formState.usesPreauthorization && step in ACS_STATUS_STEPS) {
+                                AcsStatusBanner(formState)
                             }
-
-                            RegisterSubscriptionWizardStep.INSTALLATION -> ServiceStepContent(
-                                formState = formState,
-                                onIntent = onIntent,
-                                onOpenNapPicker = { napPickerOpen = true },
-                                onFacadePhotoClick = onFacadePhotoClick,
-                                hostDeviceField = {
-                                    MyOutLinedDropDown(
-                                        modifier = Modifier.testTag(RegisterSubscriptionTestTags.HOST_DEVICE),
-                                        label = stringResource(R.string.host_device),
-                                        items = form.activeCoreDevices(),
-                                        selected = form.selectedHostDevice,
-                                        onItemSelected = { onIntent(RegisterSubscriptionIntent.HostDeviceSelected(it)) },
-                                        hasError = form.hostDeviceError != null,
-                                        enabled = !formState.isLoading,
-                                        itemTestTag = { index, _ -> RegisterSubscriptionTestTags.hostDeviceItem(index) },
+                            when (step) {
+                                RegisterSubscriptionWizardStep.SERVICE_TYPE -> ServiceTypeStepContent(formState, onIntent)
+                                RegisterSubscriptionWizardStep.ONU_SELECTION,
+                                RegisterSubscriptionWizardStep.ONU_CONFIRMATION ->
+                                    OnuListBlock(
+                                        onus = form.onuList,
+                                        selected = form.selectedOnu,
+                                        error = form.onuError,
+                                        loading = formState.isLoading,
+                                        refreshIcon = {
+                                            RefreshIcon(onRefreshOnuList = { onIntent(RegisterSubscriptionIntent.RefreshOnuList) }, formState = formState)
+                                        },
+                                        onSelect = { onIntent(RegisterSubscriptionIntent.OnuSelected(it)) },
                                     )
-                                },
-                                legacyFiberFields = { LegacyFiberOnuFields(formState, onIntent) },
-                            )
+                                RegisterSubscriptionWizardStep.WAITING_FOR_ACS -> AcsWaitingBlock(formState)
+                                RegisterSubscriptionWizardStep.CLIENT_LOCATION -> {
+                                    ClientDataFields(
+                                        form = form,
+                                        isLoading = formState.isLoading,
+                                        identityLocked = formState.identityLocked,
+                                        customerBanner = formState.customerServiceNumber?.let { number ->
+                                            "Cliente: ${form.firstName} ${form.lastName} · servicio $number"
+                                        },
+                                        onFirstNameChanged = {
+                                            onIntent(RegisterSubscriptionIntent.FirstNameChanged(it))
+                                        },
+                                        onLastNameChanged = {
+                                            onIntent(RegisterSubscriptionIntent.LastNameChanged(it))
+                                        },
+                                        onDniChanged = { onIntent(RegisterSubscriptionIntent.DniChanged(it)) },
+                                        onPhoneChanged = { onIntent(RegisterSubscriptionIntent.PhoneChanged(it)) },
+                                        dniWarning = formState.dniWarning,
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    AddressFields(
+                                        formState = formState,
+                                        form = form,
+                                        onPlaceSelected = {
+                                            onIntent(RegisterSubscriptionIntent.PlaceSelected(it))
+                                        },
+                                        onPlaceSelectionCleared = {
+                                            onIntent(RegisterSubscriptionIntent.PlaceSelectionCleared)
+                                        },
+                                        onAddressChanged = {
+                                            onIntent(RegisterSubscriptionIntent.AddressChanged(it))
+                                        },
+                                        onUseCurrentLocation = {
+                                            onIntent(RegisterSubscriptionIntent.UseCurrentLocationClicked)
+                                        },
+                                        onChooseManualLocation = {
+                                            onIntent(RegisterSubscriptionIntent.ChooseManualLocationClicked)
+                                        },
+                                    )
+                                }
 
-                            RegisterSubscriptionWizardStep.CONFIRMATION -> ReviewStepContent(formState, onIntent)
+                                RegisterSubscriptionWizardStep.INSTALLATION -> ServiceStepContent(
+                                    formState = formState,
+                                    onIntent = onIntent,
+                                    onOpenNapPicker = { napPickerOpen = true },
+                                    onFacadePhotoClick = onFacadePhotoClick,
+                                    hostDeviceField = {
+                                        MyOutLinedDropDown(
+                                            modifier = Modifier.testTag(RegisterSubscriptionTestTags.HOST_DEVICE),
+                                            label = stringResource(R.string.host_device),
+                                            items = form.activeCoreDevices(),
+                                            selected = form.selectedHostDevice,
+                                            onItemSelected = { onIntent(RegisterSubscriptionIntent.HostDeviceSelected(it)) },
+                                            hasError = form.hostDeviceError != null,
+                                            enabled = !formState.isLoading,
+                                            itemTestTag = { index, _ -> RegisterSubscriptionTestTags.hostDeviceItem(index) },
+                                        )
+                                    },
+                                    legacyFiberFields = { LegacyFiberOnuFields(formState, onIntent) },
+                                )
+
+                                RegisterSubscriptionWizardStep.CONFIRMATION -> ReviewStepContent(formState, onIntent)
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
-            }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .imePadding()
-                    .background(IspTheme.colors.card)
-            ) {
-                HorizontalDivider(color = IspTheme.colors.cardBorder)
-                val selectedOnu = form.selectedOnu
-                when {
-                    formState.wizardStep in ONU_STEPS && selectedOnu != null -> RegisterWizardFooterLine(selectedOnu.chosenLabel())
-                    navigationHint != null -> RegisterWizardFooterLine(navigationHint)
-                    formState.wizardStep == RegisterSubscriptionWizardStep.SERVICE_TYPE ->
-                        RegisterWizardFooterLine(chosenServiceTypeLabel(form.installationType))
-                    formState.wizardStep == RegisterSubscriptionWizardStep.CONFIRMATION && formState.submitBlockedReason == null ->
-                        RegisterWizardFooterLine("Los ${registrationProgressPhases(formState.usesPreauthorization).size} pasos están completos", ok = true)
-                    formState.wizardStep != RegisterSubscriptionWizardStep.WAITING_FOR_ACS && formState.wizardStep !in ONU_STEPS ->
-                        RegisterWizardFooterLine("Todo listo para continuar", ok = true)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .imePadding()
+                        .background(IspTheme.colors.card)
+                ) {
+                    HorizontalDivider(color = IspTheme.colors.cardBorder)
+                    val selectedOnu = form.selectedOnu
+                    when {
+                        formState.wizardStep in ONU_STEPS && selectedOnu != null -> RegisterWizardFooterLine(selectedOnu.chosenLabel())
+                        navigationHint != null -> RegisterWizardFooterLine(navigationHint)
+                        formState.wizardStep == RegisterSubscriptionWizardStep.SERVICE_TYPE ->
+                            RegisterWizardFooterLine(chosenServiceTypeLabel(form.installationType))
+                        formState.wizardStep == RegisterSubscriptionWizardStep.CONFIRMATION && formState.submitBlockedReason == null ->
+                            RegisterWizardFooterLine("Los ${registrationProgressPhases(formState.usesPreauthorization).size} pasos están completos", ok = true)
+                        formState.wizardStep != RegisterSubscriptionWizardStep.WAITING_FOR_ACS && formState.wizardStep !in ONU_STEPS ->
+                            RegisterWizardFooterLine("Todo listo para continuar", ok = true)
+                    }
+                    formState.submitBlockedReason?.let { reason ->
+                        RegisterWizardFooterLine(reason, error = true, modifier = Modifier.testTag(RegisterSubscriptionTestTags.SUBMIT_BLOCKED_REASON))
+                    }
+                    WizardNavigationBar(
+                        step = formState.wizardStep,
+                        isLoading = formState.isLoading,
+                        canContinue = when (formState.wizardStep) {
+                            RegisterSubscriptionWizardStep.SERVICE_TYPE -> formState.serviceTypeChosen
+                            RegisterSubscriptionWizardStep.ONU_SELECTION,
+                            RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> form.selectedOnu != null
+                            else -> canAdvanceWizardStep(formState.wizardStep, form)
+                        },
+                        canRegister = form.isValid() && if (formState.preauthorizationOperation != null) {
+                            !form.facadePhotoUrl.isNullOrBlank()
+                        } else {
+                            form.facadePhotoUri != null || !form.facadePhotoUrl.isNullOrBlank()
+                        },
+                        showClientBack = formState.preauthorizationEnabled && !formState.usesPreauthorization,
+                        onBack = { onIntent(RegisterSubscriptionIntent.WizardBackClicked) },
+                        onLeave = { backDispatcher?.onBackPressed() },
+                        onContinue = { onIntent(RegisterSubscriptionIntent.WizardContinueClicked) },
+                        onRegister = { onIntent(RegisterSubscriptionIntent.RegisterClick()) },
+                        retryLabel = when (formState.preauthorizationOperation?.state) {
+                            "CANCEL_FAILED" -> "Reintentar limpieza"
+                            "CANCEL_REQUESTED", "CANCELLING" -> "Consultar limpieza"
+                            else -> "Reintentar"
+                        },
+                        onRetryAcs = {
+                            if (formState.preauthorizationOperation?.state in setOf("CANCEL_FAILED", "CANCEL_REQUESTED", "CANCELLING")) {
+                                onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
+                            } else onIntent(RegisterSubscriptionIntent.RetryOnuRegistration)
+                        },
+                        onCancelPreauthorization = { onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) },
+                    )
                 }
-                formState.submitBlockedReason?.let { reason ->
-                    RegisterWizardFooterLine(reason, error = true, modifier = Modifier.testTag(RegisterSubscriptionTestTags.SUBMIT_BLOCKED_REASON))
-                }
-                WizardNavigationBar(
-                    step = formState.wizardStep,
-                    isLoading = formState.isLoading,
-                    canContinue = when (formState.wizardStep) {
-                        RegisterSubscriptionWizardStep.SERVICE_TYPE -> formState.serviceTypeChosen
-                        RegisterSubscriptionWizardStep.ONU_SELECTION,
-                        RegisterSubscriptionWizardStep.ONU_CONFIRMATION -> form.selectedOnu != null
-                        else -> canAdvanceWizardStep(formState.wizardStep, form)
-                    },
-                    canRegister = form.isValid() && if (formState.preauthorizationOperation != null) {
-                        !form.facadePhotoUrl.isNullOrBlank()
-                    } else {
-                        form.facadePhotoUri != null || !form.facadePhotoUrl.isNullOrBlank()
-                    },
-                    showClientBack = formState.preauthorizationEnabled && !formState.usesPreauthorization,
-                    onBack = { onIntent(RegisterSubscriptionIntent.WizardBackClicked) },
-                    onLeave = { backDispatcher?.onBackPressed() },
-                    onContinue = { onIntent(RegisterSubscriptionIntent.WizardContinueClicked) },
-                    onRegister = { onIntent(RegisterSubscriptionIntent.RegisterClick()) },
-                    retryLabel = when (formState.preauthorizationOperation?.state) {
-                        "CANCEL_FAILED" -> "Reintentar limpieza"
-                        "CANCEL_REQUESTED", "CANCELLING" -> "Consultar limpieza"
-                        else -> "Reintentar"
-                    },
-                    onRetryAcs = {
-                        if (formState.preauthorizationOperation?.state in setOf("CANCEL_FAILED", "CANCEL_REQUESTED", "CANCELLING")) {
-                            onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
-                        } else onIntent(RegisterSubscriptionIntent.RetryOnuRegistration)
-                    },
-                    onCancelPreauthorization = { onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) },
-                )
             }
         }
             if (napPickerOpen) {
@@ -354,6 +364,33 @@ fun RegisterSubscriptionForm(
                 )
             }
         }
+    }
+}
+
+/** Initial catalog load failed: the step content and the navigation bar give way to a retry. */
+@Composable
+private fun CatalogLoadError(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = message,
+            fontSize = 15.sp,
+            lineHeight = 22.sp,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        )
+        Spacer(Modifier.height(16.dp))
+        RegisterPrimaryButton(
+            text = "Reintentar",
+            enabled = true,
+            loading = false,
+            modifier = Modifier.testTag(RegisterSubscriptionTestTags.CATALOG_RETRY),
+            onClick = onRetry,
+        )
     }
 }
 

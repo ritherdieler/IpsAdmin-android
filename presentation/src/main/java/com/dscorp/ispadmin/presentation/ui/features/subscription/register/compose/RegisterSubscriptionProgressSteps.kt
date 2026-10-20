@@ -2,6 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compo
 
 import com.dscorp.ispadmin.domain.model.AccessMode
 import com.dscorp.ispadmin.domain.model.RegistrationProgressCheckpoint
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 
 enum class RegisterScreenBusyMode {
     NONE,
@@ -15,6 +16,13 @@ fun registerScreenBusyMode(isLoading: Boolean, isRegistering: Boolean): Register
         isLoading -> RegisterScreenBusyMode.CATALOG
         else -> RegisterScreenBusyMode.NONE
     }
+
+/** The registering overlay can cancel the OLT authorization only when an ONU was (or will be) authorized first. */
+internal fun registrationOverlayCancelsOnu(state: RegisterSubscriptionState): Boolean = state.usesPreauthorization
+
+/** The catalog loader can cancel the OLT authorization only while the preauthorization request is running. */
+internal fun catalogOverlayCancelsOnu(state: RegisterSubscriptionState): Boolean =
+    state.usesPreauthorization && state.isPreauthorizationRequestInProgress
 
 fun registrationProgressStepMessage(
     progressMessage: String?,
