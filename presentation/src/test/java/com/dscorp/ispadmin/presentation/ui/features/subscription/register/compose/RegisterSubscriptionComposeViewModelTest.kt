@@ -77,6 +77,8 @@ private const val UNCERTAIN_MESSAGE =
 private const val CATALOG_CONNECTIVITY_MESSAGE =
     "No se pudo cargar el catálogo de registro. Revisa tu conexión y vuelve a intentar."
 
+private const val NO_ACTIVE_CORES_MESSAGE = "No hay routers core disponibles"
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class RegisterSubscriptionComposeViewModelTest {
 
@@ -1457,6 +1459,103 @@ class RegisterSubscriptionComposeViewModelTest {
         coVerify(exactly = 2) { getRegistrationCatalogUseCase() }
         job.cancel()
     }
+
+    private suspend fun TestScope.viewModelOnClientStepAfterGoodLoad(
+        observability: com.dscorp.ispadmin.observability.ObservabilityClient = mockk(relaxed = true),
+        events: MutableList<RegisterSubscriptionUiEvent>? = null,
+    ): RegisterSubscriptionComposeViewModel {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>(relaxed = true)
+        coEvery { operationUseCase.active() } returns null
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalogWithAllTypes())
+        val model = viewModelWithPreauthorization(operationUseCase, observabilityClient = observability)
+        viewModel = model
+        if (events != null) backgroundScope.launch(kotlinx.coroutines.test.UnconfinedTestDispatcher(testScheduler)) { model.uiEvent.collect { events.add(it) } }
+        model.loadScreenData(null)
+        advanceUntilIdle()
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        model.onIntent(RegisterSubscriptionIntent.FirstNameChanged("Lucía"))
+        advanceUntilIdle()
+        assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, model.uiState.value.wizardStep)
+        return model
+    }
+
+    @Test
+    fun `a failed reload after a successful load keeps the form and shows the dialog`() = runTest(testDispatcher) {
+        val obs = mockk<com.dscorp.ispadmin.observability.ObservabilityClient>(relaxed = true)
+        val events = mutableListOf<RegisterSubscriptionUiEvent>()
+        val model = viewModelOnClientStepAfterGoodLoad(obs, events)
+        val failure = java.io.IOException("offline")
+        coEvery { getRegistrationCatalogUseCase() } returns Result.failure(failure)
+
+        model.loadScreenData(null)
+        advanceUntilIdle()
+
+        val state = model.uiState.value
+        assertNull(state.catalogLoadError)
+        assertFalse(state.isLoading)
+        assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, state.wizardStep)
+        assertEquals("LUCÍA", state.registerSubscriptionForm.firstName)
+        assertEquals(listOf<RegisterSubscriptionUiEvent>(RegisterSubscriptionUiEvent.Error(CATALOG_CONNECTIVITY_MESSAGE)), events)
+        io.mockk.verify(exactly = 1) {
+            obs.reportError(throwable = failure, message = any(), severity = any(), tags = any())
+        }
+    }
+
+    @Test
+    fun `a reload without active cores after a successful load keeps the form and shows the dialog`() =
+        runTest(testDispatcher) {
+            val events = mutableListOf<RegisterSubscriptionUiEvent>()
+            val model = viewModelOnClientStepAfterGoodLoad(events = events)
+            coEvery { getRegistrationCatalogUseCase() } returns Result.success(
+                catalogWithAllTypes().copy(coreDevices = listOf(CatalogCoreDevice(id = 1, name = "Off", disabled = true)))
+            )
+
+            model.loadScreenData(null)
+            advanceUntilIdle()
+
+            val state = model.uiState.value
+            assertNull(state.catalogLoadError)
+            assertFalse(state.isLoading)
+            assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, state.wizardStep)
+            assertEquals("LUCÍA", state.registerSubscriptionForm.firstName)
+            assertEquals(listOf<RegisterSubscriptionUiEvent>(RegisterSubscriptionUiEvent.Error(NO_ACTIVE_CORES_MESSAGE)), events)
+        }
+
+    @Test
+    fun `after a failed first load, a retry that succeeds sets the flag so a later failed reload keeps the form`() =
+        runTest(testDispatcher) {
+            coEvery { getRegistrationCatalogUseCase() } returnsMany listOf(
+                Result.failure(java.io.IOException("offline")),
+                Result.success(catalogWithAllTypes()),
+            )
+            val operationUseCase = mockk<OnuRegistrationOperationUseCase>(relaxed = true)
+            coEvery { operationUseCase.active() } returns null
+            val model = viewModelWithPreauthorization(operationUseCase)
+            viewModel = model
+            val events = mutableListOf<RegisterSubscriptionUiEvent>()
+            backgroundScope.launch(kotlinx.coroutines.test.UnconfinedTestDispatcher(testScheduler)) { model.uiEvent.collect { events.add(it) } }
+            model.loadScreenData(null)
+            advanceUntilIdle()
+            assertEquals(CATALOG_CONNECTIVITY_MESSAGE, model.uiState.value.catalogLoadError)
+            model.onIntent(RegisterSubscriptionIntent.RetryCatalogLoad)
+            advanceUntilIdle()
+            assertNull(model.uiState.value.catalogLoadError)
+            model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+            model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+            model.onIntent(RegisterSubscriptionIntent.FirstNameChanged("Lucía"))
+            advanceUntilIdle()
+            coEvery { getRegistrationCatalogUseCase() } returns Result.failure(java.io.IOException("offline"))
+
+            model.loadScreenData(null)
+            advanceUntilIdle()
+
+            val state = model.uiState.value
+            assertNull(state.catalogLoadError)
+            assertEquals(RegisterSubscriptionWizardStep.CLIENT_LOCATION, state.wizardStep)
+            assertEquals("LUCÍA", state.registerSubscriptionForm.firstName)
+            assertEquals(listOf<RegisterSubscriptionUiEvent>(RegisterSubscriptionUiEvent.Error(CATALOG_CONNECTIVITY_MESSAGE)), events)
+        }
 
     @Test
     fun `loadScreenData clears the previous catalog error when it starts`() = runTest(testDispatcher) {
