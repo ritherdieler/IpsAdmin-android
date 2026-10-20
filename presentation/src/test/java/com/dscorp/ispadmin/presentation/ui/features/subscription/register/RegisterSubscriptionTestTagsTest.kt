@@ -19,6 +19,22 @@ class RegisterSubscriptionTestTagsTest {
     }
 
     @Test
+    fun `service type tags are unique and non-empty`() {
+        val tags = listOf(
+            RegisterSubscriptionTestTags.SERVICE_TYPE_FIBER,
+            RegisterSubscriptionTestTags.SERVICE_TYPE_TV,
+            RegisterSubscriptionTestTags.SERVICE_TYPE_WIRELESS,
+        )
+        assertThat(tags).containsNoDuplicates()
+        assertThat(tags).containsExactly(
+            "register_service_type_fiber",
+            "register_service_type_tv",
+            "register_service_type_wireless",
+        )
+        assertThat(RegisterSubscriptionTestTags.interactive).containsAtLeastElementsIn(tags)
+    }
+
+    @Test
     fun `formulario aplica testTags criticos del flujo fiber`() {
         val formSource = registerWizardSource()
         listOf(

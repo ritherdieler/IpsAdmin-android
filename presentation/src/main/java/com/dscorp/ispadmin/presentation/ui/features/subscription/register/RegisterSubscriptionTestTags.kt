@@ -14,6 +14,9 @@ object RegisterSubscriptionTestTags {
     const val NEARBY_NAP_LOADING = "register_nearby_nap_loading"
     const val NAP_SHEET = "register_nap_sheet"
     const val INSTALLATION_TYPE = "register_installation_type_dropdown"
+    const val SERVICE_TYPE_FIBER = "register_service_type_fiber"
+    const val SERVICE_TYPE_TV = "register_service_type_tv"
+    const val SERVICE_TYPE_WIRELESS = "register_service_type_wireless"
     const val ACCESS_MODE = "register_access_mode"
     const val ACCESS_MODE_PPPOE = "register_access_mode_pppoe"
     const val ACCESS_MODE_STATIC_IP = "register_access_mode_static_ip"
@@ -91,6 +94,9 @@ object RegisterSubscriptionTestTags {
         PLACE,
         NAP_BOX,
         INSTALLATION_TYPE,
+        SERVICE_TYPE_FIBER,
+        SERVICE_TYPE_TV,
+        SERVICE_TYPE_WIRELESS,
         ACCESS_MODE,
         ACCESS_MODE_PPPOE,
         ACCESS_MODE_STATIC_IP,
