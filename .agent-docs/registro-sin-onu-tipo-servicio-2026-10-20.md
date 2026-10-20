@@ -1,6 +1,6 @@
 # Registro de suscripción sin ONU: paso inicial de tipo de servicio
 
-Fecha: 2026-10-20 · Estado: **borrador para revisión** · Repo: `IpsAdmin-android app` (solo app; sin cambios de backend).
+Fecha: 2026-10-20 · Estado: **implementado en código el 2026-10-20; verificación manual en staging pendiente** · Repo: `IpsAdmin-android app` (solo app; sin cambios de backend).
 
 Diseño visual: lienzo «Rediseño IspAdmin Android», página «A · Registro» (https://claude.ai/artifact/1yfKRpqjG9eEXu3jD4XQwX), pantallas `a-reg-00-tipo`, `a-reg-11-sin-onu-cliente`, `a-reg-12-tv-servicio`, `a-reg-13-sin-onu-revision`, más `a-reg-03-servicio` con el tipo de solo lectura.
 
@@ -111,6 +111,13 @@ Instrumentadas: `FiberRegisterFirstOnuE2ETest` debe tocar primero `SERVICE_TYPE_
 Comando de verificación: `gradlew.bat :presentation:testDevDebugUnitTest --tests "*RegisterSubscription*"` y los tests de `RegisterWizardChrome`.
 
 Prueba manual obligatoria antes de proponer versión: en el laboratorio de staging, registrar un Solo TV (CATV) y un Inalámbrico sin ONU, y un Fibra completo para confirmar que no hay regresión.
+
+## Desviaciones respecto al spec
+
+- Los bloques de recuperación de operación (§5.2) fijan `wizardStep = ONU_SELECTION` además de `serviceTypeChosen = true`, y aplican `withOfflineState` al estado resultante.
+- El botón cerrar de la cabecera en `SERVICE_TYPE` siempre sale de la pantalla; nunca inicia la cancelación de la OLT, aunque ya esté elegida Fibra (nada está autorizado en ese paso).
+- Los mensajes de commit de la implementación están en inglés (el plan los proponía en español).
+- El E2E de fibra toca `SERVICE_TYPE_FIBER` y «Continuar» solo si el paso de tipo aparece; una ONU u operación recuperada lo omite.
 
 ## 7. Riesgos
 

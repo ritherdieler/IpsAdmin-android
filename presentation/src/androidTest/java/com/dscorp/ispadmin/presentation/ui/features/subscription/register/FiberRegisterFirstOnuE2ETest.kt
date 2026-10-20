@@ -327,10 +327,18 @@ class FiberRegisterFirstOnuE2ETest {
         waitUntilTag(RegisterSubscriptionTestTags.FORM_READY, timeoutMs = 120_000)
         val entryDeadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(120_000)
         var onuSelectorVisibleSince: Long? = null
+        var serviceTypePicked = false
         while (System.nanoTime() < entryDeadline) {
             if (isTagVisible(RegisterSubscriptionTestTags.FIRST_NAME) ||
                 isTagVisible(RegisterSubscriptionTestTags.INSTALLATION_TYPE) ||
                 isTagVisible(RegisterSubscriptionTestTags.SUBMIT)) return
+            // The wizard starts at SERVICE_TYPE; a resumed ONU or operation skips it.
+            if (!serviceTypePicked && isTagVisible(RegisterSubscriptionTestTags.SERVICE_TYPE_FIBER)) {
+                composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SERVICE_TYPE_FIBER).performClick()
+                clickWizardContinue()
+                serviceTypePicked = true
+                continue
+            }
             val onuSelectorVisible = composeRule.onAllNodesWithTag(RegisterSubscriptionTestTags.ONU)
                 .fetchSemanticsNodes().isNotEmpty()
             if (onuSelectorVisible) {
