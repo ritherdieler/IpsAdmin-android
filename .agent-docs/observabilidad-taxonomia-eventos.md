@@ -212,6 +212,17 @@ Notas de diseño Fase 2 y 3:
 - No se instrumentaron: `MainActivityViewModel` (solo lee sesión local) ni `FindSubscriptionViewModel` (código completamente comentado / muerto).
 - Se mantiene el enfoque conservador: sin `runTracked`, sin cambios de tipos de retorno ni de flujo de control.
 
+### Telemetría de registros pendientes (offline legado)
+
+| message | Severidad | Tag | Cuándo se envía |
+|---------|-----------|-----|-----------------|
+| `pending_subscriptions.count` | `info` | `count` (entero ≥ 0) | Una vez por proceso, al abrir la sesión (`MainActivityViewModel` con usuario logueado) |
+
+- Emisor: `PendingSubscriptionsTelemetry.reportOncePerProcess()` (`reportLog` directo, sin `obsTags`: es un dato de inventario, no una acción de pantalla).
+- `count` es la cantidad de registros de suscripción que siguen encolados en el teléfono.
+- Motivo: decidir cuándo se puede eliminar la cola offline (entrega 2 de «eliminar soporte offline de registro»). El dato `count = 0` en toda la flota es lo que habilita ese corte.
+- La guarda es por proceso (`AtomicBoolean`); si la lectura falla o se cancela, no se consume y se reintenta en la siguiente apertura.
+
 ## 8. Backend — indexado de `feature` y `action`
 
 Para poder agrupar y filtrar por dominio, el backend extrae `feature` y `action`

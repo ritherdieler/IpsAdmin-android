@@ -17,6 +17,7 @@ import com.dscorp.ispadmin.presentation.ui.features.payment.register.RegisterPay
 import com.dscorp.ispadmin.presentation.ui.features.profile.ProfileViewModel
 import com.dscorp.ispadmin.presentation.ui.features.registration.RegisterViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscription.edit.EditSubscriptionViewModel
+import com.dscorp.ispadmin.presentation.ui.features.subscription.pending.PendingSubscriptionsTelemetry
 import com.dscorp.ispadmin.presentation.ui.features.subscription.pending.PendingSubscriptionsViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose.RegisterSubscriptionComposeViewModel
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.SubscriptionDetailViewModel
@@ -73,6 +74,7 @@ val viewModelModule = module {
     viewModel { PaymentDetailViewModel(get(), get()) }
     viewModel { RegisterPaymentViewModel(get(), get()) }
     viewModel { ProfileViewModel() }
+    factory { PendingSubscriptionsTelemetry(get(), get()) }
     viewModel { MainActivityViewModel() }
     viewModel {
         com.dscorp.ispadmin.presentation.ui.features.report.ReportsViewModel(
