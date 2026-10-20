@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -19,6 +20,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -104,5 +106,16 @@ class RegisterServiceTypeStepTest {
 
         composeRule.onNodeWithText("No hay planes activos de Solo TV.").assertExists()
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SERVICE_TYPE_FIBER).assertIsSelected()
+    }
+
+    @Test
+    fun `closing the type step never starts an OLT cancellation`() {
+        show(chosen = true, type = InstallationType.FIBER)
+
+        composeRule.onNodeWithContentDescription("Cerrar registro").performClick()
+        composeRule.onNodeWithText("Cancelar").performClick()
+
+        assertTrue(intents.none { it is RegisterSubscriptionIntent.CancelOnuRegistration })
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL).assertDoesNotExist()
     }
 }

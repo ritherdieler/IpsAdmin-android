@@ -100,7 +100,8 @@ internal fun RegisterWizardHeader(
         Row(Modifier.fillMaxWidth().height(64.dp).padding(start = 4.dp, end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(
                 onClick = onClose,
-                modifier = if (usesPreauthorization) Modifier.testTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL) else Modifier,
+                // Nothing is authorized on the type step, so its close is a plain leave button.
+                modifier = if (usesPreauthorization && !choosingType) Modifier.testTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL) else Modifier,
             ) { Icon(Icons.Rounded.Close, contentDescription = "Cerrar registro") }
             Text("Nueva suscripción", Modifier.weight(1f), fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
             Text(

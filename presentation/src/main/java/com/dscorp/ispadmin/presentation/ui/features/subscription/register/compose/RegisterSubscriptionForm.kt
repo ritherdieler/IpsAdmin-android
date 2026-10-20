@@ -185,7 +185,8 @@ fun RegisterSubscriptionForm(
                 usesPreauthorization = formState.usesPreauthorization,
                 onClose = {
                     // Closing an ONU-first registration goes through the cancel flow, which cleans the OLT authorization.
-                    if (formState.usesPreauthorization) onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
+                    // The type step authorizes nothing, so it just leaves, whatever tile is chosen.
+                    if (formState.usesPreauthorization && formState.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE) onIntent(RegisterSubscriptionIntent.CancelOnuRegistration)
                     else backDispatcher?.onBackPressed()
                 },
             )
