@@ -2,7 +2,6 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compo
 
 import android.app.Application
 import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -38,19 +37,11 @@ class RegisterWizardChromeTest {
     private val zte = Onu("1", "1", "1", "t", "ZTE F670L", "GPON", "5", "ZTEGC8F01A22")
     private val huawei = Onu("1", "1", "1", "t", "HG8145V5", "GPON", "2", "HWTC7B21C0D4")
     private val intents = mutableListOf<RegisterSubscriptionIntent>()
-    private var exits = 0
+    private val backPresses = BackPressCounter()
 
     private fun show(state: RegisterSubscriptionState) {
         composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
-        composeRule.runOnUiThread {
-            composeRule.activity.onBackPressedDispatcher.addCallback(
-                object : OnBackPressedCallback(true) {
-                    override fun handleOnBackPressed() {
-                        exits++
-                    }
-                },
-            )
-        }
+        backPresses.installOn(composeRule)
         composeRule.setContent { MaterialTheme { RegisterSubscriptionForm(formState = state, onIntent = { intents += it }) } }
     }
 
@@ -167,7 +158,7 @@ class RegisterWizardChromeTest {
 
         composeRule.onNodeWithContentDescription("Cerrar registro").performClick()
 
-        assertEquals(1, exits)
+        assertEquals(1, backPresses.count)
         assertTrue(RegisterSubscriptionIntent.CancelOnuRegistration !in intents)
     }
 

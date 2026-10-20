@@ -2,7 +2,6 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compo
 
 import android.app.Application
 import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -40,7 +39,7 @@ class RegisterServiceTypeStepTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     private val intents = mutableListOf<RegisterSubscriptionIntent>()
-    private var exits = 0
+    private val backPresses = BackPressCounter()
 
     private fun show(
         chosen: Boolean = false,
@@ -48,15 +47,7 @@ class RegisterServiceTypeStepTest {
         error: String? = null,
     ) {
         composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
-        composeRule.runOnUiThread {
-            composeRule.activity.onBackPressedDispatcher.addCallback(
-                object : OnBackPressedCallback(true) {
-                    override fun handleOnBackPressed() {
-                        exits++
-                    }
-                },
-            )
-        }
+        backPresses.installOn(composeRule)
         composeRule.setContent {
             MaterialTheme {
                 RegisterSubscriptionForm(
@@ -133,7 +124,7 @@ class RegisterServiceTypeStepTest {
 
         composeRule.onNodeWithText("Cancelar").performClick()
 
-        assertEquals(1, exits)
+        assertEquals(1, backPresses.count)
         assertTrue(intents.none { it is RegisterSubscriptionIntent.CancelOnuRegistration })
     }
 
@@ -159,7 +150,7 @@ class RegisterServiceTypeStepTest {
         composeRule.onNodeWithContentDescription("Cerrar registro").performClick()
         composeRule.onNodeWithText("Cancelar").performClick()
 
-        assertTrue(exits > 0)
+        assertEquals(2, backPresses.count)
         assertTrue(intents.none { it is RegisterSubscriptionIntent.CancelOnuRegistration })
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL).assertDoesNotExist()
     }

@@ -2,7 +2,6 @@ package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compo
 
 import android.app.Application
 import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -34,19 +33,11 @@ class RegisterCatalogErrorTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     private val intents = mutableListOf<RegisterSubscriptionIntent>()
-    private var exits = 0
+    private val backPresses = BackPressCounter()
 
     private fun show(error: String?) {
         composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
-        composeRule.runOnUiThread {
-            composeRule.activity.onBackPressedDispatcher.addCallback(
-                object : OnBackPressedCallback(true) {
-                    override fun handleOnBackPressed() {
-                        exits++
-                    }
-                },
-            )
-        }
+        backPresses.installOn(composeRule)
         composeRule.setContent {
             MaterialTheme {
                 RegisterSubscriptionForm(
@@ -97,7 +88,7 @@ class RegisterCatalogErrorTest {
 
         composeRule.onNodeWithContentDescription("Cerrar registro").performClick()
 
-        assertEquals(1, exits)
+        assertEquals(1, backPresses.count)
     }
 
     @Test
