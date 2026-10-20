@@ -81,6 +81,20 @@ class SubscriptionHubModelTest {
     }
 
     @Test
+    fun `the current Core sends no debt totals, so the unpaid receipts give the header debt`() {
+        val header = HubHeader.from(
+            subscription(status = ServiceStatus.ACTIVE, pendingInvoices = 0, totalDebt = 0.0),
+            receipts = listOf(receipt(1, 100), receipt(2, 200, amount = 80.0), receipt(3, 300, paid = true)),
+        )
+
+        assertEquals(StatusBadge("Activo", BadgeTone.SUCCESS), header.status)
+        assertEquals(StatusBadge("Debe 2 meses", BadgeTone.ERROR), header.debtBadge)
+        assertEquals("S/ 130.00", header.debtAmount)
+        assertTrue(header.canCharge)
+        assertEquals("S/ 100.00", HubHeader.from(subscription(), receipts = listOf(receipt(1, 100))).debtAmount)
+    }
+
+    @Test
     fun `charge preselects every unpaid receipt oldest first`() {
         val draft = ChargeDraft.start(
             receipts = listOf(receipt(3, 300), receipt(1, 100), receipt(2, 200), receipt(9, 50, paid = true)),
@@ -131,6 +145,16 @@ class SubscriptionHubModelTest {
         assertFalse(onlyOne.canRestore)
 
         assertFalse(ChargeDraft.start(receipts, METHODS, ServiceStatus.ACTIVE).canRestore)
+    }
+
+    @Test
+    fun `the current Core cut flag offers the restore toggle without turning it on`() {
+        val flagged = ChargeDraft.start(listOf(receipt(1, 100)), METHODS, ServiceStatus.ACTIVE, cutFlagged = true)
+
+        assertTrue(flagged.canRestore)
+        assertFalse(flagged.restore)
+        val three = listOf(receipt(1, 100), receipt(2, 200), receipt(3, 300))
+        assertFalse(ChargeDraft.start(three, METHODS, ServiceStatus.ACTIVE, cutFlagged = true).toggle(2).toggle(3).canRestore)
     }
 
     private val fifty = listOf(receipt(1, 100, amount = 50.0), receipt(2, 200, amount = 50.0))

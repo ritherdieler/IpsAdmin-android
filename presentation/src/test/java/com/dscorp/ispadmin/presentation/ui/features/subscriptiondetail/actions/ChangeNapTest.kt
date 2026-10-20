@@ -7,7 +7,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.dscorp.ispadmin.data.datasource.remote.NapOptionResponse
+import com.dscorp.ispadmin.data.datasource.remote.NapMoveApi
 import com.dscorp.ispadmin.data.datasource.remote.NapOptionsResponse
+import com.dscorp.ispadmin.data.utils.EndpointUnavailableException
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -26,6 +28,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
+import retrofit2.HttpException
+import retrofit2.Response
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -118,6 +124,39 @@ class ChangeNapTest {
 
         assertEquals("No se pudo mover la ONU. Revisa tu conexión y vuelve a intentar.", viewModel.uiState.value.error)
         assertNull(viewModel.uiState.value.done)
+    }
+
+    @Test
+    fun `a Core without NAP options says the change is not available yet`() = runTest(dispatcher) {
+        coEvery { gateway.options(1842) } throws EndpointUnavailableException()
+        val viewModel = ChangeNapViewModel(gateway, dispatcher)
+
+        viewModel.onIntent(ChangeNapIntent.Load(1842))
+        advanceUntilIdle()
+
+        assertEquals("Cambiar caja NAP no está disponible todavía en este servidor.", viewModel.uiState.value.error)
+        assertNull(viewModel.uiState.value.model)
+    }
+
+    @Test
+    fun `the api gateway reads Spring's default 404 as a missing endpoint`() = runTest(dispatcher) {
+        val api = mockk<NapMoveApi>()
+        coEvery { api.options(1842) } throws HttpException(
+            Response.error<NapOptionsResponse>(
+                404,
+                """{"status":404,"error":"Not Found","message":"No message available","path":"/ispadmin/subscription/1842/nap-options"}"""
+                    .toResponseBody("application/json".toMediaType()),
+            ),
+        )
+        coEvery { api.options(7) } throws HttpException(
+            Response.error<NapOptionsResponse>(404, """{"code":"NOT_FOUND","message":"Suscripción no encontrada"}""".toResponseBody("application/json".toMediaType())),
+        )
+
+        val missing = runCatching { ApiChangeNapGateway(api).options(1842) }.exceptionOrNull()
+        val notFound = runCatching { ApiChangeNapGateway(api).options(7) }.exceptionOrNull()
+
+        assertEquals(true, missing is EndpointUnavailableException)
+        assertEquals(true, notFound is HttpException)
     }
 
     @Test

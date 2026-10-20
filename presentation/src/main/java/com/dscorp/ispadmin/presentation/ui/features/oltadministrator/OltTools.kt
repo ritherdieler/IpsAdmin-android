@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.data.datasource.remote.OltToolsApi
 import com.dscorp.ispadmin.data.datasource.remote.OnuLiveStatusResponse
 import com.dscorp.ispadmin.data.datasource.remote.OnuLookupResponse
+import com.dscorp.ispadmin.data.utils.ApiErrorBodyParser
+import com.dscorp.ispadmin.data.utils.EndpointUnavailableException
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.badge
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTitleCase
@@ -19,7 +21,7 @@ import org.json.JSONObject
 import java.util.Locale
 
 interface OltToolsGateway {
-    /** Null when the OLT does not know the serial. */
+    /** Null when the OLT does not know the serial; [EndpointUnavailableException] when the Core has no lookup yet. */
     suspend fun lookup(sn: String): OnuLookupResponse?
     suspend fun liveStatus(externalId: String): OnuLiveStatusResponse
     suspend fun deleteBySn(sn: String)
@@ -30,8 +32,9 @@ class ApiOltToolsGateway(private val api: OltToolsApi) : OltToolsGateway {
         val response = api.lookup(sn)
         return when {
             response.isSuccessful -> response.body()
-            response.code() == NOT_FOUND -> null
-            else -> throw HttpException(response)
+            response.code() != NOT_FOUND -> throw HttpException(response)
+            ApiErrorBodyParser.isMissingEndpoint(NOT_FOUND, response.errorBody()?.string()) -> throw EndpointUnavailableException()
+            else -> null
         }
     }
     override suspend fun liveStatus(externalId: String) = api.liveStatus(externalId)
@@ -137,6 +140,8 @@ class OltToolsViewModel(private val gateway: OltToolsGateway, private val mainIm
                 _uiState.update { it.copy(searching = false, card = OnuCard.from(lookup, live)) }
             } catch (cancelled: CancellationException) {
                 throw cancelled
+            } catch (_: EndpointUnavailableException) {
+                _uiState.update { it.copy(searching = false, error = UNAVAILABLE) }
             } catch (_: Exception) {
                 _uiState.update { it.copy(searching = false, error = SEARCH_ERROR) }
             }
@@ -163,6 +168,7 @@ class OltToolsViewModel(private val gateway: OltToolsGateway, private val mainIm
 
     private companion object {
         const val NOT_FOUND = "No hay una ONU con ese serial en la OLT."
+        const val UNAVAILABLE = "Función no disponible en este servidor."
         const val SEARCH_ERROR = "No se pudo consultar la OLT. Revisa tu conexión y vuelve a intentar."
         const val DELETE_ERROR = "No se pudo eliminar la ONU. La OLT no confirmó el cambio."
     }

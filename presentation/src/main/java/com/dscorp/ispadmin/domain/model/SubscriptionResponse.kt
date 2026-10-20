@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.domain.model
 
 import com.dscorp.ispadmin.domain.model.extensions.toFormattedDateString
+import com.google.gson.annotations.SerializedName
 import retrofit2.http.Url
 import java.util.Date
 
@@ -57,6 +58,12 @@ data class SubscriptionResponse(
     val fiberOnuSn: String? = null,
     val wifiSsid24: String? = null,
     val wifiSsid5: String? = null,
+    /**
+     * Cut by the debt cycle. The current production Core keeps cut services ACTIVE and only raises this
+     * flag (never cleared); the new Core sends CUT_OFF and sets it to match. Only used to offer «Restablecer».
+     */
+    @SerializedName(value = "isServiceCutOff", alternate = ["serviceCutOff"])
+    val isServiceCutOff: Boolean = false,
 ) : java.io.Serializable {
     fun getFullName() = "$firstName $lastName"
 

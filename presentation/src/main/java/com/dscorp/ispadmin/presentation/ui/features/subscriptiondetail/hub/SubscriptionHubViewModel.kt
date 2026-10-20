@@ -20,6 +20,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.His
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.HistoryMonth
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.canRestore
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.offersRestore
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.restoreHint
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -176,7 +177,7 @@ class SubscriptionHubViewModel(
                     it.copy(
                         isLoading = false,
                         subscription = subscription,
-                        header = HubHeader.from(subscription),
+                        header = HubHeader.from(subscription, receipts),
                         ficha = FichaHeader.from(subscription, receipts, today()),
                         payments = FichaPayments.from(receipts, subscription.totalDebt, today()),
                         tickets = tickets,
@@ -269,11 +270,13 @@ class SubscriptionHubViewModel(
 
     /** «Restablecer» quick action: only when the cut subscription keeps fewer than two pending receipts. */
     private fun restoreService() {
-        val subscription = _uiState.value.subscription ?: return
+        val state = _uiState.value
+        val subscription = state.subscription ?: return
         viewModelScope.launch(mainImmediate) {
-            val pending = subscription.pendingInvoiceQuantity
-            if (!canRestore(subscription.serviceStatus, pending)) {
-                restoreHint(subscription.serviceStatus, pending)?.let { _events.emit(SubscriptionHubEvent.Message(it)) }
+            val pending = owedDebt(subscription, state.receipts).pending
+            val cut = subscription.offersRestore()
+            if (!canRestore(cut, pending)) {
+                restoreHint(cut, pending)?.let { _events.emit(SubscriptionHubEvent.Message(it)) }
                 return@launch
             }
             val restored = gateway.restoreInternet(subscription.id).isSuccess
@@ -285,7 +288,13 @@ class SubscriptionHubViewModel(
     private fun openCharge() {
         val state = _uiState.value
         val subscription = state.subscription ?: return
-        val draft = ChargeDraft.start(state.receipts, state.methods, subscription.serviceStatus, lastUsed = gateway.lastMethod())
+        val draft = ChargeDraft.start(
+            receipts = state.receipts,
+            methods = state.methods,
+            status = subscription.serviceStatus,
+            lastUsed = gateway.lastMethod(),
+            cutFlagged = subscription.isServiceCutOff,
+        )
         _uiState.update { it.copy(charge = ChargeSheetState(draft)) }
     }
 
@@ -300,7 +309,8 @@ class SubscriptionHubViewModel(
         val subscription = _uiState.value.subscription ?: return
         if (charge.draft.blockingReason != null || charge.isSubmitting) return
         val user = gateway.currentUser()
-        if (user?.id == null) {
+        val collectorId = user?.id
+        if (user == null || collectorId == null) {
             _uiState.update { it.copy(charge = charge.copy(error = SESSION_ERROR)) }
             return
         }
@@ -308,7 +318,7 @@ class SubscriptionHubViewModel(
             _uiState.update { it.copy(charge = charge.copy(isSubmitting = true, error = null)) }
             val draft = charge.draft
             val registered = try {
-                gateway.registerCharge(draft.toBatch())
+                gateway.registerCharge(draft.toBatch(collectorId))
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
@@ -329,12 +339,13 @@ class SubscriptionHubViewModel(
         return gateway.restoreInternet(subscriptionId).isSuccess
     }
 
-    private fun ChargeDraft.toBatch() = ChargeBatch(
+    private fun ChargeDraft.toBatch(collectorId: Int) = ChargeBatch(
         paymentIds = selectedReceipts.mapNotNull { it.id },
         method = method,
         discountAmount = discountValue,
         discountReason = discountReason.takeIf { discountValue > 0 },
         electronicPayerName = payerName.trim().takeIf { requiresPayerName && it.isNotEmpty() },
+        responsibleId = collectorId,
     )
 
     private fun chargeReceipt(draft: ChargeDraft, registered: List<Payment>, holder: String, user: User, restored: Boolean?): ChargeReceipt {

@@ -83,16 +83,46 @@ class FichaModelTest {
     fun `restore needs fewer than two pending receipts`() {
         assertEquals(
             "Para restablecer debe quedar con menos de 2 recibos pendientes: cobra al menos 1 mes.",
-            restoreHint(ServiceStatus.CUT_OFF, pending = 2),
+            restoreHint(cut = true, pending = 2),
         )
         assertEquals(
             "Para restablecer debe quedar con menos de 2 recibos pendientes: cobra al menos 2 meses.",
-            restoreHint(ServiceStatus.CUT_OFF, pending = 3),
+            restoreHint(cut = true, pending = 3),
         )
-        assertNull(restoreHint(ServiceStatus.CUT_OFF, pending = 1))
-        assertNull(restoreHint(ServiceStatus.ACTIVE, pending = 3))
-        assertTrue(canRestore(ServiceStatus.CUT_OFF, pending = 1))
-        assertFalse(canRestore(ServiceStatus.CUT_OFF, pending = 2))
+        assertNull(restoreHint(cut = true, pending = 1))
+        assertNull(restoreHint(cut = false, pending = 3))
+        assertTrue(canRestore(cut = true, pending = 1))
+        assertFalse(canRestore(cut = true, pending = 2))
+        assertFalse(canRestore(cut = false, pending = 0))
+    }
+
+    @Test
+    fun `the current Core sends no debt totals, so the unpaid receipts give the debt card`() {
+        val header = FichaHeader.from(subscription(status = ServiceStatus.ACTIVE, pendingInvoices = 0, totalDebt = 0.0), receipts, TODAY)
+
+        assertEquals(DebtCard("S/ 150.00", "ago y set 2026 · oct vence mañana"), header.debt)
+        assertEquals(listOf(StatusBadge("Activo", BadgeTone.SUCCESS), StatusBadge("Debe 3 meses", BadgeTone.ERROR)), header.badges)
+        assertEquals(3, header.pending)
+    }
+
+    @Test
+    fun `the Core debt totals win over the loaded receipts`() {
+        val header = FichaHeader.from(subscription(pendingInvoices = 5, totalDebt = 250.0), receipts, TODAY)
+
+        assertEquals("S/ 250.00", header.debt?.amount)
+        assertEquals(5, header.pending)
+    }
+
+    @Test
+    fun `the current Core cut flag offers restore but is no cut badge`() {
+        val flagged = subscription(status = ServiceStatus.ACTIVE, pendingInvoices = 0, totalDebt = 0.0)
+            .copy(isServiceCutOff = true, lastCutOffDate = "2026-09-15", phone = null, location = GeoLocation())
+
+        assertTrue(flagged.offersRestore())
+        assertFalse(subscription(status = ServiceStatus.ACTIVE).offersRestore())
+        assertTrue(subscription(status = ServiceStatus.CUT_OFF).offersRestore())
+        assertEquals(listOf(FichaAction.RESTORE, FichaAction.TICKET), quickActions(flagged))
+        assertEquals(listOf(StatusBadge("Activo", BadgeTone.SUCCESS)), FichaHeader.from(flagged, emptyList(), TODAY).badges)
     }
 
     @Test

@@ -37,19 +37,20 @@ fun FichaScreen(
     tabContent: @Composable (FichaTab) -> Unit,
 ) {
     var confirmRestore by remember { mutableStateOf(false) }
-    val pending = subscription.pendingInvoiceQuantity
+    val pending = header.pending
+    val cut = subscription.offersRestore()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         FichaHeaderBand(header, compact = tab != FichaTab.RESUMEN, onBack = onBack, onMore = onMore, onCharge = onCharge)
         if (tab == FichaTab.RESUMEN) {
             FichaQuickActions(quickActions(subscription)) { action ->
-                if (action == FichaAction.RESTORE && canRestore(subscription.serviceStatus, pending)) confirmRestore = true
+                if (action == FichaAction.RESTORE && canRestore(cut, pending)) confirmRestore = true
                 else onAction(action)
             }
         }
         FichaTabs(tab, onTab, ticketsCount)
         when (tab) {
             FichaTab.RESUMEN -> FichaSummary(
-                restoreHint = restoreHint(subscription.serviceStatus, pending),
+                restoreHint = restoreHint(cut, pending),
                 service = serviceRows(subscription),
                 holder = holderRows(subscription),
                 network = networkRows(subscription),

@@ -476,12 +476,8 @@ class Repository : IRepository, KoinComponent {
     override suspend fun registerPayment(payment: Payment): Payment =
         PaymentResponses.registeredOrThrow(restApiServices.registerPayment(payment))
 
-    override suspend fun getPaymentMethods(): List<com.dscorp.ispadmin.domain.model.PaymentMethodOption> {
-        val response = restApiServices.getPaymentMethods()
-        val body = response.body()
-        if (response.isSuccessful && body != null) return body
-        throw Exception(ApiErrorBodyParser.parse(response.errorBody()?.string(), "Error al obtener los métodos de pago"))
-    }
+    override suspend fun getPaymentMethods(): List<com.dscorp.ispadmin.domain.model.PaymentMethodOption> =
+        PaymentResponses.methodsOrFallback { restApiServices.getPaymentMethods() }
 
     override suspend fun getNetworkDeviceTypes(): List<String> {
         val response = restApiServices.getNetworkDeviceTypes()

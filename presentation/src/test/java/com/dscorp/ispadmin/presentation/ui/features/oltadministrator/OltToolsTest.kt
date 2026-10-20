@@ -9,6 +9,7 @@ import com.dscorp.ispadmin.data.datasource.remote.OnuLinkedSubscriptionResponse
 import com.dscorp.ispadmin.data.datasource.remote.OnuLiveStatusResponse
 import com.dscorp.ispadmin.data.datasource.remote.OnuLookupResponse
 import com.dscorp.ispadmin.data.datasource.remote.OltToolsApi
+import com.dscorp.ispadmin.data.utils.EndpointUnavailableException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.Response
@@ -104,6 +105,36 @@ class OltToolsTest {
         advanceUntilIdle()
 
         assertEquals("No hay una ONU con ese serial en la OLT.", viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `a Core without the lookup says the tool is not available instead of not found`() = runTest(dispatcher) {
+        coEvery { gateway.lookup(any()) } throws EndpointUnavailableException()
+        val viewModel = OltToolsViewModel(gateway, dispatcher)
+        viewModel.onIntent(OltToolsIntent.QueryChanged("HWTC7B21C0D4"))
+        viewModel.onIntent(OltToolsIntent.Search)
+        advanceUntilIdle()
+
+        assertEquals("Función no disponible en este servidor.", viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `the api gateway tells a missing lookup endpoint from an unknown serial`() = runTest(dispatcher) {
+        val api = mockk<OltToolsApi>()
+        coEvery { api.lookup("HWTC7B21C0D4") } returns Response.error(
+            404,
+            """{"timestamp":"2026-10-20T10:00:00.000+00:00","status":404,"error":"Not Found","message":"No message available","path":"/ispadmin/onu/lookup"}"""
+                .toResponseBody("application/json".toMediaType()),
+        )
+        coEvery { api.lookup("XXXX1234") } returns Response.error(
+            404,
+            """{"status":404,"error":"Not Found","message":"No se encontró la ONU en la OLT"}""".toResponseBody("application/json".toMediaType()),
+        )
+
+        val missing = runCatching { ApiOltToolsGateway(api).lookup("HWTC7B21C0D4") }.exceptionOrNull()
+
+        assertEquals(true, missing is EndpointUnavailableException)
+        assertNull(ApiOltToolsGateway(api).lookup("XXXX1234"))
     }
 
     @Test

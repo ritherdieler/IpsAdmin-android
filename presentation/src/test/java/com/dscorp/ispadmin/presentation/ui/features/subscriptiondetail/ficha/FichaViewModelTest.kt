@@ -112,6 +112,41 @@ class FichaViewModelTest {
     }
 
     @Test
+    fun `on the current Core a flagged cut with one unpaid receipt is restored`() = runTest(dispatcher) {
+        coEvery { gateway.subscription(1842) } returns
+            subscription(status = ServiceStatus.ACTIVE, pendingInvoices = 0, totalDebt = 0.0).copy(isServiceCutOff = true)
+        coEvery { gateway.restoreInternet(1842) } returns Result.success(Unit)
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842))
+        advanceUntilIdle()
+
+        viewModel.onIntent(SubscriptionHubIntent.RestoreService)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { gateway.restoreInternet(1842) }
+        assertEquals(1, viewModel.uiState.value.ficha?.pending)
+    }
+
+    @Test
+    fun `on the current Core the unpaid receipts say what to charge before restoring`() = runTest(dispatcher) {
+        coEvery { gateway.subscription(1842) } returns
+            subscription(status = ServiceStatus.ACTIVE, pendingInvoices = 0, totalDebt = 0.0).copy(isServiceCutOff = true)
+        coEvery { gateway.recentPayments(1842, any()) } returns listOf(unpaid(9, 9), unpaid(8, 8))
+        val events = mutableListOf<SubscriptionHubEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.collect { events += it } }
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842))
+        advanceUntilIdle()
+
+        viewModel.onIntent(SubscriptionHubIntent.RestoreService)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { gateway.restoreInternet(any()) }
+        assertEquals(
+            listOf(SubscriptionHubEvent.Message("Para restablecer debe quedar con menos de 2 recibos pendientes: cobra al menos 1 mes.")),
+            events,
+        )
+    }
+
+    @Test
     fun `network tab loads the equipment reading once and survives a failing reading`() = runTest(dispatcher) {
         coEvery { gateway.subscription(1842) } returns subscription().copy(
             fiberOnuSn = "HWTC9A3F21B0",

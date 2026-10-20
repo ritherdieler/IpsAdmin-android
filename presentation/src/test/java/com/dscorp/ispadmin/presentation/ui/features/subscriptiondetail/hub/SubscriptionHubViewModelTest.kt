@@ -92,7 +92,7 @@ class SubscriptionHubViewModelTest {
         viewModel.onIntent(SubscriptionHubIntent.SubmitCharge)
         advanceUntilIdle()
 
-        assertEquals(ChargeBatch(listOf(1, 2), "Yape", 0.0, null, "Jorge Ramos V."), batch.captured)
+        assertEquals(ChargeBatch(listOf(1, 2), "Yape", 0.0, null, "Jorge Ramos V.", responsibleId = 7), batch.captured)
         coVerify(exactly = 1) { gateway.restoreInternet(1842) }
         verify { gateway.rememberMethod("Yape") }
         assertNull(viewModel.uiState.value.charge)
@@ -134,6 +134,32 @@ class SubscriptionHubViewModelTest {
 
         coVerify(exactly = 0) { gateway.restoreInternet(any()) }
         assertTrue(viewModel.uiState.value.charge == null)
+    }
+
+    @Test
+    fun `the current Core sends no debt totals, so the loaded receipts give the debt`() = runTest(dispatcher) {
+        coEvery { gateway.subscription(1842) } returns subscription(status = ServiceStatus.ACTIVE, pendingInvoices = 0, totalDebt = 0.0)
+
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842))
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("S/ 100.00", state.header?.debtAmount)
+        assertEquals(true, state.header?.canCharge)
+        assertEquals("S/ 100.00", state.ficha?.debt?.amount)
+        assertEquals("Cobrar S/ 100.00", state.payments?.pending?.chargeLabel)
+    }
+
+    @Test
+    fun `the current Core cut flag offers restore in the charge sheet`() = runTest(dispatcher) {
+        coEvery { gateway.subscription(1842) } returns subscription(status = ServiceStatus.ACTIVE).copy(isServiceCutOff = true)
+        viewModel.onIntent(SubscriptionHubIntent.Load(1842))
+        advanceUntilIdle()
+
+        viewModel.onIntent(SubscriptionHubIntent.OpenCharge)
+
+        assertEquals(true, viewModel.uiState.value.charge?.draft?.canRestore)
+        assertEquals(false, viewModel.uiState.value.charge?.draft?.restore)
     }
 
     @Test

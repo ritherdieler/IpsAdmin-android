@@ -52,6 +52,13 @@ class FichaPaymentsModelTest {
     }
 
     @Test
+    fun `without a Core total the unpaid receipts give the pending card`() {
+        val tab = FichaPayments.from(receipts, totalDebt = 0.0, today = today)
+
+        assertEquals(PendingCard("S/ 150.00", "2 recibos vencidos · ago y set 2026", "Cobrar S/ 150.00"), tab.pending)
+    }
+
+    @Test
     fun `an up to date subscription has no pending card`() {
         val tab = FichaPayments.from(receipts.filter { it.paid }, totalDebt = 0.0, today = today)
 

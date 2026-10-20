@@ -53,6 +53,23 @@ internal fun ServiceStatus.badge(): StatusBadge = when (this) {
     ServiceStatus.UNKNOWN -> StatusBadge("Desconocido", BadgeTone.NEUTRAL)
 }
 
+/** Unpaid receipts of a subscription: how many and what they add up to. */
+data class OwedDebt(val pending: Int, val amount: Double) {
+    val hasDebt: Boolean get() = pending > 0 && amount > 0
+}
+
+/**
+ * The Core debt totals. The current production Core sends zeros in GET subscription/{id} (it does not load the
+ * payments), so then the unpaid receipts already loaded give the debt. The new Core counts every unpaid receipt.
+ */
+internal fun owedDebt(subscription: SubscriptionResponse, receipts: List<Payment>): OwedDebt {
+    if (subscription.pendingInvoiceQuantity > 0 || subscription.totalDebt > 0) {
+        return OwedDebt(subscription.pendingInvoiceQuantity, subscription.totalDebt)
+    }
+    val unpaid = receipts.filter { !it.paid }
+    return OwedDebt(unpaid.size, unpaid.sumOf { it.amountToPay })
+}
+
 data class HubHeader(
     val name: String,
     val subtitle: String,
@@ -62,9 +79,8 @@ data class HubHeader(
     val canCharge: Boolean,
 ) {
     companion object {
-        fun from(subscription: SubscriptionResponse): HubHeader {
-            val pending = subscription.pendingInvoiceQuantity
-            val hasDebt = pending > 0 && subscription.totalDebt > 0
+        fun from(subscription: SubscriptionResponse, receipts: List<Payment> = emptyList()): HubHeader {
+            val owed = owedDebt(subscription, receipts)
             return HubHeader(
                 name = displayName(subscription.firstName, subscription.lastName),
                 subtitle = listOfNotNull(
@@ -73,9 +89,9 @@ data class HubHeader(
                     subscription.place?.name?.toTitleCase(),
                 ).joinToString(" · "),
                 status = subscription.serviceStatus.badge(),
-                debtBadge = if (hasDebt) StatusBadge(debtText(pending), BadgeTone.ERROR) else null,
-                debtAmount = if (hasDebt) formatSoles(subscription.totalDebt) else null,
-                canCharge = hasDebt,
+                debtBadge = if (owed.hasDebt) StatusBadge(debtText(owed.pending), BadgeTone.ERROR) else null,
+                debtAmount = if (owed.hasDebt) formatSoles(owed.amount) else null,
+                canCharge = owed.hasDebt,
             )
         }
 
@@ -99,6 +115,8 @@ data class ChargeDraft(
     val discountReason: String? = null,
     /** Method of the previous charge on this phone, badged «Último usado». */
     val lastUsed: String? = null,
+    /** Cut per the current production Core, which keeps the status ACTIVE and only raises isServiceCutOff. */
+    val cutFlagged: Boolean = false,
 ) {
     val selectedReceipts: List<Payment> get() = receipts.filter { it.id in selectedIds }
     val total: Double get() = selectedReceipts.sumOf { it.amountToPay }
@@ -108,7 +126,7 @@ data class ChargeDraft(
     private val receivedValue: Double? get() = if (isCash) received.toMoney() else null
     val change: Double? get() = receivedValue?.let { it - toPay }?.takeIf { it >= -MONEY_EPSILON }?.coerceAtLeast(0.0)
     val pendingAfter: Int get() = receipts.size - selectedIds.size
-    val canRestore: Boolean get() = status == ServiceStatus.CUT_OFF && pendingAfter <= MAX_PENDING_TO_RESTORE
+    val canRestore: Boolean get() = (status == ServiceStatus.CUT_OFF || cutFlagged) && pendingAfter <= MAX_PENDING_TO_RESTORE
     val requiresPayerName: Boolean get() = methods.any { it.name == method && it.requiresPayerName }
 
     val blockingReason: String?
@@ -131,6 +149,7 @@ data class ChargeDraft(
             methods: List<PaymentMethodOption>,
             status: ServiceStatus,
             lastUsed: String? = null,
+            cutFlagged: Boolean = false,
         ): ChargeDraft {
             val unpaid = receipts.filter { !it.paid && it.id != null }.sortedBy { it.billingDate }
             val remembered = methods.firstOrNull { it.name == lastUsed }?.name
@@ -143,8 +162,10 @@ data class ChargeDraft(
                 status = status,
                 restore = false,
                 lastUsed = remembered,
+                cutFlagged = cutFlagged,
             )
-            return draft.copy(restore = draft.canRestore)
+            // The current Core never clears the flag and re-enables a paid-up service itself: offer restoring, off by default.
+            return draft.copy(restore = draft.canRestore && status == ServiceStatus.CUT_OFF)
         }
     }
 }
@@ -174,6 +195,8 @@ data class ChargeBatch(
     val discountAmount: Double,
     val discountReason: String?,
     val electronicPayerName: String?,
+    /** Collector: the session user. */
+    val responsibleId: Int,
 )
 
 /** a-caj-04: confirmation shown after a charge. */

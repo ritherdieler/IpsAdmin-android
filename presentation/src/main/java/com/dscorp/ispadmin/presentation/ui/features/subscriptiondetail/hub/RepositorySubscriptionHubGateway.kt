@@ -46,7 +46,14 @@ class RepositorySubscriptionHubGateway(
     override suspend fun paymentMethods(): List<PaymentMethodOption> = repository.getPaymentMethods()
     override suspend fun registerCharge(batch: ChargeBatch): List<Payment> =
         requireNotNull(chargeApi) { "Charge API not wired" }.registerBatch(
-            PaymentBatchRequest(batch.paymentIds, batch.method, batch.discountAmount, batch.discountReason, batch.electronicPayerName),
+            PaymentBatchRequest(
+                paymentIds = batch.paymentIds,
+                method = batch.method,
+                responsibleId = batch.responsibleId,
+                discountAmount = batch.discountAmount,
+                discountReason = batch.discountReason,
+                electronicPayerName = batch.electronicPayerName,
+            ),
         )
     override fun lastMethod(): String? = preferences?.getString(LAST_METHOD_KEY, null)
     override fun rememberMethod(method: String) {

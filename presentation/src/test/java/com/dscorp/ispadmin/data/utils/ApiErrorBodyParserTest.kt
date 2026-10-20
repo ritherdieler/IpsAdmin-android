@@ -29,6 +29,24 @@ class ApiErrorBodyParserTest {
     }
 
     @Test
+    fun `a 404 without a message is an endpoint this Core does not have`() {
+        // Spring Boot's default error page for a route the current Core does not map.
+        val springDefault = """{"timestamp":"2026-10-20T10:00:00.000+00:00","status":404,"error":"Not Found","message":"No message available","path":"/ispadmin/onu/lookup"}"""
+        assertEquals(true, ApiErrorBodyParser.isMissingEndpoint(404, springDefault))
+        assertEquals(true, ApiErrorBodyParser.isMissingEndpoint(404, """{"status":404,"error":"Not Found","message":"","path":"/x"}"""))
+        assertEquals(true, ApiErrorBodyParser.isMissingEndpoint(404, ""))
+        assertEquals(true, ApiErrorBodyParser.isMissingEndpoint(404, "<html>Not Found</html>"))
+    }
+
+    @Test
+    fun `a 404 that says what is missing comes from the Core itself`() {
+        val notFound = """{"status":404,"error":"Not Found","message":"No se encontró la ONU en la OLT"}"""
+        assertEquals(false, ApiErrorBodyParser.isMissingEndpoint(404, notFound))
+        assertEquals(false, ApiErrorBodyParser.isMissingEndpoint(404, """{"code":"NOT_FOUND","message":"Subscription not found","error":"Subscription not found"}"""))
+        assertEquals(false, ApiErrorBodyParser.isMissingEndpoint(400, ""))
+    }
+
+    @Test
     fun `falls back when body empty or invalid`() {
         assertEquals("fallback", ApiErrorBodyParser.parse(null, "fallback"))
         assertEquals("fallback", ApiErrorBodyParser.parse(" ", "fallback"))

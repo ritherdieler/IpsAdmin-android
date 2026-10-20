@@ -12,6 +12,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.badge
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.displayName
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.formatSoles
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.label
+import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.owedDebt
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTitleCase
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.planLabel
 import java.time.Instant
@@ -28,11 +29,18 @@ data class DebtCard(val amount: String, val detail: String?)
 data class InfoRow(val label: String, val value: String, val note: String? = null, val badge: StatusBadge? = null)
 
 /** Navy band of the ficha (a-sus-04): name, code line, state badges and the debt card. */
-data class FichaHeader(val name: String, val subtitle: String, val badges: List<StatusBadge>, val debt: DebtCard?) {
+data class FichaHeader(
+    val name: String,
+    val subtitle: String,
+    val badges: List<StatusBadge>,
+    val debt: DebtCard?,
+    /** Unpaid receipts; decides whether «Restablecer» is allowed. */
+    val pending: Int = 0,
+) {
     companion object {
         fun from(subscription: SubscriptionResponse, receipts: List<Payment>, today: LocalDate): FichaHeader {
-            val pending = subscription.pendingInvoiceQuantity
-            val hasDebt = pending > 0 && subscription.totalDebt > 0
+            val owed = owedDebt(subscription, receipts)
+            val pending = owed.pending
             val status = subscription.cutSince()
                 ?.let { StatusBadge("Cortado desde ${dayMonth(it)}", BadgeTone.WARNING) }
                 ?: subscription.serviceStatus.badge()
@@ -45,11 +53,12 @@ data class FichaHeader(val name: String, val subtitle: String, val badges: List<
                 ).joinToString(" · "),
                 badges = listOfNotNull(
                     status,
-                    if (hasDebt) StatusBadge(if (pending == 1) "Debe 1 mes" else "Debe $pending meses", BadgeTone.ERROR) else null,
+                    if (owed.hasDebt) StatusBadge(if (pending == 1) "Debe 1 mes" else "Debe $pending meses", BadgeTone.ERROR) else null,
                 ),
-                debt = if (hasDebt) {
-                    DebtCard(formatSoles(subscription.totalDebt), debtDetail(receipts.filter { !it.paid }, today))
+                debt = if (owed.hasDebt) {
+                    DebtCard(formatSoles(owed.amount), debtDetail(receipts.filter { !it.paid }, today))
                 } else null,
+                pending = pending,
             )
         }
     }
@@ -77,15 +86,21 @@ fun debtDetail(unpaid: List<Payment>, today: LocalDate): String? {
     return listOfNotNull(overdueText, nextText).joinToString(" · ").ifEmpty { null }
 }
 
-fun restoreHint(status: ServiceStatus, pending: Int): String? {
-    if (status != ServiceStatus.CUT_OFF || pending <= MAX_PENDING_TO_RESTORE) return null
+fun restoreHint(cut: Boolean, pending: Int): String? {
+    if (!cut || pending <= MAX_PENDING_TO_RESTORE) return null
     val toCharge = pending - MAX_PENDING_TO_RESTORE
     val months = if (toCharge == 1) "1 mes" else "$toCharge meses"
     return "Para restablecer debe quedar con menos de 2 recibos pendientes: cobra al menos $months."
 }
 
-fun canRestore(status: ServiceStatus, pending: Int): Boolean =
-    status == ServiceStatus.CUT_OFF && pending <= MAX_PENDING_TO_RESTORE
+fun canRestore(cut: Boolean, pending: Int): Boolean =
+    cut && pending <= MAX_PENDING_TO_RESTORE
+
+/**
+ * «Restablecer» applies: CUT_OFF on the new Core; the current production Core keeps cut services ACTIVE and only
+ * raises isServiceCutOff. The flag is never a «Cortado» badge: that Core never clears it.
+ */
+internal fun SubscriptionResponse.offersRestore(): Boolean = serviceStatus == ServiceStatus.CUT_OFF || isServiceCutOff
 
 fun serviceRows(subscription: SubscriptionResponse): List<InfoRow> = listOfNotNull(
     subscription.plan?.let { plan ->
@@ -125,7 +140,7 @@ fun networkRows(subscription: SubscriptionResponse): List<InfoRow> = listOfNotNu
 
 fun quickActions(subscription: SubscriptionResponse): List<FichaAction> = buildList {
     if (!subscription.phone.isNullOrBlank()) addAll(listOf(FichaAction.CALL, FichaAction.WHATSAPP))
-    if (subscription.serviceStatus == ServiceStatus.CUT_OFF) add(FichaAction.RESTORE)
+    if (subscription.offersRestore()) add(FichaAction.RESTORE)
     add(FichaAction.TICKET)
     val location = subscription.location
     if (location != null && (location.latitude != 0.0 || location.longitude != 0.0)) add(FichaAction.MAP)
@@ -185,8 +200,10 @@ data class FichaPayments(
         fun from(receipts: List<Payment>, totalDebt: Double, today: LocalDate): FichaPayments {
             val unpaid = receipts.filter { !it.paid }
             val overdue = unpaid.filter { it.dueDay()?.isBefore(today) ?: true }.sortedBy { it.billingDate }
-            val pending = if (totalDebt > 0 && unpaid.isNotEmpty()) {
-                val amount = formatSoles(totalDebt)
+            // The current production Core sends a zero total; then the unpaid receipts add it up.
+            val owed = totalDebt.takeIf { it > 0 } ?: unpaid.sumOf { it.amountToPay }
+            val pending = if (owed > 0 && unpaid.isNotEmpty()) {
+                val amount = formatSoles(owed)
                 val detail = if (overdue.isNotEmpty()) {
                     val count = if (overdue.size == 1) "1 recibo vencido" else "${overdue.size} recibos vencidos"
                     "$count · ${debtDetail(overdue, today)}"

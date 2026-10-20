@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.dscorp.ispadmin.data.datasource.remote.NapMoveApi
 import com.dscorp.ispadmin.data.datasource.remote.NapMoveRequest
 import com.dscorp.ispadmin.data.datasource.remote.NapOptionsResponse
+import com.dscorp.ispadmin.data.utils.ApiErrorBodyParser
+import com.dscorp.ispadmin.data.utils.EndpointUnavailableException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,13 +15,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 interface ChangeNapGateway {
+    /** [EndpointUnavailableException] when the Core has no NAP options yet (current production Core). */
     suspend fun options(subscriptionId: Int): NapOptionsResponse
     /** Moves the ONU and returns "LV-15-1 · puerto 5". */
     suspend fun move(subscriptionId: Int, napId: Int, port: Int): String
 }
 
 class ApiChangeNapGateway(private val api: NapMoveApi) : ChangeNapGateway {
-    override suspend fun options(subscriptionId: Int) = api.options(subscriptionId)
+    override suspend fun options(subscriptionId: Int): NapOptionsResponse = try {
+        api.options(subscriptionId)
+    } catch (failed: retrofit2.HttpException) {
+        val body = failed.response()?.errorBody()?.string()
+        throw if (ApiErrorBodyParser.isMissingEndpoint(failed.code(), body)) EndpointUnavailableException() else failed
+    }
     override suspend fun move(subscriptionId: Int, napId: Int, port: Int): String {
         val moved = api.move(subscriptionId, NapMoveRequest(napId, port))
         return listOfNotNull(moved.napCode.takeIf { it.isNotBlank() }, moved.port?.let { "puerto $it" }).joinToString(" · ")
@@ -78,6 +86,8 @@ class ChangeNapViewModel(private val gateway: ChangeNapGateway, private val main
                 _uiState.update { it.copy(loading = false, model = model) }
             } catch (cancelled: CancellationException) {
                 throw cancelled
+            } catch (_: EndpointUnavailableException) {
+                _uiState.update { it.copy(loading = false, error = UNAVAILABLE) }
             } catch (_: Exception) {
                 _uiState.update { it.copy(loading = false, error = LOAD_ERROR) }
             }
@@ -109,6 +119,7 @@ class ChangeNapViewModel(private val gateway: ChangeNapGateway, private val main
 
     private companion object {
         const val LOAD_ERROR = "No se pudieron cargar las cajas. Revisa tu conexión y vuelve a intentar."
+        const val UNAVAILABLE = "Cambiar caja NAP no está disponible todavía en este servidor."
         const val PORT_TAKEN = "Ese puerto se ocupó hace un momento. Elige otro."
         const val MOVE_ERROR = "No se pudo mover la ONU. Revisa tu conexión y vuelve a intentar."
     }
