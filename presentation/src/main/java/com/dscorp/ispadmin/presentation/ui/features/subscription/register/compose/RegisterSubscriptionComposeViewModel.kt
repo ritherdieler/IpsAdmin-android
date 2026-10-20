@@ -347,10 +347,10 @@ class RegisterSubscriptionComposeViewModel(
 
         val cachedNapBoxes = catalog.napBoxes.map { it.toNapBoxResponse() }
         val cachedPlans = catalog.plans.map { it.toPlanResponse() }
-        val filteredPlans = cachedPlans.filter { it.type == InstallationType.FIBER }
-        val selectedPlan = getAutoSelectedPlan(filteredPlans, null)
-
         _uiState.update { current ->
+            // A reload (e.g. rotation) must keep the chosen type, so filter by it and keep the chosen plan.
+            val currentForm = current.registerSubscriptionForm
+            val filteredPlans = cachedPlans.filter { it.type == currentForm.installationType }
             current.copy(
                 currentUser = user,
                 cachedNapBoxList = cachedNapBoxes,
@@ -363,7 +363,7 @@ class RegisterSubscriptionComposeViewModel(
                     coreDeviceList = coreList,
                     selectedHostDevice = autoSelected,
                     hostDeviceError = null,
-                    selectedPlan = selectedPlan
+                    selectedPlan = getAutoSelectedPlan(filteredPlans, currentForm.selectedPlan)
                 )
             )
         }
@@ -1229,7 +1229,9 @@ class RegisterSubscriptionComposeViewModel(
             else withOfflineState(
                 state.copy(
                     serviceTypeChosen = true,
-                    wizardStep = RegisterSubscriptionWizardStep.ONU_SELECTION,
+                    wizardStep = if (!state.serviceTypeChosen || state.wizardStep == RegisterSubscriptionWizardStep.SERVICE_TYPE) {
+                        RegisterSubscriptionWizardStep.ONU_SELECTION
+                    } else state.wizardStep,
                     registerSubscriptionForm = state.registerSubscriptionForm.copy(
                         selectedOnu = selectedOnu,
                         onuError = null,
@@ -1295,7 +1297,9 @@ class RegisterSubscriptionComposeViewModel(
         val restoredStep = this["wizardStep"]?.toString()?.let { value ->
             runCatching { RegisterSubscriptionWizardStep.valueOf(value) }.getOrNull()
         }
-        return restoredStep?.takeUnless { it.isPreauthorizationStep() }
+        return restoredStep?.takeUnless {
+            it == RegisterSubscriptionWizardStep.SERVICE_TYPE || it.isPreauthorizationStep()
+        }
     }
 
     private fun restoreRegistrationDraft(
@@ -1753,14 +1757,13 @@ private fun observeOfflineMode() {
     }
 }
 
-/** Offline registration applies unless the ONU is preauthorized; solo TV never needs the client IP. */
+/** Offline registration applies unless the ONU is preauthorized; every type then needs the client IP. */
 private fun withOfflineState(state: RegisterSubscriptionState): RegisterSubscriptionState {
     val offline = deviceOffline && !state.usesPreauthorization
     return state.copy(
         isOfflineMode = offline,
         registerSubscriptionForm = state.registerSubscriptionForm.copy(
-            requiresClientIpAddress = offline &&
-                state.registerSubscriptionForm.installationType != InstallationType.ONLY_TV_FIBER
+            requiresClientIpAddress = offline
         )
     )
 }
@@ -1782,12 +1785,11 @@ private fun onNapBoxSelectionCleared() {
 }
 
 private fun onServiceTypeSelected(type: InstallationType) {
-    onInstallationTypeSelected(type)
-    val current = currentUiState()
-    if (current.registerSubscriptionForm.installationType != type) {
+    if (getFilteredPlansForInstallationType(type).isEmpty()) {
         _uiState.update { it.copy(serviceTypeError = "No hay planes activos de ${type.planTypeLabel()}.") }
         return
     }
+    onInstallationTypeSelected(type)
     _uiState.update { state ->
         withOfflineState(
             state.copy(
