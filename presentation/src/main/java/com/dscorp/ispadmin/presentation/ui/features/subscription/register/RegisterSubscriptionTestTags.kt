@@ -64,6 +64,7 @@ object RegisterSubscriptionTestTags {
     const val PROGRESS_HINT = "registration_progress_hint"
     const val CATALOG_LOADING_OVERLAY = "register_catalog_loading_overlay"
     const val CATALOG_LOADING_MESSAGE = "register_catalog_loading_message"
+    const val CATALOG_RETRY = "register_catalog_retry"
     const val SUCCESS_FULLSCREEN = "register_success_fullscreen"
     const val SUCCESS_MESSAGE = "register_success_message"
     const val SUCCESS_SECTION_WIFI = "register_success_section_wifi"

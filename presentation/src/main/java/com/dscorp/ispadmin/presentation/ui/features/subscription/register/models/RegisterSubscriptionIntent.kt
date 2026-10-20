@@ -28,6 +28,8 @@ sealed interface RegisterSubscriptionIntent {
     data class ServiceTypeSelected(val type: InstallationType) : RegisterSubscriptionIntent
     data class AccessModeSelected(val mode: AccessMode) : RegisterSubscriptionIntent
     data object RefreshOnuList : RegisterSubscriptionIntent
+    /** Re-runs the last initial load after it failed. */
+    data object RetryCatalogLoad : RegisterSubscriptionIntent
     data class NoteChanged(val value: String) : RegisterSubscriptionIntent
     data class EquipmentConditionChanged(val value: EquipmentCondition) : RegisterSubscriptionIntent
     data class OnVlanChanged(val vlan: String) : RegisterSubscriptionIntent

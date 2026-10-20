@@ -1345,22 +1345,19 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
-    fun `a failing catalog fetch emits the initial catalog error and does not open the form`() = runTest(testDispatcher) {
+    fun `a catalog fetch failure sets catalogLoadError and does not emit a dialog event`() = runTest(testDispatcher) {
         val events = loadCatalogFailingWith(IllegalStateException("catalog unavailable"))
 
-        assertEquals(1, events.size)
-        assertTrue(events[0] is RegisterSubscriptionUiEvent.Error)
-        assertEquals("catalog unavailable", (events[0] as RegisterSubscriptionUiEvent.Error).message)
+        assertTrue(events.isEmpty())
+        assertEquals("catalog unavailable", viewModel.uiState.value.catalogLoadError)
     }
 
     @Test
-    fun `a network failure on the catalog fetch shows the Spanish connectivity message`() = runTest(testDispatcher) {
+    fun `an IOException shows the Spanish connectivity message in catalogLoadError`() = runTest(testDispatcher) {
         val events = loadCatalogFailingWith(java.net.UnknownHostException("Unable to resolve host"))
 
-        assertEquals(
-            listOf<RegisterSubscriptionUiEvent>(RegisterSubscriptionUiEvent.Error(CATALOG_CONNECTIVITY_MESSAGE)),
-            events,
-        )
+        assertTrue(events.isEmpty())
+        assertEquals(CATALOG_CONNECTIVITY_MESSAGE, viewModel.uiState.value.catalogLoadError)
     }
 
     @Test
@@ -1369,10 +1366,99 @@ class RegisterSubscriptionComposeViewModelTest {
             IllegalStateException("wrapped", java.io.IOException("connection reset"))
         )
 
-        assertEquals(
-            listOf<RegisterSubscriptionUiEvent>(RegisterSubscriptionUiEvent.Error(CATALOG_CONNECTIVITY_MESSAGE)),
-            events,
+        assertTrue(events.isEmpty())
+        assertEquals(CATALOG_CONNECTIVITY_MESSAGE, viewModel.uiState.value.catalogLoadError)
+    }
+
+    @Test
+    fun `RetryCatalogLoad clears the error, reloads and opens the form on success`() = runTest(testDispatcher) {
+        coEvery { getRegistrationCatalogUseCase() } returnsMany listOf(
+            Result.failure(java.io.IOException("offline")),
+            Result.success(catalogWithAllTypes()),
         )
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>(relaxed = true)
+        coEvery { operationUseCase.active() } returns null
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        assertEquals(CATALOG_CONNECTIVITY_MESSAGE, viewModel.uiState.value.catalogLoadError)
+
+        viewModel.onIntent(RegisterSubscriptionIntent.RetryCatalogLoad)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNull(state.catalogLoadError)
+        assertFalse(state.isLoading)
+        assertTrue(state.registerSubscriptionForm.planList.isNotEmpty())
+        coVerify(exactly = 2) { getRegistrationCatalogUseCase() }
+    }
+
+    @Test
+    fun `RetryCatalogLoad reuses the parameters of the last load`() = runTest(testDispatcher) {
+        coEvery { getRegistrationCatalogUseCase() } returnsMany listOf(
+            Result.failure(java.io.IOException("offline")),
+            Result.success(catalogWithAllTypes()),
+        )
+        coEvery { installationOrderUseCase.getInstallationOrderByIdResult(42) } returns Result.failure(IllegalStateException("order unavailable"))
+        viewModel = viewModelWithPreauthorization(mockk<OnuRegistrationOperationUseCase>(relaxed = true))
+        viewModel.loadScreenData(42)
+        advanceUntilIdle()
+
+        viewModel.onIntent(RegisterSubscriptionIntent.RetryCatalogLoad)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { installationOrderUseCase.getInstallationOrderByIdResult(42) }
+    }
+
+    @Test
+    fun `a failed reload keeps the error`() = runTest(testDispatcher) {
+        coEvery { getRegistrationCatalogUseCase() } returns Result.failure(java.io.IOException("offline"))
+        viewModel = viewModelWithPreauthorization(mockk<OnuRegistrationOperationUseCase>(relaxed = true))
+        val events = mutableListOf<RegisterSubscriptionUiEvent>()
+        val job = launch { viewModel.uiEvent.collect { events.add(it) } }
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        viewModel.onIntent(RegisterSubscriptionIntent.RetryCatalogLoad)
+        advanceUntilIdle()
+
+        assertEquals(CATALOG_CONNECTIVITY_MESSAGE, viewModel.uiState.value.catalogLoadError)
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertTrue(events.isEmpty())
+        coVerify(exactly = 2) { getRegistrationCatalogUseCase() }
+        job.cancel()
+    }
+
+    @Test
+    fun `loadScreenData clears the previous catalog error when it starts`() = runTest(testDispatcher) {
+        coEvery { getRegistrationCatalogUseCase() } returns Result.failure(java.io.IOException("offline"))
+        viewModel = viewModelWithPreauthorization(mockk<OnuRegistrationOperationUseCase>(relaxed = true))
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+        coEvery { getRegistrationCatalogUseCase() } coAnswers {
+            delay(50)
+            Result.success(catalogWithAllTypes())
+        }
+
+        viewModel.loadScreenData(null)
+        testScheduler.runCurrent()
+
+        assertNull(viewModel.uiState.value.catalogLoadError)
+        assertTrue(viewModel.uiState.value.isLoading)
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `a catalog load failure does not let the wizard pick a type from empty lists`() = runTest(testDispatcher) {
+        loadCatalogFailingWith(java.io.IOException("offline"))
+
+        viewModel.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.ONLY_TV_FIBER))
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNull(state.serviceTypeError)
+        assertFalse(state.serviceTypeChosen)
+        assertEquals(CATALOG_CONNECTIVITY_MESSAGE, state.catalogLoadError)
     }
 
     @Test
@@ -1388,7 +1474,7 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
-    fun `loadScreenData emits error when user session fails`() = runTest(testDispatcher) {
+    fun `loadScreenData sets catalogLoadError when user session fails`() = runTest(testDispatcher) {
         coEvery { getUserSessionUseCase() } returns Result.failure(Exception("no session"))
 
         val events = mutableListOf<RegisterSubscriptionUiEvent>()
@@ -1399,9 +1485,8 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel.loadScreenData(null)
         advanceUntilIdle()
 
-        assertEquals(1, events.size)
-        assertTrue(events[0] is RegisterSubscriptionUiEvent.Error)
-        assertEquals("no session", (events[0] as RegisterSubscriptionUiEvent.Error).message)
+        assertTrue(events.isEmpty())
+        assertEquals("no session", viewModel.uiState.value.catalogLoadError)
         assertEquals(false, viewModel.uiState.value.isLoading)
 
         job.cancel()
@@ -1658,7 +1743,7 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
-    fun `loadScreenData emits error when no active cores`() = runTest(testDispatcher) {
+    fun `loadScreenData sets catalogLoadError when no active cores`() = runTest(testDispatcher) {
         coEvery { getRegistrationCatalogUseCase() } returns Result.success(
             sampleCatalog(
                 coreDevices = listOf(CatalogCoreDevice(id = 1, name = "Off", disabled = true))
@@ -1673,12 +1758,9 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel.loadScreenData(null)
         advanceUntilIdle()
 
-        assertEquals(1, events.size)
-        assertTrue(events[0] is RegisterSubscriptionUiEvent.Error)
-        assertEquals(
-            "No hay routers core disponibles",
-            (events[0] as RegisterSubscriptionUiEvent.Error).message
-        )
+        assertTrue(events.isEmpty())
+        assertEquals("No hay routers core disponibles", viewModel.uiState.value.catalogLoadError)
+        assertEquals(false, viewModel.uiState.value.isLoading)
 
         job.cancel()
     }

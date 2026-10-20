@@ -194,6 +194,8 @@ class RegisterSubscriptionComposeViewModel(
     private var locationPipelineJob: Job? = null
 
     private var loadScreenJob: Job? = null
+    private var lastLoadOrderId: Int? = null
+    private var lastLoadCustomerId: Int? = null
     private var refreshOnuJob: Job? = null
     private var registerSubscriptionJob: Job? = null
     private var acsWatchJob: Job? = null
@@ -234,6 +236,9 @@ class RegisterSubscriptionComposeViewModel(
     }
 
     fun loadScreenData(installationOrderId: Int?, customerId: Int? = null) {
+        lastLoadOrderId = installationOrderId
+        lastLoadCustomerId = customerId
+        _uiState.update { it.copy(catalogLoadError = null) }
         loadScreenJob?.cancel()
         observabilityClient.addBreadcrumb(
             category = ObsBreadcrumbCategory.NAVIGATION,
@@ -306,8 +311,12 @@ class RegisterSubscriptionComposeViewModel(
         }
     }
 
-    private suspend fun emitInitialCatalogError(error: Throwable, installationOrderId: Int?) {
-        _uiState.update { it.copy(isLoading = false) }
+    private fun retryCatalogLoad() {
+        loadScreenData(lastLoadOrderId, lastLoadCustomerId)
+    }
+
+    private fun emitInitialCatalogError(error: Throwable, installationOrderId: Int?) {
+        _uiState.update { it.copy(isLoading = false, catalogLoadError = initialCatalogErrorMessage(error)) }
         observabilityClient.reportError(
             throwable = error,
             message = "Fallo al cargar catálogos iniciales",
@@ -318,7 +327,6 @@ class RegisterSubscriptionComposeViewModel(
                 "orderId" to installationOrderId
             )
         )
-        _uiEvent.emit(RegisterSubscriptionUiEvent.Error(initialCatalogErrorMessage(error)))
     }
 
     private fun initialCatalogErrorMessage(error: Throwable): String =
@@ -444,6 +452,7 @@ class RegisterSubscriptionComposeViewModel(
             is RegisterSubscriptionIntent.AccessModeSelected ->
                 onAccessModeSelected(intent.mode)
             RegisterSubscriptionIntent.RefreshOnuList -> refreshOnuList()
+            RegisterSubscriptionIntent.RetryCatalogLoad -> retryCatalogLoad()
             is RegisterSubscriptionIntent.NoteChanged -> onNoteChanged(intent.value)
             is RegisterSubscriptionIntent.EquipmentConditionChanged ->
                 onEquipmentConditionChanged(intent.value)
@@ -1749,6 +1758,8 @@ private fun onServiceTypeSelected(type: InstallationType) {
     // The type is only chosen on its own step, before any ONU is authorized.
     val current = currentUiState()
     if (current.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE || current.preauthorizationOperation != null) return
+    // The plan lists are empty because the load failed, not because there are no plans.
+    if (current.catalogLoadError != null) return
     if (getFilteredPlansForInstallationType(type).isEmpty()) {
         _uiState.update { it.copy(serviceTypeError = "No hay planes activos de ${type.planTypeLabel()}.") }
         return
