@@ -40,10 +40,10 @@ Retirar el soporte offline para registrar suscripciones y su sincronización, en
 
 ### 4.1 Registro en línea
 - `RegisterSubscriptionUseCase` siempre registra en línea; se eliminan `canRegisterOnline` y `enqueueOffline`.
-- Si el envío falla por red, el asistente muestra el error con una acción «Reintentar» que reutiliza el mismo `clientRequestId`, de modo que un reenvío no duplica el alta (idempotencia del backend). El texto del error es «No hay conexión con el servidor. Revisa tu señal e inténtalo de nuevo.» y no menciona colas.
+- Si el envío falla por red (`IOException`), se conserva el flujo existente de resultado incierto: `SubmitAndTrackRegistrationUseCase` devuelve `Uncertain`, el asistente muestra «No se pudo confirmar si el registro quedó guardado. Puedes reintentar: no se duplicará.» y vuelve a mostrar «Registrar»; el reintento reutiliza el mismo `clientRequestId` (guardado en el estado de la pantalla), de modo que un reenvío no duplica el alta (idempotencia del backend). No se añade un mensaje nuevo.
 - Se eliminan: `RegisterSubscriptionResult.QueuedOffline`, `RegistrationSubmission.Queued`, `RegisterSubscriptionUiEvent.QueuedOffline` y su diálogo, `EnqueuePendingSubscriptionUseCase`, `isOfflineMode`, `requiresClientIpAddress`, `FormFieldKey.CLIENT_IP_ADDRESS`, `RegisterSubscriptionIntent.ClientIpAddressChanged`, la etiqueta de prueba `CLIENT_IP`, `ClientIpAddressValidation`, la fila «IP del cliente» de la revisión y la rama de IP de `wizardFieldsFor`.
 - `withOfflineState` y `deviceOffline` del ViewModel desaparecen con lo anterior.
-- El campo `clientIpAddress`/`ip` del modelo `Subscription` deja de llenarse. Se borra del modelo solo si ningún otro código lo lee; la tarea verifica esa lectura antes de borrar y el backend ya acepta el campo ausente.
+- Los campos `clientIpAddress` e `ip` del modelo `Subscription` dejan de llenarse desde el formulario (se envían nulos; el backend ya acepta el campo ausente). Los campos se quitan del modelo, si procede, en la entrega 2.
 - Se eliminan los monitores de conectividad y el ping: `ObserveOfflineRegistrationModeUseCase`, `NetworkConnectivityMonitor`/`Impl` y `MikrotikReachabilityMonitor`/`Impl`, con su cableado en Koin y los parámetros del constructor de `RegisterSubscriptionUseCase` y del ViewModel.
 
 ### 4.2 Catálogo directo
