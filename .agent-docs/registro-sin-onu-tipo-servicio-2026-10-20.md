@@ -90,7 +90,7 @@ Sin cambio de contrato. Con el camino sin ONU el modelo `Subscription` sale con 
 
 ### 5.6 Modo offline
 
-Con el camino sin ONU el modo offline vuelve a aplicar (solo se desactivaba por la preautorización). Para `ONLY_TV_FIBER` no se pide IP del cliente: `OnlyTvFiberInstallationStrategy` no crea cola, así que `requiresClientIpAddress = offline && !usesPreauthorization && installationType != ONLY_TV_FIBER`. Como `usesPreauthorization` cambia al elegir el tipo, el ViewModel guarda el último valor de «sin conexión» (`deviceOffline`) y recalcula `isOfflineMode` y `requiresClientIpAddress` tanto cuando llega un valor nuevo como en `ServiceTypeSelected`.
+Con el camino sin ONU el modo offline vuelve a aplicar (solo se desactivaba por la preautorización). Sin conexión, la IP del cliente se pide para todos los tipos sin preautorización, igual que en el flujo clásico, porque la cola offline y el backend asignan una IP estática a los tipos que no son fibra: `requiresClientIpAddress = offline && !usesPreauthorization`. Como `usesPreauthorization` cambia al elegir el tipo, el ViewModel guarda el último valor de «sin conexión» (`deviceOffline`) y recalcula `isOfflineMode` y `requiresClientIpAddress` tanto cuando llega un valor nuevo como en `ServiceTypeSelected`.
 
 ### 5.7 Pantallas que cambian en el lienzo
 
@@ -101,8 +101,10 @@ Con el camino sin ONU el modo offline vuelve a aplicar (solo se desactivaba por 
 Unitarias (JUnit + MockK, como el resto del módulo):
 
 - `RegisterSubscriptionComposeViewModelTest`: arranque en `SERVICE_TYPE`; Fibra avanza a `ONU_SELECTION`; CATV avanza a `CLIENT_LOCATION`, fija `tvCpeKind = OPTICAL_RECEIVER` y el envío no lleva `onu`, `vlan` ni `registrationOperationId`; Inalámbrico igual; tipo sin planes muestra el error y no avanza; Atrás desde `CLIENT_LOCATION` vuelve a `SERVICE_TYPE` solo en el camino sin ONU; una operación activa recuperada no muestra `SERVICE_TYPE`.
+- Sin conexión: Solo TV exige la IP del cliente igual que Inalámbrico (el paso `INSTALLATION` no avanza sin una IP válida); Fibra no la pide.
+- Recarga de datos (p. ej. rotación): la lista de planes y el plan elegido se conservan para Solo TV, Inalámbrico y Fibra; un borrador nunca restaura `SERVICE_TYPE`; elegir un tipo sin planes (también el actual) muestra el error y no lo marca como elegido; restaurar una ONU guardada no devuelve el asistente a `ONU_SELECTION` si ya se pasó el paso de tipo; el Atrás del sistema en `INSTALLATION` vuelve a `CLIENT_LOCATION` en el camino sin ONU.
 - `RegisterWizardChromeTest`: 4 fases con preautorización, 3 sin ella, `SERVICE_TYPE` sin barra.
-- `RegisterServiceStepTest` y `RegisterSubscriptionFormWizardTest`: selector de tipo de solo lectura; revisión sin tarjeta «Equipo» en el camino sin ONU.
+- `RegisterServiceStepTest` y `RegisterSubscriptionFormWizardTest`: selector de tipo de solo lectura; revisión sin tarjeta «Equipo» en el camino sin ONU; «Atrás» visible en `CLIENT_LOCATION` solo sin ONU; la revisión de Inalámbrico y de Solo TV con ONU no muestra la fila «Conexión» ni la nota de TV.
 - Ajustar los 4 casos existentes que asumen `ONU_SELECTION` como primer paso.
 - `RegisterSubscriptionFormValidationTest`: ya cubre CATV y ONU; no cambia.
 
@@ -117,12 +119,17 @@ Prueba manual obligatoria antes de proponer versión: en el laboratorio de stagi
 - De los cuatro bloques de recuperación de operación (§5.2), tres fijan `wizardStep = ONU_SELECTION` además de `serviceTypeChosen = true`: el de la intención de cancelación pendiente, el de la suscripción vinculada (provisión) y el de los estados `CANCEL_*`, todos en `restoreActivePreauthorization`. El cuarto, `showPreauthorizationOperation`, fija `serviceTypeChosen = true` pero conserva el paso calculado según la operación (paso actual, `CLIENT_LOCATION`, `WAITING_FOR_ACS` o el del borrador restaurado). Los cuatro aplican `withOfflineState`.
 - El botón cerrar de la cabecera en `SERVICE_TYPE` siempre sale de la pantalla; nunca inicia la cancelación de la OLT, aunque ya esté elegida Fibra (nada está autorizado en ese paso).
 - Los mensajes de commit de la implementación están en inglés (el plan los proponía en español).
+- **Offline y Solo TV (corrige §5.6 original):** el spec original eximía de la IP del cliente a `ONLY_TV_FIBER`. Se revierte: la cola offline (`RegisterSubscriptionUseCase.enqueueOffline`) exige la IP para cualquier tipo y el backend asigna una IP estática a los tipos que no son fibra, así que Solo TV sin conexión pide la IP igual que Inalámbrico. No se tocó el caso de uso ni el backend.
+- «Atrás» en `CLIENT_LOCATION` cuando no hay ONU (`preauthorizationEnabled && !usesPreauthorization`), y un `BackHandler` en la pantalla que recorre el asistente hacia atrás (Revisión, Servicio, Cliente, Tipo) en ese camino; desde `SERVICE_TYPE` el Atrás del sistema sale. La X de la cabecera sigue saliendo sin confirmar. No se aplica con el resultado del registro visible ni mientras se registra.
+- Al recargar los datos de la pantalla (rotación), `applyInitialCatalogData` filtra los planes por el tipo ya elegido y conserva el plan seleccionado; antes los reemplazaba por los de Fibra.
+- `registrationWizardStep()` descarta también `SERVICE_TYPE`, y `restorePreauthorizationSelection` solo fija `ONU_SELECTION` si el tipo aún no se eligió o el paso es `SERVICE_TYPE`.
+- La nota final de la revisión de Solo TV («No se autoriza ninguna ONU») solo aparece con receptor CATV.
 - El E2E de fibra toca `SERVICE_TYPE_FIBER` y «Continuar» solo si el paso de tipo aparece; una ONU u operación recuperada lo omite.
 
 ## 7. Riesgos
 
 - Es el flujo central de altas y toca su máquina de estados. Mitigación: la rama de fibra no cambia de comportamiento y tiene su E2E.
-- Un técnico que elige Fibra por error solo puede cancelar y reiniciar en `ONU_SELECTION` (sin «Atrás»). Se acepta para no complicar la cancelación; el mismo patrón ya existe en fibra.
+- Un técnico que elige Fibra por error solo puede cancelar y reiniciar en `ONU_SELECTION` (sin «Atrás»). Se acepta para no complicar la cancelación; el mismo patrón ya existe en fibra. En el camino sin ONU sí hay «Atrás» desde `CLIENT_LOCATION` hacia `SERVICE_TYPE`, conservando lo escrito.
 - El camino sin ONU no tiene borrador remoto: si el sistema cierra la app a mitad del formulario se pierde lo escrito, como en el flujo anterior a la preautorización.
 - Las pantallas de Progreso y Éxito de TV mostrarán pasos de fibra hasta que se rediseñen (fuera de alcance).
 - Se sigue cargando la lista de ONU al abrir el asistente aunque el tipo no la use; optimización pendiente, no bloquea.
