@@ -406,7 +406,7 @@ fun RegisterSubscriptionFormScreen(
                 progressCheckpoints = uiState.registrationProgressCheckpoints,
                 accessMode = uiState.registerSubscriptionForm.accessMode,
                 clientName = uiState.registerSubscriptionForm.firstName.toTitleCase().substringBefore(' '),
-                onCancel = if (uiState.usesPreauthorization) {
+                onCancel = if (registrationOverlayCancelsOnu(uiState)) {
                     { viewModel.onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) }
                 } else null,
                 cancelEnabled = !uiState.cancellationInProgress,
@@ -415,10 +415,7 @@ fun RegisterSubscriptionFormScreen(
                     ?.let { provisioning -> { onViewProvisioning(provisioning.subscriptionId) } },
             )
             RegisterScreenBusyMode.CATALOG -> CatalogLoadingOverlay(
-                onCancel = if (
-                    uiState.usesPreauthorization &&
-                    uiState.isPreauthorizationRequestInProgress
-                ) {
+                onCancel = if (catalogOverlayCancelsOnu(uiState)) {
                     { viewModel.onIntent(RegisterSubscriptionIntent.CancelOnuRegistration) }
                 } else null,
                 message = when {

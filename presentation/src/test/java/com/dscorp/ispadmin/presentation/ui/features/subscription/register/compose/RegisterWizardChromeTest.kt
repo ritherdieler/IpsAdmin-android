@@ -172,10 +172,10 @@ class RegisterWizardChromeTest {
     }
 
     @Test
-    fun `a solo TV registration in progress has no OLT cancel button`() {
-        show(solo(RegisterSubscriptionWizardStep.CONFIRMATION).copy(isRegistering = true))
+    fun `the header close of a solo TV state has no OLT cancel tag`() {
+        show(solo(RegisterSubscriptionWizardStep.CONFIRMATION))
 
+        composeRule.onNodeWithContentDescription("Cerrar registro").assertExists()
         composeRule.onNodeWithTag(RegisterSubscriptionTestTags.ONU_REGISTRATION_CANCEL).assertDoesNotExist()
-        composeRule.onNodeWithText("Cancelar registro").assertDoesNotExist()
     }
 }

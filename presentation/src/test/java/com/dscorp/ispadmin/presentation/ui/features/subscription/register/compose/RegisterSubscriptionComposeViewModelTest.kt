@@ -36,6 +36,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.E2eAcc
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.LocationCaptureMethod
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.FormFieldKey
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionUiEvent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.TvCpeKind
@@ -49,7 +50,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -3227,28 +3230,28 @@ class RegisterSubscriptionComposeViewModelTest {
 
     @Test
     fun `ServiceTypeSelected is ignored while a preauthorization operation exists`() = runTest(testDispatcher) {
-        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val model = serviceTypeViewModel(mockk())
         val ready = OnuRegistrationOperation(
             id = "preauth-type-ignored", serial = "VSOL0031C0B6", subscriptionId = null,
             phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 4,
         )
-        coEvery { operationUseCase.active() } returns ready
-        coEvery { operationUseCase.draft(ready.id) } returns null
-        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
-        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalogWithAllTypes())
-        viewModel = viewModelWithPreauthorization(operationUseCase)
-        viewModel.loadScreenData(null)
-        advanceUntilIdle()
-        val before = viewModel.uiState.value.registerSubscriptionForm
+        // No public path leaves an operation on the type step, so seed it to isolate that half of the guard.
+        @Suppress("UNCHECKED_CAST")
+        val stateFlow = model.javaClass.getDeclaredField("_uiState").apply { isAccessible = true }
+            .get(model) as MutableStateFlow<RegisterSubscriptionState>
+        stateFlow.update { it.copy(preauthorizationOperation = ready) }
+        assertEquals(RegisterSubscriptionWizardStep.SERVICE_TYPE, model.uiState.value.wizardStep)
+        val before = model.uiState.value.registerSubscriptionForm
 
-        viewModel.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.WIRELESS))
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.WIRELESS))
         advanceUntilIdle()
 
-        val after = viewModel.uiState.value.registerSubscriptionForm
+        val after = model.uiState.value.registerSubscriptionForm
         assertEquals(before.installationType, after.installationType)
         assertEquals(before.planList, after.planList)
         assertEquals(before.selectedPlan, after.selectedPlan)
-        assertNull(viewModel.uiState.value.serviceTypeError)
+        assertFalse(model.uiState.value.serviceTypeChosen)
+        assertNull(model.uiState.value.serviceTypeError)
     }
 
     @Test
