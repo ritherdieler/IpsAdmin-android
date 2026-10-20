@@ -43,7 +43,7 @@ Híbrido en migración, no Clean Architecture completa.
 :domain        →  Kotlin + coroutines + Koin core (sin Android)
 ```
 
-- Dominio **nuevo** (offline sync, catálogo): puertos en `:domain`, impl en `:data`.
+- Dominio **nuevo** (cola de pendientes, catálogo de registro): puertos en `:domain`, impl en `:data`.
 - Dominio **legado**: `presentation/src/main/java/com/dscorp/ispadmin/domain/` (~75 archivos).
 - Data **legado**: `IRepository` + `Repository.kt` (~1124 líneas) en `:presentation`.
 - UI **nueva**: Jetpack Compose + Navigation Compose + Material 3 + `MyTheme`.
@@ -69,7 +69,7 @@ No migrar XML→Compose ni romper `IRepository` salvo tarea explícita.
 |---|---|
 | DI | Koin (no Hilt) — `di/KoinApplication.kt` |
 | Red | Retrofit + OkHttp + Gson. Kotlin Serialization solo para rutas `@Serializable` |
-| Local | Room en `:data` (sync/catálogo). SharedPreferences + `TokenStore` para sesión |
+| Local | Room en `:data` (solo cola de pendientes). SharedPreferences + `TokenStore` para sesión |
 | Imágenes | Coil |
 | Nav | Navigation Compose (`IpsAdminNavHost.kt`, `NavRoutes.kt`). Sin `navigation/*.xml` |
 | Firebase | Analytics, Messaging, Crashlytics, App Distribution |
@@ -100,7 +100,7 @@ No existe Spotless/Detekt. `InstrumentationTestRunner` está referenciado en Gra
 - Puerto + impl: `domain/.../PendingSubscriptionRepository.kt` + `data/.../PendingSubscriptionRepositoryImpl.kt`
 - API monolítica: `presentation/.../datasource/remote/RestApiServices.kt`
 - API acotada: `presentation/.../auth/AuthApiService.kt`
-- Mapper: `data/.../local/mapper/CatalogMapper.kt`
+- Mapper: `data/.../local/mapper/PendingSubscriptionMapper.kt`
 - Test VM: `presentation/src/test/.../pending/PendingSubscriptionsViewModelTest.kt`
 - Nav: `presentation/.../navigation/IpsAdminNavHost.kt`
 - App: `presentation/.../di/KoinApplication.kt`
@@ -292,9 +292,9 @@ Hay 4: `MainActivity` (Compose NavHost), `MigrationActivity`, `TicketActivity`, 
 
 ### Persistencia
 
-- Room vive en `:data` (`IspAdminDatabase`). Entidades Room ≠ modelos de dominio; mapear (`CatalogMapper`).
+- Room vive en `:data` (`IspAdminDatabase`). Entidades Room ≠ modelos de dominio; mapear (`PendingSubscriptionMapper`).
 - SharedPreferences / `TokenStore` = sesión. **No** introducir DataStore en una feature.
-- Source of truth: Room para pending/catalog; red para el resto salvo diseño explícito.
+- Source of truth: Room solo para la cola de pendientes (el catálogo de registro ya no se guarda en Room: se pide a la API); red para el resto salvo diseño explícito.
 - Prohibido `fallbackToDestructiveMigration()` en prod. Toda schema change = Migration.
 - Queries Room en background (DAO suspend/`Flow`). UI nunca toca DAO.
 

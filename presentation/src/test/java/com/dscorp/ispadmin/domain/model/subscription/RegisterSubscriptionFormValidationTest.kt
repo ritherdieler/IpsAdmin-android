@@ -283,37 +283,10 @@ class RegisterSubscriptionFormValidationTest {
     }
 
     @Test
-    fun `subscriptionClientIpAddressError required when empty`() {
-        assertEquals(
-            "Ingrese la IP del cliente",
-            subscriptionClientIpAddressError("", required = true)
-        )
-    }
-
-    @Test
-    fun `subscriptionClientIpAddressError null when not required and empty`() {
-        assertNull(subscriptionClientIpAddressError("  ", required = false))
-    }
-
-    @Test
-    fun `subscriptionClientIpAddressError invalid ipv4`() {
-        assertEquals(
-            "La IP del cliente no es válida",
-            subscriptionClientIpAddressError("999.1.1.1", required = true)
-        )
-    }
-
-    @Test
-    fun `subscriptionClientIpAddressError accepts valid ipv4`() {
-        assertNull(subscriptionClientIpAddressError("192.168.1.50", required = true))
-    }
-
-    @Test
-    fun `blockingForSubmit excludes equipment and client ip`() {
+    fun `blockingForSubmit excludes equipment`() {
         assertTrue(FormFieldKey.blockingForSubmit.contains(FormFieldKey.NOTE))
         assertTrue(FormFieldKey.blockingForSubmit.contains(FormFieldKey.HOST_DEVICE))
         assertFalse(FormFieldKey.blockingForSubmit.contains(FormFieldKey.EQUIPMENT_CONDITION))
-        assertFalse(FormFieldKey.blockingForSubmit.contains(FormFieldKey.CLIENT_IP_ADDRESS))
     }
 
     @Test
@@ -390,18 +363,6 @@ class RegisterSubscriptionFormValidationTest {
         val longNote = "y".repeat(RegisterSubscriptionFormConstraints.MAX_NOTE_LENGTH + 1)
         val form = RegisterSubscriptionFormState(note = longNote).validated(FormFieldKey.NOTE)
         assertNotNull(form.noteError)
-    }
-
-    @Test
-    fun `validate client ip required when requiresClientIpAddress`() {
-        val form = RegisterSubscriptionFormState(requiresClientIpAddress = true)
-        assertEquals("Ingrese la IP del cliente", form.validate(FormFieldKey.CLIENT_IP_ADDRESS))
-    }
-
-    @Test
-    fun `validate client ip null when not required`() {
-        val form = RegisterSubscriptionFormState(requiresClientIpAddress = false)
-        assertNull(form.validate(FormFieldKey.CLIENT_IP_ADDRESS))
     }
 
     @Test

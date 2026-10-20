@@ -1,14 +1,9 @@
 package com.dscorp.ispadmin.domain.usecase.subscription
 
-import com.dscorp.ispadmin.domain.connectivity.MikrotikReachabilityMonitor
-import com.dscorp.ispadmin.domain.connectivity.NetworkConnectivityMonitor
-import com.dscorp.ispadmin.domain.model.PendingSubscription
-import com.dscorp.ispadmin.domain.model.PendingSubscriptionStatus
 import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.domain.repository.SubscriptionWriteRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
@@ -18,32 +13,43 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.File
+import java.io.IOException
 import java.util.UUID
 
 class RegisterSubscriptionUseCaseTest {
 
     private val subscriptionWriteRepository = mockk<SubscriptionWriteRepository>()
-    private val enqueuePendingSubscriptionUseCase = mockk<EnqueuePendingSubscriptionUseCase>()
-    private val connectivityMonitor = mockk<NetworkConnectivityMonitor>()
-    private val mikrotikReachabilityMonitor = mockk<MikrotikReachabilityMonitor>()
     private lateinit var useCase: RegisterSubscriptionUseCase
     private lateinit var facadePhotoFile: File
 
     @Before
     fun setUp() {
         facadePhotoFile = File.createTempFile("facade", ".jpg").apply { writeText("photo") }
-        useCase = RegisterSubscriptionUseCase(
-            subscriptionWriteRepository = subscriptionWriteRepository,
-            enqueuePendingSubscriptionUseCase = enqueuePendingSubscriptionUseCase,
-            connectivityMonitor = connectivityMonitor,
-            mikrotikReachabilityMonitor = mikrotikReachabilityMonitor
-        )
-        every { connectivityMonitor.isConnected() } returns true
-        coEvery { mikrotikReachabilityMonitor.isMikrotikReachable() } returns true
+        useCase = RegisterSubscriptionUseCase(subscriptionWriteRepository = subscriptionWriteRepository)
     }
 
     @Test
-    fun `online with orderId sends clientRequestId and installationOrderId and never closes order locally`() = runTest {
+    fun `without an operation it registers online with the photo`() = runTest {
+        val captured = slot<Subscription>()
+        val registered = Subscription(subscriptionId = 11)
+        coEvery {
+            subscriptionWriteRepository.registerSubscriptionWithFacadePhoto(capture(captured), facadePhotoFile)
+        } returns registered
+
+        val result = useCase(Subscription(firstName = "Luis"), orderId = 9, facadePhotoFile = facadePhotoFile)
+
+        assertTrue(result.isSuccess)
+        assertEquals(registered, (result.getOrThrow() as RegisterSubscriptionResult.Registered).subscription)
+        assertEquals(9, captured.captured.installationOrderId)
+        UUID.fromString(captured.captured.clientRequestId!!)
+        coVerify(exactly = 1) {
+            subscriptionWriteRepository.registerSubscriptionWithFacadePhoto(any(), facadePhotoFile)
+        }
+        coVerify(exactly = 0) { subscriptionWriteRepository.registerSubscription(any()) }
+    }
+
+    @Test
+    fun `without an operation or photo it registers online and sends installationOrderId`() = runTest {
         val captured = slot<Subscription>()
         val registered = Subscription(subscriptionId = 10)
         coEvery { subscriptionWriteRepository.registerSubscription(capture(captured)) } returns registered
@@ -57,7 +63,6 @@ class RegisterSubscriptionUseCaseTest {
         assertNotNull(captured.captured.clientRequestId)
         UUID.fromString(captured.captured.clientRequestId!!)
         coVerify(exactly = 1) { subscriptionWriteRepository.registerSubscription(any()) }
-        coVerify(exactly = 0) { enqueuePendingSubscriptionUseCase(any(), any(), any()) }
     }
 
     @Test(expected = kotlinx.coroutines.CancellationException::class)
@@ -69,8 +74,7 @@ class RegisterSubscriptionUseCaseTest {
     }
 
     @Test
-    fun `preauthorized registration is always online and reuses operation idempotency key`() = runTest {
-        every { connectivityMonitor.isConnected() } returns false
+    fun `with a registration operation id it registers online without the photo`() = runTest {
         val captured = slot<Subscription>()
         coEvery { subscriptionWriteRepository.registerSubscription(capture(captured)) } returns Subscription(subscriptionId = 81)
 
@@ -85,7 +89,6 @@ class RegisterSubscriptionUseCaseTest {
         assertEquals("preauth-op-81", captured.captured.registrationOperationId)
         assertEquals("https://storage/photo.jpg", captured.captured.facadePhotoUrl)
         coVerify(exactly = 1) { subscriptionWriteRepository.registerSubscription(any()) }
-        coVerify(exactly = 0) { enqueuePendingSubscriptionUseCase(any(), any(), any()) }
         coVerify(exactly = 0) { subscriptionWriteRepository.registerSubscriptionWithFacadePhoto(any(), any()) }
     }
 
@@ -102,150 +105,30 @@ class RegisterSubscriptionUseCaseTest {
     }
 
     @Test
-    fun `online with facade photo sends multipart payload with installationOrderId`() = runTest {
-        val captured = slot<Subscription>()
-        val registered = Subscription(subscriptionId = 11)
+    fun `a network failure returns a failure and never queues`() = runTest {
         coEvery {
-            subscriptionWriteRepository.registerSubscriptionWithFacadePhoto(capture(captured), facadePhotoFile)
-        } returns registered
+            subscriptionWriteRepository.registerSubscriptionWithFacadePhoto(any(), any())
+        } throws IOException("no route to host")
 
-        val result = useCase(Subscription(firstName = "Luis"), orderId = 9, facadePhotoFile = facadePhotoFile)
+        val result = useCase(Subscription(firstName = "Ana"), orderId = 8, facadePhotoFile = facadePhotoFile)
 
-        assertTrue(result.isSuccess)
-        assertEquals(9, captured.captured.installationOrderId)
-        UUID.fromString(captured.captured.clientRequestId!!)
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is IOException)
         coVerify(exactly = 1) {
             subscriptionWriteRepository.registerSubscriptionWithFacadePhoto(any(), facadePhotoFile)
         }
-        coVerify(exactly = 0) { subscriptionWriteRepository.registerSubscription(any()) }
     }
 
     @Test
-    fun `offline enqueues pending subscription with photo and does not call remote`() = runTest {
-        every { connectivityMonitor.isConnected() } returns false
-        val jsonSlot = slot<String>()
-        val pending = PendingSubscription(
-            localId = "local-1",
-            clientRequestId = "client-1",
-            subscriptionJson = """{"firstName":"Ana"}""",
-            facadePhotoPath = "/files/pending_subscriptions/local-1.jpg",
-            installationOrderId = 8,
-            status = PendingSubscriptionStatus.PENDING,
-            createdAt = 1L
-        )
-        coEvery {
-            enqueuePendingSubscriptionUseCase(capture(jsonSlot), facadePhotoFile, 8)
-        } returns Result.success(pending)
+    fun `it keeps the given clientRequestId and generates one when missing`() = runTest {
+        val captured = mutableListOf<Subscription>()
+        coEvery { subscriptionWriteRepository.registerSubscription(capture(captured)) } returns Subscription(subscriptionId = 1)
+        val fixed = RegisterSubscriptionUseCase(subscriptionWriteRepository, uuidGenerator = { "generated-id" })
 
-        val result = useCase(
-            Subscription(firstName = "Ana", clientIpAddress = "192.168.1.50"),
-            orderId = 8,
-            facadePhotoFile = facadePhotoFile
-        )
+        fixed(Subscription(firstName = "Ana", clientRequestId = "form-req-1"), orderId = null)
+        fixed(Subscription(firstName = "Ana"), orderId = null)
 
-        assertTrue(result.isSuccess)
-        val outcome = result.getOrThrow() as RegisterSubscriptionResult.QueuedOffline
-        assertEquals(pending, outcome.pending)
-        assertTrue(jsonSlot.captured.contains("192.168.1.50"))
-        assertTrue(jsonSlot.captured.contains("clientIpAddress"))
-        coVerify(exactly = 1) { enqueuePendingSubscriptionUseCase(any(), facadePhotoFile, 8) }
-        coVerify(exactly = 0) { subscriptionWriteRepository.registerSubscription(any()) }
-        coVerify(exactly = 0) {
-            subscriptionWriteRepository.registerSubscriptionWithFacadePhoto(any(), any())
-        }
-    }
-
-    @Test
-    fun `connected but MikroTik unreachable enqueues offline instead of calling remote`() = runTest {
-        every { connectivityMonitor.isConnected() } returns true
-        coEvery { mikrotikReachabilityMonitor.isMikrotikReachable() } returns false
-        val pending = PendingSubscription(
-            localId = "local-2",
-            clientRequestId = "client-2",
-            subscriptionJson = """{"clientIpAddress":"10.0.0.8"}""",
-            facadePhotoPath = "/files/pending_subscriptions/local-2.jpg",
-            installationOrderId = 3,
-            status = PendingSubscriptionStatus.PENDING,
-            createdAt = 1L
-        )
-        coEvery {
-            enqueuePendingSubscriptionUseCase(any(), facadePhotoFile, 3)
-        } returns Result.success(pending)
-
-        val result = useCase(
-            Subscription(firstName = "Luis", clientIpAddress = "10.0.0.8"),
-            orderId = 3,
-            facadePhotoFile = facadePhotoFile
-        )
-
-        assertTrue(result.getOrThrow() is RegisterSubscriptionResult.QueuedOffline)
-        coVerify(exactly = 0) { subscriptionWriteRepository.registerSubscription(any()) }
-        coVerify(exactly = 0) {
-            subscriptionWriteRepository.registerSubscriptionWithFacadePhoto(any(), any())
-        }
-    }
-
-    @Test
-    fun `offline without clientIpAddress fails`() = runTest {
-        every { connectivityMonitor.isConnected() } returns false
-
-        val result = useCase(
-            Subscription(firstName = "Ana"),
-            orderId = 8,
-            facadePhotoFile = facadePhotoFile
-        )
-
-        assertTrue(result.isFailure)
-        assertEquals(
-            "La IP del cliente es obligatoria en modo offline",
-            result.exceptionOrNull()?.message
-        )
-        coVerify(exactly = 0) { enqueuePendingSubscriptionUseCase(any(), any(), any()) }
-    }
-
-    @Test
-    fun `offline without facade photo fails`() = runTest {
-        every { connectivityMonitor.isConnected() } returns false
-
-        val result = useCase(
-            Subscription(firstName = "Ana", clientIpAddress = "192.168.1.50"),
-            orderId = 8,
-            facadePhotoFile = null
-        )
-
-        assertTrue(result.isFailure)
-        coVerify(exactly = 0) { enqueuePendingSubscriptionUseCase(any(), any(), any()) }
-    }
-
-    @Test
-    fun `offline json includes vlan`() = runTest {
-        every { connectivityMonitor.isConnected() } returns false
-        val jsonSlot = slot<String>()
-        val pending = PendingSubscription(
-            localId = "local-vlan",
-            clientRequestId = "client-vlan",
-            subscriptionJson = """{"vlan":"100"}""",
-            facadePhotoPath = "/files/pending_subscriptions/local-vlan.jpg",
-            installationOrderId = 8,
-            status = PendingSubscriptionStatus.PENDING,
-            createdAt = 1L
-        )
-        coEvery {
-            enqueuePendingSubscriptionUseCase(capture(jsonSlot), facadePhotoFile, 8)
-        } returns Result.success(pending)
-
-        val result = useCase(
-            Subscription(
-                firstName = "Ana",
-                clientIpAddress = "192.168.1.50",
-                vlan = "100"
-            ),
-            orderId = 8,
-            facadePhotoFile = facadePhotoFile
-        )
-
-        assertTrue(result.isSuccess)
-        assertTrue(jsonSlot.captured.contains("\"vlan\""))
-        assertTrue(jsonSlot.captured.contains("100"))
+        assertEquals("form-req-1", captured[0].clientRequestId)
+        assertEquals("generated-id", captured[1].clientRequestId)
     }
 }

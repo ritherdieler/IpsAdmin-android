@@ -22,7 +22,6 @@ import org.koin.compose.koinInject
 @Composable
 fun MoreRoute(user: User, versionLabel: String, onItemSelected: (MoreItem) -> Unit, onProfile: () -> Unit, onLoggedOut: () -> Unit) {
     val type = user.type ?: return
-    val items = remember(type) { MainNavigation.moreItemsFor(type) }
     val observePending: ObservePendingSubscriptionsUseCase = koinInject()
     val planApi: PlanApi = koinInject()
     val profile: ProfileViewModel = koinViewModel()
@@ -30,6 +29,7 @@ fun MoreRoute(user: User, versionLabel: String, onItemSelected: (MoreItem) -> Un
 
     val pendingFlow = remember { observePending().getOrNull()?.map { it.size } ?: flowOf(null) }
     val pending by pendingFlow.collectAsState(initial = null)
+    val items = remember(type, pending) { MainNavigation.moreItemsFor(type, pending ?: 0) }
     val activePlans by produceState<Int?>(null, items) {
         if (MoreItem.PLANS !in items) return@produceState
         value = try {

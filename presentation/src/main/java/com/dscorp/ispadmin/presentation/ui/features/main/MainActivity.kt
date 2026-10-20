@@ -82,6 +82,7 @@ class MainActivity : FragmentActivity() {
         firebaseAnalytics.setUserId(user.id.toString())
         applyUserConfiguration(user)
         registerDeviceToken(user)
+        lifecycleScope.launch { viewModel.reportPendingTelemetry() }
     }
 
     private fun setupUserProfile() {

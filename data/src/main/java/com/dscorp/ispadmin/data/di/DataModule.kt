@@ -3,7 +3,6 @@ package com.dscorp.ispadmin.data.di
 import android.content.Context
 import android.net.ConnectivityManager
 import androidx.room.Room
-import com.dscorp.ispadmin.data.connectivity.MikrotikReachabilityMonitorImpl
 import com.dscorp.ispadmin.data.connectivity.NetworkConnectivityMonitorImpl
 import com.dscorp.ispadmin.data.local.IspAdminDatabase
 import com.dscorp.ispadmin.data.local.PendingFacadePhotoStorage
@@ -16,13 +15,11 @@ import com.dscorp.ispadmin.data.repository.PendingSubscriptionRepositoryImpl
 import com.dscorp.ispadmin.data.repository.RegistrationCatalogRepositoryImpl
 import com.dscorp.ispadmin.data.repository.SharedPreferencesOnuRegistrationCancellationIntentStore
 import com.dscorp.ispadmin.data.repository.SharedPreferencesOnuRegistrationSelectionStore
-import com.dscorp.ispadmin.domain.connectivity.MikrotikReachabilityMonitor
 import com.dscorp.ispadmin.domain.connectivity.NetworkConnectivityMonitor
 import com.dscorp.ispadmin.domain.repository.PendingSubscriptionRepository
 import com.dscorp.ispadmin.domain.repository.RegistrationCatalogRepository
 import com.dscorp.ispadmin.domain.repository.SubscriptionSyncRemote
 import com.dscorp.ispadmin.domain.storage.FacadePhotoStorage
-import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 import retrofit2.Retrofit
@@ -65,17 +62,11 @@ val dataModule = module {
         RegistrationCatalogRemoteDataSourceImpl(get())
     }
     single<RegistrationCatalogRepository> {
-        RegistrationCatalogRepositoryImpl(get(), get())
+        RegistrationCatalogRepositoryImpl(get())
     }
     single<NetworkConnectivityMonitor> {
         NetworkConnectivityMonitorImpl(
             androidContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        )
-    }
-    single<MikrotikReachabilityMonitor> {
-        MikrotikReachabilityMonitorImpl(
-            okHttpClient = get<OkHttpClient>(),
-            baseUrl = getProperty("BASE_URL")
         )
     }
     single { get<Retrofit>().create(PendingSubscriptionSyncApi::class.java) }

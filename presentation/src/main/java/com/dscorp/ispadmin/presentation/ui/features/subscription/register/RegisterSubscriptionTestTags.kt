@@ -7,7 +7,6 @@ object RegisterSubscriptionTestTags {
     const val PHONE = "tf_register_phone"
     const val ADDRESS = "tf_register_address"
     const val NOTE = "tf_register_note"
-    const val CLIENT_IP = "tf_client_ip_address"
 
     const val PLACE = "register_place_field"
     const val NAP_BOX = "register_nap_box_field"

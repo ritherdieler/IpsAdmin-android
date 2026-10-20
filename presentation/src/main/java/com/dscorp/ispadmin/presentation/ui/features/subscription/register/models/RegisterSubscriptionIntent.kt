@@ -30,7 +30,6 @@ sealed interface RegisterSubscriptionIntent {
     data object RefreshOnuList : RegisterSubscriptionIntent
     data class NoteChanged(val value: String) : RegisterSubscriptionIntent
     data class EquipmentConditionChanged(val value: EquipmentCondition) : RegisterSubscriptionIntent
-    data class ClientIpAddressChanged(val value: String) : RegisterSubscriptionIntent
     data class OnVlanChanged(val vlan: String) : RegisterSubscriptionIntent
     data class TvCpeKindSelected(val kind: TvCpeKind) : RegisterSubscriptionIntent
     data class WifiSsid24Changed(val value: String) : RegisterSubscriptionIntent

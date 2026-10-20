@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performClick
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.navigation.MoreItem
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,9 +37,24 @@ class MoreScreenUiTest {
             listOf(MoreEntry(MoreItem.PLANS, "11 activos"), MoreEntry(MoreItem.OUTLAYS, null), MoreEntry(MoreItem.REGISTER_OUTLAY, null), MoreEntry(MoreItem.INSTALLATION_ORDERS, null)),
             menu.sections[0].entries,
         )
-        assertEquals(MoreEntry(MoreItem.PENDING_SUBSCRIPTIONS, "0"), menu.sections[1].entries.last())
         assertEquals(listOf("Suscripciones"), MoreMenu.from(User(id = 2, name = "Ana", type = User.UserType.TECHNICIAN),
             listOf(MoreItem.REGISTER_SUBSCRIPTION, MoreItem.PENDING_SUBSCRIPTIONS, MoreItem.PROFILE), pending = null, activePlans = null).sections.map { it.title })
+    }
+
+    @Test
+    fun `pending subscriptions entry is hidden with zero pending`() {
+        val user = User(id = 1, name = "Sergio Carrillo", type = User.UserType.ADMIN)
+        listOf(0, null).forEach { pending ->
+            val entries = MoreMenu.from(user, ADMIN_ITEMS, pending = pending, activePlans = 11).sections.flatMap { it.entries }
+            assertFalse("pending=$pending", entries.any { it.item == MoreItem.PENDING_SUBSCRIPTIONS })
+        }
+    }
+
+    @Test
+    fun `pending subscriptions entry is shown with its count when there are pending`() {
+        val menu = MoreMenu.from(User(id = 1, name = "Sergio Carrillo", type = User.UserType.ADMIN), ADMIN_ITEMS, pending = 3, activePlans = 11)
+
+        assertEquals(MoreEntry(MoreItem.PENDING_SUBSCRIPTIONS, "3"), menu.sections[1].entries.last())
     }
 
     @Test

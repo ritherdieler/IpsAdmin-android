@@ -273,9 +273,6 @@ private fun NavGraphContent(
                         onViewProvisioning = { subscriptionId ->
                             navController.navigate(Subscription.Provisioning(subscriptionId))
                         },
-                        onNavigateToPendingSubscriptions = {
-                            navController.navigate(Subscription.PendingSubscriptions)
-                        },
                         onViewSubscription = { subscriptionId ->
                             navController.popBackStack()
                             navController.navigate(Subscription.Details(subscriptionId))

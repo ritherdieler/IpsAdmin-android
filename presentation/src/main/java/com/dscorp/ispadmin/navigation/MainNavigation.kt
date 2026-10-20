@@ -54,6 +54,10 @@ object MainNavigation {
         UserType.LOGISTIC, UserType.CLIENT -> listOf(MainDestination.MORE)
     }
 
+    /** The role's entries; «Pendientes de envío» only while the offline queue still holds registrations. */
+    fun moreItemsFor(type: UserType, pendingCount: Int): List<MoreItem> =
+        moreItemsFor(type).filter { it != MoreItem.PENDING_SUBSCRIPTIONS || pendingCount > 0 }
+
     fun moreItemsFor(type: UserType): List<MoreItem> = when (type) {
         UserType.ADMIN -> listOf(
             MoreItem.REGISTER_SUBSCRIPTION, MoreItem.CREATE_TICKET, MoreItem.INSTALLATION_ORDERS,

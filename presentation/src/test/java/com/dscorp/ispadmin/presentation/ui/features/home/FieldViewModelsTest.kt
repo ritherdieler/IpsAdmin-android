@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -55,6 +56,7 @@ class FieldViewModelsTest {
         val state = viewModel.uiState.value
         assertEquals("mié 14 oct · 2 trabajos", state.today?.subtitle)
         assertEquals("MS", state.initials)
+        assertNull(state.today?.uploads)
         assertFalse(state.loading)
     }
 

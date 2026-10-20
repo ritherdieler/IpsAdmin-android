@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CloudDone
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Schedule
@@ -81,7 +80,7 @@ fun TechnicianTodayContent(state: FieldUiState, onAction: (FieldAction) -> Unit,
         FieldStatus(state, onRetry)
         if (today != null) {
             Column(Modifier.padding(top = 4.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                UploadsBanner(today.uploads) { onAction(FieldAction.PendingUploads) }
+                today.uploads?.let { UploadsBanner(it) { onAction(FieldAction.PendingUploads) } }
                 today.now?.let { job ->
                     FieldSection("Ahora") { NowCard(job, onAction) }
                 }
@@ -140,15 +139,14 @@ private fun FieldCard(content: @Composable () -> Unit) {
 @Composable
 private fun UploadsBanner(banner: UploadBanner, onClick: () -> Unit) {
     val colors = IspTheme.colors
-    val (container, tint) = if (banner.allSent) colors.successContainer to colors.success else colors.warningContainer to colors.warning
     Row(
-        Modifier.padding(horizontal = 16.dp).fillMaxWidth().background(container, RoundedCornerShape(16.dp))
-            .clickable(enabled = !banner.allSent, role = Role.Button, onClick = onClick)
+        Modifier.padding(horizontal = 16.dp).fillMaxWidth().background(colors.warningContainer, RoundedCornerShape(16.dp))
+            .clickable(role = Role.Button, onClick = onClick)
             .padding(start = 6.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(28.dp).background(Color.White, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-            Icon(if (banner.allSent) Icons.Outlined.CloudDone else Icons.Outlined.CloudUpload, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+            Icon(Icons.Outlined.CloudUpload, contentDescription = null, tint = colors.warning, modifier = Modifier.size(18.dp))
         }
         Spacer(Modifier.width(10.dp))
         Text("${banner.title} · ${banner.detail}", fontSize = 13.sp, lineHeight = 18.sp)

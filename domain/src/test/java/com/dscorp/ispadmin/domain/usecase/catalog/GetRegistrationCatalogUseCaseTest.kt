@@ -1,6 +1,5 @@
 package com.dscorp.ispadmin.domain.usecase.catalog
 
-import com.dscorp.ispadmin.domain.exception.CatalogNotAvailableOffline
 import com.dscorp.ispadmin.domain.model.CatalogCoreDevice
 import com.dscorp.ispadmin.domain.model.CatalogNapBox
 import com.dscorp.ispadmin.domain.model.CatalogOnu
@@ -8,13 +7,16 @@ import com.dscorp.ispadmin.domain.model.CatalogPlace
 import com.dscorp.ispadmin.domain.model.CatalogPlan
 import com.dscorp.ispadmin.domain.model.RegistrationCatalog
 import com.dscorp.ispadmin.domain.repository.RegistrationCatalogRepository
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import io.mockk.coEvery
-import io.mockk.mockk
-import kotlinx.coroutines.test.runTest
+import java.io.IOException
 
 class GetRegistrationCatalogUseCaseTest {
 
@@ -28,39 +30,34 @@ class GetRegistrationCatalogUseCaseTest {
     }
 
     @Test
-    fun `returns success with coreDevices when cache is populated`() = runTest {
+    fun `invoke returns the repository result`() = runTest {
         val catalog = populatedCatalog()
-        coEvery { repository.getCachedCatalog() } returns Result.success(catalog)
+        coEvery { repository.fetchCatalog() } returns Result.success(catalog)
+
+        val success = useCase()
+
+        assertTrue(success.isSuccess)
+        assertSame(catalog, success.getOrThrow())
+
+        val error = IOException("api down")
+        coEvery { repository.fetchCatalog() } returns Result.failure(error)
+
+        val failure = useCase()
+
+        assertTrue(failure.isFailure)
+        assertSame(error, failure.exceptionOrNull())
+        coVerify(exactly = 2) { repository.fetchCatalog() }
+    }
+
+    @Test
+    fun `invoke does not reject a catalog without core devices`() = runTest {
+        val catalog = populatedCatalog().copy(coreDevices = emptyList())
+        coEvery { repository.fetchCatalog() } returns Result.success(catalog)
 
         val result = useCase()
 
         assertTrue(result.isSuccess)
-        val value = result.getOrThrow()
-        assertTrue(value.coreDevices.isNotEmpty())
-        assertEquals("Core-1", value.coreDevices.first().name)
-        assertEquals(catalog.plans, value.plans)
-    }
-
-    @Test
-    fun `returns CatalogNotAvailableOffline when cache is empty and there is no network fallback`() = runTest {
-        coEvery { repository.getCachedCatalog() } returns Result.failure(CatalogNotAvailableOffline())
-
-        val result = useCase()
-
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is CatalogNotAvailableOffline)
-    }
-
-    @Test
-    fun `returns CatalogNotAvailableOffline when cached catalog has no coreDevices`() = runTest {
-        coEvery { repository.getCachedCatalog() } returns Result.success(
-            populatedCatalog().copy(coreDevices = emptyList())
-        )
-
-        val result = useCase()
-
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is CatalogNotAvailableOffline)
+        assertEquals(emptyList<CatalogCoreDevice>(), result.getOrThrow().coreDevices)
     }
 
     private fun populatedCatalog() = RegistrationCatalog(
