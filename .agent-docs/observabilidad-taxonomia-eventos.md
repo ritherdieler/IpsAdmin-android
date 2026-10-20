@@ -209,14 +209,14 @@ Notas de diseño Fase 2 y 3:
 - Inyección de `ObservabilityClient` por constructor (Koin) salvo `DashBoardViewModel`, `ProfileViewModel` y `MainActivityViewModel`, que usan `by inject()` / `KoinJavaComponent.inject` coherente con su patrón existente.
 - ViewModels basados en `BaseViewModel` (`executeWithProgress`) usan el patrón `try/catch { reportError(...); throw }` para reportar sin alterar el manejo de estado/loaders del `BaseViewModel`.
 - `ReportsViewModel` usa un helper privado `downloadReport(action) { ... }` para evitar duplicar la instrumentación en sus 9 descargas.
-- No se instrumentaron: `MainActivityViewModel` (solo lee sesión local) ni `FindSubscriptionViewModel` (código completamente comentado / muerto).
+- No se instrumentó `FindSubscriptionViewModel` (código completamente comentado / muerto). `MainActivityViewModel` no instrumenta acciones de pantalla; solo reporta el evento de inventario `pending_subscriptions.count` (ver «Telemetría de registros pendientes»).
 - Se mantiene el enfoque conservador: sin `runTracked`, sin cambios de tipos de retorno ni de flujo de control.
 
 ### Telemetría de registros pendientes (offline legado)
 
 | message | Severidad | Tag | Cuándo se envía |
 |---------|-----------|-----|-----------------|
-| `pending_subscriptions.count` | `info` | `count` (entero ≥ 0) | Una vez por proceso, al abrir la sesión (`MainActivityViewModel` con usuario logueado) |
+| `pending_subscriptions.count` | `info` | `count` (entero ≥ 0) | Al iniciar la actividad con una sesión existente (una vez por proceso; `MainActivityViewModel`) |
 
 - Emisor: `PendingSubscriptionsTelemetry.reportOncePerProcess()` (`reportLog` directo, sin `obsTags`: es un dato de inventario, no una acción de pantalla).
 - `count` es la cantidad de registros de suscripción que siguen encolados en el teléfono.

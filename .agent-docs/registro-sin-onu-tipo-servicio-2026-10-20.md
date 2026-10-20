@@ -2,6 +2,8 @@
 
 Fecha: 2026-10-20 · Estado: **implementado en código el 2026-10-20; verificación manual en staging pendiente** · Repo: `IpsAdmin-android app` (solo app; sin cambios de backend).
 
+> **Nota (2026-10-20):** las partes de modo offline de este documento (§5.6 y las líneas que mencionan `requiresClientIpAddress`, `isOfflineMode` u offline) quedaron superadas por `eliminar-soporte-offline-registro-2026-10-20.md`: el registro ya no tiene modo offline ni pide la IP del cliente. El texto original se conserva como histórico.
+
 Diseño visual: lienzo «Rediseño IspAdmin Android», página «A · Registro» (https://claude.ai/artifact/1yfKRpqjG9eEXu3jD4XQwX), pantallas `a-reg-00-tipo`, `a-reg-11-sin-onu-cliente`, `a-reg-12-tv-servicio`, `a-reg-13-sin-onu-revision`, más `a-reg-03-servicio` con el tipo de solo lectura.
 
 ## 1. Problema

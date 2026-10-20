@@ -1,6 +1,6 @@
 # Eliminar el soporte offline del registro de suscripciones
 
-Fecha: 2026-10-20 · Estado: **borrador para revisión** · Repos: `IpsAdmin-android app` (entregas 1 y 2) e `ispadmin-backend` (solo entrega 2).
+Fecha: 2026-10-20 · Estado: **entrega 1 implementada en código el 2026-10-20; verificación manual en staging pendiente** · Repos: `IpsAdmin-android app` (entregas 1 y 2) e `ispadmin-backend` (solo entrega 2).
 
 Sustituye lo que decía el spec `registro-sin-onu-tipo-servicio-2026-10-20.md` sobre el modo offline (§5.6): con este trabajo el registro deja de tener modo offline y la IP del cliente ya no se pide en la app.
 
@@ -58,7 +58,7 @@ Retirar el soporte offline para registrar suscripciones y su sincronización, en
 - Se corrigen los textos que prometen envío automático («Se envían solos al volver la señal», «se envían al volver la conexión»): pasan a decir que se envían al pulsar «Enviar ahora».
 
 ### 4.4 Telemetría para decidir la entrega 2
-- Una vez por proceso, después del inicio de sesión, la app envía a observabilidad el evento `pending_subscriptions_count` con el número de pendientes. Se documenta en `observabilidad-taxonomia-eventos.md`.
+- Una vez por proceso, la app envía a observabilidad el evento `pending_subscriptions.count` con el número de pendientes. Se envía cuando arranca la Activity/ViewModel con una sesión ya existente: un inicio de sesión nuevo dentro del mismo proceso lo reporta en el siguiente arranque en frío. Se documenta en `observabilidad-taxonomia-eventos.md`.
 
 ### 4.5 Lo que no cambia
 Backend; esquema de Room; WorkManager y `ACCESS_NETWORK_STATE`; preautorización; `SubmitAndTrackRegistrationUseCase` (la reconciliación por `registrationOperationId` sigue igual); verificación de versión.
@@ -99,3 +99,11 @@ Backend; esquema de Room; WorkManager y `ACCESS_NETWORK_STATE`; preautorización
 - Entrega 1: nueva versión de la app; el backend no cambia. Reversión: reinstalar la versión previa (la cola local no se toca).
 - Entrega 2: nueva versión de la app más un despliegue de backend independiente (el backend no depende de la versión de la app porque solo se retira una alerta). Reversión del backend: revertir el commit; de la app: reinstalar la versión previa (la limpieza de arranque es irreversible, por eso solo se ejecuta cuando la condición de 5.1 se cumple).
 - Ningún despliegue, push ni cambio en la base de producción se hace sin petición explícita.
+
+## 9. Desviaciones respecto al spec (entrega 1, verificadas en el código)
+
+- **`NetworkConnectivityMonitor` se conserva** (interfaz, `NetworkConnectivityMonitorImpl`, su prueba y el binding en `DataModule`): `SyncPendingSubscriptionsUseCase` todavía lo usa para el envío manual de pendientes. Se elimina junto con la cola en la entrega 2. Sí se eliminaron `MikrotikReachabilityMonitor`/`Impl`, `ObserveOfflineRegistrationModeUseCase` y su cableado.
+- **`GetRegistrationCatalogUseCase` ya no rechaza un catálogo sin equipos de core**: solo delega en `RegistrationCatalogRepository.fetchCatalog()`. Esa validación la hace el ViewModel con `NO_ACTIVE_CORE_DEVICES_ERROR` (no bloquea el asistente cuando la preautorización de ONU está disponible). `RegistrationCatalog.isAvailableOffline()` también se eliminó.
+- **`CatalogMapper.kt` se borró**: solo lo usaba el repositorio anterior, que leía y guardaba el catálogo en Room.
+- **Textos de la cola, tal como quedaron**: pie de la pantalla de pendientes «Envíalos con “Enviar ahora” cuando tengas señal»; nota informativa «Ya no se guardan registros sin señal: aquí solo quedan los que se guardaron antes.»; banner del inicio del técnico «N registro(s) sin enviar · toca para enviarlos», que ya no existe con 0 pendientes (se quitó el estado «Todo enviado»).
+- **La guarda de telemetría se libera sola** si la cola no se puede leer o si la corrutina se cancela antes de enviar, de modo que se reintenta en la siguiente apertura del proceso.
