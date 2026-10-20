@@ -49,7 +49,7 @@ Retirar el soporte offline para registrar suscripciones y su sincronización, en
 ### 4.2 Catálogo directo
 - `GetRegistrationCatalogUseCase()` pasa a devolver `Result<RegistrationCatalog>` pidiendo a la API los cinco endpoints existentes (`plan`, `place`, `napbox`, `onu/unconfigured_onus`, `networkDevice/coreTypes`), sin persistir. Se conserva que los DTO de equipos de core blanqueen usuario y clave.
 - `RefreshRegistrationCatalogUseCase` se elimina y `applyInitialCatalogData` llama una sola vez al caso de uso. `CatalogNotAvailableOffline` se elimina.
-- Si falla la carga, el asistente muestra el mismo error de carga inicial que hoy y no abre el formulario.
+- Si falla la carga, el asistente muestra el error de carga inicial y no abre el formulario. Cuando la causa es de red (`IOException`, también como causa encadenada) el mensaje es «No se pudo cargar el catálogo de registro. Revisa tu conexión y vuelve a intentar.»; cualquier otro fallo conserva su mensaje. A observabilidad se reporta siempre la excepción original. No hay botón de reintento (decisión del usuario para más adelante).
 - Las clases `catalog_*` de Room (entidades y DAOs) NO se tocan en esta entrega, para no cambiar el esquema de la base ni arriesgar la cola; quedan sin uso con un comentario que remite a la entrega 2.
 
 ### 4.3 Cola existente: solo vaciarla
@@ -58,7 +58,7 @@ Retirar el soporte offline para registrar suscripciones y su sincronización, en
 - Se corrigen los textos que prometen envío automático («Se envían solos al volver la señal», «se envían al volver la conexión»): pasan a decir que se envían al pulsar «Enviar ahora».
 
 ### 4.4 Telemetría para decidir la entrega 2
-- Una vez por proceso, la app envía a observabilidad el evento `pending_subscriptions.count` con el número de pendientes. Se envía cuando arranca la Activity/ViewModel con una sesión ya existente: un inicio de sesión nuevo dentro del mismo proceso lo reporta en el siguiente arranque en frío. Se documenta en `observabilidad-taxonomia-eventos.md`.
+- Una vez por proceso, la app envía a observabilidad el evento `pending_subscriptions.count` con el número de pendientes. Se envía cuando arranca la Activity/ViewModel con una sesión ya existente y también cuando se inicia una sesión (inicio de sesión nuevo, mediante `onSessionStarted` de `MainActivity`, porque ese flujo no recrea la Activity); la guarda por proceso evita el doble envío. Un fallo al leer la cola nunca cierra la app: no se envía nada y se reintenta en la siguiente oportunidad. Se documenta en `observabilidad-taxonomia-eventos.md`.
 
 ### 4.5 Lo que no cambia
 Backend; esquema de Room; WorkManager y `ACCESS_NETWORK_STATE`; preautorización; `SubmitAndTrackRegistrationUseCase` (la reconciliación por `registrationOperationId` sigue igual); verificación de versión.
@@ -71,6 +71,12 @@ Backend; esquema de Room; WorkManager y `ACCESS_NETWORK_STATE`; preautorización
 
 ### 5.2 App
 - Se borran: pantalla, ViewModel y estado de pendientes; la ruta y `FieldAction.PendingUploads`; la entrada de menú y el banner; `PendingSubscription*` del dominio y datos; `PendingSubscriptionRepository`; `SyncPendingSubscriptionsUseCase`, `DiscardPendingSubscriptionUseCase`, `ObservePendingSubscriptionsUseCase`; `SubscriptionSyncRemote`/`PendingSubscriptionSyncApi`; `PendingFacadePhotoStorage`; Room completo (`IspAdminDatabase`, entidades y DAOs de pendientes y de catálogo); `SubscriptionRegistrationRequest` (código muerto).
+- Conectividad: `NetworkConnectivityMonitor` (puerto en `domain`), `NetworkConnectivityMonitorImpl` y su prueba, el binding en `DataModule` y la excepción `NoConnectivity` (solo `SyncPendingSubscriptionsUseCase` los usa; hoy figuran únicamente en §9).
+- Telemetría: `PendingSubscriptionsTelemetry` (clase y prueba), su `factory` en `ViewModelModule`, la llamada desde `MainActivityViewModel` y desde `onSessionStarted` de `MainActivity`, y su sección en `observabilidad-taxonomia-eventos.md`.
+- Navegación y menú: `MainNavigation.moreItemsFor(type, pendingCount)` (la sobrecarga con conteo), el parámetro `pending` de `MoreMenu.from` y el cálculo del conteo en `MoreRoute` (la entrada «Pendientes de envío» desaparece con la función).
+- Inicio del técnico: `TechnicianToday.uploads`, `UploadBanner` y el composable `UploadsBanner`, `FieldGateway.pendingUploads` y la dependencia `pending` (`PendingSubscriptionRepository`) de `RepositoryFieldGateway`.
+- Fotos: el puerto `FacadePhotoStorage` y su binding en `DataModule` (junto con `PendingFacadePhotoStorage`).
+- Modelo: los campos `clientIpAddress` e `ip` de `Subscription` y su lectura en el análisis del JSON de `PendingSubscriptionsViewModel` (el detalle «IP …» de cada pendiente).
 - Limpieza de arranque única: `deleteDatabase("ispadmin.db")` y borrado de `filesDir/pending_subscriptions`, con el mismo patrón que el borrado de la base de Chucker en `KoinApplication.onCreate`.
 - Dependencias: Room y el plugin `ksp` solo se quitan si una búsqueda confirma que nada más los usa; `room-testing`, `robolectric` y `mockwebserver` solo si las pruebas restantes de `data` no los usan; WorkManager y `ACCESS_NETWORK_STATE` se conservan.
 - Documentación: se actualizan los ejemplos canónicos de `AGENTS.md` que citan `PendingSubscriptions*`, y los documentos `.agent-docs` de offline se marcan como históricos o se borran (`offline-ip-conflict-sync-2026-08-15.md`, `deploy-app-distribution-offline-sync-2026-08-15.md`, `deploy-develop-offline-provision-2026-08-15.md`, los tres `backend-*.patch`).
@@ -82,7 +88,7 @@ Backend; esquema de Room; WorkManager y `ACCESS_NETWORK_STATE`; preautorización
 
 ## 6. Pruebas
 
-**Entrega 1:** caso de uso sin cola; ViewModel sin estado offline y con error de red + reintento con el mismo `clientRequestId`; carga directa del catálogo (éxito, error de red, equipos de core sin credenciales); la pantalla de pendientes se conserva con sus pruebas; entradas de menú y banner ocultos con 0 pendientes y visibles con 1 o más; evento `pending_subscriptions_count`. Se ajustan las pruebas listadas en el inventario (`RegisterSubscriptionUseCaseTest`, `RegisterSubscriptionComposeViewModelTest`, `RegisterExistingCustomerViewModelTest`, `SubmitAndTrackRegistrationUseCaseTest`, `MoreScreenUiTest`, `MainNavigationTest`, `FieldViewModelsTest`, `TechnicianTodayModelTest`). Prueba manual en staging con y sin red: registro de Fibra, Solo TV e Inalámbrico, y envío de un pendiente ya encolado.
+**Entrega 1:** caso de uso sin cola; ViewModel sin estado offline y con error de red + reintento con el mismo `clientRequestId`; carga directa del catálogo (éxito, error de red, equipos de core sin credenciales); la pantalla de pendientes se conserva con sus pruebas; entradas de menú y banner ocultos con 0 pendientes y visibles con 1 o más; evento `pending_subscriptions.count`. Se ajustan las pruebas listadas en el inventario (`RegisterSubscriptionUseCaseTest`, `RegisterSubscriptionComposeViewModelTest`, `RegisterExistingCustomerViewModelTest`, `SubmitAndTrackRegistrationUseCaseTest`, `MoreScreenUiTest`, `MainNavigationTest`, `FieldViewModelsTest`, `TechnicianTodayModelTest`). Prueba manual en staging con y sin red: registro de Fibra, Solo TV e Inalámbrico, y envío de un pendiente ya encolado.
 
 **Entrega 2:** prueba de la limpieza de arranque; las pruebas de `data` que dependían de Room se eliminan con su código; en el backend, `SubscriptionControllerMultipartIdempotencyTest` pierde solo el caso de la alerta y se conserva el resto; se ejecuta la suite de `core` afectada.
 
