@@ -30,7 +30,7 @@ fun MoreRoute(user: User, versionLabel: String, onItemSelected: (MoreItem) -> Un
     val pendingFlow = remember { observePending().getOrNull()?.map { it.size } ?: flowOf(null) }
     val pending by pendingFlow.collectAsState(initial = null)
     val items = remember(type, pending) { MainNavigation.moreItemsFor(type, pending ?: 0) }
-    val activePlans by produceState<Int?>(null, items) {
+    val activePlans by produceState<Int?>(null, type) {
         if (MoreItem.PLANS !in items) return@produceState
         value = try {
             planApi.allWithCounts().count { it.isActive }

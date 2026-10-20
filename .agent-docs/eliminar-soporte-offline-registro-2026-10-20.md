@@ -44,7 +44,7 @@ Retirar el soporte offline para registrar suscripciones y su sincronización, en
 - Se eliminan: `RegisterSubscriptionResult.QueuedOffline`, `RegistrationSubmission.Queued`, `RegisterSubscriptionUiEvent.QueuedOffline` y su diálogo, `EnqueuePendingSubscriptionUseCase`, `isOfflineMode`, `requiresClientIpAddress`, `FormFieldKey.CLIENT_IP_ADDRESS`, `RegisterSubscriptionIntent.ClientIpAddressChanged`, la etiqueta de prueba `CLIENT_IP`, `ClientIpAddressValidation`, la fila «IP del cliente» de la revisión y la rama de IP de `wizardFieldsFor`.
 - `withOfflineState` y `deviceOffline` del ViewModel desaparecen con lo anterior.
 - Los campos `clientIpAddress` e `ip` del modelo `Subscription` dejan de llenarse desde el formulario (se envían nulos; el backend ya acepta el campo ausente). Los campos se quitan del modelo, si procede, en la entrega 2.
-- Se eliminan los monitores de conectividad y el ping: `ObserveOfflineRegistrationModeUseCase`, `NetworkConnectivityMonitor`/`Impl` y `MikrotikReachabilityMonitor`/`Impl`, con su cableado en Koin y los parámetros del constructor de `RegisterSubscriptionUseCase` y del ViewModel.
+- Se eliminan los monitores de conectividad y el ping: `ObserveOfflineRegistrationModeUseCase`, `NetworkConnectivityMonitor`/`Impl` (ver Desviaciones: se conserva hasta la entrega 2) y `MikrotikReachabilityMonitor`/`Impl`, con su cableado en Koin y los parámetros del constructor de `RegisterSubscriptionUseCase` y del ViewModel.
 
 ### 4.2 Catálogo directo
 - `GetRegistrationCatalogUseCase()` pasa a devolver `Result<RegistrationCatalog>` pidiendo a la API los cinco endpoints existentes (`plan`, `place`, `napbox`, `onu/unconfigured_onus`, `networkDevice/coreTypes`), sin persistir. Se conserva que los DTO de equipos de core blanqueen usuario y clave.
@@ -58,7 +58,7 @@ Retirar el soporte offline para registrar suscripciones y su sincronización, en
 - Se corrigen los textos que prometen envío automático («Se envían solos al volver la señal», «se envían al volver la conexión»): pasan a decir que se envían al pulsar «Enviar ahora».
 
 ### 4.4 Telemetría para decidir la entrega 2
-- Una vez por proceso, la app envía a observabilidad el evento `pending_subscriptions.count` con el número de pendientes. Se envía cuando arranca la Activity/ViewModel con una sesión ya existente y también cuando se inicia una sesión (inicio de sesión nuevo, mediante `onSessionStarted` de `MainActivity`, porque ese flujo no recrea la Activity); la guarda por proceso evita el doble envío. Un fallo al leer la cola nunca cierra la app: no se envía nada y se reintenta en la siguiente oportunidad. Se documenta en `observabilidad-taxonomia-eventos.md`.
+- Una vez por proceso, la app envía a observabilidad el evento `pending_subscriptions.count` con el número de pendientes. Se envía al iniciar la actividad con una sesión existente y, tras un login nuevo, al iniciar la sesión (una vez por proceso; `onSessionStarted` de `MainActivity`, porque ese flujo no recrea la Activity); la guarda por proceso evita el doble envío. Un fallo al leer la cola nunca cierra la app: no se envía nada y se reintenta en la siguiente oportunidad. Se documenta en `observabilidad-taxonomia-eventos.md`.
 
 ### 4.5 Lo que no cambia
 Backend; esquema de Room; WorkManager y `ACCESS_NETWORK_STATE`; preautorización; `SubmitAndTrackRegistrationUseCase` (la reconciliación por `registrationOperationId` sigue igual); verificación de versión.

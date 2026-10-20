@@ -220,7 +220,7 @@ class PendingSubscriptionsViewModelTest {
         val (waiting, failed) = viewModel.uiState.value.items
         assertEquals("Hilda Ccori Mamani", waiting.clientName)
         assertEquals("Inalámbrico · IP 10.0.0.5 · DNI 45871236", waiting.detail)
-        assertEquals("Esperando señal", waiting.statusLabel)
+        assertEquals("Por enviar", waiting.statusLabel)
         assertEquals("No se pudo enviar", failed.statusLabel)
         assertEquals("El DNI 45871236 ya tiene una suscripción activa.", failed.error)
     }

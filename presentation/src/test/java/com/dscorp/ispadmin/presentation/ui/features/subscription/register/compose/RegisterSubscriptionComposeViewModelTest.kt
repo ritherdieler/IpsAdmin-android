@@ -71,10 +71,13 @@ import org.junit.Before
 import org.junit.Test
 import java.io.File
 
-@OptIn(ExperimentalCoroutinesApi::class)
+private const val UNCERTAIN_MESSAGE =
+    "No se pudo confirmar si el registro quedó guardado. Puedes reintentar: no se duplicará."
+
 private const val CATALOG_CONNECTIVITY_MESSAGE =
     "No se pudo cargar el catálogo de registro. Revisa tu conexión y vuelve a intentar."
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class RegisterSubscriptionComposeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
@@ -2973,12 +2976,17 @@ class RegisterSubscriptionComposeViewModelTest {
             advanceUntilIdle()
             fillValidTvCustomerFields()
             model.onIntent(RegisterSubscriptionIntent.NapBoxSelected(NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)))
+            val events = mutableListOf<RegisterSubscriptionUiEvent>()
+            val eventsJob = launch { model.uiEvent.collect { events.add(it) } }
+            advanceUntilIdle()
 
             model.saveSubscription(facadePhotoFile)
             advanceUntilIdle()
 
             assertEquals(1, sent.size)
-            assertTrue(model.uiState.value.submission is SubmissionState.Uncertain)
+            assertEquals(UNCERTAIN_MESSAGE, (model.uiState.value.submission as SubmissionState.Uncertain).message)
+            assertEquals(listOf<RegisterSubscriptionUiEvent>(RegisterSubscriptionUiEvent.Error(UNCERTAIN_MESSAGE)), events)
+            eventsJob.cancel()
             assertEquals("JUAN", model.uiState.value.registerSubscriptionForm.firstName)
             assertFalse(model.uiState.value.isRegistering)
 

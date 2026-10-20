@@ -133,7 +133,7 @@ fun PendingSubscriptionsScreen(
                     items(uiState.items, key = { it.localId }) { item ->
                         PendingSubscriptionCard(item, onDiscard = { discarding = item })
                     }
-                    item("note") {
+                    if (uiState.items.isNotEmpty()) item("note") {
                         Row(verticalAlignment = Alignment.Top, modifier = Modifier.padding(top = 4.dp)) {
                             Icon(Icons.Outlined.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(8.dp))

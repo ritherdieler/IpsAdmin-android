@@ -69,7 +69,7 @@ No migrar XML→Compose ni romper `IRepository` salvo tarea explícita.
 |---|---|
 | DI | Koin (no Hilt) — `di/KoinApplication.kt` |
 | Red | Retrofit + OkHttp + Gson. Kotlin Serialization solo para rutas `@Serializable` |
-| Local | Room en `:data` (solo cola de pendientes). SharedPreferences + `TokenStore` para sesión |
+| Local | Room en `:data` (solo cola de pendientes; tablas `catalog_*` sin uso hasta la entrega 2). SharedPreferences + `TokenStore` para sesión |
 | Imágenes | Coil |
 | Nav | Navigation Compose (`IpsAdminNavHost.kt`, `NavRoutes.kt`). Sin `navigation/*.xml` |
 | Firebase | Analytics, Messaging, Crashlytics, App Distribution |

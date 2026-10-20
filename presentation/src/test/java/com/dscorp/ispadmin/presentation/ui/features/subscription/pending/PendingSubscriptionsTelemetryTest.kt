@@ -6,12 +6,17 @@ import com.dscorp.ispadmin.observability.ObservabilityClient
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PendingSubscriptionsTelemetryTest {
 
     private val observePending = mockk<ObservePendingSubscriptionsUseCase>()
@@ -101,5 +106,29 @@ class PendingSubscriptionsTelemetryTest {
         queued(1)
         telemetry.reportOncePerProcess()
         verify(exactly = 1) { observability.reportLog(any(), any(), any()) }
+    }
+
+    @Test
+    fun `a cancelled collection releases the guard so the next process start retries`() = runTest {
+        every { observePending() } returns Result.success(flow { awaitCancellation() })
+        val telemetry = PendingSubscriptionsTelemetry(observePending, observability)
+
+        val job = launch { telemetry.reportOncePerProcess() }
+        runCurrent()
+        job.cancel()
+        runCurrent()
+        verify(exactly = 0) { observability.reportLog(any(), any(), any()) }
+
+        queued(2)
+        telemetry.reportOncePerProcess()
+        telemetry.reportOncePerProcess()
+
+        verify(exactly = 1) {
+            observability.reportLog(
+                message = "pending_subscriptions.count",
+                severity = "info",
+                tags = mapOf("count" to 2),
+            )
+        }
     }
 }

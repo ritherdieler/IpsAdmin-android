@@ -20,8 +20,6 @@ class RegisterSubscriptionFormHostDeviceTest {
         assertThat(formSource).contains("RegisterSubscriptionIntent.HostDeviceSelected")
         assertThat(formSource).contains("R.string.host_device")
         assertThat(formSource).contains("form.activeCoreDevices()")
-        assertThat(formSource).doesNotContain("CLIENT_IP")
-        assertThat(formSource).doesNotContain("requiresClientIpAddress")
         assertThat(formSource).contains("shouldShowAccessModeSelector()")
         assertThat(formSource).contains("WanAccessModeSelector")
         assertThat(formSource).contains("RegisterSubscriptionIntent.AccessModeSelected")
