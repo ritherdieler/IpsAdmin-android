@@ -114,7 +114,7 @@ Prueba manual obligatoria antes de proponer versión: en el laboratorio de stagi
 
 ## Desviaciones respecto al spec
 
-- Los bloques de recuperación de operación (§5.2) fijan `wizardStep = ONU_SELECTION` además de `serviceTypeChosen = true`, y aplican `withOfflineState` al estado resultante.
+- De los cuatro bloques de recuperación de operación (§5.2), tres fijan `wizardStep = ONU_SELECTION` además de `serviceTypeChosen = true`: el de la intención de cancelación pendiente, el de la suscripción vinculada (provisión) y el de los estados `CANCEL_*`, todos en `restoreActivePreauthorization`. El cuarto, `showPreauthorizationOperation`, fija `serviceTypeChosen = true` pero conserva el paso calculado según la operación (paso actual, `CLIENT_LOCATION`, `WAITING_FOR_ACS` o el del borrador restaurado). Los cuatro aplican `withOfflineState`.
 - El botón cerrar de la cabecera en `SERVICE_TYPE` siempre sale de la pantalla; nunca inicia la cancelación de la OLT, aunque ya esté elegida Fibra (nada está autorizado en ese paso).
 - Los mensajes de commit de la implementación están en inglés (el plan los proponía en español).
 - El E2E de fibra toca `SERVICE_TYPE_FIBER` y «Continuar» solo si el paso de tipo aparece; una ONU u operación recuperada lo omite.
