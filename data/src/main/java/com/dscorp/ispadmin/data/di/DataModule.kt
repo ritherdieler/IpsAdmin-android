@@ -65,7 +65,7 @@ val dataModule = module {
         RegistrationCatalogRemoteDataSourceImpl(get())
     }
     single<RegistrationCatalogRepository> {
-        RegistrationCatalogRepositoryImpl(get(), get())
+        RegistrationCatalogRepositoryImpl(get())
     }
     single<NetworkConnectivityMonitor> {
         NetworkConnectivityMonitorImpl(

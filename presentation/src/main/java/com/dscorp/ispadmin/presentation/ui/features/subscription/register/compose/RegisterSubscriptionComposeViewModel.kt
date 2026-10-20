@@ -31,7 +31,6 @@ import com.dscorp.ispadmin.domain.repository.StartOnuRegistrationRequest
 import com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.catalog.GetRegistrationCatalogUseCase
-import com.dscorp.ispadmin.domain.usecase.catalog.RefreshRegistrationCatalogUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetAvailableOnuListUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetNearNapBoxesUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetPlaceFromLocationUseCase
@@ -94,7 +93,6 @@ import java.util.concurrent.atomic.AtomicInteger
 class RegisterSubscriptionComposeViewModel(
     private val getAvailableOnuListUseCase: GetAvailableOnuListUseCase,
     private val getRegistrationCatalogUseCase: GetRegistrationCatalogUseCase,
-    private val refreshRegistrationCatalogUseCase: RefreshRegistrationCatalogUseCase,
     private val getPlaceFromLocationUseCase: GetPlaceFromLocationUseCase,
     private val registerSubscriptionUseCase: RegisterSubscriptionUseCase,
     private val getUserSessionUseCase: GetUserSessionUseCase,
@@ -326,7 +324,6 @@ class RegisterSubscriptionComposeViewModel(
     }
 
     private suspend fun applyInitialCatalogData(): Result<Unit> = coroutineScope {
-        refreshRegistrationCatalogUseCase()
         val catalogResult = getRegistrationCatalogUseCase()
         val userSession = getUserSessionUseCase()
 

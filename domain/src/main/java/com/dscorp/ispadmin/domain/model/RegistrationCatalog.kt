@@ -55,6 +55,4 @@ data class RegistrationCatalog(
     val napBoxes: List<CatalogNapBox>,
     val onus: List<CatalogOnu>,
     val coreDevices: List<CatalogCoreDevice>
-) {
-    fun isAvailableOffline(): Boolean = coreDevices.isNotEmpty()
-}
+)

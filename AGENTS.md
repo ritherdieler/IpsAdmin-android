@@ -100,7 +100,7 @@ No existe Spotless/Detekt. `InstrumentationTestRunner` está referenciado en Gra
 - Puerto + impl: `domain/.../PendingSubscriptionRepository.kt` + `data/.../PendingSubscriptionRepositoryImpl.kt`
 - API monolítica: `presentation/.../datasource/remote/RestApiServices.kt`
 - API acotada: `presentation/.../auth/AuthApiService.kt`
-- Mapper: `data/.../local/mapper/CatalogMapper.kt`
+- Mapper: `data/.../local/mapper/PendingSubscriptionMapper.kt`
 - Test VM: `presentation/src/test/.../pending/PendingSubscriptionsViewModelTest.kt`
 - Nav: `presentation/.../navigation/IpsAdminNavHost.kt`
 - App: `presentation/.../di/KoinApplication.kt`
@@ -292,7 +292,7 @@ Hay 4: `MainActivity` (Compose NavHost), `MigrationActivity`, `TicketActivity`, 
 
 ### Persistencia
 
-- Room vive en `:data` (`IspAdminDatabase`). Entidades Room ≠ modelos de dominio; mapear (`CatalogMapper`).
+- Room vive en `:data` (`IspAdminDatabase`). Entidades Room ≠ modelos de dominio; mapear (`PendingSubscriptionMapper`).
 - SharedPreferences / `TokenStore` = sesión. **No** introducir DataStore en una feature.
 - Source of truth: Room para pending/catalog; red para el resto salvo diseño explícito.
 - Prohibido `fallbackToDestructiveMigration()` en prod. Toda schema change = Migration.

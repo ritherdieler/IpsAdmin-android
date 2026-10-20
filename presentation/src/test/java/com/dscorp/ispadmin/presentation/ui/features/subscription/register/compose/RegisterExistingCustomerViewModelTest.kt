@@ -9,7 +9,6 @@ import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.repository.SubscriptionActionsRepository
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.catalog.GetRegistrationCatalogUseCase
-import com.dscorp.ispadmin.domain.usecase.catalog.RefreshRegistrationCatalogUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetAvailableOnuListUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetNearNapBoxesUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetPlaceFromLocationUseCase
@@ -96,9 +95,7 @@ class RegisterExistingCustomerViewModelTest {
     }
 
     private fun viewModel(): RegisterSubscriptionComposeViewModel {
-        val refresh = mockk<RefreshRegistrationCatalogUseCase>()
         val getCatalog = mockk<GetRegistrationCatalogUseCase>()
-        coEvery { refresh() } returns Result.success(Unit)
         coEvery { getCatalog() } returns Result.success(
             RegistrationCatalog(
                 plans = listOf(CatalogPlan("p1", "Plan", 10.0, "100", "100", "FIBER")),
@@ -117,7 +114,6 @@ class RegisterExistingCustomerViewModelTest {
         return RegisterSubscriptionComposeViewModel(
             getAvailableOnuListUseCase = onus,
             getRegistrationCatalogUseCase = getCatalog,
-            refreshRegistrationCatalogUseCase = refresh,
             getPlaceFromLocationUseCase = mockk(relaxed = true),
             registerSubscriptionUseCase = mockk(relaxed = true),
             getUserSessionUseCase = session,

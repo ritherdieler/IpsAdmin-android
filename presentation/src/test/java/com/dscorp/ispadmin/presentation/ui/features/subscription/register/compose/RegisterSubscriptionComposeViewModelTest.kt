@@ -21,7 +21,6 @@ import com.dscorp.ispadmin.domain.model.Subscription
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.usecase.InstallationOrderUseCase
 import com.dscorp.ispadmin.domain.usecase.catalog.GetRegistrationCatalogUseCase
-import com.dscorp.ispadmin.domain.usecase.catalog.RefreshRegistrationCatalogUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetAvailableOnuListUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetNearNapBoxesUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.GetPlaceFromLocationUseCase
@@ -77,7 +76,6 @@ class RegisterSubscriptionComposeViewModelTest {
 
     private lateinit var getAvailableOnuListUseCase: GetAvailableOnuListUseCase
     private lateinit var getRegistrationCatalogUseCase: GetRegistrationCatalogUseCase
-    private lateinit var refreshRegistrationCatalogUseCase: RefreshRegistrationCatalogUseCase
     private lateinit var getPlaceFromLocationUseCase: GetPlaceFromLocationUseCase
     private lateinit var registerSubscriptionUseCase: RegisterSubscriptionUseCase
     private lateinit var getUserSessionUseCase: GetUserSessionUseCase
@@ -176,7 +174,6 @@ class RegisterSubscriptionComposeViewModelTest {
         facadePhotoFile = File.createTempFile("facade_test", ".jpg")
         getAvailableOnuListUseCase = mockk()
         getRegistrationCatalogUseCase = mockk()
-        refreshRegistrationCatalogUseCase = mockk()
         getPlaceFromLocationUseCase = mockk()
         registerSubscriptionUseCase = mockk()
         getUserSessionUseCase = mockk()
@@ -189,14 +186,12 @@ class RegisterSubscriptionComposeViewModelTest {
         every { observeOfflineRegistrationModeUseCase() } returns Result.success(offlineModeFlow)
 
         coEvery { getAvailableOnuListUseCase() } returns Result.success(emptyList())
-        coEvery { refreshRegistrationCatalogUseCase() } returns Result.success(Unit)
         coEvery { getRegistrationCatalogUseCase() } returns Result.success(sampleCatalog())
         coEvery { getUserSessionUseCase() } returns Result.success(sampleUser)
 
         viewModel = RegisterSubscriptionComposeViewModel(
             getAvailableOnuListUseCase = getAvailableOnuListUseCase,
             getRegistrationCatalogUseCase = getRegistrationCatalogUseCase,
-            refreshRegistrationCatalogUseCase = refreshRegistrationCatalogUseCase,
             getPlaceFromLocationUseCase = getPlaceFromLocationUseCase,
             registerSubscriptionUseCase = registerSubscriptionUseCase,
             getUserSessionUseCase = getUserSessionUseCase,
@@ -219,7 +214,6 @@ class RegisterSubscriptionComposeViewModelTest {
     ) = RegisterSubscriptionComposeViewModel(
         getAvailableOnuListUseCase = getAvailableOnuListUseCase,
         getRegistrationCatalogUseCase = getRegistrationCatalogUseCase,
-        refreshRegistrationCatalogUseCase = refreshRegistrationCatalogUseCase,
         getPlaceFromLocationUseCase = getPlaceFromLocationUseCase,
         registerSubscriptionUseCase = registerSubscriptionUseCase,
         getUserSessionUseCase = getUserSessionUseCase,
@@ -262,7 +256,6 @@ class RegisterSubscriptionComposeViewModelTest {
         assertEquals(false, viewModel.uiState.value.isRegistering)
         assertEquals(sampleUser, viewModel.uiState.value.currentUser)
         assertEquals(samplePlan, viewModel.uiState.value.registerSubscriptionForm.selectedPlan)
-        coVerify(exactly = 1) { refreshRegistrationCatalogUseCase() }
         coVerify(exactly = 1) { getRegistrationCatalogUseCase() }
 
         job.cancel()
@@ -871,7 +864,7 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
-    fun `OLT catalog refresh failure keeps ready preauthorized ONU from operation evidence`() = runTest(testDispatcher) {
+    fun `empty OLT catalog keeps ready preauthorized ONU from operation evidence`() = runTest(testDispatcher) {
         val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
         val ready = com.google.gson.Gson().fromJson(
             """{"id":"preauth-olt-catalog-error","serial":"ZTEGDC47BFFD","subscriptionId":null,"phase":"READY_FOR_FORM","state":"READY_FOR_FORM","revision":7,"checkpoints":[],"onuTarget":{"oltId":"2","ponType":"gpon","board":"1","port":"6","onuType":"F6600RV9.0.21","vlan":100},"oltEvidence":{"externalId":"gigafiber-ma5608t_1_6_122","board":1,"port":6,"ontId":122}}""",
@@ -880,9 +873,6 @@ class RegisterSubscriptionComposeViewModelTest {
         coEvery { operationUseCase.active() } returns ready
         coEvery { operationUseCase.draft(ready.id) } returns null
         coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
-        coEvery { refreshRegistrationCatalogUseCase() } returns Result.failure(
-            java.net.ConnectException("OLT catalog unavailable")
-        )
         coEvery { getRegistrationCatalogUseCase() } returns Result.success(
             sampleCatalog(onus = emptyList(), coreDevices = emptyList())
         )
@@ -900,7 +890,6 @@ class RegisterSubscriptionComposeViewModelTest {
         assertEquals("ZTEGDC47BFFD", state.registerSubscriptionForm.selectedOnu?.sn)
         assertTrue(state.registerSubscriptionForm.onuList.any { it.sn == ready.serial })
         assertNull(state.preauthorizationError)
-        coVerify(exactly = 1) { refreshRegistrationCatalogUseCase() }
     }
 
     @Test
@@ -1296,6 +1285,29 @@ class RegisterSubscriptionComposeViewModelTest {
         advanceUntilIdle()
         assertEquals(false, viewModel.uiState.value.isLoading)
         assertEquals(false, viewModel.uiState.value.isRegistering)
+    }
+
+    @Test
+    fun `a failing catalog fetch emits the initial catalog error and does not open the form`() = runTest(testDispatcher) {
+        coEvery { getRegistrationCatalogUseCase() } returns Result.failure(
+            java.net.ConnectException("catalog unavailable")
+        )
+
+        val events = mutableListOf<RegisterSubscriptionUiEvent>()
+        val job = launch {
+            viewModel.uiEvent.collect { events.add(it) }
+        }
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        assertEquals(1, events.size)
+        assertTrue(events[0] is RegisterSubscriptionUiEvent.Error)
+        assertEquals("catalog unavailable", (events[0] as RegisterSubscriptionUiEvent.Error).message)
+        assertEquals(false, viewModel.uiState.value.isLoading)
+        assertTrue(viewModel.uiState.value.registerSubscriptionForm.planList.isEmpty())
+
+        job.cancel()
     }
 
     @Test
@@ -1935,7 +1947,6 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel = RegisterSubscriptionComposeViewModel(
             getAvailableOnuListUseCase = getAvailableOnuListUseCase,
             getRegistrationCatalogUseCase = getRegistrationCatalogUseCase,
-            refreshRegistrationCatalogUseCase = refreshRegistrationCatalogUseCase,
             getPlaceFromLocationUseCase = getPlaceFromLocationUseCase,
             registerSubscriptionUseCase = registerSubscriptionUseCase,
             getUserSessionUseCase = getUserSessionUseCase,
@@ -2888,7 +2899,6 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel = RegisterSubscriptionComposeViewModel(
             getAvailableOnuListUseCase = getAvailableOnuListUseCase,
             getRegistrationCatalogUseCase = getRegistrationCatalogUseCase,
-            refreshRegistrationCatalogUseCase = refreshRegistrationCatalogUseCase,
             getPlaceFromLocationUseCase = getPlaceFromLocationUseCase,
             registerSubscriptionUseCase = registerSubscriptionUseCase,
             getUserSessionUseCase = getUserSessionUseCase,
@@ -2955,7 +2965,6 @@ class RegisterSubscriptionComposeViewModelTest {
         viewModel = RegisterSubscriptionComposeViewModel(
             getAvailableOnuListUseCase = getAvailableOnuListUseCase,
             getRegistrationCatalogUseCase = getRegistrationCatalogUseCase,
-            refreshRegistrationCatalogUseCase = refreshRegistrationCatalogUseCase,
             getPlaceFromLocationUseCase = getPlaceFromLocationUseCase,
             registerSubscriptionUseCase = registerSubscriptionUseCase,
             getUserSessionUseCase = getUserSessionUseCase,

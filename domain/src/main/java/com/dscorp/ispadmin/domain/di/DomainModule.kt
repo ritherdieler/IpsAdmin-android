@@ -1,7 +1,6 @@
 package com.dscorp.ispadmin.domain.di
 
 import com.dscorp.ispadmin.domain.usecase.catalog.GetRegistrationCatalogUseCase
-import com.dscorp.ispadmin.domain.usecase.catalog.RefreshRegistrationCatalogUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.DiscardPendingSubscriptionUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.EnqueuePendingSubscriptionUseCase
 import com.dscorp.ispadmin.domain.usecase.subscription.ObserveOfflineRegistrationModeUseCase
@@ -12,7 +11,6 @@ import org.koin.dsl.module
 
 val domainModule = module {
     single { GetRegistrationCatalogUseCase(get()) }
-    single { RefreshRegistrationCatalogUseCase(get()) }
     single { EnqueuePendingSubscriptionUseCase(get(), get()) }
     single { ObservePendingSubscriptionsUseCase(get()) }
     single { ObserveOfflineRegistrationModeUseCase(get(), get()) }

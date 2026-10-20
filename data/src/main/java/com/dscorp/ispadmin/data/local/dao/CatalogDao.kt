@@ -12,6 +12,7 @@ import com.dscorp.ispadmin.data.local.entity.CatalogPlaceEntity
 import com.dscorp.ispadmin.data.local.entity.CatalogPlanEntity
 import kotlinx.coroutines.flow.Flow
 
+// Unused: the registration catalog now loads straight from the API. Removed in delivery 2.
 @Dao
 interface CatalogDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
