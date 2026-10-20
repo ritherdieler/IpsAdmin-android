@@ -1062,13 +1062,16 @@ class RegisterSubscriptionComposeViewModel(
                     return
                 }
                 _uiState.update {
-                    it.copy(
-                        preauthorizationEnabled = true,
-                        serviceTypeChosen = true,
-                        preauthorizationOperation = operation,
-                        isRegistering = true,
-                        cancellationInProgress = true,
-                        registrationProgressMessage = "Retomando la cancelación de ${intent.serial}…",
+                    withOfflineState(
+                        it.copy(
+                            preauthorizationEnabled = true,
+                            serviceTypeChosen = true,
+                            wizardStep = RegisterSubscriptionWizardStep.ONU_SELECTION,
+                            preauthorizationOperation = operation,
+                            isRegistering = true,
+                            cancellationInProgress = true,
+                            registrationProgressMessage = "Retomando la cancelación de ${intent.serial}…",
+                        )
                     )
                 }
                 cancellationRequested = true
@@ -1078,15 +1081,18 @@ class RegisterSubscriptionComposeViewModel(
             if (linkedSubscriptionId != null) {
                 val cancelling = operation.state in setOf("CANCEL_REQUESTED", "CANCELLING", "CANCEL_FAILED", "CANCELLED")
                 _uiState.update {
-                    it.copy(
-                        preauthorizationEnabled = true,
-                        serviceTypeChosen = true,
-                        preauthorizationOperation = operation,
-                        isRegistering = true,
-                        submission = if (cancelling) it.submission else SubmissionState.Provisioning(linkedSubscriptionId),
-                        registrationProgressMessage = if (cancelling) {
-                            "Retomando limpieza de la cancelación…"
-                        } else "Retomando provisión de la suscripción #$linkedSubscriptionId…",
+                    withOfflineState(
+                        it.copy(
+                            preauthorizationEnabled = true,
+                            serviceTypeChosen = true,
+                            wizardStep = RegisterSubscriptionWizardStep.ONU_SELECTION,
+                            preauthorizationOperation = operation,
+                            isRegistering = true,
+                            submission = if (cancelling) it.submission else SubmissionState.Provisioning(linkedSubscriptionId),
+                            registrationProgressMessage = if (cancelling) {
+                                "Retomando limpieza de la cancelación…"
+                            } else "Retomando provisión de la suscripción #$linkedSubscriptionId…",
+                        )
                     )
                 }
                 ensureRegistrationWorkflow(operation.id)
@@ -1099,13 +1105,16 @@ class RegisterSubscriptionComposeViewModel(
             }
             if (operation.state in setOf("CANCEL_REQUESTED", "CANCELLING", "CANCEL_FAILED", "CANCELLED")) {
                 _uiState.update {
-                    it.copy(
-                        preauthorizationEnabled = true,
-                        serviceTypeChosen = true,
-                        preauthorizationOperation = operation,
-                        isRegistering = true,
-                        cancellationInProgress = true,
-                        registrationProgressMessage = "Retomando limpieza de la cancelación…",
+                    withOfflineState(
+                        it.copy(
+                            preauthorizationEnabled = true,
+                            serviceTypeChosen = true,
+                            wizardStep = RegisterSubscriptionWizardStep.ONU_SELECTION,
+                            preauthorizationOperation = operation,
+                            isRegistering = true,
+                            cancellationInProgress = true,
+                            registrationProgressMessage = "Retomando limpieza de la cancelación…",
+                        )
                     )
                 }
                 cancellationRequested = true
@@ -1145,23 +1154,25 @@ class RegisterSubscriptionComposeViewModel(
             )
         }
         _uiState.update { current ->
-            current.copy(
-                isLoading = false,
-                isPreauthorizationRequestInProgress = false,
-                preauthorizationEnabled = true,
-                serviceTypeChosen = true,
-                preauthorizationOperation = operation,
-                preauthorizationError = preauthorizationFailure(operation),
-                wizardStep = when {
-                    userInForm && (operation.canOpenRegistrationForm() || operation.isAwaitingAcsContact()) -> currentStep
-                    operation.isAwaitingAcsContact() -> RegisterSubscriptionWizardStep.CLIENT_LOCATION
-                    !operation.canOpenRegistrationForm() -> RegisterSubscriptionWizardStep.WAITING_FOR_ACS
-                    else -> restoredWizardStep ?: RegisterSubscriptionWizardStep.CLIENT_LOCATION
-                },
-                submitBlockedReason = current.submitBlockedReason.takeIf { operation.isAwaitingAcsContact() },
-                registerSubscriptionForm = if (userInForm) {
-                    current.registerSubscriptionForm.copy(selectedOnu = form.selectedOnu, onuList = form.onuList)
-                } else form,
+            withOfflineState(
+                current.copy(
+                    isLoading = false,
+                    isPreauthorizationRequestInProgress = false,
+                    preauthorizationEnabled = true,
+                    serviceTypeChosen = true,
+                    preauthorizationOperation = operation,
+                    preauthorizationError = preauthorizationFailure(operation),
+                    wizardStep = when {
+                        userInForm && (operation.canOpenRegistrationForm() || operation.isAwaitingAcsContact()) -> currentStep
+                        operation.isAwaitingAcsContact() -> RegisterSubscriptionWizardStep.CLIENT_LOCATION
+                        !operation.canOpenRegistrationForm() -> RegisterSubscriptionWizardStep.WAITING_FOR_ACS
+                        else -> restoredWizardStep ?: RegisterSubscriptionWizardStep.CLIENT_LOCATION
+                    },
+                    submitBlockedReason = current.submitBlockedReason.takeIf { operation.isAwaitingAcsContact() },
+                    registerSubscriptionForm = if (userInForm) {
+                        current.registerSubscriptionForm.copy(selectedOnu = form.selectedOnu, onuList = form.onuList)
+                    } else form,
+                )
             )
         }
         clearStoredOnuSelection()
@@ -1215,12 +1226,14 @@ class RegisterSubscriptionComposeViewModel(
         } ?: return
         _uiState.update { state ->
             if (state.preauthorizationOperation != null) state
-            else state.copy(
-                serviceTypeChosen = true,
-                wizardStep = RegisterSubscriptionWizardStep.ONU_SELECTION,
-                registerSubscriptionForm = state.registerSubscriptionForm.copy(
-                    selectedOnu = selectedOnu,
-                    onuError = null,
+            else withOfflineState(
+                state.copy(
+                    serviceTypeChosen = true,
+                    wizardStep = RegisterSubscriptionWizardStep.ONU_SELECTION,
+                    registerSubscriptionForm = state.registerSubscriptionForm.copy(
+                        selectedOnu = selectedOnu,
+                        onuError = null,
+                    )
                 )
             )
         }

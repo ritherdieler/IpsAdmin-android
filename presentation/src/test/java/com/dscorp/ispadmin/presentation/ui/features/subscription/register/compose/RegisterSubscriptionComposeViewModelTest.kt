@@ -3263,4 +3263,130 @@ class RegisterSubscriptionComposeViewModelTest {
         assertTrue(model.uiState.value.isOfflineMode)
         assertTrue(model.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
     }
+
+    @Test
+    fun `a recovered operation fixes the offline state computed before it was known`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val ready = OnuRegistrationOperation(
+            id = "preauth-offline", serial = "VSOL0031C0B6", subscriptionId = null,
+            phase = "READY_FOR_FORM", state = "READY_FOR_FORM", revision = 4,
+        )
+        val activeGate = CompletableDeferred<OnuRegistrationOperation?>()
+        coEvery { operationUseCase.active() } coAnswers { activeGate.await() }
+        coEvery { operationUseCase.draft(any()) } returns null
+        coEvery { operationUseCase.saveDraft(any(), any()) } returns Unit
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(catalogWithAllTypes())
+        offlineModeFlow.value = true
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        testScheduler.runCurrent()
+        // The offline value was collected before any operation was known.
+        assertTrue(viewModel.uiState.value.isOfflineMode)
+        assertTrue(viewModel.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
+
+        activeGate.complete(ready)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.usesPreauthorization)
+        assertFalse(viewModel.uiState.value.isOfflineMode)
+        assertFalse(viewModel.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
+    }
+
+    @Test
+    fun `a restored ONU selection fixes the offline state computed before it was known`() = runTest(testDispatcher) {
+        val serial = "VSOL0031C0B6"
+        val selectionStore = InMemoryOnuRegistrationSelectionStore()
+        selectionStore.saveSelectedOnuSerial(sampleUser.id!!.toLong(), serial)
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val catalogGate = CompletableDeferred<Result<RegistrationCatalog>>()
+        coEvery { operationUseCase.active() } returns null
+        coEvery { getRegistrationCatalogUseCase() } coAnswers { catalogGate.await() }
+        offlineModeFlow.value = true
+        viewModel = viewModelWithPreauthorization(
+            useCase = operationUseCase,
+            onuRegistrationSelectionStore = selectionStore,
+        )
+
+        viewModel.loadScreenData(null)
+        testScheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.isOfflineMode)
+
+        catalogGate.complete(Result.success(sampleCatalog(onus = listOf(fiberOnu().copy(sn = serial)))))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.usesPreauthorization)
+        assertFalse(viewModel.uiState.value.isOfflineMode)
+        assertFalse(viewModel.uiState.value.registerSubscriptionForm.requiresClientIpAddress)
+    }
+
+    @Test
+    fun `a recovered cancellation intent does not show SERVICE_TYPE`() = runTest(testDispatcher) {
+        val intentStore = InMemoryCancellationIntentStore()
+        val serial = "ZTEGDC47BFFD"
+        val requestKey = "request-key-step"
+        intentStore.save(OnuRegistrationCancellationIntent(1, requestKey, serial))
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val active = OnuRegistrationOperation(
+            id = "operation-intent-step", serial = serial, subscriptionId = null,
+            phase = "OLT_AUTHORIZATION", state = "RUNNING", revision = 11, registrationRequestKey = requestKey,
+        )
+        val cancelling = active.copy(state = "CANCEL_REQUESTED", revision = 12)
+        val getGate = CompletableDeferred<OnuRegistrationOperation>()
+        coEvery { operationUseCase.active() } returns active
+        coEvery { operationUseCase.cancel(active.id, active.revision) } returns cancelling
+        coEvery { operationUseCase.get(active.id) } coAnswers { getGate.await() }
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(sampleCatalog())
+        viewModel = viewModelWithPreauthorization(operationUseCase, intentStore)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.cancellationInProgress)
+        assertTrue(viewModel.uiState.value.serviceTypeChosen)
+        assertTrue(viewModel.uiState.value.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE)
+        getGate.cancel()
+    }
+
+    @Test
+    fun `a recovered linked operation does not show SERVICE_TYPE`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val linked = OnuRegistrationOperation(
+            id = "linked-step", serial = "VSOL0031C0B6", subscriptionId = 84,
+            phase = "PROVISIONING", state = "RUNNING", revision = 5,
+        )
+        coEvery { operationUseCase.active() } returns linked
+        coEvery { operationUseCase.get(linked.id) } returns linked
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(sampleCatalog())
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isRegistering)
+        assertTrue(viewModel.uiState.value.serviceTypeChosen)
+        assertTrue(viewModel.uiState.value.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE)
+    }
+
+    @Test
+    fun `a recovered unlinked cancellation does not show SERVICE_TYPE`() = runTest(testDispatcher) {
+        val operationUseCase = mockk<OnuRegistrationOperationUseCase>()
+        val cancelling = OnuRegistrationOperation(
+            id = "cancelling-step", serial = "ZTEGDC47BFFD", subscriptionId = null,
+            phase = "WAITING_FOR_ACS", state = "CANCEL_REQUESTED", revision = 6,
+        )
+        val getGate = CompletableDeferred<OnuRegistrationOperation>()
+        coEvery { operationUseCase.active() } returns cancelling
+        coEvery { operationUseCase.get(cancelling.id) } coAnswers { getGate.await() }
+        coEvery { getRegistrationCatalogUseCase() } returns Result.success(sampleCatalog())
+        viewModel = viewModelWithPreauthorization(operationUseCase)
+
+        viewModel.loadScreenData(null)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.cancellationInProgress)
+        assertTrue(viewModel.uiState.value.serviceTypeChosen)
+        assertTrue(viewModel.uiState.value.wizardStep != RegisterSubscriptionWizardStep.SERVICE_TYPE)
+        getGate.cancel()
+    }
 }
