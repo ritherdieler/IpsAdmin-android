@@ -86,6 +86,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import java.io.File
+import java.io.IOException
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -113,6 +114,8 @@ class RegisterSubscriptionComposeViewModel(
     private companion object {
         const val OBS_FEATURE = "subscription"
         const val OBS_SCREEN = "register_subscription"
+        const val CATALOG_CONNECTIVITY_MESSAGE =
+            "No se pudo cargar el catálogo de registro. Revisa tu conexión y vuelve a intentar."
         const val CLIENT_REQUEST_ID_KEY = "register_subscription_client_request_id"
         const val DNI_CHECK_MIN_LENGTH = 8
         const val DNI_CHECK_DEBOUNCE_MS = 600L
@@ -315,8 +318,15 @@ class RegisterSubscriptionComposeViewModel(
                 "orderId" to installationOrderId
             )
         )
-        _uiEvent.emit(RegisterSubscriptionUiEvent.Error(error.message ?: "Unknown error"))
+        _uiEvent.emit(RegisterSubscriptionUiEvent.Error(initialCatalogErrorMessage(error)))
     }
+
+    private fun initialCatalogErrorMessage(error: Throwable): String =
+        if (generateSequence(error) { it.cause }.any { it is IOException }) {
+            CATALOG_CONNECTIVITY_MESSAGE
+        } else {
+            error.message ?: "Unknown error"
+        }
 
     private suspend fun applyInitialCatalogData(): Result<Unit> = coroutineScope {
         val catalogResult = getRegistrationCatalogUseCase()

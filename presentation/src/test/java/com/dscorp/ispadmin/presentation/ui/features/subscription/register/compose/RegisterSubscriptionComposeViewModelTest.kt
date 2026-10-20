@@ -52,6 +52,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -68,6 +69,9 @@ import org.junit.Test
 import java.io.File
 
 @OptIn(ExperimentalCoroutinesApi::class)
+private const val CATALOG_CONNECTIVITY_MESSAGE =
+    "No se pudo cargar el catálogo de registro. Revisa tu conexión y vuelve a intentar."
+
 class RegisterSubscriptionComposeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
@@ -1312,27 +1316,69 @@ class RegisterSubscriptionComposeViewModelTest {
         assertEquals(false, viewModel.uiState.value.isRegistering)
     }
 
-    @Test
-    fun `a failing catalog fetch emits the initial catalog error and does not open the form`() = runTest(testDispatcher) {
-        coEvery { getRegistrationCatalogUseCase() } returns Result.failure(
-            java.net.ConnectException("catalog unavailable")
+    private suspend fun TestScope.loadCatalogFailingWith(
+        failure: Throwable,
+        observability: com.dscorp.ispadmin.observability.ObservabilityClient = mockk(relaxed = true),
+    ): List<RegisterSubscriptionUiEvent> {
+        coEvery { getRegistrationCatalogUseCase() } returns Result.failure(failure)
+        viewModel = viewModelWithPreauthorization(
+            mockk<OnuRegistrationOperationUseCase>(relaxed = true),
+            observabilityClient = observability,
         )
 
         val events = mutableListOf<RegisterSubscriptionUiEvent>()
-        val job = launch {
-            viewModel.uiEvent.collect { events.add(it) }
-        }
+        val job = launch { viewModel.uiEvent.collect { events.add(it) } }
 
         viewModel.loadScreenData(null)
         advanceUntilIdle()
 
+        assertEquals(false, viewModel.uiState.value.isLoading)
+        assertTrue(viewModel.uiState.value.registerSubscriptionForm.planList.isEmpty())
+        job.cancel()
+        return events
+    }
+
+    @Test
+    fun `a failing catalog fetch emits the initial catalog error and does not open the form`() = runTest(testDispatcher) {
+        val events = loadCatalogFailingWith(IllegalStateException("catalog unavailable"))
+
         assertEquals(1, events.size)
         assertTrue(events[0] is RegisterSubscriptionUiEvent.Error)
         assertEquals("catalog unavailable", (events[0] as RegisterSubscriptionUiEvent.Error).message)
-        assertEquals(false, viewModel.uiState.value.isLoading)
-        assertTrue(viewModel.uiState.value.registerSubscriptionForm.planList.isEmpty())
+    }
 
-        job.cancel()
+    @Test
+    fun `a network failure on the catalog fetch shows the Spanish connectivity message`() = runTest(testDispatcher) {
+        val events = loadCatalogFailingWith(java.net.UnknownHostException("Unable to resolve host"))
+
+        assertEquals(
+            listOf<RegisterSubscriptionUiEvent>(RegisterSubscriptionUiEvent.Error(CATALOG_CONNECTIVITY_MESSAGE)),
+            events,
+        )
+    }
+
+    @Test
+    fun `a wrapped network failure on the catalog fetch shows the Spanish connectivity message`() = runTest(testDispatcher) {
+        val events = loadCatalogFailingWith(
+            IllegalStateException("wrapped", java.io.IOException("connection reset"))
+        )
+
+        assertEquals(
+            listOf<RegisterSubscriptionUiEvent>(RegisterSubscriptionUiEvent.Error(CATALOG_CONNECTIVITY_MESSAGE)),
+            events,
+        )
+    }
+
+    @Test
+    fun `a network failure on the catalog fetch still reports the original exception`() = runTest(testDispatcher) {
+        val obs = mockk<com.dscorp.ispadmin.observability.ObservabilityClient>(relaxed = true)
+        val failure = java.net.UnknownHostException("Unable to resolve host")
+
+        loadCatalogFailingWith(failure, obs)
+
+        io.mockk.verify(exactly = 1) {
+            obs.reportError(throwable = failure, message = any(), severity = any(), tags = any())
+        }
     }
 
     @Test
