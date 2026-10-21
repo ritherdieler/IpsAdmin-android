@@ -15,6 +15,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.SubmissionState
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.Subscription
+import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionTestTags
 import com.dscorp.ispadmin.R
 import com.google.gson.Gson
 import io.mockk.every
@@ -411,5 +412,52 @@ class RegisterSubscriptionSuccessDialogTest {
 
         composeRule.onNodeWithTag("register_success_section_tr069").assertDoesNotExist()
         composeRule.onNodeWithTag("register_success_message").assertIsDisplayed()
+    }
+
+    @Test
+    fun `solo TV success shows neither internet access, speeds nor Wi-Fi`() {
+        composeRule.setContent {
+            MaterialTheme {
+                RegisterSuccessFullScreen(
+                    subscription = Subscription(
+                        firstName = "Ana",
+                        lastName = "García",
+                        installationType = InstallationType.ONLY_TV_FIBER,
+                        ip = "192.168.31.69",
+                    ),
+                    plan = PlanResponse("tv1", "cable_basico", 30.0, "0", "0", InstallationType.ONLY_TV_FIBER),
+                    onDismiss = {},
+                    onContinue = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("cable_basico").assertExists()
+        composeRule.onNodeWithTag("register_success_section_access").assertDoesNotExist()
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SUCCESS_SECTION_WIFI).assertDoesNotExist()
+        composeRule.onNodeWithText("192.168.31.69").assertDoesNotExist()
+        composeRule.onNodeWithText("Bajada").assertDoesNotExist()
+    }
+
+    @Test
+    fun `wireless success shows the IP but no Wi-Fi`() {
+        composeRule.setContent {
+            MaterialTheme {
+                RegisterSuccessFullScreen(
+                    subscription = Subscription(
+                        firstName = "Ana",
+                        lastName = "García",
+                        installationType = InstallationType.WIRELESS,
+                        accessMode = "STATIC_IP",
+                        ip = "192.168.250.10",
+                    ),
+                    onDismiss = {},
+                    onContinue = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("192.168.250.10").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(RegisterSubscriptionTestTags.SUCCESS_SECTION_WIFI).assertDoesNotExist()
     }
 }

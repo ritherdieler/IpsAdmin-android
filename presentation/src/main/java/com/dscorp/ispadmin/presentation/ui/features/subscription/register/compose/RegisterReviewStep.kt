@@ -91,12 +91,15 @@ internal fun ReviewStepContent(formState: RegisterSubscriptionState, onIntent: (
             ReviewRow("Clave", "•".repeat(form.wifiPassword24.length.coerceIn(8, 12))),
         ) else emptyList()
         val photoReady = !form.facadePhotoUrl.isNullOrBlank() || form.facadePhotoUri != null
-        ReviewCard(if (wifiRows.isEmpty()) "Foto" else "Wi-Fi y foto", editLabel = "Editar Wi-Fi y foto",
+        ReviewCard(if (wifiRows.isEmpty()) "Foto" else "Wi-Fi y foto",
+            editLabel = if (wifiRows.isEmpty()) "Editar foto" else "Editar Wi-Fi y foto",
             onEdit = { onIntent(RegisterSubscriptionIntent.EditStepClicked(RegisterSubscriptionWizardStep.INSTALLATION)) },
             rows = wifiRows + ReviewRow("Foto de fachada", if (photoReady) "✓ Lista" else "Falta"))
         Text(
             if (form.installationType == InstallationType.ONLY_TV_FIBER && form.tvCpeKind == TvCpeKind.OPTICAL_RECEIVER) {
                 "Al registrar se reserva el puerto en la caja NAP y se activa el servicio de TV. No se autoriza ninguna ONU."
+            } else if (form.installationType == InstallationType.WIRELESS) {
+                "Al registrar se configura el acceso a internet del cliente."
             } else {
                 "Al registrar se configura el acceso a internet y el Wi-Fi. Tarda hasta 2 minutos y puedes salir de esta pantalla."
             },

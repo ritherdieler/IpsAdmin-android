@@ -3401,6 +3401,34 @@ class RegisterSubscriptionComposeViewModelTest {
     }
 
     @Test
+    fun `wireless sends no nap box even when one was picked for the location`() = runTest(testDispatcher) {
+        val model = serviceTypeViewModel(mockk())
+        var sent: Subscription? = null
+        coEvery {
+            registerSubscriptionUseCase(any(), any(), facadePhotoFile = any())
+        } answers {
+            sent = firstArg()
+            Result.success(RegisterSubscriptionResult.Registered(Subscription(subscriptionId = 5)))
+        }
+
+        model.onIntent(RegisterSubscriptionIntent.ServiceTypeSelected(InstallationType.WIRELESS))
+        model.onIntent(RegisterSubscriptionIntent.WizardContinueClicked)
+        advanceUntilIdle()
+        fillValidTvCustomerFields()
+        model.onIntent(
+            RegisterSubscriptionIntent.PlanSelected(
+                PlanResponse("w1", "Wireless", 30.0, "50", "20", InstallationType.WIRELESS)
+            )
+        )
+        model.onIntent(RegisterSubscriptionIntent.NapBoxSelected(NapBoxResponse(id = "n1", placeName = "P1", placeId = 1)))
+        model.saveSubscription(facadePhotoFile)
+        advanceUntilIdle()
+
+        assertEquals(InstallationType.WIRELESS, sent?.installationType)
+        assertNull(sent?.napBoxId)
+    }
+
+    @Test
     fun `a type without active plans shows the error and stays`() = runTest(testDispatcher) {
         val model = serviceTypeViewModel(mockk(), sampleCatalog())
 

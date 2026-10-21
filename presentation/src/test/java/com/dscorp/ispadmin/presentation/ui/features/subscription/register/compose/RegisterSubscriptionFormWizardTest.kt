@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -608,6 +609,33 @@ class RegisterSubscriptionFormWizardTest {
 
         composeRule.onNodeWithText("Conexión").assertDoesNotExist()
         composeRule.onNodeWithText("No se autoriza ninguna ONU.", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the review of wireless mentions no Wi-Fi in the photo card or the final note`() {
+        composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        composeRule.setContent {
+            MaterialTheme { RegisterSubscriptionForm(formState = reviewState(InstallationType.WIRELESS, null)) }
+        }
+
+        composeRule.onNodeWithContentDescription("Editar foto").assertExists()
+        composeRule.onNodeWithContentDescription("Editar Wi-Fi y foto").assertDoesNotExist()
+        composeRule.onNodeWithText("Wi-Fi", substring = true).assertDoesNotExist()
+        composeRule.onNodeWithText("Al registrar se configura el acceso a internet del cliente.", substring = true)
+            .assertExists()
+    }
+
+    @Test
+    fun `the review of solo TV labels the photo card edit without Wi-Fi`() {
+        composeRule.activity.setTheme(R.style.Theme_IspAdminAndroid)
+        composeRule.setContent {
+            MaterialTheme {
+                RegisterSubscriptionForm(formState = reviewState(InstallationType.ONLY_TV_FIBER, TvCpeKind.OPTICAL_RECEIVER))
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Editar foto").assertExists()
+        composeRule.onNodeWithContentDescription("Editar Wi-Fi y foto").assertDoesNotExist()
     }
 
     @Test

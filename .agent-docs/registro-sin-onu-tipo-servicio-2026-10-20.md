@@ -156,3 +156,18 @@ Plan: `pendientes-registro-offline-limpieza-plan-2026-10-20.md` (rama `fix/pendi
 - La tarjeta «Equipo» con una serie de ONU guardada en un tipo no fibra: inalcanzable (la guarda se borra al cancelar la fibra).
 - Mostrar la entrada de pendientes cuando falla la lectura de Room, y el banner del técnico desactualizado tras una recarga fallida: casos improbables e inofensivos.
 - `GetRegistrationCatalogUseCase` como paso directo: lo exige el plan de la entrega 1.
+
+## Verificación en staging (2026-10-20)
+
+Emulador con APK `stagingDebug` de `develop` 60d4cf8d contra `ispadmin-staging`:
+
+- **Solo TV (CATV)** → suscripción 900001: asistente de 3 pasos sin ONU ni ACS; Atrás desde Cliente vuelve al tipo y conserva los datos; la rotación en Servicio conserva tipo, plan y NAP. Request con `ONLY_TV_FIBER` y `registrationOperationId`, `onu` y `vlan` nulos; borne asignado por el backend; no crea cola en el MK2 (`OnlyTvFiberInstallationStrategy` devuelve `queueAdded = false`).
+- **Inalámbrico (IP estática)** → suscripción 900002: mismo recorrido; IP del pool de laboratorio `192.168.250.10` y cola `[stg]` en el MK2.
+
+Correcciones tras la prueba:
+
+- Inalámbrico enviaba la NAP elegida sola por cercanía (`napBoxId`); ahora solo se envía si el tipo la requiere (`requiresNapBox()`).
+- Revisión: el botón de la tarjeta de foto dice «Editar foto» cuando no hay Wi‑Fi; la nota de Inalámbrico ya no menciona el Wi‑Fi.
+- Pantalla de éxito: Solo TV oculta velocidades, «Acceso a internet» y «Wi‑Fi»; Inalámbrico oculta «Wi‑Fi». Si el tipo no llega en la respuesta se muestran todas las secciones como antes.
+
+Pendiente: caso Fibra completo (regresión) y limpieza de las suscripciones 900001/900002 y de la cola `[stg]` del MK2.

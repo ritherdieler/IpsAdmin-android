@@ -2313,7 +2313,7 @@ private fun buildSubscriptionFromForm(
         ),
         installationType = form.installationType,
         note = form.note,
-        napBoxId = form.selectedNapBox?.id,
+        napBoxId = form.selectedNapBox?.id.takeIf { form.requiresNapBox() },
         onu = form.selectedOnu.takeIf { form.requiresOnu() },
         equipmentCondition = form.equipmentCondition,
         autoCut = true,

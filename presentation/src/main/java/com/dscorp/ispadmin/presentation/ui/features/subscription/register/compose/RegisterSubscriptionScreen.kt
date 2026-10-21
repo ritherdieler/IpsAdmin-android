@@ -632,6 +632,10 @@ internal fun RegisterSuccessFullScreen(
     // a-reg-09: the service already has internet; only the Wi-Fi did not reach the ONU.
     val wifiMissing = requiresManualTr069 || isFailedTr069
     val usesPppoe = AccessMode.parse(subscription.accessMode)?.usesPppoe() == true
+    // Solo TV has no internet access; only fiber configures Wi-Fi on an ONU. Unknown type keeps every section.
+    val type = subscription.installationType
+    val showInternetAccess = type != InstallationType.ONLY_TV_FIBER
+    val showWifi = type == null || type == InstallationType.FIBER
     val monthlyPrice = subscription.price ?: plan?.price
     val colors = IspTheme.colors
     val name = listOfNotNull(subscription.firstName, subscription.lastName).joinToString(" ").toTitleCase().ifBlank { "Suscriptor" }
@@ -737,11 +741,13 @@ internal fun RegisterSuccessFullScreen(
                         monthlyPrice?.let { price ->
                             InfoRow("Mensualidad", "S/ ${"%.2f".format(Locale.US, price)} / mes")
                         }
-                        plan?.downloadSpeed?.takeIf(String::isNotBlank)?.let { speed -> InfoRow("Bajada", "$speed Mbps") }
-                        plan?.uploadSpeed?.takeIf(String::isNotBlank)?.let { speed -> InfoRow("Subida", "$speed Mbps") }
+                        if (showInternetAccess) {
+                            plan?.downloadSpeed?.takeIf(String::isNotBlank)?.let { speed -> InfoRow("Bajada", "$speed Mbps") }
+                            plan?.uploadSpeed?.takeIf(String::isNotBlank)?.let { speed -> InfoRow("Subida", "$speed Mbps") }
+                        }
                     }
 
-                    RegisterSuccessSectionCard(title = "Acceso a internet", testTag = "register_success_section_access") {
+                    if (showInternetAccess) RegisterSuccessSectionCard(title = "Acceso a internet", testTag = "register_success_section_access") {
                         if (usesPppoe) {
                             InfoRow("Usuario PPPoE", subscription.pppoeUsername?.takeIf(String::isNotBlank) ?: "No disponible")
                             InfoRow("Contraseña PPPoE", subscription.pppoePassword?.takeIf(String::isNotBlank) ?: "No disponible")
@@ -750,7 +756,7 @@ internal fun RegisterSuccessFullScreen(
                         }
                     }
 
-                    RegisterSuccessSectionCard(title = "Wi-Fi", testTag = RegisterSubscriptionTestTags.SUCCESS_SECTION_WIFI) {
+                    if (showWifi) RegisterSuccessSectionCard(title = "Wi-Fi", testTag = RegisterSubscriptionTestTags.SUCCESS_SECTION_WIFI) {
                         InfoRow("SSID 2.4 GHz", subscription.wifiSsid24?.takeIf(String::isNotBlank) ?: "No disponible")
                         InfoRow("Contraseña 2.4 GHz", subscription.wifiPassword24?.takeIf(String::isNotBlank) ?: "No disponible")
                         InfoRow("SSID 5 GHz", subscription.wifiSsid5?.takeIf(String::isNotBlank) ?: "No disponible")
