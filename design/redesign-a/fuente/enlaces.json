@@ -1,0 +1,387 @@
+{
+  "_comentario": "Enlaces que exportar.py agrega o corrige sobre los del lienzo, y los happy paths. Las claves son la etiqueta del enlace o botón (aria-label o su texto); con * al final se compara solo el inicio; «*» sola es toda la pantalla.",
+  "barra_inferior": {
+    "Inicio": "a-ini-02-secretaria",
+    "Hoy": "a-ini-03-tecnico",
+    "Suscripciones": "a-sus-02-inicial",
+    "Caja": "a-caj-01-caja",
+    "Tickets": "a-tic-01-lista",
+    "Instalaciones": "a-ins-01-lista",
+    "Más": "a-mas-01-menu"
+  },
+  "pantallas": {
+    "a-acc-01-splash": { "*": "a-acc-03-login" },
+    "a-acc-02-actualizar": { "Actualizar ahora": "a-acc-03-login", "Cerrar la app": "a-acc-01-splash" },
+    "a-acc-03-login": { "Ingresar": "a-ini-02-secretaria", "Ingresar con huella": "a-ini-02-secretaria" },
+    "a-acc-04-login-error": { "Ingresar": "a-ini-02-secretaria", "Ingresar con huella": "a-ini-02-secretaria" },
+    "a-ini-02-secretaria": {
+      "HC Hilda Ccori Mamani*": "a-sus-04-ficha-resumen",
+      "Cobrar S/ 100.00 a Hilda Ccori Mamani": "a-caj-02-cobro-yape"
+    },
+    "a-ini-03-tecnico": { "Registrar suscripción": "a-reg-02-equipo", "Baja #3611*": "a-tic-02-pendiente" },
+    "a-ini-04-ventas": {
+      "Hoy 10:30 Ticket #3612*": "a-ins-01-lista",
+      "Jue 15 oct 09:00 Orden #6*": "a-ins-03-asignar",
+      "Por asignar Ticket #3598*": "a-ins-03-asignar"
+    },
+    "a-ini-05-notificaciones": {
+      "No leída: Registro de Lucía Mendoza*": "a-reg-09-atencion",
+      "Nueva versión 2.7.0*": "a-acc-02-actualizar"
+    },
+    "a-sus-01-buscar": {
+      "RQ *": "a-sus-04-ficha-resumen",
+      "RH *": "a-sus-04-ficha-resumen",
+      "RR *": "a-sus-04-ficha-resumen",
+      "AR *": "a-sus-04-ficha-resumen",
+      "CR *": "a-sus-04-ficha-resumen"
+    },
+    "a-sus-02-inicial": {
+      "490 Cortados": "a-sus-01-buscar",
+      "21 Deben 2 meses": "a-sus-01-buscar",
+      "112 Sin caja NAP": "a-sus-01-buscar",
+      "449 Cancelados": "a-sus-01-buscar",
+      "MQ *": "a-sus-04-ficha-resumen",
+      "FP *": "a-sus-04-ficha-resumen",
+      "CR *": "a-sus-04-ficha-resumen"
+    },
+    "a-sus-03-filtros": { "Ver 287 resultados": "a-sus-01-buscar", "Limpiar": "a-sus-02-inicial" },
+    "a-sus-04-ficha-resumen": { "Tickets 1": "a-tic-01-lista" },
+    "a-sus-05-ficha-pagos": {
+      "Tickets 1": "a-tic-01-lista",
+      "Oct 2026*": "a-caj-02-cobro-yape",
+      "Set 2026*": "a-caj-02-cobro-yape",
+      "Ago 2026*": "a-caj-02-cobro-yape",
+      "Jun 2026*": "a-caj-05-detalle-pago",
+      "May 2026*": "a-caj-05-detalle-pago",
+      "Ver pagos anteriores": "a-caj-06-buscar-pagos"
+    },
+    "a-sus-06-ficha-red": { "Tickets 1": "a-tic-01-lista" },
+    "a-sus-07-ficha-historial": { "Tickets 1": "a-tic-01-lista" },
+    "a-sus-08-mas-acciones": { "Nuevo servicio para el titular": "a-reg-02-equipo" },
+    "a-sus-09-cambiar-plan": { "Cambiar a Duo basico 80": "a-sus-04-ficha-resumen" },
+    "a-sus-10-cambiar-nap": { "Mover a LV -15-1 · puerto 5": "a-sus-04-ficha-resumen" },
+    "a-sus-11-ubicacion": { "Guardar ubicación": "a-sus-04-ficha-resumen" },
+    "a-sus-12-postergar-corte": { "Postergar hasta el lun 19 oct": "a-sus-04-ficha-resumen" },
+    "a-sus-13-cancelar": { "Cancelar suscripción": "a-sus-04-ficha-resumen" },
+    "a-sus-14-editar-titular": { "Guardar": "a-sus-04-ficha-resumen", "Guardar cambios": "a-sus-04-ficha-resumen" },
+    "a-reg-09-atencion": { "Crear ticket de seguimiento": "a-tic-05-crear" },
+    "a-reg-10-cola": { "Revisar": "a-reg-01-cliente", "Editar": "a-reg-01-cliente" },
+    "a-caj-01-caja": { "Ver los 31": "a-caj-06-buscar-pagos" },
+    "a-caj-07-egreso": { "Registrar egreso": "a-caj-08-egresos" },
+    "a-tic-01-lista": {
+      "Media #3612*": "a-tic-02-pendiente",
+      "Baja #3610*": "a-tic-02-pendiente",
+      "Baja #3611*": "a-tic-02-pendiente",
+      "En curso 1": "a-tic-03-en-curso"
+    },
+    "a-tic-02-pendiente": { "Tomar ticket": "a-tic-03-en-curso", "Más acciones: reagendar*": "a-tic-07-reagendar" },
+    "a-tic-04-cerrar": { "Cerrar ticket": "a-tic-01-lista" },
+    "a-tic-05-crear": { "Crear ticket": "a-tic-01-lista" },
+    "a-tic-07-reagendar": { "Reagendar para jue 15 · 11:00": "a-tic-03-en-curso" },
+    "a-ins-01-lista": { "Registrar suscripción de *": "a-reg-02-equipo", "Por asignar": "a-ins-03-asignar" },
+    "a-ins-02-crear-orden": { "Crear orden": "a-ins-01-lista" },
+    "a-ins-03-asignar": { "Asignar a Diego Huerta": "a-ins-01-lista" },
+    "a-mas-01-menu": { "Cerrar sesión": "a-est-06-dialogo-sesion" },
+    "a-mas-02-perfil": { "Cerrar sesión": "a-est-06-dialogo-sesion" },
+    "a-mas-03-planes": {
+      "Nuevo plan": "a-mas-04-editar-plan",
+      "Duo basico 80*": "a-mas-04-editar-plan",
+      "Internet70*": "a-mas-04-editar-plan",
+      "Internet100*": "a-mas-04-editar-plan",
+      "Duo100*": "a-mas-04-editar-plan",
+      "Internet 500MB*": "a-mas-04-editar-plan",
+      "Basico wireless 50*": "a-mas-04-editar-plan",
+      "Wireless 70*": "a-mas-04-editar-plan",
+      "Wireless 100*": "a-mas-04-editar-plan",
+      "Wireless 150*": "a-mas-04-editar-plan",
+      "Cable basico*": "a-mas-04-editar-plan"
+    },
+    "a-mas-04-editar-plan": { "Guardar": "a-mas-03-planes", "Retirar plan": "a-mas-03-planes" },
+    "a-est-03-error": { "Reintentar": "a-tic-01-lista", "Nuevo": "a-tic-05-crear" },
+    "a-est-04-vacio": { "Ver pendientes (4)": "a-tic-01-lista", "Nuevo": "a-tic-05-crear" },
+    "a-est-05-sin-conexion": {
+      "Reintentar": "a-sus-01-buscar",
+      "JR *": "a-sus-04-ficha-resumen",
+      "RH *": "a-sus-04-ficha-resumen",
+      "RQ *": "a-sus-04-ficha-resumen",
+      "RR *": "a-sus-04-ficha-resumen",
+      "AR *": "a-sus-04-ficha-resumen",
+      "CR *": "a-sus-04-ficha-resumen"
+    },
+    "a-est-06-dialogo-sesion": { "Cerrar sesión": "a-acc-03-login", "Volver": "a-mas-02-perfil" },
+    "a-est-07-oscuro-inicio": {
+      "Perfil": "a-mas-02-perfil",
+      "Corte automático esta medianoche*": "a-sus-01-buscar",
+      "21 deben 2 meses*": "a-sus-01-buscar",
+      "4 tickets pendientes*": "a-tic-01-lista",
+      "Ver los 21": "a-sus-01-buscar",
+      "Jorge Ramos Villanueva*": "a-est-08-oscuro-ficha",
+      "Hilda Ccori Mamani*": "a-est-08-oscuro-ficha",
+      "Cobrar a Jorge Ramos Villanueva": "a-caj-02-cobro-yape",
+      "Cobrar a Hilda Ccori Mamani": "a-caj-02-cobro-yape",
+      "Nuevo": "a-ini-06-nuevo"
+    },
+    "a-est-08-oscuro-ficha": {
+      "Ticket": "a-tic-05-crear",
+      "Mapa": "a-sus-11-ubicacion",
+      "Pagos": "a-sus-05-ficha-pagos",
+      "Red": "a-sus-06-ficha-red",
+      "Historial": "a-sus-07-ficha-historial",
+      "Tickets 1": "a-tic-01-lista"
+    }
+  },
+  "flujos": [
+    {
+      "id": "cobrar-cortado", "clave": true, "rol": "Secretaría",
+      "nombre": "Cobrar a un cortado (Yape)",
+      "pasos": [
+        { "pantalla": "a-ini-02-secretaria", "toca": "Cobrar S/ 100.00 a Jorge Ramos Villanueva" },
+        { "pantalla": "a-caj-02-cobro-yape", "toca": "Registrar cobro" },
+        { "pantalla": "a-caj-04-comprobante", "toca": "Listo" },
+        { "pantalla": "a-caj-01-caja" }
+      ]
+    },
+    {
+      "id": "instalar-ticket", "clave": true, "rol": "Técnico",
+      "nombre": "Instalar desde un ticket (registro completo)",
+      "pasos": [
+        { "pantalla": "a-ini-03-tecnico", "toca": "Registrar suscripción" },
+        { "pantalla": "a-reg-02-equipo", "toca": "Autorizar y continuar" },
+        { "pantalla": "a-reg-01-cliente", "toca": "Continuar" },
+        { "pantalla": "a-reg-03-servicio", "toca": "Cambiar caja NAP" },
+        { "pantalla": "a-reg-04-nap", "toca": "Usar LV -15-5" },
+        { "pantalla": "a-reg-03-servicio", "toca": "Continuar" },
+        { "pantalla": "a-reg-05-wifi-foto", "toca": "Continuar" },
+        { "pantalla": "a-reg-06-revision", "toca": "Registrar suscripción" },
+        { "pantalla": "a-reg-07-progreso", "nota": "Al terminar, la app avisa y abre Éxito" },
+        { "pantalla": "a-reg-08-exito", "toca": "Cerrar ticket #3612" },
+        { "pantalla": "a-tic-04-cerrar", "toca": "Cerrar ticket" },
+        { "pantalla": "a-tic-01-lista" }
+      ]
+    },
+    {
+      "id": "ticket-cortado", "clave": true, "rol": "Secretaría",
+      "nombre": "Ticket «Sin conexión» de un cortado",
+      "pasos": [
+        { "pantalla": "a-ini-05-notificaciones", "toca": "No leída: Ticket #3609*" },
+        { "pantalla": "a-tic-02-pendiente", "toca": "Cobrar S/ 50.00" },
+        { "pantalla": "a-caj-02-cobro-yape", "toca": "Registrar cobro" },
+        { "pantalla": "a-caj-04-comprobante", "nota": "Servicio restablecido: se vuelve al ticket para cerrarlo sin visita" },
+        { "pantalla": "a-tic-04-cerrar", "toca": "Cerrar ticket" },
+        { "pantalla": "a-tic-01-lista" }
+      ]
+    },
+    {
+      "id": "atender-ticket", "clave": true, "rol": "Técnico",
+      "nombre": "Atender un ticket",
+      "pasos": [
+        { "pantalla": "a-tic-01-lista", "toca": "▲ Alta #3609*" },
+        { "pantalla": "a-tic-02-pendiente", "toca": "Tomar ticket" },
+        { "pantalla": "a-tic-03-en-curso", "toca": "Resolver y cerrar" },
+        { "pantalla": "a-tic-04-cerrar", "toca": "Cerrar ticket" },
+        { "pantalla": "a-tic-01-lista" }
+      ]
+    },
+    {
+      "id": "mover-nap", "clave": true, "rol": "Administrador",
+      "nombre": "Mover de caja NAP",
+      "pasos": [
+        { "pantalla": "a-sus-04-ficha-resumen", "toca": "Más acciones" },
+        { "pantalla": "a-sus-08-mas-acciones", "toca": "Cambiar caja NAP" },
+        { "pantalla": "a-sus-10-cambiar-nap", "toca": "Mover a LV -15-1 · puerto 5" },
+        { "pantalla": "a-sus-04-ficha-resumen" }
+      ]
+    },
+    {
+      "id": "ingresar", "rol": "Todos",
+      "nombre": "Ingresar a la app",
+      "pasos": [
+        { "pantalla": "a-acc-01-splash", "toca": "*", "nota": "Comprueba la versión y pasa solo al ingreso" },
+        { "pantalla": "a-acc-03-login", "toca": "Ingresar" },
+        { "pantalla": "a-ini-02-secretaria" }
+      ]
+    },
+    {
+      "id": "actualizar", "rol": "Todos",
+      "nombre": "Actualización obligatoria",
+      "pasos": [
+        { "pantalla": "a-acc-01-splash", "nota": "Detecta una versión obligatoria" },
+        { "pantalla": "a-acc-02-actualizar", "toca": "Actualizar ahora" },
+        { "pantalla": "a-acc-03-login" }
+      ]
+    },
+    {
+      "id": "panel-admin", "rol": "Administrador",
+      "nombre": "Revisar la caja desde el panel",
+      "pasos": [
+        { "pantalla": "a-ini-01-admin", "toca": "Ver caja" },
+        { "pantalla": "a-caj-01-caja", "toca": "11:42 Jorge Ramos Villanueva*" },
+        { "pantalla": "a-caj-05-detalle-pago" }
+      ]
+    },
+    {
+      "id": "cobrar-efectivo", "rol": "Secretaría",
+      "nombre": "Cobrar en efectivo desde la ficha",
+      "pasos": [
+        { "pantalla": "a-sus-02-inicial", "toca": "JR Jorge Ramos Villanueva*" },
+        { "pantalla": "a-sus-04-ficha-resumen", "toca": "Pagos" },
+        { "pantalla": "a-sus-05-ficha-pagos", "toca": "Cobrar S/ 100.00" },
+        { "pantalla": "a-caj-02-cobro-yape", "toca": "Efectivo" },
+        { "pantalla": "a-caj-03-cobro-efectivo", "toca": "Registrar cobro · S/ 90.00" },
+        { "pantalla": "a-caj-04-comprobante", "toca": "Ver ficha" },
+        { "pantalla": "a-sus-04-ficha-resumen" }
+      ]
+    },
+    {
+      "id": "revisar-ficha", "rol": "Todos",
+      "nombre": "Buscar un abonado y revisar su ficha",
+      "pasos": [
+        { "pantalla": "a-sus-02-inicial", "toca": "Filtros" },
+        { "pantalla": "a-sus-03-filtros", "toca": "Ver 287 resultados" },
+        { "pantalla": "a-sus-01-buscar", "toca": "JR Jorge*" },
+        { "pantalla": "a-sus-04-ficha-resumen", "toca": "Pagos" },
+        { "pantalla": "a-sus-05-ficha-pagos", "toca": "Red" },
+        { "pantalla": "a-sus-06-ficha-red", "toca": "Historial" },
+        { "pantalla": "a-sus-07-ficha-historial" }
+      ]
+    },
+    {
+      "id": "cambiar-plan", "rol": "Administrador",
+      "nombre": "Cambiar el plan",
+      "pasos": [
+        { "pantalla": "a-sus-04-ficha-resumen", "toca": "Más acciones" },
+        { "pantalla": "a-sus-08-mas-acciones", "toca": "Cambiar plan" },
+        { "pantalla": "a-sus-09-cambiar-plan", "toca": "Cambiar a Duo basico 80" },
+        { "pantalla": "a-sus-04-ficha-resumen" }
+      ]
+    },
+    {
+      "id": "postergar-corte", "rol": "Secretaría",
+      "nombre": "Postergar el corte",
+      "pasos": [
+        { "pantalla": "a-sus-04-ficha-resumen", "toca": "Más acciones" },
+        { "pantalla": "a-sus-08-mas-acciones", "toca": "Postergar corte" },
+        { "pantalla": "a-sus-12-postergar-corte", "toca": "Postergar hasta el lun 19 oct" },
+        { "pantalla": "a-sus-04-ficha-resumen" }
+      ]
+    },
+    {
+      "id": "ubicacion", "rol": "Técnico",
+      "nombre": "Actualizar la ubicación",
+      "pasos": [
+        { "pantalla": "a-sus-04-ficha-resumen", "toca": "Mapa" },
+        { "pantalla": "a-sus-11-ubicacion", "toca": "Guardar ubicación" },
+        { "pantalla": "a-sus-04-ficha-resumen" }
+      ]
+    },
+    {
+      "id": "editar-titular", "rol": "Secretaría",
+      "nombre": "Editar el titular",
+      "pasos": [
+        { "pantalla": "a-sus-04-ficha-resumen", "toca": "Editar titular" },
+        { "pantalla": "a-sus-14-editar-titular", "toca": "Guardar cambios" },
+        { "pantalla": "a-sus-04-ficha-resumen" }
+      ]
+    },
+    {
+      "id": "cancelar", "rol": "Administrador",
+      "nombre": "Cancelar la suscripción",
+      "pasos": [
+        { "pantalla": "a-sus-04-ficha-resumen", "toca": "Más acciones" },
+        { "pantalla": "a-sus-08-mas-acciones", "toca": "Cancelar suscripción" },
+        { "pantalla": "a-sus-13-cancelar", "toca": "Cancelar suscripción", "nota": "Elige el motivo y confirma" },
+        { "pantalla": "a-sus-04-ficha-resumen" }
+      ]
+    },
+    {
+      "id": "crear-ticket", "rol": "Secretaría",
+      "nombre": "Crear un ticket",
+      "pasos": [
+        { "pantalla": "a-ini-02-secretaria", "toca": "Nuevo" },
+        { "pantalla": "a-ini-06-nuevo", "toca": "Ticket*" },
+        { "pantalla": "a-tic-05-crear", "toca": "Ver las 15 categorías" },
+        { "pantalla": "a-tic-06-categorias", "toca": "Cerrar", "nota": "Elige la categoría y vuelve al formulario" },
+        { "pantalla": "a-tic-05-crear", "toca": "Crear ticket" },
+        { "pantalla": "a-tic-01-lista" }
+      ]
+    },
+    {
+      "id": "reagendar", "rol": "Técnico",
+      "nombre": "Reagendar un ticket",
+      "pasos": [
+        { "pantalla": "a-tic-03-en-curso", "toca": "Reagendar" },
+        { "pantalla": "a-tic-07-reagendar", "toca": "Reagendar para jue 15 · 11:00" },
+        { "pantalla": "a-tic-03-en-curso" }
+      ]
+    },
+    {
+      "id": "orden-instalacion", "rol": "Ventas",
+      "nombre": "Crear una orden de instalación y asignarla",
+      "pasos": [
+        { "pantalla": "a-ini-04-ventas", "toca": "Nueva orden" },
+        { "pantalla": "a-ins-02-crear-orden", "toca": "Crear orden" },
+        { "pantalla": "a-ins-01-lista", "toca": "Por asignar" },
+        { "pantalla": "a-ins-03-asignar", "toca": "Asignar a Diego Huerta" },
+        { "pantalla": "a-ins-01-lista" }
+      ]
+    },
+    {
+      "id": "registro-atencion", "rol": "Técnico",
+      "nombre": "Resolver un registro que requiere atención",
+      "pasos": [
+        { "pantalla": "a-ini-05-notificaciones", "toca": "No leída: Registro de Lucía Mendoza*" },
+        { "pantalla": "a-reg-09-atencion", "toca": "Reintentar Wi-Fi" },
+        { "pantalla": "a-reg-07-progreso", "nota": "Al terminar, la app avisa y abre Éxito" },
+        { "pantalla": "a-reg-08-exito" }
+      ]
+    },
+    {
+      "id": "pendientes-envio", "rol": "Técnico",
+      "nombre": "Enviar registros guardados sin señal",
+      "pasos": [
+        { "pantalla": "a-mas-01-menu", "toca": "Pendientes de envío*" },
+        { "pantalla": "a-reg-10-cola", "toca": "Revisar" },
+        { "pantalla": "a-reg-01-cliente" }
+      ]
+    },
+    {
+      "id": "buscar-pago", "rol": "Secretaría",
+      "nombre": "Buscar un pago",
+      "pasos": [
+        { "pantalla": "a-caj-01-caja", "toca": "Buscar pago, titular o pagador" },
+        { "pantalla": "a-caj-06-buscar-pagos", "toca": "Hilda Ccori Mamani*" },
+        { "pantalla": "a-caj-05-detalle-pago", "toca": "Ver suscripción" },
+        { "pantalla": "a-sus-04-ficha-resumen" }
+      ]
+    },
+    {
+      "id": "egreso", "rol": "Administrador",
+      "nombre": "Registrar un egreso",
+      "pasos": [
+        { "pantalla": "a-mas-01-menu", "toca": "Egresos" },
+        { "pantalla": "a-caj-08-egresos", "toca": "Nuevo egreso" },
+        { "pantalla": "a-caj-07-egreso", "toca": "Registrar egreso" },
+        { "pantalla": "a-caj-08-egresos" }
+      ]
+    },
+    {
+      "id": "editar-plan", "rol": "Administrador",
+      "nombre": "Editar un plan",
+      "pasos": [
+        { "pantalla": "a-mas-01-menu", "toca": "Planes*" },
+        { "pantalla": "a-mas-03-planes", "toca": "Basico*" },
+        { "pantalla": "a-mas-04-editar-plan", "toca": "Guardar" },
+        { "pantalla": "a-mas-03-planes" }
+      ]
+    },
+    {
+      "id": "cerrar-sesion", "rol": "Todos",
+      "nombre": "Cerrar sesión",
+      "pasos": [
+        { "pantalla": "a-mas-01-menu", "toca": "Cerrar sesión" },
+        { "pantalla": "a-est-06-dialogo-sesion", "toca": "Cerrar sesión" },
+        { "pantalla": "a-acc-03-login" }
+      ]
+    }
+  ]
+}

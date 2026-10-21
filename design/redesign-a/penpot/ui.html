@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Importar diseño</title>
+<style>
+body{margin:0;padding:14px;font:13px/18px system-ui,sans-serif;color:#e8eaf0;background:#1f1f24}
+h1{margin:0 0 6px;font-size:15px}p{margin:0 0 10px;color:#a9adbb}
+label{display:block;margin:8px 0 4px}select,button{width:100%;font:inherit;padding:7px;border-radius:8px;border:1px solid #444}
+button{margin-top:10px;background:#31efb8;color:#10142b;font-weight:600;border:0;cursor:pointer}button:disabled{opacity:.5}
+#log{margin-top:12px;height:300px;overflow:auto;font:12px/16px ui-monospace,monospace;color:#c9ccd6;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h1>Rediseño A → Penpot</h1>
+<p>Crea las pantallas como capas editables, los enlaces «navegar a» y los happy paths. Las pantallas de la app van en una sola página para que los enlaces entre módulos funcionen.</p>
+<label for="alcance">Qué importar</label>
+<select id="alcance"></select>
+<button id="importar">Importar</button>
+<div id="log"></div>
+<script>
+"use strict";
+const BASE = "../";
+const APP_PAGE = "App · 64 pantallas";
+const SYSTEM_PAGE = "Sistema, datos y diagnóstico";
+const MODULE_GAP = 420;
+const log = (text) => { const el = document.getElementById("log"); el.textContent += text + "\n"; el.scrollTop = el.scrollHeight; };
+
+// ---- messaging with plugin.js -------------------------------------------------------------
+let nextId = 0;
+const pending = {};
+window.addEventListener("message", (event) => {
+  const message = event.data;
+  if (!message || typeof message !== "object") return;
+  if (message.type === "log") { log(message.text); return; }
+  const done = pending[message.id];
+  if (!done) return;
+  delete pending[message.id];
+  if (message.type === "error") done.reject(new Error(message.text)); else done.resolve(message);
+});
+// ?modo=exportar records every step and saves them to penpot/diseno.json instead of sending them,
+// for browsers where Penpot cannot reach localhost (see consola.js).
+const EXPORT = new URLSearchParams(location.search).get("modo") === "exportar";
+const recorded = [];
+function send(message, transfer) {
+  if (EXPORT) {
+    recorded.push(message);
+    return Promise.resolve({ text: message.type === "board" ? message.title + " · " + message.nodes.length + " capas" : message.type });
+  }
+  const id = ++nextId;
+  return new Promise((resolve, reject) => {
+    pending[id] = { resolve, reject };
+    // Plugin modal: the host is the parent frame. Opened from Penpot as a window: the opener.
+    (window.opener || parent).postMessage({ ...message, id }, "*", transfer || []);
+  });
+}
+
+// ---- reading a rendered board -------------------------------------------------------------
+function color(value) {
+  const m = /rgba?\(([^)]+)\)/.exec(value || "");
+  if (!m) return null;
+  const parts = m[1].split(/[\s,/]+/).filter(Boolean).map(Number);
+  const alpha = parts.length > 3 ? parts[3] : 1;
+  if (alpha === 0) return null;
+  const hex = "#" + parts.slice(0, 3).map((n) => Math.round(n).toString(16).padStart(2, "0")).join("");
+  return { color: hex, opacity: alpha };
+}
+
+function radius(cs, w, h) {
+  const one = (v) => { const n = parseFloat(v) || 0; return v.endsWith("%") ? Math.min(w, h) * n / 100 : Math.min(n, Math.min(w, h) / 2); };
+  return [one(cs.borderTopLeftRadius), one(cs.borderTopRightRadius), one(cs.borderBottomRightRadius), one(cs.borderBottomLeftRadius)];
+}
+
+function shadows(value) {
+  if (!value || value === "none") return [];
+  return value.split(/,(?![^(]*\))/).map((part) => {
+    const c = color(part);
+    const nums = part.replace(/rgba?\([^)]*\)/, "").trim().split(/\s+/).filter((t) => t !== "inset").map(parseFloat);
+    if (!c) return null;
+    return { inset: /inset/.test(part), x: nums[0] || 0, y: nums[1] || 0, blur: nums[2] || 0, spread: nums[3] || 0, color: c.color, opacity: c.opacity };
+  }).filter(Boolean);
+}
+
+function box(cs, r, opacity, nodes, name) {
+  const fill = color(cs.backgroundColor);
+  if (fill) fill.opacity *= opacity;
+  const sides = ["Top", "Right", "Bottom", "Left"].map((s) => ({ w: parseFloat(cs["border" + s + "Width"]) || 0, c: color(cs["border" + s + "Color"]), style: cs["border" + s + "Style"] }))
+    .map((s) => (s.style === "none" || !s.c ? { w: 0, c: null } : s));
+  const uniform = sides.every((s) => s.w === sides[0].w && s.c && sides[0].c && s.c.color === sides[0].c.color);
+  const shadow = shadows(cs.boxShadow);
+  const rad = radius(cs, r.w, r.h);
+  const stroke = uniform && sides[0].w > 0 ? { color: sides[0].c.color, opacity: sides[0].c.opacity * opacity, width: sides[0].w } : null;
+  if (fill || stroke || shadow.length) {
+    nodes.push({ type: "rect", name, x: r.x, y: r.y, w: r.w, h: r.h, fill, stroke, radius: rad.some(Boolean) ? rad : null, shadows: shadow });
+  }
+  if (!uniform) {
+    const [t, ri, b, l] = sides;
+    const line = (x, y, w, h, s) => s.w > 0 && nodes.push({ type: "rect", name: "Borde", x, y, w, h, fill: { color: s.c.color, opacity: s.c.opacity * opacity } });
+    line(r.x, r.y, r.w, t.w, t);
+    line(r.x + r.w - ri.w, r.y, ri.w, r.h, ri);
+    line(r.x, r.y + r.h - b.w, r.w, b.w, b);
+    line(r.x, r.y, l.w, r.h, l);
+  }
+}
+
+const canvas = document.createElement("canvas").getContext("2d");
+function fit(text, cs, width) {
+  canvas.font = cs.fontStyle + " " + cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+  if (canvas.measureText(text).width <= width + 1) return text;
+  let low = 0, high = text.length;
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (canvas.measureText(text.slice(0, mid) + "…").width <= width) low = mid; else high = mid - 1;
+  }
+  return text.slice(0, low).trimEnd() + "…";
+}
+
+function textStyle(cs, opacity) {
+  const size = parseFloat(cs.fontSize);
+  const line = cs.lineHeight === "normal" ? 1.2 : parseFloat(cs.lineHeight) / size;
+  const c = color(cs.color) || { color: "#000000", opacity: 1 };
+  const transform = { uppercase: "uppercase", lowercase: "lowercase", capitalize: "capitalize" }[cs.textTransform] || null;
+  const decoration = cs.textDecorationLine.includes("underline") ? "underline" : cs.textDecorationLine.includes("line-through") ? "line-through" : null;
+  return {
+    family: cs.fontFamily.split(",")[0].replace(/["']/g, "").trim(),
+    weight: cs.fontWeight, italic: cs.fontStyle === "italic", size: Math.round(size * 100) / 100,
+    lineHeight: Math.round(line * 100) / 100, letterSpacing: cs.letterSpacing === "normal" ? 0 : parseFloat(cs.letterSpacing),
+    color: c.color, opacity: c.opacity * opacity, transform, decoration,
+  };
+}
+
+function textNode(node, parentEl, cs, opacity, rel, nodes, doc) {
+  let value = node.nodeValue;
+  if (!/pre/.test(cs.whiteSpace)) value = value.replace(/\s+/g, " ");
+  value = value.trim();
+  if (!value) return;
+  const range = doc.createRange();
+  range.selectNodeContents(node);
+  const lines = Array.from(range.getClientRects()).filter((q) => q.width > 0);
+  if (!lines.length) return;
+  const r = rel(range.getBoundingClientRect());
+  const tops = new Set(lines.map((q) => Math.round(q.top)));
+  const truncated = cs.textOverflow === "ellipsis" && parentEl.scrollWidth > parentEl.clientWidth + 1;
+  const align = { start: "left", end: "right", left: "left", right: "right", center: "center", justify: "justify" }[cs.textAlign] || "left";
+  const style = textStyle(cs, opacity);
+  if (truncated) value = fit(value, cs, rel(parentEl.getBoundingClientRect()).w);
+  nodes.push({ type: "text", text: value, x: r.x, y: r.y, w: Math.ceil(r.w) + 2, h: r.h, wrap: tops.size > 1, align, ...style });
+}
+
+// A block whose content is only text and plain inline elements becomes one text shape with style
+// ranges, so a paragraph that mixes bold and regular text stays one editable text.
+function inlineOnly(el, win) {
+  let hasText = false;
+  for (const child of el.childNodes) {
+    if (child.nodeType === 3) { if (child.nodeValue.trim()) hasText = true; continue; }
+    if (child.nodeType !== 1) continue;
+    const tag = child.tagName.toLowerCase();
+    if (tag === "br") continue;
+    const cs = win.getComputedStyle(child);
+    if (cs.display !== "inline" || tag === "svg" || tag === "img" || tag === "input" || tag === "textarea") return false;
+    if (color(cs.backgroundColor) || parseFloat(cs.borderTopWidth) || parseFloat(cs.borderBottomWidth)) return false;
+    const inner = inlineOnly(child, win);
+    if (inner === false) return false;
+    if (inner) hasText = true;
+  }
+  return hasText ? true : null;
+}
+
+function inlineText(el, cs, opacity, rel, nodes, doc) {
+  const win = doc.defaultView;
+  const segments = [];
+  let out = "";
+  (function collect(node, style) {
+    for (const child of node.childNodes) {
+      if (child.nodeType === 3) {
+        let piece = /pre/.test(style.ws) ? child.nodeValue : child.nodeValue.replace(/\s+/g, " ");
+        if (!out || out.endsWith(" ") || out.endsWith("\n")) piece = piece.replace(/^ /, "");
+        if (!piece) continue;
+        segments.push({ start: out.length, end: out.length + piece.length, ...style.text });
+        out += piece;
+      } else if (child.nodeType === 1 && child.tagName.toLowerCase() === "br") {
+        out = out.replace(/ $/, "") + "\n";
+      } else if (child.nodeType === 1) {
+        const ccs = win.getComputedStyle(child);
+        collect(child, { ws: ccs.whiteSpace, text: textStyle(ccs, opacity * parseFloat(ccs.opacity || "1")) });
+      }
+    }
+  })(el, { ws: cs.whiteSpace, text: textStyle(cs, opacity) });
+  const trimmed = out.replace(/\s+$/, "");
+  segments.forEach((seg) => { seg.end = Math.min(seg.end, trimmed.length); });
+  const parts = segments.filter((seg) => seg.end > seg.start);
+  if (!trimmed || !parts.length) return;
+  const range = doc.createRange();
+  range.selectNodeContents(el);
+  const r = rel(range.getBoundingClientRect());
+  const box = rel(el.getBoundingClientRect());
+  const tops = new Set(Array.from(range.getClientRects()).filter((q) => q.width > 0).map((q) => Math.round(q.top)));
+  const align = { start: "left", end: "right", left: "left", right: "right", center: "center", justify: "justify" }[cs.textAlign] || "left";
+  let text = trimmed;
+  if (cs.textOverflow === "ellipsis" && el.scrollWidth > el.clientWidth + 1) {
+    text = fit(trimmed, cs, box.w);
+    parts.forEach((seg) => { seg.end = Math.min(seg.end, text.length); });
+  }
+  const wrap = tops.size > 1 || text.includes("\n");
+  const padL = parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth);
+  const padR = parseFloat(cs.paddingRight) + parseFloat(cs.borderRightWidth);
+  const contentW = box.w - padL - padR;
+  // Wrapped or aligned text keeps the block width so it breaks and aligns like the screen.
+  const useBlock = wrap || align !== "left";
+  nodes.push({
+    type: "text", text, align, wrap,
+    x: useBlock ? box.x + padL : r.x, y: r.y,
+    w: useBlock ? contentW : Math.ceil(r.w) + 2, h: r.h,
+    fixedWidth: useBlock,
+    ...parts[0], segments: parts.length > 1 ? parts.filter((seg) => seg.end > seg.start) : null,
+  });
+}
+
+function svgMarkup(el, cs) {
+  const copy = el.cloneNode(true);
+  const r = el.getBoundingClientRect();
+  copy.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  copy.setAttribute("width", r.width);
+  copy.setAttribute("height", r.height);
+  copy.removeAttribute("style");
+  copy.removeAttribute("class");
+  const current = (color(cs.color) || { color: "#000000" }).color;
+  // Resolve inherited presentation (fill/stroke from CSS) on every element.
+  const originals = [el, ...el.querySelectorAll("*")];
+  const copies = [copy, ...copy.querySelectorAll("*")];
+  originals.forEach((orig, i) => {
+    const s = getComputedStyle(orig);
+    const target = copies[i];
+    const fill = color(s.fill);
+    const stroke = color(s.stroke);
+    if (!target.getAttribute("fill") || target.getAttribute("fill") === "currentColor") target.setAttribute("fill", s.fill === "none" ? "none" : fill ? fill.color : "none");
+    if ((!target.getAttribute("stroke") || target.getAttribute("stroke") === "currentColor") && s.stroke !== "none" && stroke) target.setAttribute("stroke", stroke.color);
+    if (s.strokeWidth && !target.getAttribute("stroke-width")) target.setAttribute("stroke-width", s.strokeWidth.replace("px", ""));
+  });
+  return copy.outerHTML.replace(/currentColor/g, current);
+}
+
+function dataBytes(src) {
+  const [head, data] = src.split(",");
+  const mime = /data:([^;]+)/.exec(head)[1];
+  const raw = atob(data);
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return { mime, bytes: Array.from(bytes) };
+}
+
+function targetOf(el) {
+  const file = (el.dataset && el.dataset.destino) || el.getAttribute("href") || "";
+  const clean = file.split("?")[0].split("#")[0];
+  return /^a-.+\.html$/.test(clean) ? clean.replace(/\.html$/, "") : null;
+}
+
+function read(doc, screen) {
+  const root = doc.body.firstElementChild;
+  const origin = root.getBoundingClientRect();
+  const rel = (q) => ({ x: q.left - origin.left, y: q.top - origin.top, w: q.width, h: q.height });
+  const nodes = [];
+  const hotspots = [];
+  const win = doc.defaultView;
+
+  function walk(el, opacity, isRoot) {
+    const cs = win.getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") return;
+    const op = opacity * parseFloat(cs.opacity || "1");
+    const r = rel(el.getBoundingClientRect());
+    const tag = el.tagName.toLowerCase();
+    if (tag === "script" || tag === "style") return;
+    if (tag === "svg") {
+      if (r.w > 0 && r.h > 0) nodes.push({ type: "svg", x: r.x, y: r.y, w: r.w, h: r.h, svg: svgMarkup(el, cs), name: el.getAttribute("aria-label") || "Ícono" });
+      return;
+    }
+    if (tag === "img") {
+      if (el.src.startsWith("data:")) nodes.push({ type: "image", x: r.x, y: r.y, w: r.w, h: r.h, name: el.alt || "Imagen", radius: radius(cs, r.w, r.h), ...dataBytes(el.src) });
+      return;
+    }
+    if (!isRoot && r.w > 0 && r.h > 0) box(cs, r, op, nodes, el.getAttribute("aria-label") || tag);
+    if (tag === "input" || tag === "textarea") {
+      const value = el.value || el.getAttribute("placeholder") || "";
+      if (value && el.type !== "checkbox" && el.type !== "radio") {
+        const style = textStyle(cs, op * (el.value ? 1 : 0.6));
+        const padL = parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth);
+        const lineH = style.size * style.lineHeight;
+        const y = tag === "textarea" ? r.y + parseFloat(cs.paddingTop) : r.y + (r.h - lineH) / 2;
+        nodes.push({ type: "text", text: fit(value, cs, r.w - padL * 2), x: r.x + padL, y, w: r.w - padL * 2, h: lineH, wrap: tag === "textarea", align: "left", ...style });
+      }
+      return;
+    }
+    const target = isRoot ? null : targetOf(el);
+    if (target && target !== screen && r.w > 0 && r.h > 0) hotspots.push({ x: r.x, y: r.y, w: r.w, h: r.h, target, radius: radius(cs, r.w, r.h) });
+    if (inlineOnly(el, win)) { inlineText(el, cs, op, rel, nodes, doc); return; }
+    for (const child of el.childNodes) {
+      if (child.nodeType === 3) textNode(child, el, cs, op, rel, nodes, doc);
+      else if (child.nodeType === 1) walk(child, op, false);
+    }
+  }
+
+  walk(root, 1, true);
+  const whole = doc.body.dataset.destino;
+  if (whole) hotspots.push({ x: 0, y: 0, w: origin.width, h: origin.height, target: whole.replace(/\.html$/, "") });
+  const fill = color(win.getComputedStyle(root).backgroundColor) || { color: "#ffffff", opacity: 1 };
+  return { nodes, hotspots, fill };
+}
+
+function load(screen, board) {
+  return new Promise((resolve, reject) => {
+    const frame = document.createElement("iframe");
+    frame.style.cssText = "position:fixed;left:-20000px;top:0;border:0;width:" + board.w + "px;height:" + board.h + "px";
+    frame.onload = async () => {
+      try {
+        await frame.contentDocument.fonts.ready;
+        await new Promise((r) => setTimeout(r, 120));
+        const result = read(frame.contentDocument, screen);
+        frame.remove();
+        resolve(result);
+      } catch (error) { frame.remove(); reject(error); }
+    };
+    frame.src = BASE + "pantallas/" + screen + ".html";
+    document.body.appendChild(frame);
+  });
+}
+
+// ---- import --------------------------------------------------------------------------------
+async function importBoards(canvasData, screens, offsets) {
+  for (const screen of screens) {
+    const board = canvasData.boards[screen + ".dc.html"];
+    const data = await load(screen, board);
+    const at = offsets(screen, board);
+    const reply = await send({ type: "board", screen, title: board.title, x: at.x, y: at.y, w: board.w, h: board.h, ...data });
+    log("✓ " + reply.text + (data.hotspots.length ? " · " + data.hotspots.length + " enlaces" : ""));
+  }
+}
+
+async function run(scope, canvasData, links) {
+  const pages = canvasData.pages.filter((p) => p.id.startsWith("a-") && p.id !== "a-sistema");
+  const order = canvasData.order.map((n) => n.replace(".dc.html", ""));
+  const chosen = scope === "todo" ? pages : pages.filter((p) => p.id === scope);
+  await send({ type: "page", name: scope === "todo" ? APP_PAGE : "Prueba · " + chosen[0].name });
+  let top = 0;
+  const rows = {};
+  for (const page of chosen) {
+    const screens = order.filter((s) => canvasData.boards[s + ".dc.html"].page === page.id);
+    const minY = Math.min(...screens.map((s) => canvasData.boards[s + ".dc.html"].y));
+    const maxY = Math.max(...screens.map((s) => { const b = canvasData.boards[s + ".dc.html"]; return b.y + b.h; }));
+    rows[page.id] = { top: top + 260 - minY, screens };
+    await send({ type: "title", text: page.name.replace(/^A · /, ""), x: 0, y: top, size: 72 });
+    top += 260 + (maxY - minY) + MODULE_GAP;
+  }
+  for (const page of chosen) {
+    log("— " + page.name);
+    await importBoards(canvasData, rows[page.id].screens, (s, b) => ({ x: b.x, y: rows[page.id].top + b.y }));
+  }
+  log("— Enlaces: " + (await send({ type: "links" })).text);
+  if (scope === "todo") {
+    const flows = links.flujos.map((f) => ({ name: (f.clave ? "★ " : "") + f.nombre, start: f.pasos[0].pantalla }));
+    log("— Happy paths: " + (await send({ type: "flows", flows })).text);
+    await send({ type: "page", name: SYSTEM_PAGE });
+    const system = ["A-flujos", "A-sistema", "A-datos", "Main"];
+    await importBoards(canvasData, system, (s, b) => ({ x: b.x, y: s === "Main" ? 1700 : b.y }));
+  }
+  log("Listo.");
+}
+
+(async () => {
+  const [canvasData, links] = await Promise.all([
+    fetch(BASE + "fuente/canvas.json").then((r) => r.json()),
+    fetch(BASE + "fuente/enlaces.json").then((r) => r.json()),
+  ]);
+  const select = document.getElementById("alcance");
+  select.innerHTML = "<option value='todo'>Todo (64 pantallas, enlaces y happy paths)</option>" +
+    canvasData.pages.filter((p) => p.id.startsWith("a-") && p.id !== "a-sistema")
+      .map((p) => "<option value='" + p.id + "'>Prueba: solo " + p.name + "</option>").join("");
+  const button = document.getElementById("importar");
+  button.onclick = async () => {
+    button.disabled = true;
+    try {
+      recorded.length = 0;
+      await run(select.value, canvasData, links);
+      if (EXPORT) {
+        const body = JSON.stringify(recorded);
+        const saved = await fetch("diseno.json", { method: "POST", body });
+        log(saved.ok ? "Guardado penpot/diseno.json (" + Math.round(body.length / 1024) + " KB)" : "No se pudo guardar: " + saved.status);
+      }
+    } catch (error) { log("ERROR: " + error.message); }
+    button.disabled = false;
+  };
+})();
+</script>
+</body>
+</html>

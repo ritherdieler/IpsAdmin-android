@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuevo ticket</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</head>
+<body>
+<div style="width: 390px; height: 1100px; position: relative; overflow: hidden; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <header style="height: 64px; padding: 0 4px; display: flex; align-items: center; gap: 4px">
+    <a href="a-tic-01-lista.html" aria-label="Cerrar" style="width: 48px; height: 48px; color: #10142b; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></a>
+    <h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 20px; line-height: 26px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Nuevo ticket</h1>
+  </header>
+
+  <div style="padding: 4px 16px 0; display: flex; flex-direction: column; gap: 20px">
+
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span id="lbl-para" style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">¿Para quién?</span>
+        <div role="radiogroup" aria-labelledby="lbl-para" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid #767c93; border-radius: 999px; overflow: hidden; height: 44px">
+          <button role="radio" aria-checked="true" style="border: 0; background: #dfe3ff; color: #141d48; font: 600 14px 'Roboto Flex', sans-serif">✓ Abonado</button>
+          <button role="radio" aria-checked="false" style="border: 0; border-left: 1px solid #767c93; background: #ffffff; color: #10142b; font: 500 14px 'Roboto Flex', sans-serif">No abonado</button>
+        </div>
+      </div>
+
+      <div style="border: 2px solid #141d48; border-radius: 16px; background: #ffffff; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+        <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 999px; background: #dfe3ff; color: #141d48; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center">GT</span>
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 22px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Gloria Ticona Apaza</span><span style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Duo basico 80 · 9 de Octubre</span></span>
+        <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0">
+          <span style="font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #d6f2e2; color: #17663d">Activo</span>
+          <a href="#" aria-label="Cambiar abonado" style="font-size: 14px; line-height: 20px; font-weight: 600; color: #b23a0e; text-decoration: none">Cambiar</a>
+        </span>
+      </div>
+    </div>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Teléfono de contacto *</span>
+      <input type="tel" value="976 333 444" style="width: 100%; height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b">
+      <span style="font-size: 12px; line-height: 16px; color: #4a5068">Del titular. Puedes cambiarlo.</span>
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div role="radiogroup" aria-labelledby="lbl-cat" style="display: flex; flex-direction: column; gap: 8px">
+        <span id="lbl-cat" style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Categoría *</span>
+        <div style="background: #ffffff; border-radius: 16px; padding: 0 16px; display: flex; flex-direction: column">
+          <label style="min-height: 52px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eaedf5"><input type="radio" name="categoria" style="width: 20px; height: 20px; accent-color: #141d48; margin: 0; flex-shrink: 0"><span style="flex-grow: 1; min-width: 0; font-size: 15px; line-height: 22px">Sin conexión a internet</span><span style="flex-shrink: 0; font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #ffdad6; color: #ba1a1a">▲ Alta</span></label>
+          <label style="min-height: 52px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eaedf5"><input type="radio" name="categoria" style="width: 20px; height: 20px; accent-color: #141d48; margin: 0; flex-shrink: 0"><span style="flex-grow: 1; min-width: 0; font-size: 15px; line-height: 22px">Otros</span><span style="flex-shrink: 0; font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #eaedf5; color: #4a5068">Baja</span></label>
+          <label style="min-height: 52px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eaedf5"><input type="radio" name="categoria" style="width: 20px; height: 20px; accent-color: #141d48; margin: 0; flex-shrink: 0"><span style="flex-grow: 1; min-width: 0; font-size: 15px; line-height: 22px">Internet lento</span><span style="flex-shrink: 0; font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #dce6ff; color: #2459c9">Media</span></label>
+          <label style="min-height: 52px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eaedf5"><input type="radio" name="categoria" style="width: 20px; height: 20px; accent-color: #141d48; margin: 0; flex-shrink: 0"><span style="flex-grow: 1; min-width: 0; font-size: 15px; line-height: 22px">Instalación de internet</span><span style="flex-shrink: 0; font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #dce6ff; color: #2459c9">Media</span></label>
+          <label style="min-height: 52px; display: flex; align-items: center; gap: 12px"><input type="radio" name="categoria" checked style="width: 20px; height: 20px; accent-color: #141d48; margin: 0; flex-shrink: 0"><span style="flex-grow: 1; min-width: 0; font-size: 15px; line-height: 22px; font-weight: 600">No tiene señal de TV cable</span><span style="flex-shrink: 0; font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #eaedf5; color: #4a5068">Baja</span></label>
+        </div>
+      </div>
+      <a href="a-tic-06-categorias.html" style="align-self: flex-start; min-height: 40px; display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600; color: #b23a0e; text-decoration: none">Ver las 15 categorías<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; color: #4a5068"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>Prioridad:</span><span style="font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #eaedf5; color: #4a5068">Baja</span><span>· según la categoría</span></div>
+    </div>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Descripción *</span>
+      <textarea style="min-height: 88px; padding: 12px 14px; box-sizing: border-box; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px/22px 'Roboto Flex', sans-serif; color: #10142b; resize: none">Sin señal en el televisor de la sala desde hoy en la mañana.</textarea>
+      <span style="display: flex; justify-content: flex-end; font-size: 12px; line-height: 16px; color: #4a5068; font-feature-settings: 'tnum'">60/300</span>
+    </label>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Asignar a</span>
+      <button style="height: 52px; box-sizing: border-box; padding: 0 12px 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; display: flex; justify-content: space-between; align-items: center; text-align: left">Sin asignar<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4a5068" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <span style="font-size: 12px; line-height: 16px; color: #4a5068">Opcional</span>
+    </label>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; background: #ffffff; border-top: 1px solid #e3e7f0; padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 8px">
+    <button style="height: 52px; border: 0; border-radius: 999px; background: #141d48; color: #ffffff; font: 600 16px 'Roboto Flex', sans-serif" data-destino="a-tic-01-lista.html">Crear ticket</button>
+  </div>
+</div>
+<script src="flujos.js"></script>
+<script src="navegacion.js"></script>
+</body>
+</html>

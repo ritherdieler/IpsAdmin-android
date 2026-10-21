@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cobrar con Yape</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; position: relative; overflow: hidden; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <div aria-hidden="true">
+    <div style="background: #141d48; color: #ffffff; padding: 8px 16px 56px 4px; border-radius: 0 0 28px 28px; display: flex; flex-direction: column; gap: 4px">
+      <div style="height: 48px; display: flex; align-items: center; justify-content: space-between">
+        <span style="width: 48px; height: 48px; color: #ffffff; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></span>
+        <span style="width: 48px; height: 48px; color: #ffffff; display: flex; align-items: center; justify-content: center; margin-right: -12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></span>
+      </div>
+      <div style="padding-left: 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 24px; line-height: 30px; font-weight: 600">Jorge Ramos Villanueva</div>
+        <div style="font-size: 14px; color: #b6bfe8">Cód. <span style="font-family: 'Roboto Mono', monospace; font-size: 13px">1842</span> · Fibra · La Villa</div>
+        <div style="display: flex; gap: 8px; padding-top: 4px; flex-wrap: wrap">
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 8px; background: #ffe8b8; color: #7a5000">Cortado desde 15 set</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 8px; background: #ffdad6; color: #ba1a1a">Debe 2 meses</span>
+        </div>
+      </div>
+    </div>
+    <div style="margin: -40px 16px 0; background: #ffffff; border-radius: 16px; padding: 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 2px rgba(16,20,43,0.06), 0 1px 3px rgba(16,20,43,0.08); position: relative">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Deuda pendiente</div>
+        <div style="font-size: 22px; line-height: 28px; font-weight: 650; font-feature-settings: 'tnum'">S/ 100.00</div>
+        <div style="font-size: 13px; color: #4a5068">ago y set 2026 · oct vence mañana</div>
+      </div>
+      <span style="height: 48px; padding: 0 24px; border-radius: 999px; background: #141d48; color: #ffffff; font-size: 15px; font-weight: 600; display: flex; align-items: center">Cobrar</span>
+    </div>
+  </div>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(16,20,43,0.52)"></div>
+
+  <div role="dialog" aria-modal="true" aria-label="Cobrar a Jorge Ramos" style="position: absolute; left: 0; right: 0; top: 64px; bottom: 0; background: #ffffff; border-radius: 28px 28px 0 0; overflow: hidden">
+
+    <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 114px; padding: 0 16px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; justify-content: center; padding: 10px 0 8px"><span style="width: 32px; height: 4px; border-radius: 999px; background: #767c93"></span></div>
+
+      <div style="display: flex; flex-direction: column">
+        <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600">Cobrar a Jorge Ramos</h2>
+        <div style="font-size: 13px; line-height: 18px; color: #4a5068">Cód. <span style="font-family: 'Roboto Mono', monospace; font-weight: 500">1842</span> · Basico · S/ 50.00 al mes</div>
+      </div>
+
+      <fieldset style="margin: 12px 0 0; padding: 0; border: 0; min-width: 0">
+        <legend style="padding: 0 0 4px; font-size: 14px; line-height: 20px; font-weight: 600">Recibos</legend>
+        <label style="height: 48px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eaedf5">
+          <input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #141d48; margin: 0; flex-shrink: 0">
+          <span style="flex-grow: 1; display: flex; flex-direction: column"><span style="font-size: 15px; line-height: 20px; font-weight: 500">Ago 2026</span><span style="font-size: 12px; line-height: 16px; color: #ba1a1a">Vencido</span></span>
+          <span style="font-size: 15px; font-weight: 600; font-feature-settings: 'tnum'">S/ 50.00</span>
+        </label>
+        <label style="height: 48px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eaedf5">
+          <input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #141d48; margin: 0; flex-shrink: 0">
+          <span style="flex-grow: 1; display: flex; flex-direction: column"><span style="font-size: 15px; line-height: 20px; font-weight: 500">Set 2026</span><span style="font-size: 12px; line-height: 16px; color: #ba1a1a">Vencido</span></span>
+          <span style="font-size: 15px; font-weight: 600; font-feature-settings: 'tnum'">S/ 50.00</span>
+        </label>
+        <label style="height: 48px; box-sizing: border-box; display: flex; align-items: center; gap: 12px">
+          <input type="checkbox" style="width: 20px; height: 20px; accent-color: #141d48; margin: 0; flex-shrink: 0">
+          <span style="flex-grow: 1; display: flex; flex-direction: column"><span style="font-size: 15px; line-height: 20px; font-weight: 500">Oct 2026</span><span style="font-size: 12px; line-height: 16px; color: #4a5068">Vence mañana</span></span>
+          <span style="font-size: 15px; font-weight: 500; color: #4a5068; font-feature-settings: 'tnum'">S/ 50.00</span>
+        </label>
+      </fieldset>
+
+      <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 14px; line-height: 20px; font-weight: 600">Método</div>
+        <div role="radiogroup" aria-label="Método de pago" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+          <button type="button" role="radio" aria-checked="true" style="min-height: 56px; box-sizing: border-box; padding: 8px 12px; border: 2px solid #141d48; border-radius: 16px; background: #f1f3f9; color: #10142b; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: 'Roboto Flex', sans-serif">
+            <span style="display: flex; flex-direction: column"><span style="font-size: 15px; line-height: 20px; font-weight: 600">Yape</span><span style="font-size: 12px; line-height: 16px; color: #4a5068">Último usado</span></span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#141d48" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg>
+          </button>
+          <a href="a-caj-03-cobro-efectivo.dc.html" role="radio" aria-checked="false" style="min-height: 56px; box-sizing: border-box; padding: 9px 13px; border: 1px solid #c6cad8; border-radius: 16px; background: #ffffff; color: #10142b; text-decoration: none; display: flex; align-items: center; font-size: 15px; line-height: 20px; font-weight: 500">Efectivo</a>
+          <button type="button" role="radio" aria-checked="false" style="min-height: 56px; box-sizing: border-box; padding: 9px 13px; border: 1px solid #c6cad8; border-radius: 16px; background: #ffffff; color: #10142b; text-align: left; display: flex; align-items: center; font: 500 15px/20px 'Roboto Flex', sans-serif">Transferencia</button>
+          <button type="button" role="radio" aria-checked="false" style="min-height: 56px; box-sizing: border-box; padding: 9px 13px; border: 1px solid #c6cad8; border-radius: 16px; background: #ffffff; color: #10142b; text-align: left; display: flex; align-items: center; font: 500 15px/20px 'Roboto Flex', sans-serif">Plin</button>
+          <button type="button" role="radio" aria-checked="false" style="min-height: 56px; box-sizing: border-box; padding: 9px 13px; border: 1px solid #c6cad8; border-radius: 16px; background: #ffffff; color: #10142b; text-align: left; display: flex; align-items: center; font: 500 15px/20px 'Roboto Flex', sans-serif">Depósito</button>
+          <button type="button" role="radio" aria-checked="false" style="min-height: 56px; box-sizing: border-box; padding: 9px 13px; border: 1px solid #c6cad8; border-radius: 16px; background: #ffffff; color: #10142b; text-align: left; display: flex; align-items: center; font: 500 15px/20px 'Roboto Flex', sans-serif">Tarjeta</button>
+        </div>
+      </div>
+
+      <label style="margin-top: 16px; display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Nombre en Yape *</span>
+        <input value="Jorge Ramos V." style="height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b">
+        <span style="font-size: 12px; line-height: 16px; color: #4a5068">Como aparece en la captura</span>
+      </label>
+
+      <button type="button" style="margin-top: 10px; align-self: flex-start; height: 48px; padding: 0 20px 0 16px; border: 1px solid #767c93; border-radius: 999px; background: transparent; color: #141d48; display: flex; align-items: center; gap: 8px; font: 600 15px 'Roboto Flex', sans-serif"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>Adjuntar captura (opcional)</button>
+
+      <button type="button" aria-expanded="false" style="margin-top: 4px; align-self: flex-start; height: 40px; padding: 0; border: 0; background: transparent; color: #b23a0e; font: 600 14px 'Roboto Flex', sans-serif">+ Aplicar descuento</button>
+
+      <div style="margin-top: 6px; display: flex; flex-direction: column">
+        <div style="min-height: 64px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eaedf5">
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 20px; font-weight: 500">Restablecer el servicio</span><span style="font-size: 12px; line-height: 16px; color: #4a5068">Queda con 1 recibo pendiente (oct): se puede restablecer</span></span>
+          <button type="button" role="switch" aria-checked="true" aria-label="Restablecer el servicio" style="width: 52px; height: 32px; border: 0; border-radius: 999px; background: #141d48; position: relative; flex-shrink: 0"><span style="position: absolute; right: 4px; top: 4px; width: 24px; height: 24px; border-radius: 999px; background: #ffffff"></span></button>
+        </div>
+        <div style="min-height: 56px; box-sizing: border-box; display: flex; align-items: center; gap: 12px">
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 20px; font-weight: 500">Enviar comprobante por WhatsApp</span><span style="font-size: 12px; line-height: 16px; color: #4a5068">987 654 321</span></span>
+          <button type="button" role="switch" aria-checked="true" aria-label="Enviar comprobante por WhatsApp" style="width: 52px; height: 32px; border: 0; border-radius: 999px; background: #141d48; position: relative; flex-shrink: 0"><span style="position: absolute; right: 4px; top: 4px; width: 24px; height: 24px; border-radius: 999px; background: #ffffff"></span></button>
+        </div>
+      </div>
+    </div>
+
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 114px; box-sizing: border-box; background: #ffffff; border-top: 1px solid #e3e7f0; padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 8px">
+      <div style="height: 28px; display: flex; justify-content: space-between; align-items: center">
+        <span style="font-size: 14px; line-height: 20px; color: #4a5068">Total · 2 recibos</span>
+        <span style="font-size: 22px; line-height: 28px; font-weight: 650; font-feature-settings: 'tnum'">S/ 100.00</span>
+      </div>
+      <a href="a-caj-04-comprobante.dc.html" style="height: 52px; border-radius: 999px; background: #141d48; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">Registrar cobro</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

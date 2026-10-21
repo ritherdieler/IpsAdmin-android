@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Ingresar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <div style="height: 272px; background: #141d48; border-radius: 0 0 28px 28px; display: flex; align-items: center; justify-content: center">
+    <img src="/_blob/87d19086048fb9f338d00ff84a8575ed" alt="GigaFiber Perú" style="width: 180px; height: 180px; display: block">
+  </div>
+
+  <form aria-labelledby="login-title" style="margin: 0; padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <h1 id="login-title" style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 600">Ingresar</h1>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Usuario *</span>
+      <input value="rosa.c" autocomplete="username" autocapitalize="none" spellcheck="false" style="height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b">
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="login-pwd" style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Contraseña *</label>
+      <div style="position: relative">
+        <input id="login-pwd" type="password" value="••••••••••" autocomplete="current-password" style="width: 100%; height: 52px; box-sizing: border-box; padding: 0 52px 0 14px; border: 2px solid #141d48; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; letter-spacing: 2px">
+        <button type="button" aria-label="Mostrar contraseña" aria-pressed="false" aria-controls="login-pwd" style="position: absolute; right: 4px; top: 4px; width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent; color: #4a5068; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
+
+    <label style="min-height: 48px; display: flex; align-items: center; gap: 12px; font-size: 15px; line-height: 20px">
+      <input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #141d48; margin: 0">
+      Mantener la sesión iniciada
+    </label>
+
+    <button type="submit" style="height: 52px; padding: 0 24px; border: 0; border-radius: 999px; background: #141d48; color: #ffffff; font: 600 15px 'Roboto Flex', sans-serif">Ingresar</button>
+    <button type="button" style="height: 52px; padding: 0 24px; border: 0; border-radius: 999px; background: #dfe3ff; color: #141d48; font: 600 15px 'Roboto Flex', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 11v3a8 8 0 0 1-1.5 4.6M8.5 7.5A5 5 0 0 1 17 11v2M5.5 9.5A7.5 7.5 0 0 1 19.5 11M7 13a5 5 0 0 0 .5 2.5M15 14.5a11 11 0 0 1-1 4.5"/></svg>Ingresar con huella</button>
+  </form>
+
+  <footer style="position: absolute; left: 0; right: 0; bottom: 0; height: 56px; padding: 0 16px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+    <span style="font-size: 14px; line-height: 20px; color: #4a5068">¿No tienes cuenta? <a href="#" style="color: #b23a0e; font-weight: 600; text-decoration: none">Solicitar acceso</a></span>
+    <span style="font-size: 12px; line-height: 16px; color: #4a5068; font-feature-settings: 'tnum'">v2.6.14</span>
+  </footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

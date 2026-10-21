@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editar plan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</head>
+<body>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <div aria-hidden="true">
+    <div style="height: 64px; padding: 0 4px; display: flex; align-items: center; gap: 4px">
+      <span style="width: 48px; height: 48px; color: #10142b; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></span>
+      <span style="flex-grow: 1; font-size: 20px; line-height: 26px; font-weight: 600">Planes</span>
+      <span style="width: 48px; height: 48px; color: #10142b; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+    </div>
+    <div style="padding: 4px 16px 0">
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid #767c93; border-radius: 999px; overflow: hidden; height: 44px; box-sizing: border-box">
+        <span style="background: #dfe3ff; color: #141d48; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center">Activos 11</span>
+        <span style="border-left: 1px solid #767c93; background: #ffffff; font-size: 14px; display: flex; align-items: center; justify-content: center">Retirados 18</span>
+      </div>
+    </div>
+    <div style="padding: 12px 32px 4px; font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Fibra · 6</div>
+    <div style="margin: 0 16px; background: #ffffff; border-radius: 16px; display: flex; flex-direction: column">
+      <div style="height: 64px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eaedf5; font-size: 15px; font-weight: 600"><span>Basico</span><span>S/ 50.00</span></div>
+      <div style="height: 64px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eaedf5; font-size: 15px; font-weight: 600"><span>Duo basico 80</span><span>S/ 80.00</span></div>
+      <div style="height: 64px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eaedf5; font-size: 15px; font-weight: 600"><span>Internet70</span><span>S/ 70.00</span></div>
+      <div style="height: 64px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 600"><span>Internet100</span><span>S/ 100.00</span></div>
+    </div>
+  </div>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(16,20,43,0.52)"></div>
+
+  <div role="dialog" aria-modal="true" aria-labelledby="editar-plan-titulo" style="position: absolute; left: 0; right: 0; bottom: 0; top: 120px; background: #ffffff; border-radius: 28px 28px 0 0; padding: 0 16px 20px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; justify-content: center; padding-top: 12px"><span style="width: 32px; height: 4px; border-radius: 999px; background: #767c93"></span></div>
+    <h2 id="editar-plan-titulo" style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600">Editar plan</h2>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Nombre *</span>
+      <input value="Basico" style="height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b">
+      <span style="font-size: 12px; line-height: 16px; color: #4a5068">Se muestra como “Basico”</span>
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span id="tipo-plan" style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Tipo</span>
+      <div role="radiogroup" aria-labelledby="tipo-plan" aria-describedby="tipo-plan-ayuda" aria-disabled="true" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #c6cad8; border-radius: 999px; overflow: hidden; height: 44px; box-sizing: border-box">
+        <button role="radio" aria-checked="true" aria-disabled="true" style="border: 0; background: #dfe3ff; color: #141d48; font: 600 14px 'Roboto Flex', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg>Fibra</button>
+        <button role="radio" aria-checked="false" aria-disabled="true" style="border: 0; border-left: 1px solid #c6cad8; background: #ffffff; color: #4a5068; font: 500 14px 'Roboto Flex', sans-serif">Inalámbrico</button>
+        <button role="radio" aria-checked="false" aria-disabled="true" style="border: 0; border-left: 1px solid #c6cad8; background: #ffffff; color: #4a5068; font: 500 14px 'Roboto Flex', sans-serif">Solo TV</button>
+      </div>
+      <span id="tipo-plan-ayuda" style="font-size: 12px; line-height: 16px; color: #4a5068">No se puede cambiar: tiene abonados</span>
+    </div>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Precio mensual *</span>
+      <span style="height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; display: flex; align-items: center; gap: 6px">
+        <span style="font-size: 16px; color: #4a5068">S/</span>
+        <input value="50.00" inputmode="decimal" style="flex-grow: 1; min-width: 0; border: 0; outline: none; background: transparent; padding: 0; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; font-feature-settings: 'tnum'">
+      </span>
+    </label>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <label style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+        <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Bajada</span>
+        <span style="height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; display: flex; align-items: center; gap: 6px">
+          <input value="200" inputmode="numeric" style="flex-grow: 1; min-width: 0; width: 100%; border: 0; outline: none; background: transparent; padding: 0; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; font-feature-settings: 'tnum'">
+          <span style="font-size: 16px; color: #4a5068">Mbps</span>
+        </span>
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+        <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Subida</span>
+        <span style="height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; display: flex; align-items: center; gap: 6px">
+          <input value="200" inputmode="numeric" style="flex-grow: 1; min-width: 0; width: 100%; border: 0; outline: none; background: transparent; padding: 0; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; font-feature-settings: 'tnum'">
+          <span style="font-size: 16px; color: #4a5068">Mbps</span>
+        </span>
+      </label>
+    </div>
+
+    <div style="min-height: 56px; display: flex; align-items: center; gap: 12px">
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px">
+        <span style="font-size: 15px; line-height: 22px">Disponible para nuevas suscripciones</span>
+        <span style="font-size: 13px; line-height: 18px; color: #4a5068">Aparece al elegir plan en el registro</span>
+      </span>
+      <button role="switch" aria-checked="true" aria-label="Disponible para nuevas suscripciones" style="width: 52px; height: 32px; border: 0; border-radius: 999px; background: #141d48; position: relative; flex-shrink: 0"><span style="position: absolute; right: 4px; top: 4px; width: 24px; height: 24px; border-radius: 999px; background: #ffffff"></span></button>
+    </div>
+
+    <div role="note" style="border-radius: 16px; padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; background: #ffe8b8; color: #10142b">
+      <span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: #ffffff; color: #7a5000; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></svg></span>
+      <span style="font-size: 14px; line-height: 20px"><b style="font-weight: 600">813 abonados usan este plan.</b> Cambiar el precio cambia su mensualidad.</span>
+    </div>
+
+    <div style="margin: auto -16px 0; padding: 12px 16px 0; border-top: 1px solid #e3e7f0; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+      <button type="button" style="height: 48px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: #ba1a1a; font: 600 15px 'Roboto Flex', sans-serif" data-destino="a-mas-03-planes.html">Retirar plan</button>
+      <button type="button" style="height: 48px; padding: 0 32px; border: 0; border-radius: 999px; background: #141d48; color: #ffffff; font: 600 15px 'Roboto Flex', sans-serif" data-destino="a-mas-03-planes.html">Guardar</button>
+    </div>
+  </div>
+</div>
+<script src="flujos.js"></script>
+<script src="navegacion.js"></script>
+</body>
+</html>

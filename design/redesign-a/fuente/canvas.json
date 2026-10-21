@@ -1,0 +1,751 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "A-datos.dc.html": {
+      "h": 1220,
+      "page": "a-sistema",
+      "title": "Datos reales y decisiones",
+      "w": 1600,
+      "x": 3800,
+      "y": 0
+    },
+    "A-flujos.dc.html": {
+      "h": 1360,
+      "page": "a-sistema",
+      "title": "Mapa de la app (64 pantallas)",
+      "w": 1840,
+      "x": 0,
+      "y": 0
+    },
+    "A-sistema.dc.html": {
+      "h": 1420,
+      "page": "a-sistema",
+      "title": "Sistema visual v2",
+      "w": 1800,
+      "x": 1920,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 1180,
+      "page": "diagnostico",
+      "title": "Diagnóstico de la app actual",
+      "w": 1760,
+      "x": 0,
+      "y": 0
+    },
+    "a-acc-01-splash.dc.html": {
+      "h": 844,
+      "page": "a-acceso",
+      "title": "Splash",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "a-acc-02-actualizar.dc.html": {
+      "h": 844,
+      "page": "a-acceso",
+      "title": "Actualización obligatoria",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "a-acc-03-login.dc.html": {
+      "h": 844,
+      "page": "a-acceso",
+      "title": "Ingresar",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "a-acc-04-login-error.dc.html": {
+      "h": 844,
+      "page": "a-acceso",
+      "title": "Ingresar con error",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "a-caj-01-caja.dc.html": {
+      "h": 844,
+      "page": "a-caja",
+      "title": "Caja",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "a-caj-02-cobro-yape.dc.html": {
+      "h": 1000,
+      "page": "a-caja",
+      "title": "Cobrar con Yape",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "a-caj-03-cobro-efectivo.dc.html": {
+      "h": 1000,
+      "page": "a-caja",
+      "title": "Cobrar en efectivo",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "a-caj-04-comprobante.dc.html": {
+      "h": 844,
+      "page": "a-caja",
+      "title": "Cobro registrado",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "a-caj-05-detalle-pago.dc.html": {
+      "h": 844,
+      "page": "a-caja",
+      "title": "Detalle de pago",
+      "w": 390,
+      "x": 0,
+      "y": 1160
+    },
+    "a-caj-06-buscar-pagos.dc.html": {
+      "h": 844,
+      "page": "a-caja",
+      "title": "Buscar pagos",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "a-caj-07-egreso.dc.html": {
+      "h": 1000,
+      "page": "a-caja",
+      "title": "Nuevo egreso",
+      "w": 390,
+      "x": 470,
+      "y": 1160
+    },
+    "a-caj-08-egresos.dc.html": {
+      "h": 844,
+      "page": "a-caja",
+      "title": "Egresos",
+      "w": 390,
+      "x": 940,
+      "y": 1160
+    },
+    "a-est-01-cargando.dc.html": {
+      "h": 844,
+      "page": "a-est",
+      "title": "Suscripciones cargando",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "a-est-02-ficha-cargando.dc.html": {
+      "h": 844,
+      "page": "a-est",
+      "title": "Ficha cargando",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "a-est-03-error.dc.html": {
+      "h": 844,
+      "page": "a-est",
+      "title": "Tickets con error",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "a-est-04-vacio.dc.html": {
+      "h": 844,
+      "page": "a-est",
+      "title": "Tickets en curso vacío",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "a-est-05-sin-conexion.dc.html": {
+      "h": 844,
+      "page": "a-est",
+      "title": "Suscripciones sin conexión",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "a-est-06-dialogo-sesion.dc.html": {
+      "h": 844,
+      "page": "a-est",
+      "title": "Cerrar sesión",
+      "w": 390,
+      "x": 0,
+      "y": 1004
+    },
+    "a-est-07-oscuro-inicio.dc.html": {
+      "h": 844,
+      "page": "a-est",
+      "title": "Inicio modo oscuro",
+      "w": 390,
+      "x": 470,
+      "y": 1004
+    },
+    "a-est-08-oscuro-ficha.dc.html": {
+      "h": 844,
+      "page": "a-est",
+      "title": "Ficha modo oscuro",
+      "w": 390,
+      "x": 940,
+      "y": 1004
+    },
+    "a-ini-01-admin.dc.html": {
+      "h": 844,
+      "page": "a-acceso",
+      "title": "Inicio Administrador",
+      "w": 390,
+      "x": 0,
+      "y": 1004
+    },
+    "a-ini-02-secretaria.dc.html": {
+      "h": 844,
+      "page": "a-acceso",
+      "title": "Inicio Secretaría",
+      "w": 390,
+      "x": 470,
+      "y": 1004
+    },
+    "a-ini-03-tecnico.dc.html": {
+      "h": 844,
+      "page": "a-acceso",
+      "title": "Hoy Técnico",
+      "w": 390,
+      "x": 940,
+      "y": 1004
+    },
+    "a-ini-04-ventas.dc.html": {
+      "h": 844,
+      "page": "a-acceso",
+      "title": "Instalaciones Ventas",
+      "w": 390,
+      "x": 1410,
+      "y": 1004
+    },
+    "a-ini-05-notificaciones.dc.html": {
+      "h": 844,
+      "page": "a-acceso",
+      "title": "Notificaciones",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "a-ini-06-nuevo.dc.html": {
+      "h": 844,
+      "page": "a-acceso",
+      "title": "Nuevo",
+      "w": 390,
+      "x": 1880,
+      "y": 1004
+    },
+    "a-ins-01-lista.dc.html": {
+      "h": 844,
+      "page": "a-tic",
+      "title": "Instalaciones",
+      "w": 390,
+      "x": 940,
+      "y": 1160
+    },
+    "a-ins-02-crear-orden.dc.html": {
+      "h": 1100,
+      "page": "a-tic",
+      "title": "Nueva orden",
+      "w": 390,
+      "x": 1410,
+      "y": 1160
+    },
+    "a-ins-03-asignar.dc.html": {
+      "h": 844,
+      "page": "a-tic",
+      "title": "Asignar técnico",
+      "w": 390,
+      "x": 1880,
+      "y": 1160
+    },
+    "a-mas-01-menu.dc.html": {
+      "h": 844,
+      "page": "a-mas",
+      "title": "Más",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "a-mas-02-perfil.dc.html": {
+      "h": 1000,
+      "page": "a-mas",
+      "title": "Perfil",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "a-mas-03-planes.dc.html": {
+      "h": 1000,
+      "page": "a-mas",
+      "title": "Planes",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "a-mas-04-editar-plan.dc.html": {
+      "h": 844,
+      "page": "a-mas",
+      "title": "Editar plan",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "a-reg-01-cliente.dc.html": {
+      "h": 1220,
+      "page": "a-reg",
+      "title": "Registro 2 · Cliente",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "a-reg-02-equipo.dc.html": {
+      "h": 844,
+      "page": "a-reg",
+      "title": "Registro 1 · Equipo",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "a-reg-03-servicio.dc.html": {
+      "h": 1290,
+      "page": "a-reg",
+      "title": "Registro 3 · Servicio",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "a-reg-04-nap.dc.html": {
+      "h": 844,
+      "page": "a-reg",
+      "title": "Registro · Elegir caja NAP",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "a-reg-05-wifi-foto.dc.html": {
+      "h": 1000,
+      "page": "a-reg",
+      "title": "Registro 3 · Wi-Fi y foto",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "a-reg-06-revision.dc.html": {
+      "h": 1100,
+      "page": "a-reg",
+      "title": "Registro 4 · Revisión",
+      "w": 390,
+      "x": 0,
+      "y": 1360
+    },
+    "a-reg-07-progreso.dc.html": {
+      "h": 844,
+      "page": "a-reg",
+      "title": "Registro · Progreso",
+      "w": 390,
+      "x": 470,
+      "y": 1360
+    },
+    "a-reg-08-exito.dc.html": {
+      "h": 1000,
+      "page": "a-reg",
+      "title": "Registro · Éxito",
+      "w": 390,
+      "x": 940,
+      "y": 1360
+    },
+    "a-reg-09-atencion.dc.html": {
+      "h": 844,
+      "page": "a-reg",
+      "title": "Registro · Falta Wi-Fi",
+      "w": 390,
+      "x": 1410,
+      "y": 1360
+    },
+    "a-reg-10-cola.dc.html": {
+      "h": 844,
+      "page": "a-reg",
+      "title": "Pendientes de envío",
+      "w": 390,
+      "x": 1880,
+      "y": 1360
+    },
+    "a-sus-01-buscar.dc.html": {
+      "h": 844,
+      "page": "a-sus",
+      "title": "Suscripciones · búsqueda",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "a-sus-02-inicial.dc.html": {
+      "h": 844,
+      "page": "a-sus",
+      "title": "Suscripciones · inicio",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "a-sus-03-filtros.dc.html": {
+      "h": 844,
+      "page": "a-sus",
+      "title": "Suscripciones · filtros",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "a-sus-04-ficha-resumen.dc.html": {
+      "h": 1720,
+      "page": "a-sus",
+      "title": "Ficha · Resumen",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "a-sus-05-ficha-pagos.dc.html": {
+      "h": 1000,
+      "page": "a-sus",
+      "title": "Ficha · Pagos",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "a-sus-06-ficha-red.dc.html": {
+      "h": 1680,
+      "page": "a-sus",
+      "title": "Ficha · Red",
+      "w": 390,
+      "x": 0,
+      "y": 1880
+    },
+    "a-sus-07-ficha-historial.dc.html": {
+      "h": 1000,
+      "page": "a-sus",
+      "title": "Ficha · Historial",
+      "w": 390,
+      "x": 470,
+      "y": 1880
+    },
+    "a-sus-08-mas-acciones.dc.html": {
+      "h": 844,
+      "page": "a-sus",
+      "title": "Más acciones",
+      "w": 390,
+      "x": 940,
+      "y": 1880
+    },
+    "a-sus-09-cambiar-plan.dc.html": {
+      "h": 844,
+      "page": "a-sus",
+      "title": "Cambiar plan",
+      "w": 390,
+      "x": 1410,
+      "y": 1880
+    },
+    "a-sus-10-cambiar-nap.dc.html": {
+      "h": 1100,
+      "page": "a-sus",
+      "title": "Cambiar caja NAP",
+      "w": 390,
+      "x": 1880,
+      "y": 1880
+    },
+    "a-sus-11-ubicacion.dc.html": {
+      "h": 844,
+      "page": "a-sus",
+      "title": "Actualizar ubicación",
+      "w": 390,
+      "x": 0,
+      "y": 3720
+    },
+    "a-sus-12-postergar-corte.dc.html": {
+      "h": 844,
+      "page": "a-sus",
+      "title": "Postergar corte",
+      "w": 390,
+      "x": 470,
+      "y": 3720
+    },
+    "a-sus-13-cancelar.dc.html": {
+      "h": 844,
+      "page": "a-sus",
+      "title": "Cancelar suscripción",
+      "w": 390,
+      "x": 940,
+      "y": 3720
+    },
+    "a-sus-14-editar-titular.dc.html": {
+      "h": 1100,
+      "page": "a-sus",
+      "title": "Editar titular",
+      "w": 390,
+      "x": 1410,
+      "y": 3720
+    },
+    "a-tic-01-lista.dc.html": {
+      "h": 844,
+      "page": "a-tic",
+      "title": "Tickets",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "a-tic-02-pendiente.dc.html": {
+      "h": 1000,
+      "page": "a-tic",
+      "title": "Ticket pendiente",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "a-tic-03-en-curso.dc.html": {
+      "h": 1000,
+      "page": "a-tic",
+      "title": "Ticket en curso",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "a-tic-04-cerrar.dc.html": {
+      "h": 1000,
+      "page": "a-tic",
+      "title": "Cerrar ticket",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "a-tic-05-crear.dc.html": {
+      "h": 1100,
+      "page": "a-tic",
+      "title": "Nuevo ticket",
+      "w": 390,
+      "x": 0,
+      "y": 1160
+    },
+    "a-tic-06-categorias.dc.html": {
+      "h": 844,
+      "page": "a-tic",
+      "title": "Elegir categoría",
+      "w": 390,
+      "x": 470,
+      "y": 1160
+    },
+    "a-tic-07-reagendar.dc.html": {
+      "h": 844,
+      "page": "a-tic",
+      "title": "Reagendar ticket",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-15T00:15:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "page": "a-sistema",
+    "view": "canvas"
+  },
+  "notes": {
+    "t-a-acceso": {
+      "kind": "title1",
+      "maxW": 2270,
+      "page": "a-acceso",
+      "text": "Propuesta A · Acceso e inicio · por rol",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t-a-caja": {
+      "kind": "title1",
+      "maxW": 2270,
+      "page": "a-caja",
+      "text": "Propuesta A · Caja, cobros y egresos",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t-a-est": {
+      "kind": "title1",
+      "maxW": 2270,
+      "page": "a-est",
+      "text": "Propuesta A · Estados del sistema y modo oscuro",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t-a-mas": {
+      "kind": "title1",
+      "maxW": 2270,
+      "page": "a-mas",
+      "text": "Propuesta A · Más, planes y perfil",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t-a-reg": {
+      "kind": "title1",
+      "maxW": 2270,
+      "page": "a-reg",
+      "text": "Propuesta A · Registro de suscripción · sin esperas bloqueantes",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t-a-sus": {
+      "kind": "title1",
+      "maxW": 2270,
+      "page": "a-sus",
+      "text": "Propuesta A · Suscripciones · búsqueda, ficha y acciones",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t-a-tic": {
+      "kind": "title1",
+      "maxW": 2270,
+      "page": "a-tic",
+      "text": "Propuesta A · Tickets e instalaciones",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "ta": {
+      "kind": "title1",
+      "maxW": 5400,
+      "page": "a-sistema",
+      "text": "Propuesta A · Sistema, datos de producción y mapa de la app",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "tdiag": {
+      "kind": "title1",
+      "maxW": 1760,
+      "page": "diagnostico",
+      "text": "Diagnóstico · IspAdmin Android",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "A-flujos.dc.html",
+    "A-sistema.dc.html",
+    "A-datos.dc.html",
+    "Main.dc.html",
+    "a-acc-01-splash.dc.html",
+    "a-acc-02-actualizar.dc.html",
+    "a-acc-03-login.dc.html",
+    "a-acc-04-login-error.dc.html",
+    "a-ini-05-notificaciones.dc.html",
+    "a-ini-01-admin.dc.html",
+    "a-ini-02-secretaria.dc.html",
+    "a-ini-03-tecnico.dc.html",
+    "a-ini-04-ventas.dc.html",
+    "a-ini-06-nuevo.dc.html",
+    "a-sus-01-buscar.dc.html",
+    "a-sus-02-inicial.dc.html",
+    "a-sus-03-filtros.dc.html",
+    "a-sus-04-ficha-resumen.dc.html",
+    "a-sus-05-ficha-pagos.dc.html",
+    "a-sus-06-ficha-red.dc.html",
+    "a-sus-07-ficha-historial.dc.html",
+    "a-sus-08-mas-acciones.dc.html",
+    "a-sus-09-cambiar-plan.dc.html",
+    "a-sus-10-cambiar-nap.dc.html",
+    "a-sus-11-ubicacion.dc.html",
+    "a-sus-12-postergar-corte.dc.html",
+    "a-sus-13-cancelar.dc.html",
+    "a-sus-14-editar-titular.dc.html",
+    "a-reg-02-equipo.dc.html",
+    "a-reg-01-cliente.dc.html",
+    "a-reg-03-servicio.dc.html",
+    "a-reg-04-nap.dc.html",
+    "a-reg-05-wifi-foto.dc.html",
+    "a-reg-06-revision.dc.html",
+    "a-reg-07-progreso.dc.html",
+    "a-reg-08-exito.dc.html",
+    "a-reg-09-atencion.dc.html",
+    "a-reg-10-cola.dc.html",
+    "a-caj-01-caja.dc.html",
+    "a-caj-06-buscar-pagos.dc.html",
+    "a-caj-02-cobro-yape.dc.html",
+    "a-caj-03-cobro-efectivo.dc.html",
+    "a-caj-04-comprobante.dc.html",
+    "a-caj-05-detalle-pago.dc.html",
+    "a-caj-07-egreso.dc.html",
+    "a-caj-08-egresos.dc.html",
+    "a-tic-01-lista.dc.html",
+    "a-tic-02-pendiente.dc.html",
+    "a-tic-03-en-curso.dc.html",
+    "a-tic-04-cerrar.dc.html",
+    "a-tic-07-reagendar.dc.html",
+    "a-tic-05-crear.dc.html",
+    "a-tic-06-categorias.dc.html",
+    "a-ins-01-lista.dc.html",
+    "a-ins-02-crear-orden.dc.html",
+    "a-ins-03-asignar.dc.html",
+    "a-mas-01-menu.dc.html",
+    "a-mas-02-perfil.dc.html",
+    "a-mas-03-planes.dc.html",
+    "a-mas-04-editar-plan.dc.html",
+    "a-est-01-cargando.dc.html",
+    "a-est-02-ficha-cargando.dc.html",
+    "a-est-03-error.dc.html",
+    "a-est-04-vacio.dc.html",
+    "a-est-05-sin-conexion.dc.html",
+    "a-est-06-dialogo-sesion.dc.html",
+    "a-est-07-oscuro-inicio.dc.html",
+    "a-est-08-oscuro-ficha.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "a-sistema",
+      "name": "A · Sistema, datos y mapa"
+    },
+    {
+      "id": "a-acceso",
+      "name": "A · Acceso e inicio"
+    },
+    {
+      "id": "a-sus",
+      "name": "A · Suscripciones"
+    },
+    {
+      "id": "a-reg",
+      "name": "A · Registro"
+    },
+    {
+      "id": "a-caja",
+      "name": "A · Caja y egresos"
+    },
+    {
+      "id": "a-tic",
+      "name": "A · Tickets e instalaciones"
+    },
+    {
+      "id": "a-mas",
+      "name": "A · Más"
+    },
+    {
+      "id": "a-est",
+      "name": "A · Estados y oscuro"
+    },
+    {
+      "id": "diagnostico",
+      "name": "Diagnóstico"
+    }
+  ],
+  "title": "Rediseño IspAdmin Android"
+}

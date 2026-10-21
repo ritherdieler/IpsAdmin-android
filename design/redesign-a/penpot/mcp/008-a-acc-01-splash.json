@@ -1,0 +1,1 @@
+{"type":"board","screen":"a-acc-01-splash","title":"Splash","box":[0,260,390,844],"fill":0,"nodes":[["i",95,322,200,200,0,null],["r",115,754,160,4,1,null,0,null],["r",153.4,754,64,4,2,null,0,null],["t",125.1,771.5,142,15,"Comprobando versión…",0,0,null]],"links":[[0,0,390,844,"a-acc-03-login"]]}

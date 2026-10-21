@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Actualización obligatoria</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #141d48; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <div style="position: absolute; left: 0; right: 0; top: 0; height: 330px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px">
+    <img src="/_blob/87d19086048fb9f338d00ff84a8575ed" alt="GigaFiber Perú" style="width: 140px; height: 140px; display: block">
+    <span style="height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,0.10); color: #dfe3ff; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M4 20h16"/></svg>Actualización obligatoria</span>
+  </div>
+
+  <section role="dialog" aria-modal="true" aria-labelledby="upd-title" aria-describedby="upd-body" style="position: absolute; left: 0; right: 0; bottom: 0; background: #ffffff; border-radius: 28px 28px 0 0; padding: 28px 16px 24px; display: flex; flex-direction: column">
+    <h1 id="upd-title" style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 600">Hay una versión nueva</h1>
+    <p id="upd-body" style="margin: 8px 0 0; font-size: 15px; line-height: 22px; color: #4a5068">Para seguir cobrando y registrando necesitas la versión <span style="font-weight: 600; color: #10142b">2.7.0</span>. Tienes la <span style="font-weight: 600; color: #10142b">2.6.14</span>.</p>
+
+    <h2 style="margin: 24px 0 4px; font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Novedades</h2>
+    <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column">
+      <li style="min-height: 56px; display: flex; align-items: center; gap: 12px">
+        <span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 999px; background: #d6f2e2; color: #17663d; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></span>
+        <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 20px; font-weight: 600">Barra inferior según tu rol</span><span style="font-size: 13px; line-height: 18px; color: #4a5068">Lo que usas cada día, a un toque</span></span>
+      </li>
+      <li style="min-height: 56px; display: flex; align-items: center; gap: 12px">
+        <span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 999px; background: #d6f2e2; color: #17663d; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></span>
+        <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 20px; font-weight: 600">Cobro en 3 toques</span><span style="font-size: 13px; line-height: 18px; color: #4a5068">Tu último método, Yape, ya viene elegido</span></span>
+      </li>
+      <li style="min-height: 56px; display: flex; align-items: center; gap: 12px">
+        <span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 999px; background: #d6f2e2; color: #17663d; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg></span>
+        <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 20px; font-weight: 600">Registro sin esperas</span><span style="font-size: 13px; line-height: 18px; color: #4a5068">Cada paso se guarda, aunque no haya señal</span></span>
+      </li>
+    </ul>
+
+    <button type="button" style="margin-top: 24px; height: 52px; padding: 0 24px; border: 0; border-radius: 999px; background: #141d48; color: #ffffff; font: 600 15px 'Roboto Flex', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M4 20h16"/></svg>Actualizar ahora</button>
+    <button type="button" style="margin-top: 8px; height: 48px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: #141d48; font: 600 15px 'Roboto Flex', sans-serif">Cerrar la app</button>
+    <p style="margin: 8px 0 0; font-size: 12px; line-height: 16px; color: #4a5068; text-align: center">Si no puedes actualizar, avisa al administrador.</p>
+  </section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

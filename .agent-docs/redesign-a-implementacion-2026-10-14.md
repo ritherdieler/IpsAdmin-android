@@ -1,6 +1,6 @@
 # Propuesta A: implementación por fases (2026-10-14, con TDD)
 
-Diseño de referencia: lienzo https://claude.ai/artifact/1yfKRpqjG9eEXu3jD4XQwX (64 pantallas, sin vistas ocultas). Rama `feature/redesign-a`, que parte de `473b68f` (arreglos de auditoría) sobre `feature/dashboard-redesign`. Un commit por fase.
+Diseño de referencia: lienzo https://claude.ai/artifact/1yfKRpqjG9eEXu3jD4XQwX (64 pantallas, sin vistas ocultas), exportado al repo en `design/redesign-a/` (HTML autónomo en `pantallas/`, fuente del lienzo en `fuente/`). Rama `feature/redesign-a`, que parte de `473b68f` (arreglos de auditoría) sobre `feature/dashboard-redesign`. Un commit por fase.
 
 ## Hecho
 

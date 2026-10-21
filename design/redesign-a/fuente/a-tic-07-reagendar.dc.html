@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Reagendar ticket</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <div aria-hidden="true">
+    <div style="height: 64px; padding: 0 4px; display: flex; align-items: center; gap: 4px">
+      <span style="width: 48px; height: 48px; color: #10142b; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></span>
+      <span style="flex-grow: 1; font-size: 20px; line-height: 26px; font-weight: 600">Ticket #3606</span>
+      <span style="width: 48px; height: 48px; color: #10142b; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></span>
+    </div>
+    <div style="padding: 4px 16px 0; display: flex; flex-direction: column; gap: 6px">
+      <div style="display: flex; gap: 8px">
+        <span style="font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #dce6ff; color: #2459c9">En curso</span>
+        <span style="font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #dce6ff; color: #2459c9">Media</span>
+      </div>
+      <div style="font-size: 22px; line-height: 28px; font-weight: 600">Internet lento</div>
+      <div style="font-size: 13px; line-height: 18px; color: #4a5068">Tomado por Diego Huerta a las 09:40 · 1 h 2 min</div>
+      <div style="margin-top: 16px; height: 144px; border-radius: 16px; background: #ffffff"></div>
+    </div>
+  </div>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(16,20,43,0.52)"></div>
+
+  <div role="dialog" aria-label="Reagendar ticket #3606" style="position: absolute; left: 0; right: 0; bottom: 0; top: 200px; background: #ffffff; border-radius: 28px 28px 0 0; padding: 0 16px 20px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; justify-content: center; padding-top: 12px"><span style="width: 32px; height: 4px; border-radius: 999px; background: #767c93"></span></div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+      <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+        <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600">Reagendar #3606</h2>
+        <div style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Internet lento · Elena Flores Ríos</div>
+      </div>
+      <a href="a-tic-03-en-curso.dc.html" aria-label="Cerrar" style="width: 48px; height: 48px; margin-right: -12px; flex-shrink: 0; color: #10142b; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span id="lbl-dia" style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Día</span>
+      <div role="radiogroup" aria-labelledby="lbl-dia" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <button role="radio" aria-checked="false" style="min-height: 56px; padding: 10px 14px; border: 1px solid #c6cad8; border-radius: 16px; background: #ffffff; text-align: left; color: #10142b; font: 500 15px/20px 'Roboto Flex', sans-serif">Hoy en la tarde</button>
+        <button role="radio" aria-checked="true" style="min-height: 56px; padding: 9px 12px 9px 13px; border: 2px solid #141d48; border-radius: 16px; background: #f1f3f9; text-align: left; color: #141d48; font: 600 15px/20px 'Roboto Flex', sans-serif; display: flex; align-items: center; justify-content: space-between; gap: 8px">Mañana jue 15<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M5 12.5 10 17l9-10"/></svg></button>
+        <button role="radio" aria-checked="false" style="min-height: 56px; padding: 10px 14px; border: 1px solid #c6cad8; border-radius: 16px; background: #ffffff; text-align: left; color: #10142b; font: 500 15px/20px 'Roboto Flex', sans-serif">Vie 16 oct</button>
+        <button role="radio" aria-checked="false" style="min-height: 56px; padding: 10px 14px; border: 1px solid #c6cad8; border-radius: 16px; background: #ffffff; text-align: left; color: #10142b; font: 500 15px/20px 'Roboto Flex', sans-serif; display: flex; align-items: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#141d48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Elegir fecha</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span id="lbl-hora" style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Hora</span>
+      <div role="radiogroup" aria-labelledby="lbl-hora" style="display: flex; gap: 8px; white-space: nowrap">
+        <button role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0; font-feature-settings: 'tnum'">09:00</button>
+        <button role="radio" aria-checked="true" style="height: 32px; padding: 0 12px 0 8px; border: 0; border-radius: 8px; background: #dfe3ff; color: #141d48; font: 600 13px 'Roboto Flex', sans-serif; flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-feature-settings: 'tnum'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg>11:00</button>
+        <button role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0; font-feature-settings: 'tnum'">14:00</button>
+        <button role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0; font-feature-settings: 'tnum'">16:00</button>
+      </div>
+    </div>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Técnico</span>
+      <button style="height: 52px; box-sizing: border-box; padding: 0 12px 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; display: flex; justify-content: space-between; align-items: center; text-align: left">Diego Huerta<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4a5068" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span id="lbl-motivo" style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Motivo</span>
+      <div role="radiogroup" aria-labelledby="lbl-motivo" style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button role="radio" aria-checked="true" style="height: 32px; padding: 0 12px 0 8px; border: 0; border-radius: 8px; background: #dfe3ff; color: #141d48; font: 600 13px 'Roboto Flex', sans-serif; display: flex; align-items: center; gap: 4px; white-space: nowrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg>El abonado no está</button>
+        <button role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; white-space: nowrap">Falta material</button>
+        <button role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; white-space: nowrap">Clima</button>
+        <button role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; white-space: nowrap">Otro</button>
+      </div>
+    </div>
+
+    <button style="margin-top: auto; height: 52px; flex-shrink: 0; border: 0; border-radius: 999px; background: #141d48; color: #ffffff; font: 600 16px 'Roboto Flex', sans-serif">Reagendar para jue 15 · 11:00</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

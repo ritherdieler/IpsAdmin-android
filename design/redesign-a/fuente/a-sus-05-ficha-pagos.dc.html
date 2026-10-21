@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Ficha · Pagos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; position: relative; overflow: hidden; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <div style="background: #ffffff">
+    <div style="background: #141d48; color: #ffffff; padding: 8px 16px 20px 4px; border-radius: 0 0 28px 28px; display: flex; flex-direction: column; gap: 4px">
+      <div style="height: 48px; display: flex; align-items: center; justify-content: space-between">
+        <a href="a-sus-01-buscar.dc.html" aria-label="Atrás" style="width: 48px; height: 48px; color: #ffffff; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a>
+        <a href="a-sus-08-mas-acciones.dc.html" aria-label="Más acciones" style="width: 48px; height: 48px; color: #ffffff; display: flex; align-items: center; justify-content: center; margin-right: -12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></a>
+      </div>
+      <div style="padding-left: 12px; display: flex; flex-direction: column; gap: 6px">
+        <h1 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 600">Jorge Ramos Villanueva</h1>
+        <div style="font-size: 14px; color: #b6bfe8">Cód. <span style="font-family: 'Roboto Mono', monospace; font-size: 13px">1842</span> · Fibra · La Villa</div>
+        <div style="display: flex; gap: 8px; padding-top: 4px; flex-wrap: wrap">
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 8px; background: #ffe8b8; color: #7a5000">Cortado desde 15 set</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 8px; background: #ffdad6; color: #ba1a1a">Debe 2 meses</span>
+        </div>
+      </div>
+    </div>
+    <div role="tablist" aria-label="Secciones de la suscripción" style="display: flex; gap: 4px; padding: 4px 8px 0; border-bottom: 1px solid #c6cad8; overflow: hidden; white-space: nowrap">
+      <a role="tab" aria-selected="false" href="a-sus-04-ficha-resumen.dc.html" style="height: 48px; padding: 0 12px; display: flex; align-items: center; text-decoration: none; color: #4a5068; font-size: 14px; font-weight: 500">Resumen</a>
+      <a role="tab" aria-selected="true" href="a-sus-05-ficha-pagos.dc.html" style="height: 48px; padding: 0 12px; display: flex; align-items: center; text-decoration: none; color: #141d48; font-size: 14px; font-weight: 600; box-shadow: inset 0 -3px 0 #141d48">Pagos</a>
+      <a role="tab" aria-selected="false" href="a-sus-06-ficha-red.dc.html" style="height: 48px; padding: 0 12px; display: flex; align-items: center; text-decoration: none; color: #4a5068; font-size: 14px; font-weight: 500">Red</a>
+      <a role="tab" aria-selected="false" href="#" style="height: 48px; padding: 0 12px; display: flex; align-items: center; text-decoration: none; color: #4a5068; font-size: 14px; font-weight: 500">Tickets 1</a>
+      <a role="tab" aria-selected="false" href="a-sus-07-ficha-historial.dc.html" style="height: 48px; padding: 0 12px; display: flex; align-items: center; text-decoration: none; color: #4a5068; font-size: 14px; font-weight: 500">Historial</a>
+    </div>
+  </div>
+
+  <div role="tabpanel" aria-label="Pagos" style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+
+    <section aria-label="Pendiente de pago" style="background: #ffffff; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Pendiente</div>
+        <div style="font-size: 22px; line-height: 28px; font-weight: 650; font-feature-settings: 'tnum'">S/ 100.00</div>
+        <div style="font-size: 13px; line-height: 18px; color: #4a5068">2 recibos vencidos · ago y set 2026</div>
+      </div>
+      <a href="a-caj-02-cobro-yape.dc.html" style="height: 48px; padding: 0 24px; border-radius: 999px; background: #141d48; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center; font-feature-settings: 'tnum'">Cobrar S/ 100.00</a>
+      <div style="border-top: 1px solid #eaedf5; padding-top: 12px; display: flex; justify-content: space-between; gap: 12px; font-size: 13px; line-height: 18px">
+        <span style="color: #4a5068">Último pago</span>
+        <span style="font-weight: 600; font-feature-settings: 'tnum'">S/ 50.00 · 12 jul · Yape</span>
+      </div>
+    </section>
+
+    <div style="padding: 12px 0 0; display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+      <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600">Recibos</h2>
+      <span style="font-size: 12px; line-height: 16px; color: #4a5068">Vencen el 15 de cada mes</span>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; display: flex; flex-direction: column">
+      <a href="#" style="min-height: 64px; padding: 10px 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 22px; font-weight: 600">Oct 2026</span><span style="font-size: 13px; line-height: 18px; color: #4a5068">Vence mañana 15 oct</span></span>
+        <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #ffe8b8; color: #7a5000">Pendiente</span><span style="font-size: 14px; font-weight: 600; font-feature-settings: 'tnum'">S/ 50.00</span></span>
+      </a>
+      <a href="#" style="min-height: 64px; padding: 10px 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 22px; font-weight: 600">Set 2026</span><span style="font-size: 13px; line-height: 18px; color: #4a5068">Venció 15 set</span></span>
+        <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #ffdad6; color: #ba1a1a">Vencido</span><span style="font-size: 14px; font-weight: 600; color: #ba1a1a; font-feature-settings: 'tnum'">S/ 50.00</span></span>
+      </a>
+      <a href="#" style="min-height: 64px; padding: 10px 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 22px; font-weight: 600">Ago 2026</span><span style="font-size: 13px; line-height: 18px; color: #4a5068">Venció 15 ago</span></span>
+        <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #ffdad6; color: #ba1a1a">Vencido</span><span style="font-size: 14px; font-weight: 600; color: #ba1a1a; font-feature-settings: 'tnum'">S/ 50.00</span></span>
+      </a>
+      <a href="a-caj-05-detalle-pago.dc.html" style="min-height: 64px; padding: 10px 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 22px; font-weight: 600">Jul 2026</span><span style="font-size: 13px; line-height: 18px; color: #4a5068">Pagado 12 jul · Yape</span></span>
+        <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #d6f2e2; color: #17663d">Pagado</span><span style="font-size: 14px; font-weight: 600; font-feature-settings: 'tnum'">S/ 50.00</span></span>
+      </a>
+      <a href="#" style="min-height: 64px; padding: 10px 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 22px; font-weight: 600">Jun 2026</span><span style="font-size: 13px; line-height: 18px; color: #4a5068">Pagado 10 jun · Efectivo</span></span>
+        <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #d6f2e2; color: #17663d">Pagado</span><span style="font-size: 14px; font-weight: 600; font-feature-settings: 'tnum'">S/ 50.00</span></span>
+      </a>
+      <a href="#" style="min-height: 64px; padding: 10px 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b">
+        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 22px; font-weight: 600">May 2026</span><span style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Pagado 14 may · Yape · desc. S/ 5.00</span></span>
+        <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #d6f2e2; color: #17663d">Pagado</span><span style="font-size: 14px; font-weight: 600; font-feature-settings: 'tnum'">S/ 45.00</span></span>
+      </a>
+    </div>
+
+    <a href="#" style="align-self: center; height: 44px; padding: 0 12px; display: flex; align-items: center; font-size: 14px; font-weight: 600; color: #b23a0e; text-decoration: none">Ver pagos anteriores</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

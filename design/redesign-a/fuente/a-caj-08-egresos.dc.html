@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Egresos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <header style="height: 64px; padding: 0 4px; display: flex; align-items: center; gap: 4px">
+    <a href="a-mas-01-menu.dc.html" aria-label="Atrás" style="width: 48px; height: 48px; color: #10142b; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a>
+    <h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 20px; line-height: 26px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Egresos</h1>
+  </header>
+
+  <div style="height: 48px; padding: 0 4px; display: flex; align-items: center; justify-content: space-between">
+    <button type="button" aria-label="Mes anterior: set 2026" style="width: 48px; height: 48px; border: 0; background: transparent; color: #10142b; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate(180deg)"><path d="m9 6 6 6-6 6"/></svg></button>
+    <span aria-live="polite" style="font-size: 16px; line-height: 22px; font-weight: 600">oct 2026</span>
+    <button type="button" disabled aria-label="Mes siguiente" style="width: 48px; height: 48px; border: 0; background: transparent; color: #c6cad8; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+  </div>
+
+  <section aria-label="Resumen de oct 2026" style="margin: 8px 16px 0; background: #ffffff; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: baseline; gap: 6px"><span style="font-size: 22px; line-height: 28px; font-weight: 650; font-feature-settings: 'tnum'">S/ 742.50</span><span style="font-size: 14px; line-height: 20px; color: #4a5068">· 9 egresos</span></div>
+    <div style="font-size: 12px; line-height: 16px; color: #4a5068; font-feature-settings: 'tnum'">Transporte S/ 310.00 · Suministros S/ 228.50 · Otros S/ 204.00</div>
+  </section>
+
+  <div role="radiogroup" aria-label="Filtrar por categoría" style="display: flex; gap: 8px; padding: 12px 16px; overflow: hidden; white-space: nowrap">
+    <button type="button" role="radio" aria-checked="true" style="height: 32px; padding: 0 12px 0 8px; border: 0; border-radius: 8px; background: #dfe3ff; color: #141d48; font: 600 13px 'Roboto Flex', sans-serif; flex-shrink: 0; display: flex; align-items: center; gap: 4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg>Todas</button>
+    <button type="button" role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0">Transporte</button>
+    <button type="button" role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0">Suministros</button>
+    <button type="button" role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0">Otros</button>
+    <button type="button" role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0">Mantenimiento</button>
+    <button type="button" role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0">Equipos</button>
+  </div>
+
+  <div style="margin: 4px 16px 0; background: #ffffff; border-radius: 16px; display: flex; flex-direction: column">
+    <a href="#" style="height: 64px; padding: 0 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+      <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #eaedf5; color: #141d48; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 7 7 4-4 7 7"/><path d="M21 12v5h-5"/></svg></span>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="min-width: 0; font-size: 15px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Combustible de la moto</span><span style="flex-shrink: 0; font-size: 15px; line-height: 20px; font-weight: 600; font-feature-settings: 'tnum'">S/ 85.00</span></span>
+        <span style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Transporte · Técnico · Diego H. · 14 oct</span>
+      </span>
+    </a>
+    <a href="#" style="height: 64px; padding: 0 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+      <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #eaedf5; color: #141d48; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 7 7 4-4 7 7"/><path d="M21 12v5h-5"/></svg></span>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="min-width: 0; font-size: 15px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Conectores SC/APC x50</span><span style="flex-shrink: 0; font-size: 15px; line-height: 20px; font-weight: 600; font-feature-settings: 'tnum'">S/ 120.00</span></span>
+        <span style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Suministros · Técnico · Marco S. · 12 oct</span>
+      </span>
+    </a>
+    <a href="#" style="height: 64px; padding: 0 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+      <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #eaedf5; color: #141d48; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 7 7 4-4 7 7"/><path d="M21 12v5h-5"/></svg></span>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="min-width: 0; font-size: 15px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Útiles de oficina</span><span style="flex-shrink: 0; font-size: 15px; line-height: 20px; font-weight: 600; font-feature-settings: 'tnum'">S/ 48.50</span></span>
+        <span style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Suministros · Administración · Rosa C. · 10 oct</span>
+      </span>
+    </a>
+    <a href="#" style="height: 64px; padding: 0 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+      <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #eaedf5; color: #141d48; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 7 7 4-4 7 7"/><path d="M21 12v5h-5"/></svg></span>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="min-width: 0; font-size: 15px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Pasajes a Santa Anita</span><span style="flex-shrink: 0; font-size: 15px; line-height: 20px; font-weight: 600; font-feature-settings: 'tnum'">S/ 25.00</span></span>
+        <span style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Transporte · Ventas · Karen V. · 9 oct</span>
+      </span>
+    </a>
+    <a href="#" style="height: 64px; padding: 0 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+      <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #eaedf5; color: #141d48; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 7 7 4-4 7 7"/><path d="M21 12v5h-5"/></svg></span>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="min-width: 0; font-size: 15px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Agua y limpieza</span><span style="flex-shrink: 0; font-size: 15px; line-height: 20px; font-weight: 600; font-feature-settings: 'tnum'">S/ 64.00</span></span>
+        <span style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Otros · Administración · Rosa C. · 6 oct</span>
+      </span>
+    </a>
+    <a href="#" style="height: 64px; padding: 0 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+      <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #eaedf5; color: #141d48; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 7 7 4-4 7 7"/><path d="M21 12v5h-5"/></svg></span>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="min-width: 0; font-size: 15px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Recarga de datos técnicos</span><span style="flex-shrink: 0; font-size: 15px; line-height: 20px; font-weight: 600; font-feature-settings: 'tnum'">S/ 40.00</span></span>
+        <span style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Otros · Técnico · Julio P. · 3 oct</span>
+      </span>
+    </a>
+    <a href="#" style="height: 64px; padding: 0 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+      <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #eaedf5; color: #141d48; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 7 7 4-4 7 7"/><path d="M21 12v5h-5"/></svg></span>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="min-width: 0; font-size: 15px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Flete de bobina de fibra</span><span style="flex-shrink: 0; font-size: 15px; line-height: 20px; font-weight: 600; font-feature-settings: 'tnum'">S/ 200.00</span></span>
+        <span style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Transporte · Técnico · Sergio C. · 2 oct</span>
+      </span>
+    </a>
+    <a href="#" style="height: 64px; padding: 0 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b; border-bottom: 1px solid #eaedf5">
+      <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #eaedf5; color: #141d48; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 7 7 4-4 7 7"/><path d="M21 12v5h-5"/></svg></span>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="min-width: 0; font-size: 15px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Precintos y cinta aislante</span><span style="flex-shrink: 0; font-size: 15px; line-height: 20px; font-weight: 600; font-feature-settings: 'tnum'">S/ 60.00</span></span>
+        <span style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Suministros · Técnico · Julio P. · 1 oct</span>
+      </span>
+    </a>
+    <a href="#" style="height: 64px; padding: 0 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #10142b">
+      <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #eaedf5; color: #141d48; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 7 7 4-4 7 7"/><path d="M21 12v5h-5"/></svg></span>
+      <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span style="min-width: 0; font-size: 15px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Trámite municipal</span><span style="flex-shrink: 0; font-size: 15px; line-height: 20px; font-weight: 600; font-feature-settings: 'tnum'">S/ 100.00</span></span>
+        <span style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Otros · Administración · Sergio C. · 1 oct</span>
+      </span>
+    </a>
+  </div>
+
+  <a href="a-caj-07-egreso.dc.html" style="position: absolute; right: 16px; bottom: 24px; height: 56px; padding: 0 20px 0 16px; box-sizing: border-box; border-radius: 16px; background: #ff5722; color: #2a0c00; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; text-decoration: none; box-shadow: 0 2px 6px rgba(16,20,43,0.18)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo egreso</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

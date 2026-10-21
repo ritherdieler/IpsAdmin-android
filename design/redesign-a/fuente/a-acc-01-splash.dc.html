@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Splash</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #141d48; color: #ffffff; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <main aria-label="GigaFiber Perú, iniciando" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center">
+    <img src="/_blob/87d19086048fb9f338d00ff84a8575ed" alt="GigaFiber Perú" style="width: 200px; height: 200px; display: block">
+  </main>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 56px; display: flex; flex-direction: column; align-items: center; gap: 12px">
+    <div role="progressbar" aria-label="Comprobando versión" style="width: 160px; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.16); position: relative; overflow: hidden">
+      <span style="position: absolute; top: 0; bottom: 0; left: 24%; width: 40%; border-radius: 999px; background: #ffffff"></span>
+    </div>
+    <div role="status" style="font-size: 13px; line-height: 18px; color: #b6bfe8">Comprobando versión…</div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

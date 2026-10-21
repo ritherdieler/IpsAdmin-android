@@ -1,0 +1,7 @@
+{
+  "name": "IspAdmin · Importar diseño",
+  "description": "Crea en Penpot las pantallas del rediseño A con sus enlaces y happy paths.",
+  "version": 2,
+  "code": "plugin.js",
+  "permissions": ["content:read", "content:write"]
+}

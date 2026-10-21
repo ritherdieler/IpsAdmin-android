@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Asignar técnico</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <div aria-hidden="true">
+    <div style="height: 64px; padding: 0 4px 0 16px; display: flex; align-items: center">
+      <span style="flex-grow: 1; font-size: 22px; line-height: 28px; font-weight: 600">Instalaciones</span>
+      <span style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+    </div>
+    <div style="display: flex; gap: 8px; padding: 0 16px 12px; white-space: nowrap; overflow: hidden">
+      <span style="height: 32px; padding: 0 12px; box-sizing: border-box; border: 1px solid #767c93; border-radius: 8px; font-size: 13px; display: flex; align-items: center; flex-shrink: 0">Por asignar</span>
+      <span style="height: 32px; padding: 0 12px; box-sizing: border-box; border-radius: 8px; background: #dfe3ff; color: #141d48; font-size: 13px; font-weight: 600; display: flex; align-items: center; flex-shrink: 0">Programadas</span>
+      <span style="height: 32px; padding: 0 12px; box-sizing: border-box; border: 1px solid #767c93; border-radius: 8px; font-size: 13px; display: flex; align-items: center; flex-shrink: 0">En curso</span>
+      <span style="height: 32px; padding: 0 12px; box-sizing: border-box; border: 1px solid #767c93; border-radius: 8px; font-size: 13px; display: flex; align-items: center; flex-shrink: 0">Cerradas</span>
+    </div>
+    <div style="margin: 0 16px 12px; height: 56px; border-radius: 16px; background: #dce6ff"></div>
+    <div style="margin: 0 16px; background: #ffffff; border-radius: 16px; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px">
+      <span style="font-size: 13px; line-height: 18px; font-weight: 600; color: #141d48">Hoy 10:30</span>
+      <span style="font-size: 15px; line-height: 22px; font-weight: 600">Lucía Mendoza Rojas</span>
+      <span style="font-size: 13px; line-height: 18px; color: #4a5068">Calle Las Flores 88 · La Villa</span>
+    </div>
+  </div>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(16,20,43,0.52)"></div>
+
+  <div role="dialog" aria-label="Asignar técnico" style="position: absolute; left: 0; right: 0; bottom: 0; top: 260px; background: #ffffff; border-radius: 28px 28px 0 0; padding: 0 16px 20px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; justify-content: center; padding-top: 12px"><span style="width: 32px; height: 4px; border-radius: 999px; background: #767c93"></span></div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+      <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+        <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600">Asignar técnico</h2>
+        <div style="font-size: 13px; line-height: 18px; color: #4a5068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Orden #6 · Tomás Vega Salas · 9 de Octubre</div>
+      </div>
+      <a href="a-ins-01-lista.dc.html" aria-label="Cerrar" style="width: 48px; height: 48px; margin-right: -12px; flex-shrink: 0; color: #10142b; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div role="radiogroup" aria-label="Técnico" style="display: flex; flex-direction: column">
+        <label style="min-height: 64px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eaedf5">
+          <input type="radio" name="tecnico" style="width: 20px; height: 20px; accent-color: #141d48; margin: 0; flex-shrink: 0">
+          <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 999px; background: #dfe3ff; color: #141d48; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center">MS</span>
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 22px">Marco Salinas</span><span style="font-size: 13px; line-height: 18px; color: #4a5068">3 trabajos hoy · en La Villa</span></span>
+        </label>
+        <label style="min-height: 64px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eaedf5">
+          <input type="radio" name="tecnico" checked style="width: 20px; height: 20px; accent-color: #141d48; margin: 0; flex-shrink: 0">
+          <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 999px; background: #dfe3ff; color: #141d48; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center">DH</span>
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 22px; font-weight: 600">Diego Huerta</span><span style="font-size: 13px; line-height: 18px; color: #4a5068">2 trabajos hoy · en La Merced</span></span>
+        </label>
+        <label style="min-height: 64px; display: flex; align-items: center; gap: 12px">
+          <input type="radio" name="tecnico" style="width: 20px; height: 20px; accent-color: #141d48; margin: 0; flex-shrink: 0">
+          <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 999px; background: #dfe3ff; color: #141d48; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center">JP</span>
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 22px">Julio Paredes</span><span style="font-size: 13px; line-height: 18px; color: #4a5068">Sin trabajos hoy</span></span>
+        </label>
+      </div>
+      <div style="font-size: 12px; line-height: 16px; color: #4a5068">Se muestran los 3 técnicos verificados.</div>
+    </div>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Fecha y hora</span>
+      <button style="height: 52px; box-sizing: border-box; padding: 0 12px 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; display: flex; justify-content: space-between; align-items: center; text-align: left; font-feature-settings: 'tnum'">Jue 15 oct · 09:00<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4a5068" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    </label>
+
+    <button style="margin-top: auto; height: 52px; flex-shrink: 0; border: 0; border-radius: 999px; background: #141d48; color: #ffffff; font: 600 16px 'Roboto Flex', sans-serif">Asignar a Diego Huerta</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

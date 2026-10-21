@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cerrar sesión</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</head>
+<body>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; display: flex; flex-direction: column">
+    <div style="height: 64px; padding: 0 4px; display: flex; align-items: center; gap: 4px">
+      <span style="width: 48px; height: 48px; color: #10142b; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></span>
+      <span style="flex-grow: 1; font-size: 20px; line-height: 26px; font-weight: 600">Perfil</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 16px 24px">
+      <span style="width: 72px; height: 72px; border-radius: 999px; background: #dfe3ff; color: #141d48; font-size: 26px; font-weight: 600; display: flex; align-items: center; justify-content: center">RC</span>
+      <span style="margin-top: 4px; font-size: 22px; line-height: 28px; font-weight: 600">Rosa C.</span>
+      <span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #dce6ff; color: #2459c9">Secretaría</span>
+    </div>
+
+    <div style="margin: 0 16px; background: #ffffff; border-radius: 16px; padding: 4px 16px; display: flex; flex-direction: column">
+      <div style="min-height: 48px; display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 1px solid #eaedf5"><span style="font-size: 14px; color: #4a5068">Usuario</span><span style="font-family: 'Roboto Mono', monospace; font-size: 13px; font-weight: 500; text-align: right">rosa.c</span></div>
+      <div style="min-height: 48px; display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 1px solid #eaedf5"><span style="font-size: 14px; color: #4a5068">Último ingreso</span><span style="font-size: 14px; font-weight: 600; text-align: right">hoy 07:58</span></div>
+      <div style="min-height: 48px; display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 1px solid #eaedf5"><span style="font-size: 14px; color: #4a5068">Ingreso con huella</span><span style="font-size: 14px; font-weight: 600; text-align: right">Activado</span></div>
+      <div style="min-height: 48px; display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 1px solid #eaedf5"><span style="font-size: 14px; color: #4a5068">Avisos de tickets</span><span style="font-size: 14px; font-weight: 600; text-align: right">Activados</span></div>
+      <div style="min-height: 48px; display: flex; justify-content: space-between; align-items: center; gap: 16px"><span style="font-size: 14px; color: #4a5068">Versión de la app</span><span style="font-size: 14px; font-weight: 600; text-align: right">2.6.14 (66)</span></div>
+    </div>
+
+    <div style="padding: 24px 16px 0">
+      <span style="height: 52px; border: 1px solid #ba1a1a; border-radius: 999px; color: #ba1a1a; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l-5-5 5-5M5 12h11"/></svg>Cerrar sesión</span>
+    </div>
+  </div>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(16,20,43,0.52)"></div>
+
+  <div role="dialog" aria-modal="true" aria-labelledby="dlg-cerrar-titulo" aria-describedby="dlg-cerrar-texto" style="position: absolute; left: 24px; right: 24px; top: 50%; transform: translateY(-50%); background: #ffffff; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+    <h2 id="dlg-cerrar-titulo" style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600">¿Cerrar sesión?</h2>
+    <p id="dlg-cerrar-texto" style="margin: 0; font-size: 14px; line-height: 20px; color: #4a5068">Dejarás de recibir avisos de tickets en este teléfono hasta que vuelvas a ingresar.</p>
+    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding-top: 8px">
+      <button style="height: 48px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: #141d48; font: 600 15px 'Roboto Flex', sans-serif" data-destino="a-mas-02-perfil.html">Volver</button>
+      <button style="height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: #ba1a1a; color: #ffffff; font: 600 15px 'Roboto Flex', sans-serif" data-destino="a-acc-03-login.html">Cerrar sesión</button>
+    </div>
+  </div>
+</div>
+<script src="flujos.js"></script>
+<script src="navegacion.js"></script>
+</body>
+</html>

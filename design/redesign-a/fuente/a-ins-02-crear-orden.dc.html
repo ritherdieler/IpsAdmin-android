@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Nueva orden</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</helmet>
+<div style="width: 390px; height: 1100px; position: relative; overflow: hidden; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <header style="height: 64px; padding: 0 4px; display: flex; align-items: center; gap: 4px">
+    <a href="a-ins-01-lista.dc.html" aria-label="Cerrar" style="width: 48px; height: 48px; color: #10142b; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></a>
+    <h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 20px; line-height: 26px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Nueva orden de instalación</h1>
+  </header>
+
+  <div style="padding: 0 16px; display: flex; flex-direction: column; gap: 16px">
+
+    <div style="border-radius: 16px; padding: 10px 12px; background: #dce6ff; color: #1b2e66; display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 18px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2459c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: -1px"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+      <span>Estos datos se precargan al registrar la suscripción.</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <label style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+        <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Nombres *</span>
+        <input value="Tomás" autocomplete="given-name" style="width: 100%; min-width: 0; height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+        <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Apellidos *</span>
+        <input value="Vega Salas" autocomplete="family-name" style="width: 100%; min-width: 0; height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b">
+      </label>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <label style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+        <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">DNI *</span>
+        <input value="45871236" inputmode="numeric" style="width: 100%; min-width: 0; height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; font-feature-settings: 'tnum'">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+        <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Teléfono *</span>
+        <input type="tel" value="951 444 210" style="width: 100%; min-width: 0; height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; font-feature-settings: 'tnum'">
+      </label>
+    </div>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Dirección *</span>
+      <textarea style="min-height: 72px; padding: 12px 14px; box-sizing: border-box; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px/22px 'Roboto Flex', sans-serif; color: #10142b; resize: none">Av. Principal 510, frente al grifo</textarea>
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Ubicación</span>
+      <div style="position: relative; width: 358px; height: 160px; border-radius: 12px; overflow: hidden">
+        <svg role="img" aria-label="Mapa: ubicación marcada en Av. Principal 510, 9 de Octubre" width="358" height="160" viewBox="0 0 358 160" style="display: block">
+          <rect width="358" height="160" fill="#e9edf2"/>
+          <rect x="-10" y="-10" width="138" height="33" rx="6" fill="#f6f7fb"/>
+          <rect x="152" y="-10" width="98" height="33" rx="6" fill="#f6f7fb"/>
+          <rect x="274" y="-10" width="94" height="33" rx="6" fill="#f6f7fb"/>
+          <rect x="-10" y="45" width="138" height="37" rx="6" fill="#f6f7fb"/>
+          <rect x="152" y="45" width="98" height="37" rx="6" fill="#f6f7fb"/>
+          <rect x="274" y="45" width="94" height="37" rx="6" fill="#f6f7fb"/>
+          <rect x="-10" y="110" width="138" height="60" rx="6" fill="#f6f7fb"/>
+          <rect x="152" y="110" width="98" height="60" rx="6" fill="#dcefe2"/>
+          <rect x="274" y="110" width="94" height="60" rx="6" fill="#f6f7fb"/>
+          <path d="M0 34H358" stroke="#ffffff" stroke-width="10"/>
+          <path d="M0 96H358" stroke="#ffffff" stroke-width="16"/>
+          <path d="M140 0V160M262 0V160" stroke="#ffffff" stroke-width="12"/>
+          <text x="12" y="99.5" font-size="10" fill="#767c93" font-family="Roboto Flex, sans-serif">Av. Principal</text>
+        </svg>
+        <span role="img" aria-label="Ubicación marcada" style="position: absolute; left: 178px; top: 55px; width: 36px; height: 36px"><svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" fill="#ff5722" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.5" fill="#ffffff"/></svg></span>
+        <button style="position: absolute; right: 10px; bottom: 10px; height: 40px; padding: 0 16px 0 12px; border: 1px solid #767c93; border-radius: 999px; background: #ffffff; color: #141d48; font: 600 14px 'Roboto Flex', sans-serif; display: flex; align-items: center; gap: 6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Marcar en el mapa</button>
+      </div>
+    </div>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Lugar *</span>
+      <button style="height: 52px; box-sizing: border-box; padding: 0 12px 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; display: flex; justify-content: space-between; align-items: center; text-align: left">9 de Octubre<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4a5068" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    </label>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Plan sugerido</span>
+      <button style="height: 52px; box-sizing: border-box; padding: 0 12px 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; display: flex; justify-content: space-between; align-items: center; text-align: left; font-feature-settings: 'tnum'">Basico · S/ 50.00<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4a5068" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <span style="font-size: 12px; line-height: 16px; color: #4a5068">Opcional</span>
+    </label>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Fecha y hora</span>
+      <button style="height: 52px; box-sizing: border-box; padding: 0 12px 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; display: flex; justify-content: space-between; align-items: center; text-align: left; font-feature-settings: 'tnum'">Jue 15 oct · 09:00<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4a5068" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span id="lbl-tecnico" style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Técnico</span>
+      <a href="a-ins-03-asignar.dc.html" aria-label="Técnico: Diego Huerta. Cambiar técnico" style="height: 52px; box-sizing: border-box; padding: 0 12px 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font-size: 16px; color: #10142b; text-decoration: none; display: flex; justify-content: space-between; align-items: center">Diego Huerta<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4a5068" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></a>
+      <span style="font-size: 12px; line-height: 16px; color: #4a5068">Opcional: puedes asignarlo después</span>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; background: #ffffff; border-top: 1px solid #e3e7f0; padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 8px">
+    <button style="height: 52px; border: 0; border-radius: 999px; background: #141d48; color: #ffffff; font: 600 16px 'Roboto Flex', sans-serif">Crear orden</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

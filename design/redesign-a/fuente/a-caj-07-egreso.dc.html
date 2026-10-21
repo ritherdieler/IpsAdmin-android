@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Nuevo egreso</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; position: relative; overflow: hidden; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif">
+
+  <header style="height: 64px; padding: 0 4px; display: flex; align-items: center; gap: 4px">
+    <a href="a-caj-08-egresos.dc.html" aria-label="Cerrar" style="width: 48px; height: 48px; color: #10142b; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></a>
+    <h1 style="margin: 0; flex-grow: 1; min-width: 0; font-size: 20px; line-height: 26px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Nuevo egreso</h1>
+  </header>
+
+  <form style="margin: 0; padding: 8px 16px 0; display: flex; flex-direction: column; gap: 20px">
+
+    <label style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Monto *</span>
+      <input inputmode="decimal" value="S/ 85.00" style="width: 100%; height: 64px; box-sizing: border-box; padding: 0; border: 0; border-bottom: 2px solid #141d48; border-radius: 0; background: transparent; text-align: center; font: 700 34px 'Roboto Flex', sans-serif; letter-spacing: -0.5px; color: #10142b; font-feature-settings: 'tnum'">
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Categoría *</span>
+      <div role="radiogroup" aria-label="Categoría" style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button type="button" role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0">Otros</button>
+        <button type="button" role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0">Suministros</button>
+        <button type="button" role="radio" aria-checked="true" style="height: 32px; padding: 0 12px 0 8px; border: 0; border-radius: 8px; background: #dfe3ff; color: #141d48; font: 600 13px 'Roboto Flex', sans-serif; flex-shrink: 0; display: flex; align-items: center; gap: 4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg>Transporte</button>
+        <button type="button" role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0">Mantenimiento</button>
+        <button type="button" role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0">Equipos</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Centro de costo *</span>
+      <div role="radiogroup" aria-label="Centro de costo" style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button type="button" role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0">Administración</button>
+        <button type="button" role="radio" aria-checked="true" style="height: 32px; padding: 0 12px 0 8px; border: 0; border-radius: 8px; background: #dfe3ff; color: #141d48; font: 600 13px 'Roboto Flex', sans-serif; flex-shrink: 0; display: flex; align-items: center; gap: 4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg>Técnico</button>
+        <button type="button" role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0">Ventas</button>
+        <button type="button" role="radio" aria-checked="false" style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif; flex-shrink: 0">Desarrollo</button>
+      </div>
+    </div>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Descripción *</span>
+      <input value="Combustible de la moto · ruta La Ensenada" style="height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b">
+    </label>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">N.º de documento</span>
+      <input value="B001-2231" style="height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b">
+      <span style="font-size: 12px; line-height: 16px; color: #4a5068">Opcional</span>
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Fecha</span>
+      <button type="button" aria-haspopup="dialog" aria-label="Fecha: Hoy, 14 oct 2026" style="height: 52px; box-sizing: border-box; padding: 0 12px 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; color: #10142b; display: flex; justify-content: space-between; align-items: center; text-align: left; font: 400 16px 'Roboto Flex', sans-serif">Hoy, 14 oct 2026<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4a5068" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #4a5068">Foto del comprobante *</span>
+      <div style="height: 140px; box-sizing: border-box; border: 1.5px dashed #767c93; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4a5068" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>
+        <div style="display: flex; gap: 8px">
+          <button type="button" style="height: 48px; padding: 0 20px; border: 0; border-radius: 999px; background: #dfe3ff; color: #141d48; font: 600 15px 'Roboto Flex', sans-serif">Tomar foto</button>
+          <button type="button" style="height: 48px; padding: 0 20px; border: 1px solid #767c93; border-radius: 999px; background: transparent; color: #141d48; font: 600 15px 'Roboto Flex', sans-serif">Galería</button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; background: #ffffff; border-top: 1px solid #e3e7f0; padding: 10px 16px 16px; display: flex; flex-direction: column; gap: 8px">
+    <span style="font-size: 12px; line-height: 16px; color: #4a5068">Falta la foto del comprobante</span>
+    <button type="button" disabled style="height: 52px; border: 0; border-radius: 999px; background: #e3e7f0; color: #4a5068; font: 600 16px 'Roboto Flex', sans-serif">Registrar egreso</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

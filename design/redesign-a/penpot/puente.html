@@ -1,0 +1,11 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Puente</title>
+<script>
+// Bridge for consola.js: loaded in an iframe inside the Penpot tab, it reads penpot/diseno.json from
+// this local server and hands it to Penpot with postMessage (Penpot itself cannot fetch localhost).
+fetch("diseno.json", { cache: "no-store" })
+  .then((response) => response.json())
+  .then((steps) => parent.postMessage({ type: "isp-diseno", steps }, "https://design.penpot.app"))
+  .catch((error) => parent.postMessage({ type: "isp-diseno-error", text: String(error) }, "https://design.penpot.app"));
+</script>

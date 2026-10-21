@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>A · Sistema visual</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</helmet>
+<div style="width: 1800px; height: 1420px; box-sizing: border-box; padding: 48px; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+
+  <div style="display: flex; flex-direction: column; gap: 8px; max-width: 1200px">
+    <div style="font-size: 13px; font-weight: 600; color: #b23a0e">Propuesta A · Sistema visual v2 · base: IspAdmin (dashboard oct 2026)</div>
+    <h1 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 650">Un solo sistema para toda la app</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 22px; color: #4a5068">Mismos tokens que <code>IspColors</code> y el dashboard aprobado. Se agregan Roboto Mono para identificadores técnicos, los componentes de las pantallas operativas y los selectores dimensionados con datos reales. Reemplaza el tema XML, sus 4 paletas, los dos <code>MyCustomDialog</code> y los tres estilos de carga.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px">
+
+    <div style="display: flex; flex-direction: column; gap: 22px">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600">Color · claro y oscuro</h2>
+        <div style="background: #ffffff; border-radius: 16px; padding: 8px 16px; display: flex; flex-direction: column">
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 12px; padding: 6px 0; font-size: 11px; font-weight: 600; color: #4a5068"><span>Token</span><span>Claro</span><span>Oscuro</span></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 12px; align-items: center; padding: 5px 0; border-top: 1px solid #eaedf5; font-size: 13px"><span>primary · botón, selección</span><span style="height: 24px; border-radius: 6px; background: #141d48"></span><span style="height: 24px; border-radius: 6px; background: #b9c3ff"></span></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 12px; align-items: center; padding: 5px 0; border-top: 1px solid #eaedf5; font-size: 13px"><span>primary-container · tonal</span><span style="height: 24px; border-radius: 6px; background: #dfe3ff"></span><span style="height: 24px; border-radius: 6px; background: #2a3678"></span></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 12px; align-items: center; padding: 5px 0; border-top: 1px solid #eaedf5; font-size: 13px"><span>hero · banda superior</span><span style="height: 24px; border-radius: 6px; background: #141d48"></span><span style="height: 24px; border-radius: 6px; background: #1b2459"></span></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 12px; align-items: center; padding: 5px 0; border-top: 1px solid #eaedf5; font-size: 13px"><span>accent · solo FAB «Nuevo»</span><span style="height: 24px; border-radius: 6px; background: #ff5722"></span><span style="height: 24px; border-radius: 6px; background: #ff7a4d"></span></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 12px; align-items: center; padding: 5px 0; border-top: 1px solid #eaedf5; font-size: 13px"><span>background</span><span style="height: 24px; border-radius: 6px; background: #f6f7fb; box-shadow: inset 0 0 0 1px #c6cad8"></span><span style="height: 24px; border-radius: 6px; background: #0d1022"></span></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 12px; align-items: center; padding: 5px 0; border-top: 1px solid #eaedf5; font-size: 13px"><span>surface · tarjetas, hojas</span><span style="height: 24px; border-radius: 6px; background: #ffffff; box-shadow: inset 0 0 0 1px #c6cad8"></span><span style="height: 24px; border-radius: 6px; background: #12162b"></span></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 12px; align-items: center; padding: 5px 0; border-top: 1px solid #eaedf5; font-size: 13px"><span>on-surface / variant</span><span style="height: 24px; border-radius: 6px; background: linear-gradient(90deg, #10142b 50%, #4a5068 50%)"></span><span style="height: 24px; border-radius: 6px; background: linear-gradient(90deg, #e4e6f2 50%, #aeb3c9 50%)"></span></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 12px; align-items: center; padding: 5px 0; border-top: 1px solid #eaedf5; font-size: 13px"><span>success · Activo, Pagado</span><span style="height: 24px; border-radius: 6px; background: #d6f2e2; box-shadow: inset 0 0 0 2px #17663d"></span><span style="height: 24px; border-radius: 6px; background: #0f3d26; box-shadow: inset 0 0 0 2px #5fd08e"></span></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 12px; align-items: center; padding: 5px 0; border-top: 1px solid #eaedf5; font-size: 13px"><span>warning · Cortado, Pendiente</span><span style="height: 24px; border-radius: 6px; background: #ffe8b8; box-shadow: inset 0 0 0 2px #7a5000"></span><span style="height: 24px; border-radius: 6px; background: #4a3400; box-shadow: inset 0 0 0 2px #f5c04a"></span></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 12px; align-items: center; padding: 5px 0; border-top: 1px solid #eaedf5; font-size: 13px"><span>error · Deuda, Alta, destruir</span><span style="height: 24px; border-radius: 6px; background: #ffdad6; box-shadow: inset 0 0 0 2px #ba1a1a"></span><span style="height: 24px; border-radius: 6px; background: #5c0a0a; box-shadow: inset 0 0 0 2px #ffb4ab"></span></div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 12px; align-items: center; padding: 5px 0; border-top: 1px solid #eaedf5; font-size: 13px"><span>info · En curso, 2.º plano</span><span style="height: 24px; border-radius: 6px; background: #dce6ff; box-shadow: inset 0 0 0 2px #2459c9"></span><span style="height: 24px; border-radius: 6px; background: #1b2e66; box-shadow: inset 0 0 0 2px #a9c1ff"></span></div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600">Tipografía</h2>
+        <div style="background: #ffffff; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 34px; line-height: 40px; font-weight: 700; letter-spacing: -0.5px; font-feature-settings: 'tnum'">S/ 1,692.00</span><span style="font-size: 11px; color: #4a5068">kpi-hero 34 · 700</span></div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 24px; line-height: 30px; font-weight: 600">Jorge Ramos Villanueva</span><span style="font-size: 11px; color: #4a5068">headline 24 · 600</span></div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 20px; line-height: 26px; font-weight: 600">Cambiar caja NAP</span><span style="font-size: 11px; color: #4a5068">title-back 20 · 600</span></div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 15px; line-height: 22px; font-weight: 600">Basico · La Villa</span><span style="font-size: 11px; color: #4a5068">title-md 15 · 600</span></div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 14px; line-height: 20px">Venció el 15 set</span><span style="font-size: 11px; color: #4a5068">body-md 14</span></div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-family: 'Roboto Mono', monospace; font-size: 13px; line-height: 18px">LV -15-3 · HWTC9A3F21B0 · 0/1/3</span><span style="font-size: 11px; color: #4a5068">mono 13 · Roboto Mono</span></div>
+        </div>
+        <div style="font-size: 13px; line-height: 19px; color: #4a5068">Espaciado 4 · 8 · 12 · 16 · 24 · 32. Radios 8 (badges, chips) · 12 (campos) · 16 (tarjetas, FAB) · 28 (hojas, diálogos, banda) · 999 (botones). Objetivo táctil mínimo 48 dp.</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 22px">
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600">Botones · uno primario por pantalla</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+          <button style="height: 48px; padding: 0 22px; border: 0; border-radius: 999px; background: #141d48; color: #ffffff; font: 600 15px 'Roboto Flex', sans-serif">Registrar cobro</button>
+          <button style="height: 48px; padding: 0 20px; border: 0; border-radius: 999px; background: #dfe3ff; color: #141d48; font: 600 15px 'Roboto Flex', sans-serif">Cobrar</button>
+          <button style="height: 48px; padding: 0 20px; border: 1px solid #767c93; border-radius: 999px; background: transparent; color: #141d48; font: 600 15px 'Roboto Flex', sans-serif">Reagendar</button>
+          <button style="height: 48px; padding: 0 12px; border: 0; background: transparent; color: #141d48; font: 600 15px 'Roboto Flex', sans-serif">Atrás</button>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+          <button style="height: 48px; padding: 0 20px; border: 0; border-radius: 999px; background: #ba1a1a; color: #ffffff; font: 600 15px 'Roboto Flex', sans-serif">Cancelar suscripción</button>
+          <button style="height: 56px; padding: 0 20px 0 16px; border: 0; border-radius: 16px; background: #ff5722; color: #2a0c00; display: flex; align-items: center; gap: 8px; font: 600 15px 'Roboto Flex', sans-serif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo</button>
+          <span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; color: #4a5068">Falta la foto del comprobante</span><button disabled style="height: 48px; padding: 0 20px; border: 0; border-radius: 999px; background: #e3e7f0; color: #4a5068; font: 600 15px 'Roboto Flex', sans-serif">Registrar egreso</button></span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600">Campos</h2>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+          <label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: #4a5068">DNI *</span><input value="71234567" style="height: 52px; box-sizing: border-box; padding: 0 14px; border: 1px solid #767c93; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; width: 100%"><span style="font-size: 12px; color: #4a5068">8 dígitos</span></label>
+          <label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: #141d48">Teléfono *</span><input value="987 111 2" style="height: 52px; box-sizing: border-box; padding: 0 14px; border: 2px solid #141d48; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; width: 100%"><span style="font-size: 12px; color: #4a5068">Con foco</span></label>
+          <label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: #ba1a1a">Nombre en Yape *</span><input value="" style="height: 52px; box-sizing: border-box; padding: 0 14px; border: 2px solid #ba1a1a; border-radius: 12px; background: #ffffff; font: 400 16px 'Roboto Flex', sans-serif; color: #10142b; width: 100%"><span style="font-size: 12px; color: #ba1a1a">Escribe quién pagó</span></label>
+        </div>
+        <div style="font-size: 13px; line-height: 19px; color: #4a5068">Etiqueta arriba, ayuda abajo. El error aparece al intentar continuar, nunca en un formulario sin tocar, y dice qué corregir.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600">Elegir: según cuántas opciones hay</h2>
+        <div style="display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px 14px; align-items: center; font-size: 13px">
+          <span style="color: #4a5068">2–3 opciones</span>
+          <div role="radiogroup" aria-label="Tipo" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #767c93; border-radius: 999px; overflow: hidden; height: 40px"><button role="radio" aria-checked="true" style="border: 0; background: #dfe3ff; color: #141d48; font: 600 13px 'Roboto Flex', sans-serif">✓ Fibra</button><button role="radio" aria-checked="false" style="border: 0; border-left: 1px solid #767c93; background: #ffffff; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif">Inalámbrico</button><button role="radio" aria-checked="false" style="border: 0; border-left: 1px solid #767c93; background: #ffffff; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif">Solo TV</button></div>
+          <span style="color: #4a5068">4–6 opciones</span>
+          <div role="radiogroup" aria-label="Método" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px"><button role="radio" aria-checked="true" style="min-height: 48px; padding: 6px 10px; border: 2px solid #141d48; border-radius: 16px; background: #f1f3f9; text-align: left; font: 600 14px 'Roboto Flex', sans-serif; color: #10142b">✓ Yape</button><button role="radio" aria-checked="false" style="min-height: 48px; padding: 6px 10px; border: 1px solid #c6cad8; border-radius: 16px; background: #ffffff; text-align: left; font: 500 14px 'Roboto Flex', sans-serif; color: #10142b">Efectivo</button><button role="radio" aria-checked="false" style="min-height: 48px; padding: 6px 10px; border: 1px solid #c6cad8; border-radius: 16px; background: #ffffff; text-align: left; font: 500 14px 'Roboto Flex', sans-serif; color: #10142b">Transferencia</button></div>
+          <span style="color: #4a5068">5–15 opciones</span>
+          <span style="font-size: 13px; line-height: 19px">Lista con radio, las más usadas primero (planes, categorías).</span>
+          <span style="color: #4a5068">más de 15</span>
+          <span style="font-size: 13px; line-height: 19px">Hoja con búsqueda + orden útil (cajas NAP por distancia, lugares por abonados).</span>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <button style="height: 32px; padding: 0 12px 0 8px; border: 0; border-radius: 8px; background: #dfe3ff; color: #141d48; display: flex; align-items: center; gap: 4px; font: 600 13px 'Roboto Flex', sans-serif"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg>Cortados</button>
+          <button style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif">Con deuda</button>
+          <button style="height: 32px; padding: 0 12px; border: 1px solid #767c93; border-radius: 8px; background: transparent; color: #10142b; font: 500 13px 'Roboto Flex', sans-serif">Lugar ▾</button>
+          <span style="display: flex; align-items: center; gap: 10px; margin-left: 8px"><button role="switch" aria-checked="true" aria-label="Ejemplo encendido" style="width: 52px; height: 32px; border: 0; border-radius: 999px; background: #141d48; position: relative"><span style="position: absolute; right: 4px; top: 4px; width: 24px; height: 24px; border-radius: 999px; background: #ffffff"></span></button><input type="checkbox" checked aria-label="Ejemplo" style="width: 20px; height: 20px; accent-color: #141d48; margin: 0"><input type="radio" checked aria-label="Ejemplo" style="width: 20px; height: 20px; accent-color: #141d48; margin: 0"></span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600">Feedback · un canal por tipo</h2>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 18px">
+          <div style="background: #2a3152; color: #f1f3f9; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; gap: 12px"><span>Ticket #3606 reagendado para jue 15 · 11:00</span><span style="color: #b9c3ff; font-weight: 600">Deshacer</span></div>
+          <div style="color: #4a5068">Resultado de una acción → <b style="color: #10142b">Snackbar</b>. Confirmar algo destructivo → <b style="color: #10142b">Diálogo</b> con el verbo exacto. Falla al cargar → <b style="color: #10142b">Estado de error</b> con «Reintentar». Proceso largo → <b style="color: #10142b">aviso en segundo plano</b>, nunca un overlay bloqueante.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 22px">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600">Filas con datos reales</h2>
+        <div style="background: #ffffff; border-radius: 16px; display: flex; flex-direction: column">
+          <div style="min-height: 72px; padding: 12px 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eaedf5">
+            <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 999px; background: #dfe3ff; color: #141d48; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center">JR</span>
+            <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">Jorge Ramos Villanueva</span><span style="font-size: 13px; color: #4a5068">Basico · La Villa</span></span>
+            <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #ffe8b8; color: #7a5000">Cortado</span><span style="font-size: 14px; font-weight: 600; color: #ba1a1a; font-feature-settings: 'tnum'">S/ 100.00</span></span>
+          </div>
+          <label style="min-height: 64px; padding: 10px 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eaedf5; background: #f1f3f9">
+            <input type="radio" name="plan-s" checked style="width: 20px; height: 20px; accent-color: #141d48; margin: 0">
+            <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">Basico <span style="font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 6px; background: #dce6ff; color: #2459c9">Más elegido</span></span><span style="font-size: 13px; color: #4a5068">200/200 Mbps · 813 abonados</span></span>
+            <span style="font-size: 15px; font-weight: 600; font-feature-settings: 'tnum'">S/ 50.00</span>
+          </label>
+          <label style="min-height: 72px; padding: 10px 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eaedf5">
+            <input type="radio" name="nap-s" style="width: 20px; height: 20px; accent-color: #141d48; margin: 0">
+            <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'Roboto Mono', monospace; font-size: 14px">LV -15-5</span><span style="font-size: 13px; color: #4a5068">arco de ingreso a primavera · 180 m</span></span>
+            <span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #d6f2e2; color: #17663d">13 libres</span>
+          </label>
+          <label style="min-height: 72px; padding: 10px 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; color: #4a5068">
+            <input type="radio" name="nap-s" disabled style="width: 20px; height: 20px; margin: 0">
+            <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'Roboto Mono', monospace; font-size: 14px">LV -3-2</span><span style="font-size: 13px">cruce principal · 380 m</span></span>
+            <span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 8px; background: #ffdad6; color: #ba1a1a">Sin puertos</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600">Badges · siempre con palabra</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: #d6f2e2; color: #17663d">Activo</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: #ffe8b8; color: #7a5000">Cortado</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: #eaedf5; color: #4a5068">Cancelado</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: #ffdad6; color: #ba1a1a">Debe 2 meses</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: #ffdad6; color: #ba1a1a">▲ Alta</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: #dce6ff; color: #2459c9">Media</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: #eaedf5; color: #4a5068">Baja</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: #dce6ff; color: #2459c9">En curso</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: #d6f2e2; color: #17663d">Pagado</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: #eaedf5; color: #4a5068">No abonado</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: #eaedf5; color: #4a5068">Retirado</span>
+          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: #dce6ff; color: #2459c9">Empresa</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600">Barra inferior por rol</h2>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px">
+          <div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; align-items: center"><span style="font-weight: 600">Administrador</span><span style="display: flex; gap: 6px; flex-wrap: wrap"><span style="padding: 3px 8px; border-radius: 999px; background: #dfe3ff; color: #141d48; font-weight: 600">Inicio</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Suscripciones</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Tickets</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Caja</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Más</span></span></div>
+          <div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; align-items: center"><span style="font-weight: 600">Contador</span><span style="display: flex; gap: 6px; flex-wrap: wrap"><span style="padding: 3px 8px; border-radius: 999px; background: #dfe3ff; color: #141d48; font-weight: 600">Inicio</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Suscripciones</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Caja</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Más</span></span></div>
+          <div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; align-items: center"><span style="font-weight: 600">Secretaría</span><span style="display: flex; gap: 6px; flex-wrap: wrap"><span style="padding: 3px 8px; border-radius: 999px; background: #dfe3ff; color: #141d48; font-weight: 600">Inicio</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Suscripciones</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Caja</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Tickets</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Más</span></span></div>
+          <div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; align-items: center"><span style="font-weight: 600">Técnico</span><span style="display: flex; gap: 6px; flex-wrap: wrap"><span style="padding: 3px 8px; border-radius: 999px; background: #dfe3ff; color: #141d48; font-weight: 600">Hoy</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Tickets</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Instalaciones</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Suscripciones</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Más</span></span></div>
+          <div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; align-items: center"><span style="font-weight: 600">Ventas</span><span style="display: flex; gap: 6px; flex-wrap: wrap"><span style="padding: 3px 8px; border-radius: 999px; background: #dfe3ff; color: #141d48; font-weight: 600">Instalaciones</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Suscripciones</span><span style="padding: 3px 8px; border-radius: 999px; background: #ffffff">Más</span></span></div>
+        </div>
+        <div style="font-size: 13px; line-height: 19px; color: #4a5068">Destinos secundarios: barra con flecha atrás y sin barra inferior. Formularios a pantalla completa: ícono cerrar. Sin menú lateral.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600">Contenido</h2>
+        <div style="font-size: 13px; line-height: 19px; color: #343844">Montos <b>S/ 1,692.00</b> (nunca «S/.»). Fechas <b>14 oct 2026</b>. Nombres en formato título aunque en la BD estén en mayúsculas. Estados traducidos (nada de PENDING). Vocabulario único: suscripción, titular, caja NAP, ONU, serie, cobro, egreso.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600">Burbuja de detalle · tooltip</h2>
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: end">
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0">
+            <div role="tooltip" id="bubble-kpi" style="max-width: 220px; background: #2a3152; color: #f1f3f9; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 2px 6px rgba(16,20,43,0.18)">
+              <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #b0c4ff">Deuda por moroso</span>
+              <span style="font-size: 13px; line-height: 18px">Deuda vencida promedio de los clientes con al menos un recibo vencido.</span>
+            </div>
+            <svg width="16" height="8" viewBox="0 0 16 8" aria-hidden="true" style="margin-right: 14px"><path d="M0 0h16L8 8z" fill="#2a3152"/></svg>
+            <div style="width: 100%; background: #ffffff; border-radius: 16px; padding: 12px 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px; margin-top: 4px">
+              <span style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; color: #4a5068">DEUDA POR MOROSO<button aria-label="Qué es deuda por moroso" aria-describedby="bubble-kpi" style="width: 28px; height: 28px; border: 0; border-radius: 999px; background: transparent; color: #4a5068; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></button></span>
+              <span style="font-size: 22px; font-weight: 700; font-feature-settings: 'tnum'">S/ 60.58</span>
+            </div>
+          </div>
+          <div style="background: #ffffff; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 0">
+            <div role="tooltip" style="background: #2a3152; color: #f1f3f9; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 18px">
+              <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: #b0c4ff">jul 2026</span>
+              <span style="display: flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 999px; background: #2f4ad0"></span>Altas <b style="font-feature-settings: 'tnum'">22</b></span>
+              <span style="display: flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 999px; background: #e8541e"></span>Bajas <b style="font-feature-settings: 'tnum'">35</b></span>
+            </div>
+            <svg width="16" height="8" viewBox="0 0 16 8" aria-hidden="true"><path d="M0 0h16L8 8z" fill="#2a3152"/></svg>
+            <span aria-hidden="true" style="width: 28px; height: 56px; margin-top: 4px; border-radius: 4px 4px 0 0; background: #2f4ad0"></span>
+            <span aria-hidden="true" style="width: 28px; height: 40px; border-radius: 0 0 4px 4px; background: #e8541e"></span>
+          </div>
+        </div>
+        <div style="font-size: 13px; line-height: 19px; color: #343844">Fondo <b>inverse-surface #2A3152</b>, texto <b>#F1F3F9</b> 13/18, título <b>#B0C4FF</b> 12 · 600. Radio 12, padding 10×12, ancho máx. 280, cola de 8 dp que apunta al ícono o al punto tocado. Va arriba del origen, centrada y dentro de la pantalla (margen 16); si no cabe, abajo. Flota: nunca empuja ni estira la tarjeta. Se abre al tocar (i) o un punto del gráfico y se cierra al tocar fuera, al volver o al tocar el (i) de nuevo. Un gráfico deja visible el último punto tocado. En gráficos con varias series, un punto del color de cada serie.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1800,"height":1420}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

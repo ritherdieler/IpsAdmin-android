@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Datos reales y decisiones</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Roboto+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#b23a0e}a:hover{color:#8a2c0a}
+</style>
+</head>
+<body>
+<div style="width: 1600px; height: 1220px; box-sizing: border-box; padding: 48px; background: #f6f7fb; color: #10142b; font-family: 'Roboto Flex', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 8px; max-width: 980px">
+      <div style="font-size: 13px; font-weight: 600; color: #b23a0e">Propuesta A · Datos de producción del 14 oct 2026 (solo lectura, cifras agregadas)</div>
+      <h1 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 650">Lo que dicen los datos y cómo cambia el diseño</h1>
+      <p style="margin: 0; font-size: 15px; line-height: 22px; color: #4a5068">Cada componente que elige algo (plan, caja NAP, método, categoría, lugar) se dimensionó con el catálogo real. Los nombres de personas en las pantallas son ficticios; planes, lugares, cajas NAP, categorías y métodos son los de producción.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 480px">
+      <div style="background: #141d48; color: #ffffff; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 26px; font-weight: 700; font-feature-settings: 'tnum'">916</span><span style="font-size: 12px; color: #b6bfe8">suscripciones activas</span></div>
+      <div style="background: #141d48; color: #ffffff; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 26px; font-weight: 700; font-feature-settings: 'tnum'">1,319</span><span style="font-size: 12px; color: #b6bfe8">titulares</span></div>
+      <div style="background: #141d48; color: #ffffff; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 26px; font-weight: 700; font-feature-settings: 'tnum'">S/ 1,692</span><span style="font-size: 12px; color: #b6bfe8">cobrados por día</span></div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px">
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Estado de las activas</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700; font-feature-settings: 'tnum'">490 de 916 cortadas</div>
+      <div aria-hidden="true" style="display: flex; height: 8px; border-radius: 999px; overflow: hidden"><span style="width: 53%; background: #f5c04a"></span><span style="width: 47%; background: #17663d"></span></div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> «Cortado» es el estado más común. Badge en toda fila, deuda junto al nombre, aviso en la ficha y «Restablecer» dentro del cobro.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Métodos de pago (90 días, 2,496 cobros)</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">Yape: 85 %</div>
+      <div aria-hidden="true" style="display: flex; height: 8px; border-radius: 999px; overflow: hidden"><span style="width: 85%; background: #2f4ad0"></span><span style="width: 12%; background: #00897b"></span><span style="width: 3%; background: #a87800"></span></div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> Yape preseleccionado (último usado) con «Nombre en Yape». Los 6 métodos van en grilla de 2 columnas, no en un segmentado de 4.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Deuda de las activas</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700; font-feature-settings: 'tnum'">332 · 1 mes / 21 · 2 meses</div>
+      <div style="font-size: 13px; color: #4a5068">Vence el 15, corte automático el 15, el cierre del 31 cancela con 2 recibos.</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> el Inicio de Secretaría prioriza «Corte esta medianoche» y «21 deben 2 meses», con «Cobrar» en la fila.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Planes</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">29 en BD · 11 activos</div>
+      <div style="font-size: 13px; color: #4a5068">Máx. 6 por tipo. «Basico» tiene 813 abonados; 18 retirados con 0–19.</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> lista con radio filtrada por tipo y ordenada por uso («Más elegido»). Nada de tarjetas. Plan retirado = badge en la ficha.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Cajas NAP</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">162 cajas × 16 puertos</div>
+      <div style="font-size: 13px; color: #4a5068">La Villa 60 · 9 de Octubre 43. 40 vacías, 85 con 1–4 usados, 2 llenas.</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> selector con búsqueda, orden por distancia, puertos libres por color y palabra, llenas deshabilitadas.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Lugares</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">24 · solo 12 con NAP</div>
+      <div style="font-size: 13px; color: #4a5068">La Villa concentra 460 de 916 activas.</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> el lugar se detecta por GPS (polígono) y se elige con búsqueda y conteo. Filtro por lugar en Suscripciones.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Nombres de titulares</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">54 % en MAYÚSCULAS</div>
+      <div style="font-size: 13px; color: #4a5068">13 % en minúsculas. Promedio 23 caracteres, máximo 49.</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> la UI muestra formato título sin tocar la BD. Listas: 1 línea con «…»; cabeceras: hasta 2 líneas.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Direcciones y referencias</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">hasta 120 caracteres</div>
+      <div style="font-size: 13px; color: #4a5068">Texto libre de referencia: «arco de ingreso a primavera».</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> máx. 2 líneas en filas; completas en la ficha. El código NAP va en monoespaciada para distinguirlo.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Tickets</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">~5 por día · 15 categorías</div>
+      <div style="font-size: 13px; color: #4a5068">Sin conexión 270 · Otros 261 · Lento 141 · Instalación 107 (180 días).</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> las 5 más usadas a la vista y el resto con búsqueda. La prioridad sale de la categoría.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Tickets de no abonados</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">18 %</div>
+      <div style="font-size: 13px; color: #4a5068">573 de 3,227 tickets.</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> «¿Para quién?» Abonado / No abonado como primer control del formulario. El teléfono ya no se borra al cambiar.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Órdenes de instalación</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">6 órdenes vs 107 tickets</div>
+      <div style="font-size: 13px; color: #4a5068">Las instalaciones llegan como tickets «Instalación de internet».</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> «Instalaciones» une órdenes y tickets de instalación. Ambos ofrecen «Registrar» y precargan el paso 1.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Cobros por día</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">31 · pico de 178</div>
+      <div style="font-size: 13px; color: #4a5068">El pico es el día de corte.</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> «Caja» lista los cobros del día y busca también por el nombre en Yape (el pagador suele no ser el titular).</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Egresos</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">~10 por mes</div>
+      <div style="font-size: 13px; color: #4a5068">5 categorías y 4 centros de costo.</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> categorías y centros como chips; la foto obligatoria se anuncia antes de que el botón quede gris. Nueva lista de egresos.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Titulares con varios servicios</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">17 · y 16 empresas</div>
+      <div style="font-size: 13px; color: #4a5068">16 con 2 servicios, 1 con 3. Empresas con RUC.</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> «Otros servicios del titular» en la ficha; editar titular avisa a cuántos servicios afecta; tipo Persona/Empresa.</div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; font-weight: 600; color: #4a5068">Personal</div>
+      <div style="font-size: 26px; line-height: 32px; font-weight: 700">7 técnicos · 3 secretarias</div>
+      <div style="font-size: 13px; color: #4a5068">6 administradores, 2 contadores. 3 técnicos verificados.</div>
+      <div style="font-size: 14px; line-height: 20px"><b>Diseño:</b> barra inferior según el rol; «Asignar técnico» muestra la carga del día de cada uno.</div>
+    </div>
+
+    <div style="background: #fff8ea; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; box-shadow: inset 0 0 0 1px #f5c04a">
+      <div style="font-size: 12px; font-weight: 600; color: #7a5000">Datos a limpiar (backoffice)</div>
+      <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 18px">
+        <li>Nombres de plan dispares: <span style="font-family: 'Roboto Mono', monospace">basico</span>, <span style="font-family: 'Roboto Mono', monospace">Internet70</span>, <span style="font-family: 'Roboto Mono', monospace">INTERNET 500MB</span>.</li>
+        <li>Lugar duplicado «Santa Constansa» y lugar «DESCONOCIDO».</li>
+        <li>Categoría duplicada «Internet Iento».</li>
+        <li>13 planes retirados con 0 o 1 abonado.</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+<script src="flujos.js"></script>
+<script src="navegacion.js"></script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Diagnóstico IspAdmin</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1d4ed8}a:hover{color:#1e3a8a}
+</style>
+</helmet>
+<div style="width: 1760px; height: 1180px; box-sizing: border-box; padding: 56px; background: #ffffff; color: #1a1d24; font-family: 'Public Sans', system-ui, sans-serif; display: flex; flex-direction: column; gap: 36px">
+
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 10px; max-width: 900px">
+      <div style="font-size: 14px; font-weight: 600; color: #5b6170">IspAdmin Android · revisión del 14 oct 2026</div>
+      <h1 style="margin: 0; font-size: 40px; line-height: 48px; font-weight: 700; letter-spacing: -0.5px">Cómo se usa la app hoy y qué la frena</h1>
+      <p style="margin: 0; font-size: 16px; line-height: 24px; color: #4a4f5c">Basado en el código (430 archivos Kotlin, 33 layouts XML, rutas de <code>FeatureNavGraph</code> y menú por rol) y en 12 pantallas recorridas en el emulador. Cada propuesta de las páginas A, B y C responde a estos hallazgos.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; width: 680px">
+      <div style="border: 1px solid #e3e5ea; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 30px; line-height: 36px; font-weight: 700">2</div>
+        <div style="font-size: 13px; line-height: 18px; color: #4a4f5c">sistemas visuales: el del dashboard y el del resto</div>
+      </div>
+      <div style="border: 1px solid #e3e5ea; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 30px; line-height: 36px; font-weight: 700">12</div>
+        <div style="font-size: 13px; line-height: 18px; color: #4a4f5c">acciones escondidas en el menú ⋮ de una tarjeta</div>
+      </div>
+      <div style="border: 1px solid #e3e5ea; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 30px; line-height: 36px; font-weight: 700">7</div>
+        <div style="font-size: 13px; line-height: 18px; color: #4a4f5c">formas distintas de mostrar un error o un éxito</div>
+      </div>
+      <div style="border: 1px solid #e3e5ea; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 30px; line-height: 36px; font-weight: 700">9</div>
+        <div style="font-size: 13px; line-height: 18px; color: #4a4f5c">pantallas compiladas a las que no se puede llegar</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 760px 500px 340px; gap: 24px; align-items: start">
+
+    <div style="display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <h2 style="margin: 0; font-size: 20px; line-height: 28px; font-weight: 700">Así se ve hoy</h2>
+        <div style="font-size: 13px; color: #5b6170">Capturas del emulador. Se omiten las pantallas que muestran datos de abonados.</div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px">
+        <figure style="margin: 0; display: flex; flex-direction: column; gap: 10px">
+          <img src="/_blob/7c2b9dc4a8c094a07d1e37d9e25b2cf3" alt="Menú lateral actual con siete secciones" style="width: 172px; height: 382px; object-fit: cover; object-position: top; border-radius: 12px; border: 1px solid #e3e5ea">
+          <figcaption style="font-size: 13px; line-height: 18px; color: #343844"><b>Menú lateral.</b> 7 secciones de 1 o 2 entradas; «Planes › Planes». Es la única forma de moverse.</figcaption>
+        </figure>
+        <figure style="margin: 0; display: flex; flex-direction: column; gap: 10px">
+          <img src="/_blob/1858f55316c74cc6e0ac28226eef58eb" alt="Registro de suscripción con modal de carga" style="width: 172px; height: 382px; object-fit: cover; object-position: top; border-radius: 12px; border: 1px solid #e3e5ea">
+          <figcaption style="font-size: 13px; line-height: 18px; color: #343844"><b>Registro.</b> Modal bloqueante desde el primer segundo; el equipo va antes que el cliente.</figcaption>
+        </figure>
+        <figure style="margin: 0; display: flex; flex-direction: column; gap: 10px">
+          <img src="/_blob/1b45735cf2b7f6047fc0fd2e17658838" alt="Historial de pagos actual" style="width: 172px; height: 382px; object-fit: cover; object-position: top; border-radius: 12px; border: 1px solid #e3e5ea">
+          <figcaption style="font-size: 13px; line-height: 18px; color: #343844"><b>Historial de pagos.</b> Título «ISP Admin», sin flecha atrás, «S/.150.0», no dice de quién es.</figcaption>
+        </figure>
+        <figure style="margin: 0; display: flex; flex-direction: column; gap: 10px">
+          <img src="/_blob/29955d77679f9593a67bf681cf08f91b" alt="Formulario de egreso actual" style="width: 172px; height: 382px; object-fit: cover; object-position: top; border-radius: 12px; border: 1px solid #e3e5ea">
+          <figcaption style="font-size: 13px; line-height: 18px; color: #343844"><b>Egreso.</b> La foto es obligatoria pero nada lo dice: «Registrar» queda gris sin explicación.</figcaption>
+        </figure>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px">
+        <h2 style="margin: 0; font-size: 20px; line-height: 28px; font-weight: 700">Lo que cuesta cada tarea hoy</h2>
+        <div style="display: flex; flex-direction: column; border: 1px solid #e3e5ea; border-radius: 12px">
+          <div style="display: grid; grid-template-columns: 210px 110px minmax(0, 1fr); gap: 16px; padding: 14px 18px; border-bottom: 1px solid #e3e5ea; align-items: baseline">
+            <div style="font-size: 15px; font-weight: 600">Cobrar una deuda</div>
+            <div style="font-size: 15px; font-weight: 700; color: #912018">7 toques</div>
+            <div style="font-size: 13px; line-height: 19px; color: #4a4f5c">Menú › Buscador › escribir › ⋮ › Historial de pagos › mes › Registrar. El historial no muestra el nombre del abonado.</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 210px 110px minmax(0, 1fr); gap: 16px; padding: 14px 18px; border-bottom: 1px solid #e3e5ea; align-items: baseline">
+            <div style="font-size: 15px; font-weight: 600">Registrar una suscripción</div>
+            <div style="font-size: 15px; font-weight: 700; color: #912018">≈ 13 min</div>
+            <div style="font-size: 13px; line-height: 19px; color: #4a4f5c">de espera tras pantallas bloqueantes como máximo: autorizar en OLT (5 min), esperar ACS (6 min) y aprovisionar (2 min). Nada se puede adelantar mientras tanto.</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 210px 110px minmax(0, 1fr); gap: 16px; padding: 14px 18px; border-bottom: 1px solid #e3e5ea; align-items: baseline">
+            <div style="font-size: 15px; font-weight: 600">Abrir la ficha de un abonado</div>
+            <div style="font-size: 15px; font-weight: 700; color: #93370d">4 toques</div>
+            <div style="font-size: 13px; line-height: 19px; color: #4a4f5c">y llega a una ficha de solo lectura: las acciones siguen en el menú de la tarjeta del buscador. Para volver, solo el botón del sistema.</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 210px 110px minmax(0, 1fr); gap: 16px; padding: 14px 18px; border-bottom: 1px solid #e3e5ea; align-items: baseline">
+            <div style="font-size: 15px; font-weight: 600">Atender un ticket avisado</div>
+            <div style="font-size: 15px; font-weight: 700; color: #912018">No llega</div>
+            <div style="font-size: 13px; line-height: 19px; color: #4a4f5c"><code>CloudMessagingService</code> no está en el manifest: la notificación no abre el ticket. En la lista, «Tomar», «Cancelar» y «Reagendar» pesan igual y «Cancelar» no pide confirmación.</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 210px 110px minmax(0, 1fr); gap: 16px; padding: 14px 18px; align-items: baseline">
+            <div style="font-size: 15px; font-weight: 600">Ver una NAP o una mufa</div>
+            <div style="font-size: 15px; font-weight: 700; color: #912018">Imposible</div>
+            <div style="font-size: 13px; line-height: 19px; color: #4a4f5c">Mapa NAP, mapa de mufas, reportes XLSX, costos fijos y eliminar ONU existen en el código pero ninguna ruta los abre.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-size: 20px; line-height: 28px; font-weight: 700">Hallazgos</h2>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid #e3e5ea; border-radius: 12px">
+          <div style="display: flex; gap: 8px; align-items: center"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: #fee4e2; color: #912018">Crítico</span><span style="font-size: 12px; color: #5b6170">Navegación</span></div>
+          <div style="font-size: 14px; line-height: 20px">Hamburguesa en todas las pantallas, también en los detalles: no hay flecha atrás. Pago y detalle de pago apilan dos barras superiores.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid #e3e5ea; border-radius: 12px">
+          <div style="display: flex; gap: 8px; align-items: center"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: #fee4e2; color: #912018">Crítico</span><span style="font-size: 12px; color: #5b6170">Navegación</span></div>
+          <div style="font-size: 14px; line-height: 20px">Al iniciar, la condición de <code>FeatureNavGraph.kt:157</code> manda a «Registrar suscripción» también cuando no hay registro en curso (a verificar en un arranque en frío).</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid #e3e5ea; border-radius: 12px">
+          <div style="display: flex; gap: 8px; align-items: center"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: #fef0c7; color: #93370d">Alto</span><span style="font-size: 12px; color: #5b6170">Jerarquía</span></div>
+          <div style="font-size: 14px; line-height: 20px">El centro real de la app es el menú ⋮ de la tarjeta del buscador (12 acciones, mismo ícono, sin filtrar por rol). La ficha de detalle no tiene acciones.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid #e3e5ea; border-radius: 12px">
+          <div style="display: flex; gap: 8px; align-items: center"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: #fef0c7; color: #93370d">Alto</span><span style="font-size: 12px; color: #5b6170">Flujos</span></div>
+          <div style="font-size: 14px; line-height: 20px">Callejones sin salida: resultados del buscador de pagadores, «Ver deudores» del dashboard, detalle de pago y el aviso de actualización forzada (sin enlace a la tienda).</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid #e3e5ea; border-radius: 12px">
+          <div style="display: flex; gap: 8px; align-items: center"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: #fef0c7; color: #93370d">Alto</span><span style="font-size: 12px; color: #5b6170">Sistema visual</span></div>
+          <div style="font-size: 14px; line-height: 20px">El sistema del dashboard (oct 2026) solo cubre 3 pantallas. El resto usa Material 3 por defecto; el XML tiene 4 paletas y es MaterialComponents de día y AppCompat de noche.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid #e3e5ea; border-radius: 12px">
+          <div style="display: flex; gap: 8px; align-items: center"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: #d1e9ff; color: #194185">Medio</span><span style="font-size: 12px; color: #5b6170">Feedback</span></div>
+          <div style="font-size: 14px; line-height: 20px">Toast, Snackbar, AlertDialog, dos <code>MyCustomDialog</code>, tarjeta y pantalla completa, a veces en la misma pantalla. Tres estilos de carga: shimmer, spinner y skeleton.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid #e3e5ea; border-radius: 12px">
+          <div style="display: flex; gap: 8px; align-items: center"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: #d1e9ff; color: #194185">Medio</span><span style="font-size: 12px; color: #5b6170">Densidad</span></div>
+          <div style="font-size: 14px; line-height: 20px">Una suscripción ocupa toda la pantalla en el buscador; un ticket muestra 7 campos y 3 botones; las órdenes muestran «Creado: null».</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid #e3e5ea; border-radius: 12px">
+          <div style="display: flex; gap: 8px; align-items: center"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: #d1e9ff; color: #194185">Medio</span><span style="font-size: 12px; color: #5b6170">Contenido</span></div>
+          <div style="font-size: 14px; line-height: 20px">Caja Nap / NAP Box, S/ / S/., «Subscripción», «Inalambrico», estados en inglés (PENDING), fechas «09 October» y montos en formato colombiano en el buscador de pagadores.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 20px; line-height: 28px; font-weight: 700">Quién la usa</h2>
+        <div style="display: flex; flex-direction: column; border: 1px solid #e3e5ea; border-radius: 12px">
+          <div style="padding: 12px 16px; border-bottom: 1px solid #e3e5ea; display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 15px; font-weight: 600">Administrador · Contador</div>
+            <div style="font-size: 13px; line-height: 18px; color: #4a4f5c">Dashboard, cobros, egresos, planes (solo admin).</div>
+          </div>
+          <div style="padding: 12px 16px; border-bottom: 1px solid #e3e5ea; display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 15px; font-weight: 600">Secretaría (caja)</div>
+            <div style="font-size: 13px; line-height: 18px; color: #4a4f5c">Buscar, cobrar, restablecer, crear tickets. No registra.</div>
+          </div>
+          <div style="padding: 12px 16px; border-bottom: 1px solid #e3e5ea; display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 15px; font-weight: 600">Técnico</div>
+            <div style="font-size: 13px; line-height: 18px; color: #4a4f5c">Tickets, órdenes de instalación, registro con ONU, en campo y a veces sin señal.</div>
+          </div>
+          <div style="padding: 12px 16px; border-bottom: 1px solid #e3e5ea; display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 15px; font-weight: 600">Ventas</div>
+            <div style="font-size: 13px; line-height: 18px; color: #4a4f5c">Órdenes de instalación y perfil.</div>
+          </div>
+          <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 15px; font-weight: 600">Logística · Cliente</div>
+            <div style="font-size: 13px; line-height: 18px; color: #912018">El menú lanza «Tipo de usuario no soportado»: la app no puede abrirse.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 20px; line-height: 28px; font-weight: 700">Lo que ya funciona</h2>
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 20px; color: #343844">
+          <div style="padding: 12px 16px; background: #f4f6f8; border-radius: 12px">El dashboard rediseñado: tokens, skeleton, estados de error y vacío, pruebas. Las tres propuestas lo conservan.</div>
+          <div style="padding: 12px 16px; background: #f4f6f8; border-radius: 12px">El registro ya informa el avance por etapas (OLT, ACS, acceso, Wi-Fi) y permite reintentar sin duplicar.</div>
+          <div style="padding: 12px 16px; background: #f4f6f8; border-radius: 12px">La cola offline sigue el patrón UDF canónico del repo.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1760,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
