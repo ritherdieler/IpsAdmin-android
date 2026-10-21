@@ -26,7 +26,7 @@ Staging (ONU lab + polígono `place`):
 # 1) cold boot medium_phone (-no-snapshot-load) y esperar sys.boot_completed=1
 # 2) luego:
 cd "IpsAdmin-android app"
-E2E_ONU_SN=ZTEGDC47BFFD ./scripts/e2e_register_fiber_staging_espresso.sh
+E2E_ONU_SN=HWTC15F5E946 ./scripts/e2e_register_fiber_staging_espresso.sh
 ```
 
 Las coords (`GEO_LAT` / `GEO_LON`) tienen que estar **dentro** de un `place.area` (polígono), no solo cerca del pin del lugar. Validar con `GET /place/findByLocation`. Fixture: [e2e-register-fiber-staging-lab-onu-2026-09-01.md](./e2e-register-fiber-staging-lab-onu-2026-09-01.md). Runbook: `ispadmin-backend/.agent-docs/staging-fiber-e2e-runbook.md` § «Coordenadas dentro de polígonos».

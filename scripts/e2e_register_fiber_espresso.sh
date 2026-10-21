@@ -2,10 +2,10 @@
 # Orchestrates Espresso FIBER register e2e against prod + §4 hard cleanup.
 # Usage (from Android repo root):
 #   ./scripts/e2e_register_fiber_espresso.sh \
-#     --onu-sn ZTEGDC47BFFD --first-name EeeFiber --last-name Prueba \
+#     --onu-sn HWTC15F5E946 --first-name EeeFiber --last-name Prueba \
 #     --wifi-ssid 'ztelab' --wifi-pass '11111111'
 # 5 GHz SSID is always "<ssid> - 5G". Password is the same on both bands.
-# ONU: --onu-sn (default ZTEGDC47BFFD). Name: --first-name / --last-name.
+# ONU: --onu-sn (default HWTC15F5E946). Name: --first-name / --last-name.
 # WAN: --access-mode pppoe|static (aliases PPPOE_DYNAMIC, STATIC_IP, PPPOE_FIXED).
 # Default PPPoE.
 # Before Espresso, if the ONU is already registered the run stops and asks to clean it first.
@@ -104,7 +104,7 @@ E2E_PLACE="${E2E_PLACE:-9 de octubre}"
 if [[ -n "$CLI_ONU_SN" ]]; then
   E2E_ONU_SN="$CLI_ONU_SN"
 fi
-E2E_ONU_SN="${E2E_ONU_SN:-ZTEGDC47BFFD}"
+E2E_ONU_SN="${E2E_ONU_SN:-HWTC15F5E946}"
 if [[ -n "$CLI_ACCESS_MODE" ]]; then
   E2E_ACCESS_MODE="$CLI_ACCESS_MODE"
 fi
