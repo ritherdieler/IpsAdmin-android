@@ -1,5 +1,7 @@
 # Design system y dashboard rediseñado — 2026-10-11
 
+> Registro histórico. Desde el 2026-10-22 el design system es uno solo para Android y el back office: https://claude.ai/artifact/T4ssmVpou5P4pvcFkjS6sF (los valores de este documento pueden haber cambiado; manda el artifact).
+
 Rama `feature/dashboard-redesign`. El commit `12abf06` es una instantánea del trabajo pendiente anterior (dashboard financiero del 2026-10-09 y otros cambios). El rediseño va encima.
 
 ## Fuentes de diseño

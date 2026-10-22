@@ -6,7 +6,7 @@ Diseño aprobado el 2026-10-11 (variante A, tema claro y oscuro). Implementació
 
 | Carpeta | Qué es | Cómo verlo |
 |---|---|---|
-| `design-system/` | Design system IspAdmin: `README.md` (reglas de uso), `tokens.json` (colores claro/oscuro, tipografía, espaciado, radios, sombra) y `components/<Componente>/` (guía + vista previa HTML) | Interactivo en https://claude.ai/artifact/T4ssmVpou5P4pvcFkjS6sF. Las `preview.html` usan variables CSS que genera ese artifact; abiertas sueltas no tienen estilos |
+| `design-system/` | Solo un README que apunta al design system único (web + Android) | https://claude.ai/artifact/T4ssmVpou5P4pvcFkjS6sF |
 | `mockups/` | Tableros del lienzo: Financiero (`Main`), Comercial y Clientes, en claro (`*A` / `Main`) y oscuro (`*Oscuro`). `canvas.json` guarda su disposición | Interactivo en https://claude.ai/artifact/1d9B2qXwQBC2hBobes6Yu4. Los `.dc.html` dependen del runtime del lienzo (`support.js`), que no está en el repo |
 | `capturas/` | La app implementada en el emulador con la base de desarrollo, después de la auditoría visual | PNG |
 
