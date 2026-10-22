@@ -3,6 +3,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose
 import android.app.Application
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.longClick
@@ -13,11 +14,13 @@ import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class, qualifiers = "w411dp-h1600dp")
@@ -134,6 +137,24 @@ class SubscriptionSearchContentTest {
     }
 
     @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE) // real text metrics, so the drawn chip height is meaningful
+    fun `result filter chips offer a 48dp touch target`() {
+        show(SubscriptionFinderUiState(
+            subscriptions = mapOf(ServiceStatus.CUT_OFF to listOf(row(id = 1))),
+            smartQuery = "ram", searchPerformed = true,
+        ))
+
+        ResultFilter.entries.take(VISIBLE_CHIPS).forEach { filter ->
+            val node = compose.onNodeWithTag(SubscriptionFinderTestTags.resultFilter(filter)).fetchSemanticsNode()
+            with(node.layoutInfo.density) {
+                val touchHeight = node.touchBoundsInRoot.height.toDp()
+                assertTrue("$filter touch height $touchHeight < 48dp", touchHeight >= 48.dp)
+                assertEquals("$filter chip is still drawn 32dp tall", 32f, node.boundsInRoot.height.toDp().value, 0.5f)
+            }
+        }
+    }
+
+    @Test
     fun `a failed search says so and retries`() {
         show(SubscriptionFinderUiState(smartQuery = "ram", searchPerformed = true, searchError = "timeout"))
 
@@ -154,5 +175,10 @@ class SubscriptionSearchContentTest {
         compose.onNodeWithText("No se pudo actualizar").assertExists()
         compose.onNodeWithText("Reintentar").performClick()
         assertEquals(1, retried)
+    }
+
+    private companion object {
+        /** Chips composed by the lazy row on a 411 dp wide screen; the rest are off screen. */
+        const val VISIBLE_CHIPS = 3
     }
 }

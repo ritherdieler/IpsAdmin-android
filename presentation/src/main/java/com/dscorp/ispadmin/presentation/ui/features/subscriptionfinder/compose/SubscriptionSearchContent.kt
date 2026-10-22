@@ -288,11 +288,12 @@ private fun ResultsContent(
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
     rowMenu: @Composable (SubscriptionResume, Boolean, () -> Unit) -> Unit,
+    // FilterChip draws 32 dp and reserves a 48 dp touch target, so the row padding drops by those 8 dp per side.
     rowExpansion: @Composable (SubscriptionResume) -> Unit,
 ) {
     val results = state.results
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(ResultFilter.entries) { filter ->
@@ -316,7 +317,7 @@ private fun ResultsContent(
                     borderColor = MaterialTheme.colorScheme.outline,
                     selectedBorderWidth = 0.dp,
                 ),
-                modifier = Modifier.height(32.dp).testTag(SubscriptionFinderTestTags.resultFilter(filter)),
+                modifier = Modifier.testTag(SubscriptionFinderTestTags.resultFilter(filter)),
             )
         }
     }
