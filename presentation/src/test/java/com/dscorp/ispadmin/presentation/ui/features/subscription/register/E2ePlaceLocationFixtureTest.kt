@@ -53,7 +53,10 @@ class E2ePlaceLocationFixtureTest {
     @Test
     fun `staging espresso script defaults wifi by lab onu brand`() {
         val script = File("../scripts/e2e_register_fiber_staging_espresso.sh").readText()
-        assertThat(script).contains("E2E_ONU_SN=\"\${E2E_ONU_SN:-ZTEGDC47BFFD}\"")
+        assertThat(script).contains("E2E_ONU_SN=\"\${E2E_ONU_SN:-$LAB_ONU_SN}\"")
+        CUSTOMER_ONU_SNS.forEach { assertThat(script).doesNotContain(it) }
+        // Lab Huawei ONU is not a VSOL serial, so it falls through to the generic wifi defaults.
+        VSOL_SN_PREFIXES.forEach { assertThat(LAB_ONU_SN).doesNotMatch("^$it.*") }
         assertThat(script).contains("lab-vsol-e2e-24")
         assertThat(script).contains("LabVsolWifi24!")
         assertThat(script).contains("ztelab")
@@ -66,9 +69,11 @@ class E2ePlaceLocationFixtureTest {
         assertThat(script).contains("E2E_ACCESS_MODE=\"\${E2E_ACCESS_MODE:-PPPOE_DYNAMIC}\"")
         assertThat(script).doesNotContain("E2E_ACCESS_MODE=\"\${E2E_ACCESS_MODE:-STATIC_IP}\"")
         assertThat(script).contains("e2e.accessMode=")
-        val onuAt = script.indexOf("E2E_ONU_SN=\"\${E2E_ONU_SN:-ZTEGDC47BFFD}\"")
+        val onuAt = script.indexOf("E2E_ONU_SN=\"\${E2E_ONU_SN:-$LAB_ONU_SN}\"")
         val wifiCaseAt = script.indexOf("lab-vsol-e2e-24")
+        val genericWifiAt = script.indexOf("_E2E_WIFI_SSID_DEFAULT=\"ztelab\"")
         assertThat(wifiCaseAt).isGreaterThan(onuAt)
+        assertThat(genericWifiAt).isGreaterThan(wifiCaseAt)
     }
 
     @Test
@@ -119,7 +124,8 @@ class E2ePlaceLocationFixtureTest {
         assertThat(prod).doesNotContain("ispadmin-staging")
         assertThat(prod).contains("connectedProdDebugAndroidTest")
         assertThat(prod).contains("installProdDebugAndroidTest")
-        assertThat(prod).contains("E2E_ONU_SN=\"\${E2E_ONU_SN:-ZTEGDC47BFFD}\"")
+        assertThat(prod).contains("E2E_ONU_SN=\"\${E2E_ONU_SN:-$LAB_ONU_SN}\"")
+        CUSTOMER_ONU_SNS.forEach { assertThat(prod).doesNotContain(it) }
         assertThat(prod).contains("--first-name)")
         assertThat(prod).contains("--last-name)")
         assertThat(prod).contains("E2E_FIRST_NAME=\"\${E2E_FIRST_NAME:-EeeFiber}\"")
@@ -209,4 +215,11 @@ class E2ePlaceLocationFixtureTest {
             .replace("E2E_FIBER_STAGING_ESPRESSO_OK", "E2E_FIBER_ENV_ESPRESSO_OK")
             .replace("E2E_FIBER_PROD_ESPRESSO_OK", "E2E_FIBER_ENV_ESPRESSO_OK")
             .replace("E2E_FIBER_ESPRESSO_OK", "E2E_FIBER_ENV_ESPRESSO_OK")
+
+    private companion object {
+        // Canonical lab ONU; ZTEGDC47BFFD and VSOL00324576 belong to customers since 2026-10-21.
+        const val LAB_ONU_SN = "HWTC15F5E946"
+        val CUSTOMER_ONU_SNS = listOf("ZTEGDC47BFFD", "VSOL00324576")
+        val VSOL_SN_PREFIXES = listOf("VSOL", "56534F4C", "12345B", "B46415")
+    }
 }
