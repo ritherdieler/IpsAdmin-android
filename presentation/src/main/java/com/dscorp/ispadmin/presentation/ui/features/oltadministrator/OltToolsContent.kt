@@ -31,7 +31,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,8 +47,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.theme.IspTheme
 import com.dscorp.ispadmin.presentation.ui.components.ConsumeOnce
+import com.dscorp.ispadmin.presentation.ui.features.composecomponents.IspSnackbarHost
 import org.koin.androidx.compose.koinViewModel
 
 private val CARD = RoundedCornerShape(16.dp)
@@ -139,6 +140,7 @@ fun OltToolsContent(state: OltToolsUiState, onIntent: (OltToolsIntent) -> Unit) 
                         }
                     },
                     dismissButton = { TextButton(onClick = { confirming = false }) { Text("Volver") } },
+                    shape = IspShapes.card,
                 )
             }
         }
@@ -153,6 +155,6 @@ fun OltToolsRoute() {
     ConsumeOnce(state.message, onConsumed = { viewModel.onIntent(OltToolsIntent.MessageShown) }) { snackbar.showSnackbar(it) }
     Box(Modifier.fillMaxSize()) {
         OltToolsContent(state, viewModel::onIntent)
-        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
+        IspSnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
 }

@@ -1,5 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail
 
+import com.dscorp.ispadmin.presentation.theme.IspShapes
+import com.dscorp.ispadmin.presentation.ui.features.composecomponents.IspSnackbarHost
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaSkeleton
 import com.dscorp.ispadmin.presentation.ui.components.ConsumeOnce
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.shareText
@@ -55,7 +57,6 @@ import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -244,7 +245,8 @@ fun SubscriptionDetailScreen(
                 ) {
                     Text("Galería")
                 }
-            }
+            },
+            shape = IspShapes.card
         )
     }
 
@@ -399,7 +401,7 @@ fun SubscriptionDetailScreen(
             )
         }
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-            SnackbarHost(snackbarHostState)
+            IspSnackbarHost(snackbarHostState)
         }
     }
 }

@@ -28,7 +28,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +50,7 @@ import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.observability.ObservabilityComposeText
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
+import com.dscorp.ispadmin.presentation.ui.features.composecomponents.IspSnackbarHost
 
 
 @Composable
@@ -364,7 +364,7 @@ fun PaymentScreenContent(
     var onlyPendingChecked by remember { mutableStateOf(false) }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { IspSnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier

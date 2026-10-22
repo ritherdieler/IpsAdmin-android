@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavController
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.Loader
 import org.koin.androidx.compose.koinViewModel
@@ -73,6 +74,7 @@ private fun SuccessMessage() {
         onDismissRequest = { },
         title = { androidx.compose.material3.Text("Éxito") },
         text = { androidx.compose.material3.Text("Migración realizada con éxito") },
-        confirmButton = { }
+        confirmButton = { },
+        shape = IspShapes.card
     )
 } 

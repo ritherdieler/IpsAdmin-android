@@ -1,12 +1,25 @@
 package com.dscorp.ispadmin.presentation.ui.features.composecomponents
 
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import kotlinx.coroutines.launch
+
+/**
+ * Design system snackbar host: Material inverse-surface snackbar with the 8 dp radius-sm corners
+ * (Material's default is 4 dp, and changing shapes.extraSmall would also reshape text fields and menus).
+ */
+@Composable
+fun IspSnackbarHost(hostState: SnackbarHostState, modifier: Modifier = Modifier) {
+    SnackbarHost(hostState, modifier) { data -> Snackbar(data, shape = IspShapes.badge) }
+}
 
 /**
  * Componente reutilizable para mostrar snackbars con mensajes de éxito o error.

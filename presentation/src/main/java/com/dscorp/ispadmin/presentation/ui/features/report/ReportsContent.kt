@@ -26,7 +26,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -44,6 +43,7 @@ import androidx.core.content.FileProvider
 import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
 import com.dscorp.ispadmin.presentation.theme.IspTheme
 import com.dscorp.ispadmin.presentation.ui.components.ConsumeOnce
+import com.dscorp.ispadmin.presentation.ui.features.composecomponents.IspSnackbarHost
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 
@@ -105,7 +105,7 @@ fun ReportsRoute() {
     ConsumeOnce(state.error, onConsumed = { viewModel.onIntent(ReportsIntent.ErrorShown) }) { snackbar.showSnackbar(it) }
     Box(Modifier.fillMaxSize()) {
         ReportsContent(state, viewModel::onIntent)
-        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
+        IspSnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
 }
 

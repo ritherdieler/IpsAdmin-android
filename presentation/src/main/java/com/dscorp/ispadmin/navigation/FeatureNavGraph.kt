@@ -39,6 +39,7 @@ import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Payment
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Profile
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.SupportTicket
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.ui.components.HorizontalImageCarousel
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.DashBoardComposeScreen
 import com.dscorp.ispadmin.presentation.ui.features.installationorders.CreateInstallationOrderScreen
@@ -180,6 +181,7 @@ private fun ExitOnRootBack(enabled: Boolean) {
         dismissButton = {
             TextButton(onClick = { showExitDialog = false }) { Text("Volver") }
         },
+        shape = IspShapes.card,
     )
 }
 

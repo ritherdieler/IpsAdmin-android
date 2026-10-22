@@ -17,6 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.navigation.NavRoutes.AuthRoutes.Login
 import com.dscorp.ispadmin.navigation.NavRoutes.AuthRoutes.Register
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginScreen
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginState
 import com.dscorp.ispadmin.presentation.ui.features.login.LoginViewModel
@@ -150,7 +151,8 @@ fun AuthNavGraph(
                         ) {
                             Text("Cancelar")
                         }
-                    }
+                    },
+                    shape = IspShapes.card
                 )
             }
 
@@ -185,7 +187,8 @@ fun AuthNavGraph(
                         ) {
                             Text("Cancelar")
                         }
-                    }
+                    },
+                    shape = IspShapes.card
                 )
             }
 
@@ -209,7 +212,8 @@ fun AuthNavGraph(
                         ) {
                             Text("Entendido")
                         }
-                    }
+                    },
+                    shape = IspShapes.card
                 )
             }
         }
@@ -262,7 +266,8 @@ fun AuthNavGraph(
                         ) {
                             Text("Intentar nuevamente")
                         }
-                    }
+                    },
+                    shape = IspShapes.card
                 )
             }
 
@@ -283,7 +288,8 @@ fun AuthNavGraph(
                         ) {
                             Text("Entendido")
                         }
-                    }
+                    },
+                    shape = IspShapes.card
                 )
             }
         }
@@ -329,7 +335,8 @@ fun AuthNavGraph(
                         ) {
                             Text("Continuar")
                         }
-                    }
+                    },
+                    shape = IspShapes.card
                 )
             }
 
@@ -363,7 +370,8 @@ fun AuthNavGraph(
                         ) {
                             Text("Cancelar")
                         }
-                    }
+                    },
+                    shape = IspShapes.card
                 )
             }
         }

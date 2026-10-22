@@ -52,6 +52,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import kotlinx.coroutines.delay
 import java.io.File
 import java.util.concurrent.Executor
@@ -315,7 +316,8 @@ fun FaceLoginScreen(
                 ) {
                     Text("Aceptar")
                 }
-            }
+            },
+            shape = IspShapes.card
         )
     }
 }

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.dscorp.ispadmin.domain.model.User
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.util.BiometricAuthManager
 import androidx.fragment.app.FragmentActivity
 import org.koin.androidx.compose.koinViewModel
@@ -113,7 +114,8 @@ fun LoginScreen(
                 ) {
                     Text("Cancelar")
                 }
-            }
+            },
+            shape = IspShapes.card
         )
     }
 
@@ -163,7 +165,8 @@ fun LoginScreen(
                     ) {
                         Text("Entendido")
                     }
-                }
+                },
+                shape = IspShapes.card
             )
         }
         is LoginState.Error -> {
@@ -195,7 +198,8 @@ fun LoginScreen(
                     ) {
                         Text("Aceptar")
                     }
-                }
+                },
+                shape = IspShapes.card
             )
         }
         else -> {}

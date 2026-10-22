@@ -27,6 +27,7 @@ import com.dscorp.ispadmin.domain.model.DashBoardDataResponse
 import com.dscorp.ispadmin.domain.model.DownloadDocumentResponse
 import com.dscorp.ispadmin.domain.model.financial.*
 import com.dscorp.ispadmin.domain.model.dashboard.CollectionSummary
+import com.dscorp.ispadmin.presentation.ui.features.composecomponents.IspSnackbarHost
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.CollectionsSection
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.collectedSoles
 import com.dscorp.ispadmin.presentation.ui.features.dashboard.billedMonths
@@ -112,7 +113,7 @@ fun FinancialScreen(
             }
         }
     }
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
+    Scaffold(snackbarHost = { IspSnackbarHost(snackbar) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
         Box(Modifier.padding(padding)) { FinancialContent(state, viewModel::onIntent, header, data.legacy, data.collections, home, onHomeAction) }
     }
 }

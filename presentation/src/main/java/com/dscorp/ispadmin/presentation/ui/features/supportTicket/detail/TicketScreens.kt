@@ -2,7 +2,6 @@ package com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,6 +15,7 @@ import androidx.navigation.NavController
 import com.dscorp.ispadmin.data.media.prepareFacadePhotoFile
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes
 import com.dscorp.ispadmin.presentation.ui.components.rememberPhotoTaker
+import com.dscorp.ispadmin.presentation.ui.features.composecomponents.IspSnackbarHost
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.ContactIntentHelper
 import org.koin.androidx.compose.koinViewModel
 
@@ -41,7 +41,7 @@ fun TicketDetailScreen(ticketId: Int, navController: NavController, viewModel: T
             onClose = { navController.navigate(FeatureRoutes.SupportTicket.Close(ticketId)) },
             onOpenTicket = { navController.navigate(FeatureRoutes.SupportTicket.Detail(it)) },
         )
-        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
+        IspSnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
 }
 

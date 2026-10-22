@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.theme.IspTheme
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FICHA_ZONE
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FichaCard
@@ -158,6 +159,7 @@ fun TicketDetailContent(
             text = { Text("El ticket se cierra sin atender.") },
             confirmButton = { TextButton(onClick = { confirmCancel = false; onIntent(TicketDetailIntent.Cancel) }) { Text("Cancelar ticket") } },
             dismissButton = { TextButton(onClick = { confirmCancel = false }) { Text("Volver") } },
+            shape = IspShapes.card,
         )
     }
 }
@@ -289,6 +291,7 @@ private fun Diagnosis(diagnosis: TicketDiagnosis, onIntent: (TicketDetailIntent)
             text = { Text("El abonado pierde la conexión 1–2 minutos.") },
             confirmButton = { TextButton(onClick = { confirm = null; onIntent(intent) }) { Text(if (reboot) "Reiniciar" else "Reenviar") } },
             dismissButton = { TextButton(onClick = { confirm = null }) { Text("Volver") } },
+            shape = IspShapes.card,
         )
     }
 }

@@ -13,7 +13,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,6 +30,7 @@ import com.dscorp.ispadmin.presentation.ui.components.Loader
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyCustomDialog
 import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
+import com.dscorp.ispadmin.presentation.ui.features.composecomponents.IspSnackbarHost
 import com.dscorp.ispadmin.presentation.utils.FormValidations
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,7 +59,7 @@ fun CreateInstallationOrderScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { IspSnackbarHost(snackbarHostState) },
     ) { paddingValues ->
         Surface(
             modifier = Modifier

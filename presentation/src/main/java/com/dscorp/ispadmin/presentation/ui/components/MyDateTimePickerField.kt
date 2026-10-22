@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -174,6 +175,7 @@ fun TimePickerDialog(
                     )
                 )
             }
-        }
+        },
+        shape = IspShapes.card
     )
 } 

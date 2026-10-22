@@ -4,6 +4,7 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.RadioButton
 import androidx.compose.foundation.selection.selectable
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.theme.ThemeMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -76,6 +77,7 @@ fun ProfileContent(
             title = { Text("Error") },
             text = { Text(error) },
             confirmButton = { TextButton(onClick = onClearError) { Text("Aceptar") } },
+            shape = IspShapes.card,
         )
     }
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -182,5 +184,6 @@ private fun ThemeDialog(current: ThemeMode, onSelect: (ThemeMode) -> Unit, onDis
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Cerrar") } },
+        shape = IspShapes.card,
     )
 }

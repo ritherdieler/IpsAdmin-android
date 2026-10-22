@@ -67,6 +67,7 @@ import coil3.compose.AsyncImage
 import com.dscorp.ispadmin.domain.model.CustomerServiceSummary
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.presentation.designsystem.components.pullUp
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.theme.IspTheme
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.HubBadge
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.SubscriptionHubTestTags
@@ -478,6 +479,7 @@ fun FichaNetworkTab(network: FichaNetwork, isFiber: Boolean, onReboot: () -> Uni
                 }) { Text(action.confirm) }
             },
             dismissButton = { androidx.compose.material3.TextButton(onClick = { confirm = null }) { Text("Volver") } },
+            shape = IspShapes.card,
         )
     }
 }

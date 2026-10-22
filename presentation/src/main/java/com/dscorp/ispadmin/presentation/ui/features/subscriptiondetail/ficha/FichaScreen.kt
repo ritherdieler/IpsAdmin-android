@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.domain.model.CustomerServiceSummary
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 
 /** Proposal A ficha (a-sus-04…07): navy header, quick actions on «Resumen», tabs below. */
 @Composable
@@ -75,6 +76,7 @@ fun FichaScreen(
                 }) { Text("Restablecer") }
             },
             dismissButton = { TextButton(onClick = { confirmRestore = false }) { Text("Volver") } },
+            shape = IspShapes.card,
         )
     }
 }

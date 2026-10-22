@@ -53,6 +53,7 @@ import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.ServiceStatus
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.data.apirequestmodel.MigrationRequest
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.ui.components.MyIconButton
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.DEFAULT_REGISTRATION_VLAN
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.VLAN_OPTIONS
@@ -274,7 +275,8 @@ fun ErrorDialog(error: String, actionText: String = "Aceptar", onDismissRequest:
             Text(modifier = Modifier.clickable {
                 onDismissRequest.invoke()
             }, text = actionText)
-        }
+        },
+        shape = IspShapes.card
     )
 
 }

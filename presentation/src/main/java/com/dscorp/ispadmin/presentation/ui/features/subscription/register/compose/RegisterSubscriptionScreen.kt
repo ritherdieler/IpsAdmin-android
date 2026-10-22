@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.subscription.register.compose
 
 import androidx.compose.material.icons.filled.Check
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTitleCase
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.unit.sp
@@ -322,6 +323,7 @@ fun RegisterSubscriptionFormScreen(
                 dismissButton = {
                     Button(onClick = { showLeaveDialog = false }) { Text("Quedarme") }
                 },
+                shape = IspShapes.card,
             )
         }
 
@@ -362,6 +364,7 @@ fun RegisterSubscriptionFormScreen(
                         Text("Seguir registrando")
                     }
                 },
+                shape = IspShapes.card,
             )
         }
 
@@ -396,7 +399,8 @@ fun RegisterSubscriptionFormScreen(
                     ) {
                         Text("Galería")
                     }
-                }
+                },
+                shape = IspShapes.card
             )
         }
 
@@ -875,7 +879,8 @@ private fun ErrorDialog(
             Button(onClick = onDismiss) {
                 Text("Aceptar")
             }
-        }
+        },
+        shape = IspShapes.card
     )
 }
 

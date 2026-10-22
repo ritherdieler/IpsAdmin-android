@@ -28,7 +28,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,9 +43,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.theme.IspTheme
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.Loader
+import com.dscorp.ispadmin.presentation.ui.features.composecomponents.IspSnackbarHost
 import com.dscorp.ispadmin.presentation.ui.features.composecomponents.SuccessSnackbar
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.BadgeTone
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.HubBadge
@@ -82,7 +83,7 @@ fun PendingSubscriptionsScreen(
         Scaffold(
             modifier = modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.background,
-            snackbarHost = { SnackbarHost(hostState = snackbarHostState, modifier = Modifier.testTag("pending_subscriptions_snackbar")) },
+            snackbarHost = { IspSnackbarHost(hostState = snackbarHostState, modifier = Modifier.testTag("pending_subscriptions_snackbar")) },
             bottomBar = {
                 Column(Modifier.fillMaxWidth().background(colors.card).navigationBarsPadding()) {
                     HorizontalDivider(color = colors.cardBorder)
@@ -158,6 +159,7 @@ fun PendingSubscriptionsScreen(
                     }
                 },
                 dismissButton = { TextButton(onClick = { discarding = null }) { Text("Volver") } },
+                shape = IspShapes.card,
             )
         }
     }

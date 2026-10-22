@@ -24,7 +24,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -50,7 +49,9 @@ import com.dscorp.ispadmin.domain.model.GeoLocation
 import com.dscorp.ispadmin.domain.model.SubscriptionResume
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Payment
 import com.dscorp.ispadmin.navigation.NavRoutes.FeatureRoutes.Subscription
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.ui.components.Loader
+import com.dscorp.ispadmin.presentation.ui.features.composecomponents.IspSnackbarHost
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.CANCEL_SUBSCRIPTION
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.CHANGE_NAP_BOX
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.SubscriptionMenu.EDIT_PLAN_SUBSCRIPTION
@@ -205,7 +206,7 @@ fun SubscriptionFinderScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { IspSnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -909,5 +910,6 @@ internal fun DeferCutDialog(onDismiss: () -> Unit, onConfirm: (untilDate: String
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        shape = IspShapes.card,
     )
 }

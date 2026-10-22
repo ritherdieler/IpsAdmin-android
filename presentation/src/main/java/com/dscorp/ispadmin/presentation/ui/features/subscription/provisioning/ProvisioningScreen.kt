@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -97,7 +98,8 @@ private fun CancelConfirmation(onIntent: (ProvisioningIntent) -> Unit) {
         confirmButton = { TextButton(modifier = Modifier.testTag("provisioning_confirm_cancel"),
             onClick = { onIntent(ProvisioningIntent.ConfirmCancel) }) { Text("Confirmar cancelación") } },
         dismissButton = { TextButton(modifier = Modifier.testTag("provisioning_dismiss_cancel"),
-            onClick = { onIntent(ProvisioningIntent.DismissCancel) }) { Text("Volver") } })
+            onClick = { onIntent(ProvisioningIntent.DismissCancel) }) { Text("Volver") } },
+        shape = IspShapes.card)
 }
 
 private fun provisioningLabel(value: String): String = when (value) {

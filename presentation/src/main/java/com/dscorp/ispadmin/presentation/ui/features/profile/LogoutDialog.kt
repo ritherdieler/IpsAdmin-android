@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 
 object LogoutDialogTags {
     const val CONFIRM = "logout_confirm"
@@ -30,5 +31,6 @@ fun LogoutDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             ) { Text("Cerrar sesión", fontWeight = FontWeight.SemiBold) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Volver", fontWeight = FontWeight.SemiBold) } },
+        shape = IspShapes.card,
     )
 }

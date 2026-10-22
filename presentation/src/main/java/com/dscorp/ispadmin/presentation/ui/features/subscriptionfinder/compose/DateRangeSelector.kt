@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.dscorp.ispadmin.observability.ObservabilityComposeText
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 
 private enum class DateField {
     START,
@@ -272,5 +273,6 @@ fun DateSearchDialog(onDismiss: () -> Unit, onSearch: (String, String) -> Unit) 
         dismissButton = {
             androidx.compose.material3.TextButton(onClick = onDismiss) { androidx.compose.material3.Text("Cerrar") }
         },
+        shape = IspShapes.card,
     )
 }

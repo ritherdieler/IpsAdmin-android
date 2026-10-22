@@ -35,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.dscorp.ispadmin.R
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.components.components.formfields.MyOutlinedTextField
@@ -86,7 +87,8 @@ fun RegisterScreen(
                     }) {
                         Text("Aceptar")
                     }
-                }
+                },
+                shape = IspShapes.card
             )
         }
 
@@ -107,7 +109,8 @@ fun RegisterScreen(
                     Button(onClick = { viewModel.clearError() }) {
                         Text("Aceptar")
                     }
-                }
+                },
+                shape = IspShapes.card
             )
         }
     }

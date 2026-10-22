@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import com.dscorp.ispadmin.presentation.theme.IspShapes
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyCustomDialog
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
@@ -368,7 +369,8 @@ private fun CancelTicketDialog(
             TextButton(onClick = onDismiss, modifier = Modifier.testTag("cancel_ticket_dismiss")) {
                 Text("No")
             }
-        }
+        },
+        shape = IspShapes.card
     )
 }
 
