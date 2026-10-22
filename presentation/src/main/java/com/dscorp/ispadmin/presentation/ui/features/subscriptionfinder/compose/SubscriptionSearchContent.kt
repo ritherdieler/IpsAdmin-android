@@ -72,6 +72,7 @@ import com.dscorp.ispadmin.observability.ObservabilityComposeText
 import com.dscorp.ispadmin.presentation.theme.IspTheme
 import com.dscorp.ispadmin.presentation.designsystem.components.ErrorState
 import com.dscorp.ispadmin.presentation.designsystem.components.StaleBanner
+import com.dscorp.ispadmin.presentation.theme.IspType
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.HubBadge
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.badge
 
@@ -110,9 +111,7 @@ private fun SearchHeader(onOpenFilters: () -> Unit) {
     ) {
         Text(
             text = "Suscripciones",
-            fontSize = 22.sp,
-            lineHeight = 28.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = IspType.screenTitle,
             modifier = Modifier.weight(1f),
         )
         IconButton(
@@ -172,8 +171,7 @@ private fun SearchBox(state: SubscriptionFinderUiState, onQueryChange: (String) 
         )
         Text(
             text = "Reconoce nombre, DNI, IP o código",
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp),
         )
@@ -265,8 +263,7 @@ private fun QuickAccessTile(access: QuickAccess, modifier: Modifier, onClick: ()
                 Text(text = access.count.toString(), fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold)
                 Text(
                     text = access.label,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
+                    style = IspType.rowLabel,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -288,10 +285,10 @@ private fun ResultsContent(
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
     rowMenu: @Composable (SubscriptionResume, Boolean, () -> Unit) -> Unit,
-    // FilterChip draws 32 dp and reserves a 48 dp touch target, so the row padding drops by those 8 dp per side.
     rowExpansion: @Composable (SubscriptionResume) -> Unit,
 ) {
     val results = state.results
+    // FilterChip draws 32 dp and reserves a 48 dp touch target, so the row padding drops by those 8 dp per side.
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -355,8 +352,7 @@ private fun ResultsContent(
                     pop()
                     listingContext(state.lastUsedFilter)?.let { append(" · $it") }
                 },
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
+                style = IspType.rowLabel,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
@@ -536,7 +532,7 @@ private fun SkeletonRow() {
 
 @Composable
 private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    Text(text = text, fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold, modifier = modifier)
+    Text(text = text, style = IspType.sectionTitle, modifier = modifier)
 }
 
 @Composable

@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.dscorp.ispadmin.domain.model.EquipmentCondition
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.presentation.theme.IspTheme
+import com.dscorp.ispadmin.presentation.theme.IspType
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTitleCase
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
@@ -103,8 +104,7 @@ internal fun ReviewStepContent(formState: RegisterSubscriptionState, onIntent: (
             } else {
                 "Al registrar se configura el acceso a internet y el Wi-Fi. Tarda hasta 2 minutos y puedes salir de esta pantalla."
             },
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
+            style = IspType.rowLabel,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }

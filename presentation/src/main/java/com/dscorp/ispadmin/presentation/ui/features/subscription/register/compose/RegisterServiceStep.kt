@@ -74,6 +74,7 @@ import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.domain.model.NapBoxResponse
 import com.dscorp.ispadmin.domain.model.subscription.RegisterSubscriptionFormConstraints
 import com.dscorp.ispadmin.presentation.theme.IspTheme
+import com.dscorp.ispadmin.presentation.theme.IspType
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionTestTags
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionFormState
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
@@ -388,7 +389,7 @@ private fun WifiSection(form: RegisterSubscriptionFormState, enabled: Boolean, o
     val colors = IspTheme.colors
     var visible by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Wi-Fi", fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold)
+        Text("Wi-Fi", style = IspType.sectionTitle)
         RegisterTextField(
             if (form.useDifferentWifiNames) "Nombre de red 2.4 GHz *" else "Nombre de red *", form.wifiSsid24,
             { onIntent(RegisterSubscriptionIntent.WifiSsid24Changed(it)) },
@@ -461,7 +462,7 @@ private fun FacadePhoto(formState: RegisterSubscriptionState, onFacadePhotoClick
     val hasPhoto = source != null
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Foto de fachada *", Modifier.weight(1f), fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold)
+            Text("Foto de fachada *", Modifier.weight(1f), style = IspType.sectionTitle)
             OutlinedButton(onClick = onFacadePhotoClick, enabled = !formState.isLoading, modifier = Modifier.heightIn(min = 48.dp)) {
                 Icon(Icons.Outlined.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))

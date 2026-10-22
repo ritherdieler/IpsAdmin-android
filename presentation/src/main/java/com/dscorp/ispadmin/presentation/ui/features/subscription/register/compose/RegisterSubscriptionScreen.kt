@@ -693,8 +693,7 @@ internal fun RegisterSuccessFullScreen(
                             subscription.provisioningPending -> "Registrado; provisión de red pendiente de reconciliar"
                             else -> "La suscripción se ha registrado correctamente"
                         },
-                        fontSize = 14.sp,
-                        lineHeight = 20.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.testTag("register_success_message")
                     )
 

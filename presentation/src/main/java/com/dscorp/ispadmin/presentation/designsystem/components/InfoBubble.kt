@@ -31,17 +31,16 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import com.dscorp.ispadmin.presentation.theme.IspType
 
 enum class BubbleSide { ABOVE, BELOW }
 
@@ -153,13 +152,13 @@ fun DetailBubble(
             .semantics { liveRegion = LiveRegionMode.Polite },
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        title?.let { Text(it, color = MaterialTheme.colorScheme.inversePrimary, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold) }
-        text?.let { Text(it, color = content, fontSize = 13.sp, lineHeight = 18.sp) }
+        title?.let { Text(it, color = MaterialTheme.colorScheme.inversePrimary, style = IspType.label) }
+        text?.let { Text(it, color = content, style = IspType.rowLabel) }
         rows.forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 row.color?.let { dot -> Box(Modifier.size(8.dp).drawBehind { drawCircle(dot, radius = size.minDimension / 2, center = Offset(size.width / 2, size.height / 2)) }) }
-                Text(row.label, color = content, fontSize = 13.sp, lineHeight = 18.sp)
-                Text(row.value, color = content, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold)
+                Text(row.label, color = content, style = IspType.rowLabel)
+                Text(row.value, color = content, style = IspType.number)
             }
         }
     }

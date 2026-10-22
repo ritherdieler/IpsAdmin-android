@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dscorp.ispadmin.domain.model.InstallationType
 import com.dscorp.ispadmin.presentation.theme.IspTheme
+import com.dscorp.ispadmin.presentation.theme.IspType
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionTestTags
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionIntent
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionState
@@ -83,8 +84,7 @@ internal fun ServiceTypeStepContent(
             Text("¿Qué servicio vas a registrar?", fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.SemiBold)
             Text(
                 "Según el tipo, el asistente sigue pasos distintos.",
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -99,13 +99,12 @@ internal fun ServiceTypeStepContent(
             }
         }
         formState.serviceTypeError?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, lineHeight = 16.sp)
+            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         }
         RegisterNote(colors.infoContainer, colors.info, Icons.Outlined.Info) {
             Text(
                 "Sin ONU no se autoriza ningún equipo en la OLT. Empiezas por los datos del cliente y son 3 pasos en vez de 4.",
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
+                style = IspType.rowLabel,
             )
         }
     }
@@ -141,7 +140,7 @@ private fun ServiceTypeTile(option: ServiceTypeOption, selected: Boolean, enable
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f).padding(vertical = 2.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(option.type.serviceTypeTitle(), fontSize = 15.sp, lineHeight = 20.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium)
-            Text(option.subtitle, fontSize = 13.sp, lineHeight = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(option.subtitle, style = IspType.rowLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

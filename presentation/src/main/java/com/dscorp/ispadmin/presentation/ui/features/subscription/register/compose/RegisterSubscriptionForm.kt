@@ -105,6 +105,7 @@ import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.PlanResponse
 import com.dscorp.ispadmin.domain.model.canOpenRegistrationForm
 import com.dscorp.ispadmin.domain.model.subscription.RegisterSubscriptionFormConstraints
+import com.dscorp.ispadmin.presentation.theme.IspType
 import com.dscorp.ispadmin.presentation.theme.MyTheme
 import com.dscorp.ispadmin.presentation.ui.components.MyAutoCompleteTextViewCompose
 import com.dscorp.ispadmin.presentation.ui.components.MyButton
@@ -419,13 +420,13 @@ private fun AcsPendingBanner(serial: String) {
     val colors = IspTheme.colors
     RegisterNote(colors.infoContainer, colors.info, Icons.Outlined.Router, Modifier.testTag(RegisterSubscriptionTestTags.ACS_PENDING_BANNER)) {
         Text("ONU $serial", fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
-        Text("Autorizada en la OLT ✓ · conectando con la gestión remota…", fontSize = 13.sp, lineHeight = 18.sp)
+        Text("Autorizada en la OLT ✓ · conectando con la gestión remota…", style = IspType.rowLabel)
         LinearProgressIndicator(
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).height(4.dp).clip(RoundedCornerShape(50)),
             color = colors.info,
             trackColor = colors.card,
         )
-        Text("Llena los datos mientras tanto; podrás registrar cuando el equipo conecte.", fontSize = 12.sp, lineHeight = 16.sp)
+        Text("Llena los datos mientras tanto; podrás registrar cuando el equipo conecte.", style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -435,7 +436,7 @@ private fun EquipmentReadyBanner(formState: RegisterSubscriptionState) {
     val colors = IspTheme.colors
     RegisterNote(colors.successContainer, colors.success, Icons.Outlined.Router) {
         Text("Equipo conectado con la gestión remota ✓", fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold)
-        Text("ONU ${operation.serial} lista para registrar.", fontSize = 13.sp, lineHeight = 18.sp)
+        Text("ONU ${operation.serial} lista para registrar.", style = IspType.rowLabel)
     }
 }
 
@@ -915,7 +916,7 @@ private fun LocationMethodSelector(
 ) {
     val colors = IspTheme.colors
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Ubicación *", fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold)
+        Text("Ubicación *", style = IspType.sectionTitle)
         Row(
             Modifier.fillMaxWidth().background(colors.card, RoundedCornerShape(16.dp)).padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,

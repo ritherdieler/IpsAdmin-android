@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.presentation.theme.IspTheme
+import com.dscorp.ispadmin.presentation.theme.IspType
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.RegisterSubscriptionTestTags
 import com.dscorp.ispadmin.presentation.ui.features.subscription.register.models.RegisterSubscriptionWizardStep
 
@@ -151,8 +152,7 @@ internal fun RegisterWizardFooterLine(text: String, ok: Boolean = false, error: 
     Text(
         text = if (ok) "✓ $text" else text,
         modifier = modifier.padding(start = 16.dp, end = 16.dp, top = 10.dp),
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
+        style = MaterialTheme.typography.bodySmall,
         color = when {
             error -> MaterialTheme.colorScheme.error
             ok -> IspTheme.colors.success
@@ -201,7 +201,7 @@ internal fun OnuListBlock(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("ONU sin autorizar", fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold)
+                Text("ONU sin autorizar", style = IspType.sectionTitle)
                 Text(
                     when (onus.size) {
                         0 -> "Sin equipos por autorizar"
@@ -274,8 +274,7 @@ internal fun OnuListBlock(
             Spacer(Modifier.width(12.dp))
             Text(
                 "Al continuar, la ONU se autoriza en la OLT y empieza a conectarse con la gestión remota. Mientras tanto llenas los datos del cliente.",
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Start,
             )
         }
@@ -284,7 +283,7 @@ internal fun OnuListBlock(
 
 @Composable
 internal fun RegisterFieldLabel(text: String, modifier: Modifier = Modifier) {
-    Text(text, modifier, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(text, modifier, style = IspType.label, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 /** a-reg field: label above, 12 dp outlined box, error or helper below. The test tag goes on the editable field. */

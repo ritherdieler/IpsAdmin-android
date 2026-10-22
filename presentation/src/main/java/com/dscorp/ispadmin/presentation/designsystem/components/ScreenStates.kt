@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dscorp.ispadmin.presentation.theme.IspTheme
+import com.dscorp.ispadmin.presentation.theme.IspType
 
 /** a-est-03: something failed to load and nothing older can be shown. */
 @Composable
@@ -143,7 +144,7 @@ private fun StateFrame(
         Box(Modifier.size(64.dp).background(iconBackground, CircleShape), contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(28.dp))
         }
-        Text(title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 16.dp))
+        Text(title, style = IspType.sectionTitle, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 16.dp))
         Text(message, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
         actions()
     }
