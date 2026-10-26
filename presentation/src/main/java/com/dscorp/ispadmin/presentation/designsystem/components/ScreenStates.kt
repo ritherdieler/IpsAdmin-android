@@ -108,26 +108,28 @@ fun StaleBanner(text: String, onRetry: () -> Unit, modifier: Modifier = Modifier
 @Composable
 fun ListSkeleton(rows: Int, modifier: Modifier = Modifier, label: String = "Cargando…") {
     val colors = IspTheme.colors
-    Column(modifier.fillMaxWidth().background(colors.card, RoundedCornerShape(16.dp)).semantics { contentDescription = label }) {
-        repeat(rows) { index ->
-            if (index > 0) HorizontalDivider(color = colors.track)
-            Row(Modifier.fillMaxWidth().height(72.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(40.dp).background(colors.track, CircleShape))
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Bone(Modifier.fillMaxWidth(0.6f).height(12.dp))
-                    Bone(Modifier.fillMaxWidth(0.4f).height(10.dp))
+    SkeletonSweepProvider {
+        Column(modifier.fillMaxWidth().background(colors.card, RoundedCornerShape(16.dp)).semantics { contentDescription = label }) {
+            repeat(rows) { index ->
+                if (index > 0) HorizontalDivider(color = colors.track)
+                Row(Modifier.fillMaxWidth().height(72.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(40.dp).skeleton(shape = CircleShape))
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Bone(Modifier.fillMaxWidth(0.6f).height(12.dp))
+                        Bone(Modifier.fillMaxWidth(0.4f).height(10.dp))
+                    }
+                    Bone(Modifier.width(56.dp).height(20.dp))
                 }
-                Bone(Modifier.width(56.dp).height(20.dp))
             }
         }
     }
 }
 
-/** One grey placeholder shape. */
+/** One placeholder shape with the brand sweep. */
 @Composable
 fun Bone(modifier: Modifier) {
-    Box(modifier.background(IspTheme.colors.track, RoundedCornerShape(8.dp)))
+    Box(modifier.skeleton())
 }
 
 @Composable
