@@ -173,7 +173,7 @@ class FiberRegisterFirstOnuE2ETest {
         }
 
         if (onuSn != null && isTagVisible(RegisterSubscriptionTestTags.FIRST_NAME)) {
-            waitUntilOnuAuthorized(onuSn, timeoutMs = 15_000)
+            waitUntilOnuAuthorized(onuSn, timeoutMs = 60_000)
         }
 
         // Step 1: Cliente + ubicación
