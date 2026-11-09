@@ -109,6 +109,7 @@ object MainNavigation {
         is FeatureRoutes.Plan.List -> "Planes"
         is FeatureRoutes.Outlay.Register -> "Registrar egreso"
         is FeatureRoutes.Outlay.Month -> "Egresos"
+        is FeatureRoutes.Outlay.Detail -> "Egreso"
         is FeatureRoutes.Reports -> "Reportes"
         is FeatureRoutes.NetworkMap -> "Mapa de red"
         is FeatureRoutes.OltTools -> "Herramientas OLT"
@@ -127,6 +128,7 @@ object MainNavigation {
             showTopBar = route !is FeatureRoutes.Dashboard && route !is Subscription.Find && route !is Subscription.Details &&
                 route !is SupportTicket.Detail && route !is SupportTicket.Close && route !is SupportTicket.Create && route !is Subscription.Register && route !is Payment.FindPayer &&
                 route !is Payment.SearchPayers && route !is Payment.Receipt && route !is Subscription.ChangePlan && route !is Subscription.ChangeNap && route !is Subscription.UpdateLocation && route !is Subscription.DeferCut && route !is Subscription.EditHolder &&
+                route !is FeatureRoutes.Outlay.Register && route !is FeatureRoutes.Outlay.Detail &&
                 !(type == UserType.SALES && route is Installation.List),
             bottomBar = if (isTopLevel && bar.size > 1) bar else emptyList(),
             selected = selected,

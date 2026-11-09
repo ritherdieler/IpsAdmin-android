@@ -39,6 +39,8 @@ data class IspColors(
     val chartGrid: Color,
     /** Text and icons on the accent «Nuevo» buttons. */
     val onAccent: Color = Color(0xFF2A0C00),
+    /** Amber of the progress bar of a limit that is close to being reached (outlays). */
+    val warningBar: Color = Color(0xFFE0A400),
 )
 
 val LightIspColors = IspColors(

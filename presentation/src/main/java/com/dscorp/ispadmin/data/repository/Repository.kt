@@ -62,6 +62,7 @@ import com.dscorp.ispadmin.domain.model.NetworkDevice
 import com.dscorp.ispadmin.domain.model.NetworkDeviceResponse
 import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Outlay
+import com.dscorp.ispadmin.domain.model.OutlaySaveResult
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.Plan
@@ -881,14 +882,15 @@ class Repository : IRepository, KoinComponent {
         }
     }
 
-    override suspend fun saveOutLay(outlay: Outlay, receiptFiles: List<File>) {
+    override suspend fun saveOutLay(outlay: Outlay, receiptFiles: List<File>): OutlaySaveResult {
         val amountBody = outlay.amount.toString().toRequestBody("text/plain".toMediaTypeOrNull())
         val descriptionBody = (outlay.description ?: "").toRequestBody("text/plain".toMediaTypeOrNull())
         val documentCodeBody = (outlay.document_code ?: "").toRequestBody("text/plain".toMediaTypeOrNull())
         val categoryBody = (outlay.category ?: "").toRequestBody("text/plain".toMediaTypeOrNull())
         val costCenterBody = (outlay.cost_center ?: "").toRequestBody("text/plain".toMediaTypeOrNull())
         val userIdBody = (outlay.responsibleId ?: 0).toString().toRequestBody("text/plain".toMediaTypeOrNull())
-        
+        val typeBody = outlay.type.name.toRequestBody("text/plain".toMediaTypeOrNull())
+
         val receiptParts = receiptFiles.map { createImagePart(it) }
         
         val response = restApiServices.saveOutlay(
@@ -898,12 +900,21 @@ class Repository : IRepository, KoinComponent {
             category = categoryBody,
             costCenter = costCenterBody,
             userId = userIdBody,
+            type = typeBody,
             image = receiptParts
         )
-        
+
         if (!response.isSuccessful) {
-            throw Exception("Error al registrar el egreso: ${response.message()}")
+            throw Exception(
+                when (response.code()) {
+                    403 -> "No tienes permiso para registrar egresos fijos."
+                    409 -> "Se superó el límite mensual de egresos variables."
+                    else -> "Error al registrar el egreso: ${response.message()}"
+                }
+            )
         }
+        val saved = response.body()
+        return OutlaySaveResult(id = saved?.id, teamNotified = saved?.teamNotified ?: false)
     }
 
     override suspend fun getElectronicPayers(subscriptionId: Int): List<String> {

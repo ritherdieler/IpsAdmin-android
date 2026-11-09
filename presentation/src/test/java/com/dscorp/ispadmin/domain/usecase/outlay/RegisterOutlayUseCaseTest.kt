@@ -1,12 +1,14 @@
 package com.dscorp.ispadmin.domain.usecase.outlay
 
 import com.dscorp.ispadmin.domain.model.Outlay
+import com.dscorp.ispadmin.domain.model.OutlaySaveResult
 import com.dscorp.ispadmin.domain.repository.OutlayReceiptPreparer
 import com.dscorp.ispadmin.domain.repository.OutlayRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -28,11 +30,12 @@ class RegisterOutlayUseCaseTest {
         val tempFile = File.createTempFile("receipt", ".jpg")
         coEvery { outlayRepository.currentResponsibleUserId() } returns 7
         coEvery { receiptPreparer.prepareCompressedReceipts(listOf("content://a")) } returns listOf(tempFile)
-        coEvery { outlayRepository.saveOutlay(any(), any()) } returns Unit
+        coEvery { outlayRepository.saveOutlay(any(), any()) } returns OutlaySaveResult(id = 12, teamNotified = true)
 
         val result = useCase(outlay, listOf("content://a"))
 
         assertTrue(result.isSuccess)
+        assertEquals(OutlaySaveResult(id = 12, teamNotified = true), result.getOrNull())
         coVerify(exactly = 1) {
             outlayRepository.saveOutlay(match { it.responsibleId == 7 }, listOf(tempFile))
         }
@@ -65,5 +68,16 @@ class RegisterOutlayUseCaseTest {
 
         assertTrue(result.isFailure)
         coVerify(exactly = 0) { outlayRepository.saveOutlay(any(), any()) }
+    }
+
+    @Test
+    fun `a fixed or variable outlay needs no cost centre`() = runTest {
+        coEvery { outlayRepository.currentResponsibleUserId() } returns 7
+        coEvery { receiptPreparer.prepareCompressedReceipts(any()) } returns emptyList()
+        coEvery { outlayRepository.saveOutlay(any(), any()) } returns OutlaySaveResult(id = null, teamNotified = false)
+
+        val result = useCase(Outlay(amount = "1800", description = "Alquiler", category = "Alquiler"), emptyList())
+
+        assertTrue(result.isSuccess)
     }
 }

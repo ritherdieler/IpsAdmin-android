@@ -331,6 +331,7 @@ interface RestApiServices {
         @Part("category") category: RequestBody,
         @Part("cost_center") costCenter: RequestBody,
         @Part("userId") userId: RequestBody,
+        @Part("type") type: RequestBody,
         @Part image: List<MultipartBody.Part>
     ): Response<OutlayDTO>
 

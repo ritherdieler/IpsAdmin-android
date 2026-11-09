@@ -12,7 +12,11 @@ data class OutlayDTO(
     val receipt_urls: List<String> = emptyList(),
     val cost_center: String? = null,
     val responsibleName: String? = null,
-    val responsibleId: Int? = null
+    val responsibleId: Int? = null,
+    /** "FIXED" or "VARIABLE"; null on Core versions that predate outlay types (counts as variable). */
+    val type: String? = null,
+    /** True when this outlay took the month past the alert threshold and the Core notified the team. */
+    val teamNotified: Boolean = false,
 )
 
 

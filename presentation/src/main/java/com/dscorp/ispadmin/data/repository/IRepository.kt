@@ -17,6 +17,7 @@ import com.dscorp.ispadmin.domain.model.NetworkDevice
 import com.dscorp.ispadmin.domain.model.NetworkDeviceResponse
 import com.dscorp.ispadmin.domain.model.Onu
 import com.dscorp.ispadmin.domain.model.Outlay
+import com.dscorp.ispadmin.domain.model.OutlaySaveResult
 import com.dscorp.ispadmin.domain.model.Payment
 import com.dscorp.ispadmin.domain.model.Place
 import com.dscorp.ispadmin.domain.model.Plan
@@ -179,7 +180,7 @@ interface IRepository {
     suspend fun doMigration(migrationRequest: MigrationRequest): SubscriptionResponse
     suspend fun getOnuBySn(s: String): AdministrativeOnuResponse
     suspend fun deleteOnuFromOlt(onuExternalId: String)
-    suspend fun saveOutLay(outlay: Outlay, receiptFiles: List<File>)
+    suspend fun saveOutLay(outlay: Outlay, receiptFiles: List<File>): OutlaySaveResult
     suspend fun getElectronicPayers(subscriptionId: Int): List<String>
     suspend fun updateCustomerData(customer: CustomerData)
     suspend fun subscriptionById(subscriptionId: Int): SubscriptionResponse

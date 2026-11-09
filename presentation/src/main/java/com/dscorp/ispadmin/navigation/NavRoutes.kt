@@ -179,6 +179,20 @@ sealed class NavRoutes {
             @Serializable
             object Month : Outlay()
 
+            /** One outlay of the month; already formatted so it travels as plain arguments. */
+            @Serializable
+            data class Detail(
+                val description: String,
+                val amount: String,
+                val isFixed: Boolean,
+                val category: String,
+                val date: String,
+                val registeredAt: String,
+                val documentCode: String,
+                val responsible: String,
+                val receiptUrls: List<String>,
+            ) : Outlay()
+
             @Serializable
             data class ImageGalleryViewer(
                 val imageUrls: List<String>,
@@ -237,6 +251,7 @@ sealed class NavRoutes {
 
                     Outlay.Register::class.qualifiedName -> Outlay.Register
                     Outlay.Month::class.qualifiedName -> Outlay.Month
+                    Outlay.Detail::class.qualifiedName -> Outlay.Detail("", "", false, "", "", "", "", "", emptyList())
                     else -> Home // Default case
                 }
             }

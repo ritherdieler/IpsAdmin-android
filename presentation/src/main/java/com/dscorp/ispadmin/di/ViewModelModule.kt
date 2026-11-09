@@ -107,6 +107,8 @@ val viewModelModule = module {
     viewModel {
         com.dscorp.ispadmin.presentation.ui.features.outlay.OutlaysViewModel(
             com.dscorp.ispadmin.presentation.ui.features.outlay.ApiOutlaysGateway(get()),
+            com.dscorp.ispadmin.presentation.ui.features.outlay.ApiOutlaySummaryGateway(get()),
+            get<com.dscorp.ispadmin.domain.repository.OutlayRepository>().canRegisterFixedOutlay(),
             get<CoroutineDispatcher>(named("mainImmediate")),
         ) { java.time.LocalDate.now(java.time.ZoneId.of("America/Lima")) }
     }
@@ -210,7 +212,7 @@ val viewModelModule = module {
             get<CoroutineDispatcher>(named("mainImmediate")),
         )
     }
-    viewModel { OutLayViewModel(get(), get()) }
+    viewModel { OutLayViewModel(get(), get(), com.dscorp.ispadmin.presentation.ui.features.outlay.ApiOutlaySummaryGateway(get()), get()) }
     viewModel {
         SubscriptionFinderViewModel(
             get(), get(), get(), get(), get(), get(), get(),

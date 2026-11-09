@@ -519,19 +519,53 @@ private fun NavGraphContent(
                     viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.outlay.OutlaysIntent.Refresh)
                 }
             }
+            // The form leaves its result here: the id of the new outlay and whether the Core alerted the team.
+            val handle = backStackEntry.savedStateHandle
+            val savedId by handle.getStateFlow<Int?>(com.dscorp.ispadmin.presentation.ui.features.outlay.OutlayResultKeys.SAVED_ID, null).collectAsState()
+            val teamNotified by handle.getStateFlow(com.dscorp.ispadmin.presentation.ui.features.outlay.OutlayResultKeys.TEAM_NOTIFIED, false).collectAsState()
             com.dscorp.ispadmin.presentation.ui.features.outlay.OutlaysContent(
                 state,
-                onFilter = { viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.outlay.OutlaysIntent.Filter(it)) },
+                onFilterType = { viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.outlay.OutlaysIntent.FilterType(it)) },
                 onNew = { navController.navigate(Outlay.Register) },
                 onRetry = { viewModel.onIntent(com.dscorp.ispadmin.presentation.ui.features.outlay.OutlaysIntent.Refresh) },
+                onOpen = { id ->
+                    viewModel.detailOf(id)?.let { d ->
+                        navController.navigate(
+                            Outlay.Detail(d.description, d.amount, d.isFixed, d.category, d.date, d.registeredAt, d.documentCode, d.responsible, d.receiptUrls),
+                        )
+                    }
+                },
+                snackbar = savedId?.let { com.dscorp.ispadmin.presentation.ui.features.outlay.outlaySavedMessage(teamNotified, state.summary?.threshold) },
+                onSnackbarDismiss = {
+                    handle[com.dscorp.ispadmin.presentation.ui.features.outlay.OutlayResultKeys.SAVED_ID] = null
+                    handle[com.dscorp.ispadmin.presentation.ui.features.outlay.OutlayResultKeys.TEAM_NOTIFIED] = false
+                },
+                highlightId = savedId,
             )
         }
         composable<Outlay.Register> {
-
             RegisterOutlayScreen(
+                onClose = { navController.popBackStack() },
+                onSaved = { result ->
+                    navController.previousBackStackEntry?.savedStateHandle?.let { handle ->
+                        handle[com.dscorp.ispadmin.presentation.ui.features.outlay.OutlayResultKeys.SAVED_ID] = result.id ?: 0
+                        handle[com.dscorp.ispadmin.presentation.ui.features.outlay.OutlayResultKeys.TEAM_NOTIFIED] = result.teamNotified
+                    }
+                    navController.popBackStack()
+                },
                 onImageClick = { images, index ->
                     navController.navigate(Outlay.ImageGalleryViewer(images,index))
                 }
+            )
+        }
+        composable<Outlay.Detail> { backStackEntry ->
+            val d = backStackEntry.toRoute<Outlay.Detail>()
+            com.dscorp.ispadmin.presentation.ui.features.outlay.OutlayDetailScreen(
+                detail = com.dscorp.ispadmin.presentation.ui.features.outlay.OutlayDetail(
+                    d.description, d.amount, d.isFixed, d.category, d.date, d.registeredAt, d.documentCode, d.responsible, d.receiptUrls,
+                ),
+                onBack = { navController.popBackStack() },
+                onOpenReceipt = { urls, index -> navController.navigate(Outlay.ImageGalleryViewer(urls, index)) },
             )
         }
         // SUPPORT TICKET MODULE

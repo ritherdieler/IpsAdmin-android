@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.domain.usecase.outlay
 
 import com.dscorp.ispadmin.domain.model.Outlay
+import com.dscorp.ispadmin.domain.model.OutlaySaveResult
 import com.dscorp.ispadmin.domain.repository.OutlayReceiptPreparer
 import com.dscorp.ispadmin.domain.repository.OutlayRepository
 
@@ -12,7 +13,7 @@ class RegisterOutlayUseCase(
     suspend operator fun invoke(
         outlay: Outlay,
         photoUriStrings: List<String>
-    ): Result<Unit> = runCatching {
+    ): Result<OutlaySaveResult> = runCatching {
         if (!outlay.isValid()) {
             throw IllegalArgumentException("Datos incompletos")
         }

@@ -15,6 +15,8 @@ object IspSpacing {
 
 object IspShapes {
     val badge = RoundedCornerShape(8.dp)
+    /** Text fields, inline notes and the photo drop zone. */
+    val field = RoundedCornerShape(12.dp)
     val card = RoundedCornerShape(16.dp)
     val heroBottom = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp)
     val pill = RoundedCornerShape(percent = 50)
