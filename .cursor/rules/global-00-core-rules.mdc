@@ -1,0 +1,55 @@
+---
+description: Reglas globales de ingeniería (todos los proyectos) — precedencia, SOLID, Clean Architecture por proyecto, inmutabilidad y seguridad de tipos, diff mínimo, verificación
+alwaysApply: true
+---
+
+# Reglas globales: núcleo
+
+Fuente unificada de `.cursorrules`. Aplica a `wispadministrator-main`, `IpsAdmin`, `mi-gigafiber-android` y `ispadmin-backoffice`.
+
+## Precedencia
+
+1. Lo que el usuario pida de forma explícita en el mensaje.
+2. Las reglas del proyecto (`AGENTS.md` y `.cursor/rules/*.mdc` específicos): mandan cuando son más concretas.
+3. Estas reglas globales.
+
+Una regla global nunca autoriza lo que el proyecto prohíbe (despliegue, secretos, base de datos, staging, subsistemas desacoplados).
+
+## SOLID y arquitectura (la del proyecto, no otra)
+
+- Una responsabilidad por clase o función; depender de abstracciones que ya existen en el repo.
+- Una abstracción nueva exige un problema real y debe **bajar** la complejidad total. Sin capas ni patrones "por si acaso".
+- **Backend core:** `Controller → Service → JpaRepository`. Sin UseCases; ports/adapters solo en los satélites que ya los tienen.
+- **Android:** Presentación (Compose + ViewModel) → Dominio (UseCase solo si hay regla de negocio; nunca pasamanos) → Datos (Repository + DataSource/DTO).
+- **Backoffice:** `components/`, `pages/`, `services/` (un archivo por entidad), `hooks/`.
+
+## Inmutabilidad y seguridad de tipos
+
+- **Kotlin:** `val` por defecto; `data class` inmutables; `sealed` para estados finitos; `when` exhaustivo; **prohibido `!!` en código nuevo**; sin mutabilidad pública; en Android el estado se expone como `StateFlow`.
+- **TypeScript:** `strict`; sin `any` nuevos; props y modelos tipados; `const` / `readonly`.
+- **Java:** no se agrega código nuevo; si hay que tocarlo, mismo criterio.
+- Sin efectos secundarios dentro de un Composable ni del render de React.
+
+## Cambios
+
+- Diff mínimo: sin renombres, formateos ni reordenar imports ajenos; sin dependencias ni frameworks no pedidos.
+- Reutilizar antes de crear: buscar una implementación similar, leer los tests del área, seguir la arquitectura local.
+- Secretos: nunca valores en el repo, logs ni docs; solo el nombre en el catálogo que indique `AGENTS.md`.
+- Idioma: reglas y comunicación en español; el código y sus comentarios siguen la convención del proyecto (backoffice: inglés conciso).
+
+## Verificación
+
+Compilar y correr los tests del módulo afectado antes de dar por terminado; reportar el resultado real, incluidos los fallos.
+
+- Backend: `./gradlew :core:test` (Gradle manda sobre `mvnw` de reglas antiguas).
+- Android: `./gradlew :presentation:testDevDebugUnitTest`.
+- Backoffice: `npx vitest run`, `npx tsc -b`, `npx eslint`.
+
+## Contradicciones entre proyectos
+
+| Tema | Resolución |
+|---|---|
+| UseCases | Backend core: no. Android: solo con regla de negocio. Backoffice: no aplica. |
+| Turbine | Solo donde el módulo ya lo incluye; agregarlo exige aprobación. |
+| Runner de tests | El de cada proyecto (JUnit 5 / JUnit 4 / Vitest). |
+| `!!` | Prohibido en código nuevo en todo Kotlin; el legado no se toca. |

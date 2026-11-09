@@ -1,0 +1,48 @@
+---
+description: TDD obligatorio en todos los proyectos — RED → GREEN → REFACTOR, stack de pruebas por proyecto, cobertura mínima
+alwaysApply: true
+---
+
+# Reglas globales: TDD y pruebas
+
+## Flujo obligatorio
+
+```text
+Requisito → Test que falla → Mínimo código → Refactor → Tests del módulo en verde
+```
+
+1. Identificar el comportamiento actual y los tests existentes.
+2. Escribir **primero** la prueba que falla por la razón correcta: comportamiento ausente, no un test que no compila. Mostrar el fallo.
+3. Implementar el mínimo código que la pasa.
+4. Refactorizar solo lo que la tarea toca, con tests en verde.
+5. Correr los tests anteriores para detectar regresiones y reportar el resultado real.
+
+- **Bug:** primero un test que lo reproduzca, después el arreglo.
+- **Código existente sin tests:** prueba de caracterización del método tocado, no de archivos enteros.
+- **Nunca** borrar ni debilitar un test para ocultar un fallo: se investiga la causa.
+- No afirmar TDD si el código se escribió antes que la prueba. Excepción declarada: cambios cosméticos o de configuración.
+- Cambio de comportamiento observable → test que lo fije.
+
+## Stack de pruebas por proyecto
+
+No se agrega otro runner ni librería sin aprobación.
+
+| Proyecto | Pruebas |
+|---|---|
+| Backend (`wispadministrator-main`) | JUnit 5 + MockK. Mockito solo en archivos que ya lo usan. |
+| Android (`IpsAdmin`, `mi-gigafiber-android`) | JUnit 4 + MockK. ViewModel con `StandardTestDispatcher` y dispatcher inyectable. Compose con Robolectric + `createComposeRule`. |
+| Backoffice | Vitest + React Testing Library. |
+
+**Turbine** (validación de `Flow`): solo en módulos que ya lo incluyen. Donde no está (p. ej. IpsAdmin) se valida con `runTest` y el dispatcher de test.
+
+## Cobertura mínima de una feature
+
+- Caso de éxito.
+- Error de red / HTTP, con el mensaje que ve el usuario y la opción de reintento.
+- Estado vacío (`Empty`).
+- Fallos de validación y reglas de negocio (permisos, límites).
+- Transiciones de estado del ViewModel / componente: carga → éxito, carga → error → reintento.
+
+## No testear
+
+Getters de DTO, wiring de Spring ni detalles de implementación. Una prueba verifica comportamiento observable.

@@ -1,0 +1,40 @@
+---
+description: Seguridad de producción en todos los proyectos — prohibido refactorizar o tocar lo que ya funciona (Subscripciones, Aprovisionamiento, Autenticación, Pagos, Wi-Fi); contratos inmutables
+alwaysApply: true
+---
+
+# Reglas globales: seguridad de producción
+
+## Prohibido sin pedido explícito del usuario en ese mensaje
+
+- Refactorizar, renombrar, mover, "limpiar" o reordenar funciones, clases, módulos, endpoints, pantallas o consultas que ya funcionan en producción.
+- Cambiar contratos: rutas, JSON (campos, nombres, tipos), firmas públicas, modelos de datos, migraciones ya aplicadas y los DTOs compartidos entre Core, apps y backoffice.
+- Eliminar o debilitar validaciones, estados, botones, navegación o tests existentes.
+- "Mejorar" un flujo validado mientras se hace otra tarea. Un bug al lado, una prueba o una regla nueva **no autorizan** tocar el camino que ya funciona.
+
+## Módulos críticos: solo cambios aditivos, mínimos y con tests
+
+| Módulo | Qué incluye |
+|---|---|
+| Subscripciones | alta, edición, estados, cortes, búsqueda |
+| Aprovisionamiento | OLT, ACS/TR-069, ONU, registro FIBER |
+| Autenticación y sesión | login, tokens, `PlatformAuthFilter`, `TokenStore`, filtros |
+| Pagos y cobranza | registro de cobros, recibos, deuda |
+| Cambio de Wi-Fi del abonado | ya validado: ver `no-tocar-cambio-wifi.mdc` |
+
+Antes de editar uno de ellos: identificar el flujo vigente, leer sus tests y limitar el diff a lo pedido.
+
+## Cómo cambiar sin romper
+
+- Preferir lo **aditivo y compatible hacia atrás**: parámetro opcional con valor por defecto, campo nuevo opcional, endpoint nuevo. Los clientes antiguos deben seguir funcionando sin cambios.
+- El comportamiento nuevo se enciende solo en el camino nuevo; el existente conserva su resultado.
+- Si el cambio necesario alteraría un comportamiento existente: **detenerse**, explicar el impacto y pedir confirmación.
+- Una deuda o un bug ajeno al alcance se **reporta**, no se corrige.
+
+## Despliegue, datos y secretos
+
+Mandan las reglas del proyecto (`AGENTS.md`). En particular:
+
+- No desplegar ni ejecutar migraciones contra bases compartidas sin confirmación explícita.
+- No escribir valores de secretos en el repo, logs ni documentos; solo el nombre en el catálogo.
+- Staging y prestaging siguen las restricciones de cada proyecto (p. ej. el backoffice staging corre solo en local).

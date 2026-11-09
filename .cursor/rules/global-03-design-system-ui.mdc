@@ -1,0 +1,45 @@
+---
+description: Design system y UI en Android/Compose y backoffice/Tailwind — tokens, escala 4/8 y los 4 estados obligatorios (Loading, Success, Error, Empty). No aplica al backend.
+globs: "**/*.tsx,**/presentation/**/*.kt,**/designsystem/**/*.kt"
+alwaysApply: false
+---
+
+# Reglas globales: design system y UI
+
+Aplica a pantallas y componentes de Android (Compose) y del backoffice (React + Tailwind). El backend no tiene UI.
+
+## Tokens, nunca valores sueltos
+
+- **Android:** `MaterialTheme.colorScheme`, `MaterialTheme.typography` y los tokens del proyecto (`IspTheme`, `IspType`, `IspSpacing`, `IspShapes`). Prohibido hardcodear colores, y `dp`/`sp` fuera de tokens o números mágicos.
+- **Backoffice:** clases Tailwind del design system (`isp-*`, escala `gray` neutra, tipografías `text-kpi`, `text-label`, etc.). Sin colores arbitrarios (`[#hex]`) si existe un token; si falta uno, se agrega al tema.
+- Colores semánticos para estado (éxito, aviso, error, información), distintos del acento de marca.
+- Reutilizar los componentes del sistema antes de crear uno nuevo (`IspCard`, `StatusBadge`, `SegmentedChoice`, `InlineNote`, `EmptyState`, `ErrorState`...).
+
+## Escala de espaciado y medidas
+
+- Múltiplos de 4/8: 4, 8, 12, 16, 24, 32.
+- Radios: 8 (badges, chips), 12 (campos), 16 (tarjetas), píldora para botones.
+- Objetivo táctil mínimo de 48 dp; botón principal de 52 dp; filas de 64 dp.
+
+## Cuatro estados explícitos en cada pantalla o lista
+
+| Estado | Qué debe mostrar |
+|---|---|
+| `Loading` | esqueleto o indicador; no un lienzo vacío |
+| `Success` | el contenido |
+| `Error` | mensaje claro que dice qué falló **y una acción de reintento** |
+| `Empty` | mensaje que dice por qué no hay datos y, si el perfil puede, la acción para crearlos |
+
+## Formularios
+
+- Etiqueta arriba y ayuda abajo; el error aparece al intentar continuar, no antes, y dice qué corregir.
+- Un solo botón primario por pantalla. Si no se puede enviar, el botón explica el motivo.
+- Resultado de una acción → snackbar; confirmar algo destructivo → diálogo con el verbo exacto.
+
+## Accesibilidad
+
+Roles y descripciones en elementos interactivos, foco visible, el color nunca es el único indicador (siempre con texto o ícono).
+
+## Diseño aprobado
+
+Si existe un diseño aprobado de la pantalla, el resultado debe coincidir con él; las diferencias se reportan, no se improvisan.
