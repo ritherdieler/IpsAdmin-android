@@ -22,6 +22,7 @@ class RepositoryTicketGateway(
     override suspend fun ticket(ticketId: Int): AssistanceTicketResponse = repository.getTicket(ticketId.toString())
     override suspend fun subscription(subscriptionId: Int): SubscriptionResponse = repository.subscriptionById(subscriptionId)
     override suspend fun ticketsBySubscription(subscriptionId: Int) = fichaApi.ticketsBySubscription(subscriptionId)
+    override suspend fun customerThread(ticketId: Int) = fichaApi.ticketThread(ticketId)
     override suspend fun cpeReading(subscriptionId: Int): CpeReading = fichaApi.cpeStatus(subscriptionId).toReading()
     override suspend fun technicians(): List<User> = repository.getTechnicians()
     override suspend fun take(ticketId: Int, userId: Int) {

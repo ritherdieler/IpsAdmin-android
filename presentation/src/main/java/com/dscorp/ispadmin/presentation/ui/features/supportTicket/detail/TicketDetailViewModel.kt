@@ -13,6 +13,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
+import com.dscorp.ispadmin.data.response.TicketThreadResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.CpeReading
@@ -30,6 +31,7 @@ interface TicketDetailGateway {
     suspend fun ticket(ticketId: Int): AssistanceTicketResponse
     suspend fun subscription(subscriptionId: Int): SubscriptionResponse
     suspend fun ticketsBySubscription(subscriptionId: Int): List<AssistanceTicketResponse>
+    suspend fun customerThread(ticketId: Int): TicketThreadResponse
     suspend fun cpeReading(subscriptionId: Int): CpeReading
     suspend fun technicians(): List<User>
     suspend fun take(ticketId: Int, userId: Int)
@@ -119,8 +121,10 @@ class TicketDetailViewModel(
             val subscriptionId = ticket.subscriptionId
             val subscription = subscriptionId?.let { optional { gateway.subscription(it) } }
             val previous = subscriptionId?.let { optional { gateway.ticketsBySubscription(it) } }.orEmpty()
+            // Only Mi GigaFiber tickets have a customer thread; a failed read leaves the slot from the ticket.
+            val thread = if (ticket.origin == TicketCustomerInfo.ORIGIN_APP) optional { gateway.customerThread(id) } else null
             val user = gateway.currentUser() ?: User()
-            val detail = TicketDetail.from(ticket, subscription, previous, user, now())
+            val detail = TicketDetail.from(ticket, subscription, previous, user, now(), thread)
             val taken = ticket.status in TAKEN
             val fiber = subscription?.installationType?.let { it != InstallationType.WIRELESS } == true
             val diagnosis = if (taken && fiber && subscriptionId != null) {

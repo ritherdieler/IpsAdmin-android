@@ -132,6 +132,7 @@ fun TicketDetailContent(
                     detail.debtNotice?.let { DebtCard(it, onCharge) }
                     Subscriber(detail, onOpenSubscription)
                     Description(detail, onCall, onWhatsApp)
+                    detail.customer?.let { CustomerThread(it) }
                     state.diagnosis?.let { Diagnosis(it, onIntent) }
                     Assignment(detail, onAssign = { onIntent(TicketDetailIntent.OpenAssign) })
                     if (detail.previous.isNotEmpty()) Previous(detail, onOpenTicket)
@@ -266,6 +267,35 @@ private fun Description(detail: TicketDetail, onCall: () -> Unit, onWhatsApp: ()
                     }
                 }
             }
+        }
+    }
+}
+
+/** Mi GigaFiber side of the ticket (R2.5): preferred slot and what the customer wrote; read-only here. */
+@Composable
+private fun CustomerThread(info: TicketCustomerInfo) {
+    FichaCard("Cliente · Mi GigaFiber") {
+        Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Outlined.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                Text(info.slot ?: "Sin horario preferido", fontSize = 14.sp)
+            }
+            if (info.comments.isEmpty()) {
+                Text("El cliente no agregó comentarios.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            info.comments.forEach { comment ->
+                Column(
+                    Modifier.fillMaxWidth().background(
+                        if (comment.fromCustomer) MaterialTheme.colorScheme.surfaceContainer else IspTheme.colors.selectedContainer,
+                        RoundedCornerShape(12.dp),
+                    ).padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(comment.body, fontSize = 14.sp, lineHeight = 20.sp)
+                    Text(listOf(comment.author, comment.at).filter { it.isNotBlank() }.joinToString(" · "), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Text("Para responder, usa el back office o WhatsApp.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

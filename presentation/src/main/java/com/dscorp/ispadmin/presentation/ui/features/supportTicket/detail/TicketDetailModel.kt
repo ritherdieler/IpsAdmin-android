@@ -1,6 +1,7 @@
 package com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail
 
 import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
+import com.dscorp.ispadmin.data.response.TicketThreadResponse
 import com.dscorp.ispadmin.domain.model.SubscriptionResponse
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.TicketRow
@@ -45,9 +46,18 @@ data class TicketDetail(
     val canCancel: Boolean,
     /** Raw contact number for the call and WhatsApp buttons. */
     val phone: String? = null,
+    /** Mi GigaFiber side of the ticket (R2.5): preferred slot and the customer thread, read-only. */
+    val customer: TicketCustomerInfo? = null,
 ) {
     companion object {
-        fun from(ticket: AssistanceTicketResponse, subscription: SubscriptionResponse?, previous: List<AssistanceTicketResponse>, user: User, now: Instant): TicketDetail {
+        fun from(
+            ticket: AssistanceTicketResponse,
+            subscription: SubscriptionResponse?,
+            previous: List<AssistanceTicketResponse>,
+            user: User,
+            now: Instant,
+            thread: TicketThreadResponse? = null,
+        ): TicketDetail {
             val actions = ticketActions(ticket, user)
             val taken = ticket.status in TAKEN_STATES
             val assignee = ticket.assignedTo?.takeIf { it.isNotBlank() }?.toTitleCase()
@@ -64,6 +74,7 @@ data class TicketDetail(
                     ticket.status.ticketBadge(),
                     priorityBadge(ticket.priority),
                     if (ticket.isExternalCustomer) StatusBadge("No abonado", BadgeTone.INFO) else null,
+                    if (ticket.origin == TicketCustomerInfo.ORIGIN_APP) StatusBadge("App", BadgeTone.INFO) else null,
                 ),
                 category = sentenceCase(ticket.category),
                 meta = meta,
@@ -96,6 +107,7 @@ data class TicketDetail(
                 canReschedule = TicketAction.RESCHEDULE in actions.overflow,
                 canCancel = TicketAction.CANCEL in actions.overflow,
                 phone = ticket.phone.takeIf { it.isNotBlank() },
+                customer = TicketCustomerInfo.from(ticket, thread),
             )
         }
 

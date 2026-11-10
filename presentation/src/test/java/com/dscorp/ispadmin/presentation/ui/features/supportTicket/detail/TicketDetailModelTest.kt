@@ -103,4 +103,50 @@ class TicketDetailModelTest {
         assertEquals("1 h 2 min", elapsedLabel(Instant.ofEpochMilli(at(14, 9, 40).time), now))
         assertEquals("35 min", elapsedLabel(now.minusSeconds(35 * 60), now))
     }
+
+    @Test
+    fun `a Mi GigaFiber ticket gets the App badge, the slot and only what the customer can read`() {
+        val app = pending.copy(origin = "APP", preferredSlot = "MORNING")
+        val thread = com.dscorp.ispadmin.data.response.TicketThreadResponse(
+            ticketId = 3609, origin = "APP", slot = "AFTERNOON", preferredDate = "2026-11-10",
+            comments = listOf(
+                com.dscorp.ispadmin.data.response.TicketThreadCommentResponse(1, "CUSTOMER", "COMMENT", null, "Se corta en la noche", true, "2026-11-02T19:40:00-05:00"),
+                com.dscorp.ispadmin.data.response.TicketThreadCommentResponse(2, "STAFF", "COMMENT", "Luis Pérez", "Nota interna", false, "2026-11-03T09:00:00-05:00"),
+                com.dscorp.ispadmin.data.response.TicketThreadCommentResponse(3, "STAFF", "COMMENT", "Luis Pérez", "Te visitamos mañana", true, "2026-11-03T10:15:00-05:00"),
+            ),
+        )
+
+        val detail = TicketDetail.from(app, cut, emptyList(), admin, now, thread)
+
+        assertEquals(StatusBadge("App", BadgeTone.INFO), detail.badges.last())
+        assertEquals("Prefiere la tarde (13 a 18 h) · mar 10 nov", detail.customer?.slot)
+        assertEquals(
+            listOf(
+                TicketCustomerComment("Cliente", "Se corta en la noche", "lun 2 nov, 19:40", fromCustomer = true),
+                TicketCustomerComment("Luis Pérez", "Te visitamos mañana", "mar 3 nov, 10:15", fromCustomer = false),
+            ),
+            detail.customer?.comments,
+        )
+    }
+
+    @Test
+    fun `without the thread the slot still comes from the ticket, and staff tickets have no customer side`() {
+        val app = pending.copy(origin = "APP", preferredSlot = "ANY")
+
+        assertEquals("Cualquier horario", TicketDetail.from(app, cut, emptyList(), admin, now).customer?.slot)
+        assertNull(TicketDetail.from(pending, cut, emptyList(), admin, now).customer)
+    }
+
+    @Test
+    fun `the app fields of the Core ticket are read`() {
+        val ticket = buildApiGson().fromJson(
+            """{"id":7,"name":"ANA","category":"Otros","description":"","status":"PENDING","priority":"Baja",
+               "origin":"APP","preferredSlot":"AFTERNOON","preferredDate":"2026-11-10"}""",
+            AssistanceTicketResponse::class.java,
+        )
+
+        assertEquals("APP", ticket.origin)
+        assertEquals("AFTERNOON", ticket.preferredSlot)
+        assertEquals("2026-11-10", ticket.preferredDate)
+    }
 }
