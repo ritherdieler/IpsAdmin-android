@@ -142,4 +142,33 @@ class TicketDetailViewModelTest {
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.diagnosis?.unavailable == true)
     }
+
+    @Test
+    fun `a Mi GigaFiber ticket loads the customer thread and a staff ticket does not`() = runTest(dispatcher) {
+        coEvery { gateway.ticket(3610) } returns pending.copy(id = 3610, origin = "APP", preferredSlot = "AFTERNOON")
+        coEvery { gateway.customerThread(3610) } returns com.dscorp.ispadmin.data.response.TicketThreadResponse(
+            ticketId = 3610, origin = "APP", slot = "AFTERNOON",
+            comments = listOf(com.dscorp.ispadmin.data.response.TicketThreadCommentResponse(1, "CUSTOMER", body = "Se corta", at = "2026-11-02T19:40:00-05:00")),
+        )
+
+        viewModel.onIntent(TicketDetailIntent.Load(3610))
+        advanceUntilIdle()
+        assertEquals(listOf("Se corta"), viewModel.uiState.value.detail?.customer?.comments?.map { it.body })
+
+        viewModel.onIntent(TicketDetailIntent.Load(3609))
+        advanceUntilIdle()
+        assertNull(viewModel.uiState.value.detail?.customer)
+        coVerify(exactly = 0) { gateway.customerThread(3609) }
+    }
+
+    @Test
+    fun `a failed thread read still shows the ticket with its slot`() = runTest(dispatcher) {
+        coEvery { gateway.ticket(3610) } returns pending.copy(id = 3610, origin = "APP", preferredSlot = "MORNING")
+        coEvery { gateway.customerThread(3610) } throws java.io.IOException("offline")
+
+        viewModel.onIntent(TicketDetailIntent.Load(3610))
+        advanceUntilIdle()
+
+        assertEquals("Prefiere la mañana (8 a 13 h)", viewModel.uiState.value.detail?.customer?.slot)
+    }
 }

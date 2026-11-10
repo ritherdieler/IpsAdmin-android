@@ -27,6 +27,10 @@ data class AssistanceTicketResponse(
     val subscriptionId: Int? = null,
     val placeId: Int? = null,
     val isExternalCustomer: Boolean = false,
+    /** "APP" when the customer reported it from Mi GigaFiber; preferred visit slot and day (yyyy-MM-dd). */
+    val origin: String? = null,
+    val preferredSlot: String? = null,
+    val preferredDate: String? = null,
 ):Serializable {
     fun getCreatedAtDateAsString(): String {
         val dateFormatter =

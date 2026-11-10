@@ -129,4 +129,30 @@ class TicketDetailUiTest {
         assertEquals(listOf("09:00", "11:00", "14:00", "16:00"), RESCHEDULE_HOURS.map { it.label })
         assertEquals("Reagendar para jue 15 · 11:00", rescheduleLabel(options[1].day, RESCHEDULE_HOURS[1].time, now.toLocalDate()))
     }
+
+    @Test
+    fun `a Mi GigaFiber ticket shows the preferred slot and the customer thread, read-only`() {
+        val customer = TicketCustomerInfo(
+            slot = "Prefiere la tarde (13 a 18 h) · mar 10 nov",
+            comments = listOf(
+                TicketCustomerComment("Cliente", "Se corta varias veces en la noche.", "lun 2 nov, 19:40", fromCustomer = true),
+                TicketCustomerComment("Luis Pérez", "Te visitamos mañana.", "mar 3 nov, 10:15", fromCustomer = false),
+            ),
+        )
+        show(TicketDetailUiState(detail = pending.copy(customer = customer), subscriptionId = 1842))
+
+        compose.onNodeWithText("Cliente · Mi GigaFiber").assertExists()
+        compose.onNodeWithText("Prefiere la tarde (13 a 18 h) · mar 10 nov").assertExists()
+        compose.onNodeWithText("Se corta varias veces en la noche.").assertExists()
+        compose.onNodeWithText("Cliente · lun 2 nov, 19:40").assertExists()
+        compose.onNodeWithText("Luis Pérez · mar 3 nov, 10:15").assertExists()
+        compose.onNodeWithText("Para responder, usa el back office o WhatsApp.").assertExists()
+    }
+
+    @Test
+    fun `a staff ticket has no customer card`() {
+        show(TicketDetailUiState(detail = pending, subscriptionId = 1842))
+
+        compose.onNodeWithText("Cliente · Mi GigaFiber").assertDoesNotExist()
+    }
 }

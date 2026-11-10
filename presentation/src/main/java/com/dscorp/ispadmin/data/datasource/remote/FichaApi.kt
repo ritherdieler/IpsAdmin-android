@@ -16,6 +16,10 @@ interface FichaApi {
     @GET("assistanceTicket/counts")
     suspend fun ticketCounts(): TicketCountsResponse
 
+    /** Customer thread of a Mi GigaFiber ticket (read-only here). */
+    @GET("assistanceTicket/{id}/comments")
+    suspend fun ticketThread(@Path("id") ticketId: Int): com.dscorp.ispadmin.data.response.TicketThreadResponse
+
     @GET("assistanceTicket/bySubscription/{id}")
     suspend fun ticketsBySubscription(@Path("id") subscriptionId: Int): List<com.dscorp.ispadmin.data.response.AssistanceTicketResponse>
 }
