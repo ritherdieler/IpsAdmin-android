@@ -90,7 +90,7 @@ class SubscriptionHubUiTest {
         compose.setContent {
             MaterialTheme {
                 ChargeReceiptContent(
-                    ChargeReceipt("P-1", "Jorge Ramos Villanueva", "ago y set 2026", "Yape · Jorge Ramos V.", "S/ 100.00", "Rosa C.", "14 oct 2026 · 11:42", restored = true),
+                    ChargeReceipt("P-1", "Jorge Ramos Villanueva", "ago y set 2026", "Yape · Jorge Ramos V.", "S/ 100.00", "Rosa C.", "14 oct 2026 · 11:42 a. m.", restored = true),
                     onDone = { done = true }, onShare = {},
                 )
             }

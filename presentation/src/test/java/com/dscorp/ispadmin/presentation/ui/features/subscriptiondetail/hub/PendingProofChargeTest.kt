@@ -28,7 +28,7 @@ class PendingProofChargeTest {
     private lateinit var viewModel: SubscriptionHubViewModel
 
     private val whatsApp = PendingProof(
-        inboundMessageId = 900, provider = "YAPE", amount = 120.0, operation = "03948211", received = "hoy 10:42",
+        inboundMessageId = 900, provider = "YAPE", amount = 120.0, operation = "03948211", received = "hoy 10:42 a. m.",
         payerName = "Jorge Ramos V.",
     )
     private val app = PendingProof(

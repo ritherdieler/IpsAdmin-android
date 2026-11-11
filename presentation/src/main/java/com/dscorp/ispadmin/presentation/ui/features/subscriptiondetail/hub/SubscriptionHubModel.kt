@@ -309,11 +309,12 @@ internal fun ChargeReceipt.shareText(): String = buildString {
     if (restored == true) append("\nServicio restablecido")
 }
 
-/** «hoy 10:42», «ayer 21:03» or «8 nov 09:15» from the Core's Lima date-time (with or without offset). */
+/** «hoy 10:42 a. m.», «ayer 9:03 p. m.» or «8 nov 9:15 a. m.» from the Core's Lima date-time (with or without offset). */
 internal fun receivedLabel(raw: String?, today: java.time.LocalDate): String {
     val text = raw?.takeIf { it.length >= 16 } ?: return ""
     val date = runCatching { java.time.LocalDate.parse(text.take(10)) }.getOrNull() ?: return ""
-    val time = text.substring(11, 16)
+    val clock = runCatching { java.time.LocalTime.parse(text.substring(11, 16)) }.getOrNull() ?: return ""
+    val time = com.dscorp.ispadmin.presentation.util.clock12(clock.hour, clock.minute)
     val day = when (date) {
         today -> "hoy"
         today.minusDays(1) -> "ayer"

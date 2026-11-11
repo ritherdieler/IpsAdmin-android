@@ -452,7 +452,7 @@ class SubscriptionHubViewModel(
             method = listOfNotNull(draft.method, payer).joinToString(" · "),
             amount = formatSoles(draft.toPay),
             collector = shortName(user.name),
-            date = "${dayMonth(at.toLocalDate())} ${at.year} · ${"%02d:%02d".format(at.hour, at.minute)}",
+            date = "${dayMonth(at.toLocalDate())} ${at.year} · ${com.dscorp.ispadmin.presentation.util.clock12(at.hour, at.minute)}",
             restored = restored,
         )
     }
