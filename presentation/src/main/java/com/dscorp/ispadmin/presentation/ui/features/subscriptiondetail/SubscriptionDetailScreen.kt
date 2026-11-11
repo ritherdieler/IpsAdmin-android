@@ -460,7 +460,7 @@ private fun ChargeBottomSheet(charge: ChargeSheetState, holderName: String, subt
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
-            ChargeSheetContent(charge.draft, holderName, onIntent, isSubmitting = charge.isSubmitting, error = charge.error, subtitle = subtitle)
+            ChargeSheetContent(charge.draft, holderName, onIntent, isSubmitting = charge.isSubmitting, error = charge.error, subtitle = subtitle, charge = charge)
         }
     }
 }

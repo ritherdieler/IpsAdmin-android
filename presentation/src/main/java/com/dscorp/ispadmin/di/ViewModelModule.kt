@@ -190,7 +190,11 @@ val viewModelModule = module {
     }
     viewModel {
         SubscriptionHubViewModel(
-            gateway = RepositorySubscriptionHubGateway(get(), get(), get(), get(), get(), get(), get()),
+            gateway = RepositorySubscriptionHubGateway(
+                get(), get(), get(), get(), get(), get(), get(),
+                imageBase = com.dscorp.ispadmin.BuildConfig.BASE_URL,
+                accessToken = { get<com.dscorp.ispadmin.data.datasource.remote.auth.TokenStore>().getAccessToken() },
+            ),
             mainImmediate = get<CoroutineDispatcher>(named("mainImmediate")),
         )
     }

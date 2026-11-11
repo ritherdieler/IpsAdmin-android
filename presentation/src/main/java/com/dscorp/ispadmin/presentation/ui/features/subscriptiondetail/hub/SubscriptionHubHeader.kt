@@ -134,13 +134,28 @@ fun ChargeSheetContent(
     error: String? = null,
     subtitle: String? = null,
     today: LocalDate = LocalDate.now(FICHA_ZONE),
+    charge: ChargeSheetState? = null,
 ) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        if (charge?.discarding != null) {
+            DiscardProofSection(charge, onIntent)
+            return@Column
+        }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text("Cobrar a $holderName", fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
             subtitle?.let { Text(it, fontSize = 13.sp, color = muted) }
         }
+
+        // a-cmp-02: with a pending proof the charge waits until staff use it or discard it.
+        val waiting = draft.pending.isNotEmpty() && draft.proof == null
+        val proof = draft.proof
+        if (proof != null) {
+            UsedProofRow(proof, canChange = true, onIntent = onIntent)
+        } else {
+            draft.pending.firstOrNull()?.let { PendingProofCard(it, position = 1, count = draft.pending.size, onIntent = onIntent) }
+        }
+        val onFieldIntent: (SubscriptionHubIntent) -> Unit = if (waiting) { _ -> } else onIntent
 
         Column {
             SectionLabel("Recibos")
@@ -148,7 +163,7 @@ fun ChargeSheetContent(
                 val id = receipt.id ?: return@forEach
                 Row(
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
-                        .clickable(role = Role.Checkbox) { onIntent(SubscriptionHubIntent.ReceiptToggled(id)) }
+                        .clickable(role = Role.Checkbox) { onFieldIntent(SubscriptionHubIntent.ReceiptToggled(id)) }
                         .testTag(SubscriptionHubTestTags.receipt(id)),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -169,13 +184,13 @@ fun ChargeSheetContent(
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             SectionLabel("Método")
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), maxItemsInEachRow = 2) {
+            if (proof != null) LockedMethod(draft.method) else FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), maxItemsInEachRow = 2) {
                 draft.methods.forEach { option ->
                     MethodTile(
                         label = option.name,
                         selected = option.name == draft.method,
                         lastUsed = option.name == draft.lastUsed,
-                        onClick = { onIntent(SubscriptionHubIntent.MethodSelected(option.name)) },
+                        onClick = { onFieldIntent(SubscriptionHubIntent.MethodSelected(option.name)) },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -185,7 +200,7 @@ fun ChargeSheetContent(
         if (draft.requiresPayerName) {
             OutlinedTextField(
                 value = draft.payerName,
-                onValueChange = { onIntent(SubscriptionHubIntent.PayerNameChanged(it)) },
+                onValueChange = { onFieldIntent(SubscriptionHubIntent.PayerNameChanged(it)) },
                 label = { Text("Nombre en ${draft.method} *") },
                 supportingText = { Text("Como aparece en la captura") },
                 singleLine = true,
@@ -193,10 +208,27 @@ fun ChargeSheetContent(
             )
         }
 
-        if (draft.isCash) {
+        draft.otherServiceFees.takeIf { it.isNotEmpty() }?.let { fees ->
+            Text(
+                "Este comprobante también paga " + fees.joinToString(" · ") { listOfNotNull(it.place, it.period, formatSoles(it.amount)).joinToString(" ") } +
+                    ": se registra en este mismo cobro.",
+                fontSize = 13.sp,
+                color = IspTheme.colors.info,
+            )
+        }
+
+        draft.leftover?.let { leftover ->
+            Text(
+                "Sobran ${formatSoles(leftover)}: quedan como saldo a favor del cliente y se descuentan solos en su próximo pago.",
+                fontSize = 13.sp,
+                color = IspTheme.colors.info,
+            )
+        }
+
+        if (draft.isCash && proof == null) {
             OutlinedTextField(
                 value = draft.received,
-                onValueChange = { onIntent(SubscriptionHubIntent.ReceivedChanged(it)) },
+                onValueChange = { onFieldIntent(SubscriptionHubIntent.ReceivedChanged(it)) },
                 label = { Text("Recibido") },
                 prefix = { Text("S/ ") },
                 supportingText = draft.change?.let { change -> { Text("Vuelto ${formatSoles(change)}") } },
@@ -206,7 +238,7 @@ fun ChargeSheetContent(
             )
         }
 
-        DiscountSection(draft, onIntent)
+        DiscountSection(draft, onFieldIntent)
 
         if (draft.canRestore) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -214,7 +246,7 @@ fun ChargeSheetContent(
                     Text("Restablecer el servicio", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                     Text(restoreNote(draft), fontSize = 12.sp, color = muted)
                 }
-                Switch(checked = draft.restore, onCheckedChange = { onIntent(SubscriptionHubIntent.RestoreToggled) })
+                Switch(checked = draft.restore, onCheckedChange = { onFieldIntent(SubscriptionHubIntent.RestoreToggled) }, enabled = !waiting)
             }
         }
 

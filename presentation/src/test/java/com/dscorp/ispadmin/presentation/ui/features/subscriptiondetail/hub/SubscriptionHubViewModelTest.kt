@@ -43,6 +43,7 @@ class SubscriptionHubViewModelTest {
         every { gateway.currentUser() } returns cashier
         every { gateway.lastMethod() } returns null
         every { gateway.rememberMethod(any()) } returns Unit
+        coEvery { gateway.pendingProofs(any()) } returns emptyList()
         viewModel = SubscriptionHubViewModel(gateway, mainImmediate = dispatcher)
     }
 

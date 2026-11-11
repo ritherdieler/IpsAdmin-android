@@ -54,12 +54,24 @@ interface SubscriptionHubGateway {
     suspend fun resendConfig(subscriptionId: Int): Result<Unit> = Result.failure(UnsupportedOperationException())
     suspend fun tickets(subscriptionId: Int): List<com.dscorp.ispadmin.data.response.AssistanceTicketResponse> = emptyList()
     suspend fun history(subscriptionId: Int): List<HistoryLog> = emptyList()
+    /** Proofs the charge has to use or discard first (GET payment/pending-proofs). */
+    suspend fun pendingProofs(subscriptionId: Int): List<PendingProof> = emptyList()
+    /** The charge with a Mi GigaFiber proof: Core approves it for [paymentIds], with the discount. */
+    suspend fun chargeWithAppProof(proofId: String, paymentIds: List<Int>, payerName: String?, discount: Double, reason: String?) {}
+    suspend fun discardProof(proof: PendingProof, reason: DiscardReason) {}
 }
+
+/** Core refused the request with [message] (e.g. 409: the charge must use the pending proof). */
+class CoreRejection(val status: Int, override val message: String) : Exception(message)
 
 data class ChargeSheetState(
     val draft: ChargeDraft,
     val isSubmitting: Boolean = false,
     val error: String? = null,
+    /** a-cmp-05: the pending proof staff are discarding, with the reason picked. */
+    val discarding: PendingProof? = null,
+    val discardReason: DiscardReason? = null,
+    val isDiscarding: Boolean = false,
 ) {
     val status: ServiceStatus get() = draft.status
 }
@@ -101,6 +113,12 @@ sealed interface SubscriptionHubIntent {
     data class DiscountReasonSelected(val reason: String) : SubscriptionHubIntent
     data object CloseReceipt : SubscriptionHubIntent
     data object SubmitCharge : SubscriptionHubIntent
+    data class UseProof(val key: String) : SubscriptionHubIntent
+    data object ChangeProof : SubscriptionHubIntent
+    data class DiscardProof(val key: String) : SubscriptionHubIntent
+    data class DiscardReasonPicked(val reason: DiscardReason) : SubscriptionHubIntent
+    data object ConfirmDiscard : SubscriptionHubIntent
+    data object CancelDiscard : SubscriptionHubIntent
     data class TabSelected(val tab: FichaTab) : SubscriptionHubIntent
     data object RestoreService : SubscriptionHubIntent
     data object RebootOnu : SubscriptionHubIntent
@@ -124,6 +142,8 @@ class SubscriptionHubViewModel(
         const val LOAD_ERROR = "No se pudo cargar la suscripción. Revisa tu conexión y vuelve a intentar."
         const val CHARGE_ERROR = "No se pudo registrar el cobro. Revisa tu conexión y vuelve a intentar."
         const val SESSION_ERROR = "Tu sesión expiró. Vuelve a ingresar para cobrar."
+        const val PENDING_ERROR = "No se pudieron revisar los comprobantes del cliente. Vuelve a abrir el cobro."
+        const val DISCARD_ERROR = "No se pudo descartar el comprobante. Vuelve a intentar."
     }
 
     private val _uiState = MutableStateFlow(SubscriptionHubUiState())
@@ -138,7 +158,8 @@ class SubscriptionHubViewModel(
             SubscriptionHubIntent.OpenCharge -> openCharge()
             SubscriptionHubIntent.CloseCharge -> _uiState.update { it.copy(charge = null) }
             is SubscriptionHubIntent.ReceiptToggled -> updateDraft { it.toggle(intent.receiptId) }
-            is SubscriptionHubIntent.MethodSelected -> updateDraft { it.copy(method = intent.method) }
+            // The method comes from the proof in use; while a proof is pending nothing is chosen yet.
+            is SubscriptionHubIntent.MethodSelected -> updateDraft { if (it.pending.isEmpty() && it.proof == null) it.copy(method = intent.method) else it }
             is SubscriptionHubIntent.PayerNameChanged -> updateDraft { it.copy(payerName = intent.name) }
             SubscriptionHubIntent.RestoreToggled -> updateDraft { it.copy(restore = !it.restore) }
             is SubscriptionHubIntent.ReceivedChanged -> updateDraft { it.copy(received = intent.amount) }
@@ -149,6 +170,18 @@ class SubscriptionHubViewModel(
             is SubscriptionHubIntent.DiscountReasonSelected -> updateDraft { it.copy(discountReason = intent.reason) }
             SubscriptionHubIntent.CloseReceipt -> _uiState.update { it.copy(chargeReceipt = null) }
             SubscriptionHubIntent.SubmitCharge -> submitCharge()
+            is SubscriptionHubIntent.UseProof -> updateDraft { draft -> draft.pending.firstOrNull { it.key == intent.key }?.let(draft::use) ?: draft }
+            SubscriptionHubIntent.ChangeProof -> updateDraft { it.clearProof() }
+            is SubscriptionHubIntent.DiscardProof -> _uiState.update { state ->
+                state.copy(charge = state.charge?.let { c -> c.copy(discarding = c.draft.pending.firstOrNull { it.key == intent.key }, discardReason = null, error = null) })
+            }
+            is SubscriptionHubIntent.DiscardReasonPicked -> _uiState.update { state ->
+                state.copy(charge = state.charge?.copy(discardReason = intent.reason))
+            }
+            SubscriptionHubIntent.CancelDiscard -> _uiState.update { state ->
+                state.copy(charge = state.charge?.copy(discarding = null, discardReason = null))
+            }
+            SubscriptionHubIntent.ConfirmDiscard -> confirmDiscard()
             is SubscriptionHubIntent.TabSelected -> {
                 _uiState.update { it.copy(tab = intent.tab) }
                 if (intent.tab == FichaTab.RED && _uiState.value.network == null) loadNetwork()
@@ -296,6 +329,44 @@ class SubscriptionHubViewModel(
             cutFlagged = subscription.isServiceCutOff,
         )
         _uiState.update { it.copy(charge = ChargeSheetState(draft)) }
+        refreshPending(subscription.id)
+    }
+
+    /** a-cmp-02: the charge waits for the pending proofs; without them the Core would refuse it anyway (409). */
+    private fun refreshPending(subscriptionId: Int) {
+        viewModelScope.launch(mainImmediate) {
+            try {
+                val proofs = gateway.pendingProofs(subscriptionId)
+                // Keeps the error on screen (e.g. the 409 that asked for this reload).
+                _uiState.update { state -> state.copy(charge = state.charge?.let { it.copy(draft = it.draft.withPending(proofs)) }) }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _uiState.update { state -> state.copy(charge = state.charge?.copy(error = PENDING_ERROR)) }
+            }
+        }
+    }
+
+    private fun confirmDiscard() {
+        val charge = _uiState.value.charge ?: return
+        val proof = charge.discarding ?: return
+        val reason = charge.discardReason ?: return
+        val subscriptionId = _uiState.value.subscription?.id ?: return
+        if (charge.isDiscarding) return
+        viewModelScope.launch(mainImmediate) {
+            _uiState.update { it.copy(charge = it.charge?.copy(isDiscarding = true, error = null)) }
+            try {
+                gateway.discardProof(proof, reason)
+                _uiState.update { it.copy(charge = it.charge?.copy(isDiscarding = false, discarding = null, discardReason = null)) }
+                _events.emit(SubscriptionHubEvent.Message("Comprobante descartado"))
+                refreshPending(subscriptionId)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                val message = (error as? CoreRejection)?.message ?: DISCARD_ERROR
+                _uiState.update { it.copy(charge = it.charge?.copy(isDiscarding = false, error = message)) }
+            }
+        }
     }
 
     private fun updateDraft(change: (ChargeDraft) -> ChargeDraft) {
@@ -318,11 +389,26 @@ class SubscriptionHubViewModel(
             _uiState.update { it.copy(charge = charge.copy(isSubmitting = true, error = null)) }
             val draft = charge.draft
             val registered = try {
-                gateway.registerCharge(draft.toBatch(collectorId))
+                val proof = draft.proof
+                if (proof?.appProofId != null) {
+                    gateway.chargeWithAppProof(
+                        proofId = proof.appProofId,
+                        paymentIds = draft.selectedReceipts.mapNotNull { it.id } + draft.otherServiceFees.map { it.paymentId },
+                        payerName = draft.payerName.trim().ifEmpty { null },
+                        discount = draft.discountValue,
+                        reason = draft.discountReason.takeIf { draft.discountValue > 0 },
+                    )
+                    emptyList()
+                } else {
+                    gateway.registerCharge(draft.toBatch(collectorId))
+                }
             } catch (cancelled: CancellationException) {
                 throw cancelled
-            } catch (_: Exception) {
-                _uiState.update { it.copy(charge = charge.copy(isSubmitting = false, error = CHARGE_ERROR)) }
+            } catch (error: Exception) {
+                val rejection = error as? CoreRejection
+                _uiState.update { it.copy(charge = charge.copy(isSubmitting = false, error = rejection?.message ?: CHARGE_ERROR)) }
+                // 409: someone else used or discarded a proof, or a new one arrived: show the current ones.
+                if (rejection?.status == 409) refreshPending(subscription.id)
                 return@launch
             }
             gateway.rememberMethod(draft.method)
@@ -346,12 +432,15 @@ class SubscriptionHubViewModel(
         discountReason = discountReason.takeIf { discountValue > 0 },
         electronicPayerName = payerName.trim().takeIf { requiresPayerName && it.isNotEmpty() },
         responsibleId = collectorId,
+        inboundMessageId = proof?.inboundMessageId,
+        // The receipt's amount: anything above the total stays as credit (Core refuses less than the total).
+        amountReceived = proof?.amount?.takeIf { proof.inboundMessageId != null },
     )
 
     private fun chargeReceipt(draft: ChargeDraft, registered: List<Payment>, holder: String, user: User, restored: Boolean?): ChargeReceipt {
         val ids = registered.mapNotNull { it.id }.ifEmpty { draft.selectedReceipts.mapNotNull { it.id } }
         val months = draft.selectedReceipts.map { java.time.Instant.ofEpochMilli(it.billingDate).atZone(FICHA_ZONE).toLocalDate() }
-        val payer = draft.payerName.trim().takeIf { draft.requiresPayerName && it.isNotEmpty() }
+        val payer = draft.payerName.trim().takeIf { (draft.requiresPayerName || draft.proof != null) && it.isNotEmpty() }
         val at = now().atZone(FICHA_ZONE)
         return ChargeReceipt(
             number = ids.joinToString(" · ") { "#$it" },

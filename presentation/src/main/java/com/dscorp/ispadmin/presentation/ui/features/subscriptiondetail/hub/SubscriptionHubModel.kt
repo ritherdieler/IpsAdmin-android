@@ -117,9 +117,15 @@ data class ChargeDraft(
     val lastUsed: String? = null,
     /** Cut per the current production Core, which keeps the status ACTIVE and only raises isServiceCutOff. */
     val cutFlagged: Boolean = false,
+    /** Proofs the customer sent that nobody reviewed: the charge must use one or discard it first. */
+    val pending: List<PendingProof> = emptyList(),
+    /** The pending proof this charge uses; its method cannot change. */
+    val proof: PendingProof? = null,
 ) {
     val selectedReceipts: List<Payment> get() = receipts.filter { it.id in selectedIds }
-    val total: Double get() = selectedReceipts.sumOf { it.amountToPay }
+    /** Fees of other services the Mi GigaFiber proof also pays: they go in this same charge. */
+    val otherServiceFees: List<PendingProofFee> get() = proof?.otherServiceFees.orEmpty()
+    val total: Double get() = selectedReceipts.sumOf { it.amountToPay } + otherServiceFees.sumOf { it.amount }
     val discountValue: Double get() = if (discountOpen) discount.toMoney() ?: 0.0 else 0.0
     val toPay: Double get() = (total - discountValue).coerceAtLeast(0.0)
     val isCash: Boolean get() = method.equals(CASH_METHOD, ignoreCase = true)
@@ -127,11 +133,16 @@ data class ChargeDraft(
     val change: Double? get() = receivedValue?.let { it - toPay }?.takeIf { it >= -MONEY_EPSILON }?.coerceAtLeast(0.0)
     val pendingAfter: Int get() = receipts.size - selectedIds.size
     val canRestore: Boolean get() = (status == ServiceStatus.CUT_OFF || cutFlagged) && pendingAfter <= MAX_PENDING_TO_RESTORE
-    val requiresPayerName: Boolean get() = methods.any { it.name == method && it.requiresPayerName }
+    val requiresPayerName: Boolean get() = proof?.isApp != true && methods.any { it.name == method && it.requiresPayerName }
+    /** What the proof pays beyond the total: it stays as the customer's credit once the charge is registered. */
+    val leftover: Double? get() = proof?.amount?.let { it - toPay }?.takeIf { it > MONEY_EPSILON }
 
     val blockingReason: String?
         get() = when {
-            selectedIds.isEmpty() -> "Elige al menos un recibo"
+            pending.isNotEmpty() && proof == null -> "Usa el comprobante o descártalo para continuar"
+            selectedIds.isEmpty() && otherServiceFees.isEmpty() -> "Elige al menos un recibo"
+            proof?.amount != null && proof.amount < toPay - MONEY_EPSILON ->
+                "El comprobante es de ${formatSoles(proof.amount)}: marca solo los recibos que cubre"
             method.isBlank() -> "Elige el método de pago"
             requiresPayerName && payerName.isBlank() -> "Escribe el nombre que aparece en $method"
             discountValue > total + MONEY_EPSILON -> "El descuento no puede ser mayor al total"
@@ -140,8 +151,32 @@ data class ChargeDraft(
             else -> null
         }
 
-    fun toggle(receiptId: Int): ChargeDraft =
-        copy(selectedIds = if (receiptId in selectedIds) selectedIds - receiptId else selectedIds + receiptId)
+    fun toggle(receiptId: Int): ChargeDraft {
+        // A Mi GigaFiber proof pays the fees the customer chose; staff may leave some out, never add others.
+        if (pending.isNotEmpty() && proof == null) return this
+        if (proof?.isApp == true && receiptId !in proof.paymentIds) return this
+        return copy(selectedIds = if (receiptId in selectedIds) selectedIds - receiptId else selectedIds + receiptId)
+    }
+
+    /** Uses [chosen] in this charge: its method, its payer and, for a Mi GigaFiber proof, the fees the customer chose. */
+    fun use(chosen: PendingProof): ChargeDraft {
+        val method = methods.firstOrNull { it.name.equals(chosen.method, ignoreCase = true) }?.name ?: chosen.method
+        val ids = receipts.mapNotNull { it.id }
+        return copy(
+            proof = chosen,
+            method = method,
+            payerName = chosen.payerName ?: payerName,
+            received = "",
+            selectedIds = if (chosen.isApp) ids.filter { it in chosen.paymentIds }.toSet() else selectedIds,
+        )
+    }
+
+    /** «Cambiar»: back to choosing which pending proof to use. */
+    fun clearProof(): ChargeDraft = copy(proof = null)
+
+    /** After a discard or a reload: keeps the proof in use only while it is still pending. */
+    fun withPending(proofs: List<PendingProof>): ChargeDraft =
+        copy(pending = proofs, proof = proof?.takeIf { used -> proofs.any { it.key == used.key } })
 
     companion object {
         fun start(
@@ -172,6 +207,49 @@ data class ChargeDraft(
 
 val DISCOUNT_REASONS = listOf("Promoción", "Reclamo", "Error de cobro", "Otro")
 
+/** A fee of another service a Mi GigaFiber proof pays in the same charge. */
+data class PendingProofFee(val paymentId: Int, val place: String, val period: String?, val amount: Double)
+
+/**
+ * a-cmp-02/08/09: a proof the customer sent that nobody reviewed. From WhatsApp ([inboundMessageId]) or from
+ * Mi GigaFiber ([appProofId], with the fees the customer chose). [readConfirmed] false: the reading did not confirm
+ * the payee or the amount, so staff compare the capture by hand.
+ */
+data class PendingProof(
+    val inboundMessageId: Int? = null,
+    val appProofId: String? = null,
+    val provider: String?,
+    val amount: Double?,
+    val operation: String?,
+    val received: String,
+    val payerName: String? = null,
+    val sentCount: Int = 1,
+    val readConfirmed: Boolean = true,
+    /** Fees of this subscription the customer chose (Mi GigaFiber). */
+    val paymentIds: List<Int> = emptyList(),
+    val otherServiceFees: List<PendingProofFee> = emptyList(),
+    /** Full URL of the capture and the session header that opens it (Core media needs ADMIN or SECRETARY). */
+    val imageUrl: String? = null,
+    val imageAuthorization: String? = null,
+) {
+    val isApp: Boolean get() = appProofId != null
+    val key: String get() = appProofId?.let { "app:$it" } ?: "wa:$inboundMessageId"
+    val source: String get() = if (isApp) "Mi GigaFiber" else "WhatsApp"
+    val method: String get() = if (provider.equals("PLIN", ignoreCase = true)) "Plin" else "Yape"
+}
+
+/** Discard reasons, the CRM's, in the canvas order (a-cmp-05); MISREAD and ILLEGIBLE let the customer send the same capture again. */
+enum class DiscardReason(val label: String, val whatsApp: String, val app: String, val appText: String = "") {
+    NOT_VOUCHER("No es un comprobante de pago", "NOT_VOUCHER", "OTHER", "No es un comprobante de pago."),
+    DUPLICATE("Operación repetida", "DUPLICATE", "ALREADY_USED"),
+    NOT_FOUND("No figura en la cuenta", "NOT_FOUND", "NOT_FOUND"),
+    MISREAD("La captura se leyó mal (puede reenviarla)", "MISREAD", "MISREAD"),
+    ILLEGIBLE("No se lee el monto o el número de operación", "ILLEGIBLE", "ILLEGIBLE"),
+    OTHER("Otro", "OTHER", "OTHER", "No pudimos validar tu comprobante.");
+
+    val resendAllowed: Boolean get() = this == MISREAD || this == ILLEGIBLE
+}
+
 private const val CASH_METHOD = "Efectivo"
 private const val MONEY_EPSILON = 0.005
 
@@ -197,6 +275,8 @@ data class ChargeBatch(
     val electronicPayerName: String?,
     /** Collector: the session user. */
     val responsibleId: Int,
+    val inboundMessageId: Int? = null,
+    val amountReceived: Double? = null,
 )
 
 /** a-caj-04: confirmation shown after a charge. */
@@ -227,4 +307,17 @@ internal fun ChargeReceipt.shareText(): String = buildString {
     appendLine("Monto: $amount")
     append("Fecha: $date")
     if (restored == true) append("\nServicio restablecido")
+}
+
+/** «hoy 10:42», «ayer 21:03» or «8 nov 09:15» from the Core's Lima date-time (with or without offset). */
+internal fun receivedLabel(raw: String?, today: java.time.LocalDate): String {
+    val text = raw?.takeIf { it.length >= 16 } ?: return ""
+    val date = runCatching { java.time.LocalDate.parse(text.take(10)) }.getOrNull() ?: return ""
+    val time = text.substring(11, 16)
+    val day = when (date) {
+        today -> "hoy"
+        today.minusDays(1) -> "ayer"
+        else -> com.dscorp.ispadmin.presentation.ui.features.home.dayMonth(date)
+    }
+    return "$day $time"
 }
