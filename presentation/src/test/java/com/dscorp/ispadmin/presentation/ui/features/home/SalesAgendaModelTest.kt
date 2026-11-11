@@ -33,10 +33,10 @@ class SalesAgendaModelTest {
 
         assertEquals(listOf("Ticket #3612", "Orden #6", "Orden #7", "Ticket #3598"), items.map { it.reference })
         assertEquals(
-            AgendaItem(TodayTarget.Ticket(3612), "Hoy 10:30", "Ticket #3612", "Lucia Mendoza Rojas", "Calle Las Flores 88 · La Villa", "Marco Salinas", scheduled = true),
+            AgendaItem(TodayTarget.Ticket(3612), "Hoy 10:30 a. m.", "Ticket #3612", "Lucia Mendoza Rojas", "Calle Las Flores 88 · La Villa", "Marco Salinas", scheduled = true),
             items[0],
         )
-        assertEquals("Jue 15 oct 09:00", items[1].whenLabel)
+        assertEquals("Jue 15 oct 9:00 a. m.", items[1].whenLabel)
         assertEquals("Diego Huerta", items[1].detail)
         assertEquals(
             AgendaItem(TodayTarget.Order(7), "Por asignar", "Orden #7", "Norma Quispe Rios", "Jr. Lima 120 · Santa Anita", "Sin técnico ni fecha · creado el 12 oct", scheduled = false),

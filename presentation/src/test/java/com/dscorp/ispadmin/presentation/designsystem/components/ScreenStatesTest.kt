@@ -23,11 +23,11 @@ class ScreenStatesTest {
     fun `the error state says what failed and retries`() {
         var retried = 0
         compose.setContent {
-            MaterialTheme { ErrorState("No se pudieron cargar los tickets", "Revisa tu conexión y vuelve a intentar.", onRetry = { retried++ }, lastAttempt = "10:42") }
+            MaterialTheme { ErrorState("No se pudieron cargar los tickets", "Revisa tu conexión y vuelve a intentar.", onRetry = { retried++ }, lastAttempt = "10:42 a. m.") }
         }
 
         compose.onNodeWithText("No se pudieron cargar los tickets").assertExists()
-        compose.onNodeWithText("Último intento 10:42").assertExists()
+        compose.onNodeWithText("Último intento 10:42 a. m.").assertExists()
         compose.onNodeWithText("Reintentar").performClick()
         assertEquals(1, retried)
     }

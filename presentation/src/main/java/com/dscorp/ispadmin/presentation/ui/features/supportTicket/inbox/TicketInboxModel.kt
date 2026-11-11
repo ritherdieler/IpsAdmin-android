@@ -8,6 +8,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.Statu
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTitleCase
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.relativeLabel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.sentenceCase
+import com.dscorp.ispadmin.presentation.util.clock12
 import java.time.Instant
 
 enum class TicketTab(val label: String) { PENDING("Pendientes"), IN_PROGRESS("En curso"), CLOSED("Cerrados") }
@@ -84,12 +85,12 @@ private fun priorityRank(priority: String): Int = when (priority.trim().lowercas
     else -> 3
 }
 
-/** "hoy 10:30", "ayer 16:20", "jue 15, 09:00" (later this week or after), "9 oct, 12:16" (earlier). */
+/** "hoy 10:30 a. m.", "ayer 4:20 p. m.", "jue 15, 9:00 a. m." (later this week or after), "9 oct, 12:16 p. m." (earlier). */
 private fun slotLabel(at: Instant, now: Instant): String {
     val local = at.atZone(FICHA_ZONE)
     val day = local.toLocalDate()
     val today = now.atZone(FICHA_ZONE).toLocalDate()
-    val time = "%02d:%02d".format(local.hour, local.minute)
+    val time = clock12(local.hour, local.minute)
     return when {
         day == today -> "hoy $time"
         day == today.minusDays(1) -> "ayer $time"

@@ -30,7 +30,7 @@ class InstallationOrderItemCreatedAtTest {
     fun `shows the formatted creation date`() {
         setItem(InstallationOrder(id = 7, customerFirstName = "Ana", createdAt = LocalDateTime.of(2026, 10, 14, 9, 30)))
 
-        composeRule.onNodeWithText("Creado: 14/10/2026 09:30").assertExists()
+        composeRule.onNodeWithText("Creado: 14/10/2026 9:30 a. m.").assertExists()
     }
 
     private fun setItem(order: InstallationOrder) {

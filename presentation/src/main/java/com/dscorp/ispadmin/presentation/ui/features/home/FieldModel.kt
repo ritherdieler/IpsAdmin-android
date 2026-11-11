@@ -12,6 +12,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTit
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.create.categoryLabel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.detail.relativeLabel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.inbox.priorityBadge
+import com.dscorp.ispadmin.presentation.util.clock12
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -101,7 +102,7 @@ private val OPEN_ORDERS = setOf(InstallationOrderStatus.SOLICITADO, Installation
 
 private fun Date.toLocal(): LocalDateTime = LocalDateTime.ofInstant(toInstant(), FICHA_ZONE)
 private fun AssistanceTicketResponse.plannedAt(): LocalDateTime = (scheduledAt ?: createdAt).toLocal()
-private fun hourMinute(time: LocalDateTime) = "%02d:%02d".format(time.hour, time.minute)
+private fun hourMinute(time: LocalDateTime) = clock12(time.hour, time.minute)
 private fun InstallationOrderDto.customerName() = "$customerFirstName $customerLastName".toTitleCase()
 
 private fun joinPlace(address: String?, place: String?, separator: String) =

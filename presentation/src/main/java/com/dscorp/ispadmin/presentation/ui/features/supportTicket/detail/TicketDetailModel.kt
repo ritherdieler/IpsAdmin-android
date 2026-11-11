@@ -21,6 +21,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTit
 import com.dscorp.ispadmin.presentation.ui.features.subscriptionfinder.compose.planLabel
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.TicketAction
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.ticketActions
+import com.dscorp.ispadmin.presentation.util.clock12
 import java.time.Duration
 import java.time.Instant
 
@@ -162,4 +163,4 @@ private fun dayTime(at: Instant, now: Instant): String {
     return "$prefix ${hourMinute(at)}"
 }
 
-private fun hourMinute(at: Instant): String = at.atZone(FICHA_ZONE).let { "%02d:%02d".format(it.hour, it.minute) }
+private fun hourMinute(at: Instant): String = at.atZone(FICHA_ZONE).let { clock12(it.hour, it.minute) }

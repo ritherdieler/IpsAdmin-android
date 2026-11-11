@@ -6,6 +6,7 @@ import com.dscorp.ispadmin.presentation.ui.features.home.monthShort
 import com.dscorp.ispadmin.presentation.ui.features.home.weekdayDayMonth
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.formatSoles
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTitleCase
+import com.dscorp.ispadmin.presentation.util.clock12
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -51,7 +52,7 @@ data class CashDay(
                     CashRow(
                         receiptId = first.id,
                         subscriptionId = first.subscriptionId,
-                        time = first.paidAt.take(16).takeLast(5),
+                        time = clockOf(first.paidAt),
                         name = first.subscriber.orEmpty().toTitleCase().ifBlank { "Sin titular" },
                         detail = detail,
                         amount = formatSoles(charge.sumOf { it.amount }),
@@ -84,6 +85,10 @@ data class CashDay(
         }
     }
 }
+
+/** «11:42 a. m.» from the Lima wall-clock paidAt (yyyy-MM-ddTHH:mm:ss); the raw text when it does not parse. */
+internal fun clockOf(paidAt: String): String =
+    runCatching { LocalDateTime.parse(paidAt).let { clock12(it.hour, it.minute) } }.getOrDefault(paidAt.take(16).takeLast(5))
 
 /** "oct", "ago y set", "jul, ago y set" from YYYY-MM months. */
 internal fun monthsLabel(months: List<String>): String {

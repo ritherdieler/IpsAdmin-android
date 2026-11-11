@@ -63,6 +63,6 @@ class TicketActionsTest {
             set(2026, Calendar.OCTOBER, 9, 12, 16, 0)
         }.time
 
-        assertEquals("9 oct 2026 · 12:16", ticketDateLabel(date, TimeZone.getTimeZone("America/Lima")))
+        assertEquals("9 oct 2026 · 12:16 p. m.", ticketDateLabel(date, TimeZone.getTimeZone("America/Lima")))
     }
 }

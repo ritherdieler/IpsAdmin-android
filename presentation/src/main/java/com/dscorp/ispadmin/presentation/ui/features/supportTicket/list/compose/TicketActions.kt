@@ -4,6 +4,7 @@ import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.AssistanceTicketStatus
 import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.domain.model.User.UserType
+import com.dscorp.ispadmin.presentation.util.clock12
 import java.util.Calendar
 import java.util.Date
 import java.util.TimeZone
@@ -37,11 +38,11 @@ fun ticketActions(ticket: AssistanceTicketResponse, user: User): TicketActions {
     )
 }
 
-/** «9 oct 2026 · 12:16», independent of the device language. */
+/** «9 oct 2026 · 12:16 p. m.», independent of the device language. */
 fun ticketDateLabel(date: Date, zone: TimeZone = TimeZone.getDefault()): String {
     val calendar = Calendar.getInstance(zone).apply { time = date }
     val day = calendar.get(Calendar.DAY_OF_MONTH)
     val month = MONTHS[calendar.get(Calendar.MONTH)]
-    val time = "%02d:%02d".format(calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE))
+    val time = clock12(calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE))
     return "$day $month ${calendar.get(Calendar.YEAR)} · $time"
 }

@@ -6,8 +6,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.res.stringResource
 import com.dscorp.ispadmin.R
 import com.dscorp.ispadmin.presentation.designsystem.components.HeroTitleBar
-import java.text.DateFormat
-import java.util.Date
+import com.dscorp.ispadmin.presentation.util.clock12
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 private const val MINUTES_SHOWN_AS_RELATIVE = 60
@@ -35,6 +35,6 @@ fun updatedLabel(millis: Long?, now: Long = System.currentTimeMillis()): String?
     return when {
         minutes < 1 -> stringResource(R.string.dashboard_updated_now)
         minutes < MINUTES_SHOWN_AS_RELATIVE -> stringResource(R.string.dashboard_updated_minutes, minutes)
-        else -> stringResource(R.string.dashboard_updated_at, DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(millis)))
+        else -> stringResource(R.string.dashboard_updated_at, Calendar.getInstance().apply { timeInMillis = millis }.let { clock12(it.get(Calendar.HOUR_OF_DAY), it.get(Calendar.MINUTE)) })
     }
 }

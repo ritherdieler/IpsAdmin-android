@@ -83,7 +83,7 @@ class TicketDetailUiTest {
         show(
             TicketDetailUiState(
                 detail = pending.copy(
-                    badges = listOf(StatusBadge("En curso", BadgeTone.INFO)), meta = "Tomado por Diego Huerta a las 09:40 · 1 h 2 min",
+                    badges = listOf(StatusBadge("En curso", BadgeTone.INFO)), meta = "Tomado por Diego Huerta a las 9:40 a. m. · 1 h 2 min",
                     debtNotice = null, primary = TicketAction.CLOSE, primaryHint = null, canAssign = false,
                 ),
                 subscriptionId = 1842,
@@ -126,8 +126,8 @@ class TicketDetailUiTest {
         val options = rescheduleDays(now.toLocalDate())
 
         assertEquals(listOf("Hoy", "Mañana jue 15", "Vie 16 oct"), options.map { it.label })
-        assertEquals(listOf("09:00", "11:00", "14:00", "16:00"), RESCHEDULE_HOURS.map { it.label })
-        assertEquals("Reagendar para jue 15 · 11:00", rescheduleLabel(options[1].day, RESCHEDULE_HOURS[1].time, now.toLocalDate()))
+        assertEquals(listOf("9:00 a. m.", "11:00 a. m.", "2:00 p. m.", "4:00 p. m."), RESCHEDULE_HOURS.map { it.label })
+        assertEquals("Reagendar para jue 15 · 11:00 a. m.", rescheduleLabel(options[1].day, RESCHEDULE_HOURS[1].time, now.toLocalDate()))
     }
 
     @Test
@@ -135,8 +135,8 @@ class TicketDetailUiTest {
         val customer = TicketCustomerInfo(
             slot = "Prefiere la tarde (13 a 18 h) · mar 10 nov",
             comments = listOf(
-                TicketCustomerComment("Cliente", "Se corta varias veces en la noche.", "lun 2 nov, 19:40", fromCustomer = true),
-                TicketCustomerComment("Luis Pérez", "Te visitamos mañana.", "mar 3 nov, 10:15", fromCustomer = false),
+                TicketCustomerComment("Cliente", "Se corta varias veces en la noche.", "lun 2 nov, 7:40 p. m.", fromCustomer = true),
+                TicketCustomerComment("Luis Pérez", "Te visitamos mañana.", "mar 3 nov, 10:15 a. m.", fromCustomer = false),
             ),
         )
         show(TicketDetailUiState(detail = pending.copy(customer = customer), subscriptionId = 1842))
@@ -144,8 +144,8 @@ class TicketDetailUiTest {
         compose.onNodeWithText("Cliente · Mi GigaFiber").assertExists()
         compose.onNodeWithText("Prefiere la tarde (13 a 18 h) · mar 10 nov").assertExists()
         compose.onNodeWithText("Se corta varias veces en la noche.").assertExists()
-        compose.onNodeWithText("Cliente · lun 2 nov, 19:40").assertExists()
-        compose.onNodeWithText("Luis Pérez · mar 3 nov, 10:15").assertExists()
+        compose.onNodeWithText("Cliente · lun 2 nov, 7:40 p. m.").assertExists()
+        compose.onNodeWithText("Luis Pérez · mar 3 nov, 10:15 a. m.").assertExists()
         compose.onNodeWithText("Para responder, usa el back office o WhatsApp.").assertExists()
     }
 

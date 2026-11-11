@@ -42,7 +42,7 @@ class AdminHomeModelTest {
     fun `the hero compares the month so far with the previous month at the same day`() {
         val home = AdminHome.from(adminSummary())
 
-        assertEquals("Corte 15 oct · actualizado 10:42", home.subtitle)
+        assertEquals("Corte 15 oct · actualizado 10:42 a. m.", home.subtitle)
         assertEquals("Cobrado en oct (al día 14)", home.monthTitle)
         assertEquals("S/ 23,688.00", home.monthAmount)
         assertEquals(KpiDelta("▲ S/ 1,140.00", DeltaTone.Positive, "vs set al día 14"), home.monthDelta)

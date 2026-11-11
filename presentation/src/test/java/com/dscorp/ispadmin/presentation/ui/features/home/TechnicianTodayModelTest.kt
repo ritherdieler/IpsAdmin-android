@@ -48,7 +48,7 @@ class TechnicianTodayModelTest {
         val now = today.now!!
         assertEquals(TodayTarget.Ticket(3612), now.target)
         assertEquals("Ticket #3612", now.label)
-        assertEquals("10:30", now.time)
+        assertEquals("10:30 a. m.", now.time)
         assertEquals(StatusBadge("Media", BadgeTone.INFO), now.priority)
         assertEquals("Instalación de internet", now.title)
         assertEquals("Lucia Mendoza Rojas", now.name)
@@ -61,7 +61,7 @@ class TechnicianTodayModelTest {
         val rows = today().pending
 
         assertEquals(listOf("Orden #6", "#3609", "#3606", "#3611"), rows.map { it.number })
-        assertEquals(TodayRow(TodayTarget.Order(6), "Orden #6", null, "15:00", null, "Instalación de internet", "Tomas Vega Salas · 9 De Octubre"), rows[0])
+        assertEquals(TodayRow(TodayTarget.Order(6), "Orden #6", null, "3:00 p. m.", null, "Instalación de internet", "Tomas Vega Salas · 9 De Octubre"), rows[0])
         assertEquals("hace 2 h", rows[1].trailing)
         assertEquals(StatusBadge("En curso · Diego Huerta", BadgeTone.INFO), rows[2].trailingBadge)
         assertEquals("Sin conexión a internet", rows[1].title)

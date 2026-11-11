@@ -33,8 +33,8 @@ class PaymentSearchModelTest {
 
         assertEquals(listOf("Hoy", "Ayer", "8 oct"), result.groups.map { it.label })
         val first = result.groups.first().hits.first()
-        assertEquals(PaymentHit(9, "Hilda Ccori Mamani", "Yape · pagó: Hilda Ccori M. · 11:30", "S/ 50.00"), first)
-        assertEquals("Efectivo · 11:05", result.groups.first().hits[1].detail)
+        assertEquals(PaymentHit(9, "Hilda Ccori Mamani", "Yape · pagó: Hilda Ccori M. · 11:30 a. m.", "S/ 50.00"), first)
+        assertEquals("Efectivo · 11:05 a. m.", result.groups.first().hits[1].detail)
         assertEquals("4 pagos en los últimos 30 días", result.footer)
         assertEquals("1 pago en los últimos 7 días", PaymentSearchResult.from(search(ccori().receipts.first()), PaymentPeriod.LAST_7, today).footer)
         assertEquals("Sin pagos en los últimos 90 días", PaymentSearchResult.from(search(), PaymentPeriod.LAST_90, today).footer)
@@ -58,7 +58,7 @@ class PaymentSearchModelTest {
             listOf(
                 "Recibo" to "jul 2026",
                 "Vencía" to "15 jul 2026",
-                "Pagado" to "12 jul 2026 · 16:05",
+                "Pagado" to "12 jul 2026 · 4:05 p. m.",
                 "Método" to "Yape",
                 "Nombre en Yape" to "Jorge Ramos V.",
                 "Descuento" to "—",

@@ -58,6 +58,7 @@ import com.dscorp.ispadmin.presentation.theme.IspSpacing
 import com.dscorp.ispadmin.presentation.theme.IspTheme
 import com.dscorp.ispadmin.presentation.theme.IspType
 import com.dscorp.ispadmin.presentation.theme.MyTheme
+import com.dscorp.ispadmin.presentation.util.clock12
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -732,7 +733,7 @@ internal fun money(value: BigDecimal?, currency: String = "PEN"): String = value
     formatter.format(it)
 } ?: stringResource(R.string.financial_unavailable)
 private fun cutoffLabel(value: String): String = runCatching {
-    OffsetDateTime.parse(value).atZoneSameInstant(ZoneId.of("America/Lima")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
+    OffsetDateTime.parse(value).atZoneSameInstant(ZoneId.of("America/Lima")).let { "${it.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))} ${clock12(it.hour, it.minute)}" }
 }.getOrDefault(value)
 
 @Preview(heightDp = 900)

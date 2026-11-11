@@ -39,10 +39,10 @@ class TicketInboxModelTest {
                 "Pedro Sanchez · Las Colinas", tag = null, assignment = "Sin asignar", assigned = false),
             rows[0],
         )
-        assertEquals("ayer 16:20", rows[1].time)
+        assertEquals("ayer 4:20 p. m.", rows[1].time)
         assertEquals(StatusBadge("No abonado", BadgeTone.INFO), rows[1].tag)
-        assertEquals("Marco Salinas · hoy 10:30", rows[1].assignment)
-        assertEquals("Julio Paredes · jue 15, 09:00", rows[3].assignment)
+        assertEquals("Marco Salinas · hoy 10:30 a. m.", rows[1].assignment)
+        assertEquals("Julio Paredes · jue 15, 9:00 a. m.", rows[3].assignment)
     }
 
     @Test

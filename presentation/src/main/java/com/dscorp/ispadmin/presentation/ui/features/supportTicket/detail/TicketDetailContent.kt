@@ -66,6 +66,7 @@ import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.Inf
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.dayMonth
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.HubBadge
 import com.dscorp.ispadmin.presentation.ui.features.supportTicket.list.compose.TicketAction
+import com.dscorp.ispadmin.presentation.util.clock12
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -74,7 +75,7 @@ data class DayOption(val label: String, val day: LocalDate)
 data class HourOption(val label: String, val time: LocalTime)
 
 /** Visit slots offered when rescheduling (a-tic-07). */
-val RESCHEDULE_HOURS: List<HourOption> = listOf(9, 11, 14, 16).map { HourOption("%02d:00".format(it), LocalTime.of(it, 0)) }
+val RESCHEDULE_HOURS: List<HourOption> = listOf(9, 11, 14, 16).map { HourOption(clock12(it, 0), LocalTime.of(it, 0)) }
 
 fun rescheduleDays(today: LocalDate): List<DayOption> = listOf(
     DayOption("Hoy", today),
@@ -88,7 +89,7 @@ fun rescheduleLabel(day: LocalDate, time: LocalTime, today: LocalDate): String {
         today.plusDays(1) -> "${weekday(day)} ${day.dayOfMonth}"
         else -> "${weekday(day)} ${dayMonth(day)}"
     }
-    return "Reagendar para $whenLabel · %02d:%02d".format(time.hour, time.minute)
+    return "Reagendar para $whenLabel · ${clock12(time.hour, time.minute)}"
 }
 
 private fun weekday(day: LocalDate): String = when (day.dayOfWeek) {
@@ -392,7 +393,7 @@ private fun RescheduleSheet(detail: TicketDetail, onDismiss: () -> Unit, onConfi
                 days.forEach { option -> Chip(option.label, option == day) { day = option } }
             }
             Text("Hora", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 RESCHEDULE_HOURS.forEach { option -> Chip(option.label, option == hour) { hour = option } }
             }
             Button(

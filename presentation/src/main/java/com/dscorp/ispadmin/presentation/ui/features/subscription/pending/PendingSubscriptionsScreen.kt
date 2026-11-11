@@ -52,9 +52,8 @@ import com.dscorp.ispadmin.presentation.ui.features.composecomponents.SuccessSna
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.BadgeTone
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.HubBadge
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.StatusBadge
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.dscorp.ispadmin.presentation.util.clock12
+import java.util.Calendar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -168,7 +167,7 @@ fun PendingSubscriptionsScreen(
 @Composable
 private fun PendingSubscriptionCard(item: PendingSubscriptionListItem, onDiscard: () -> Unit) {
     val colors = IspTheme.colors
-    val savedAt = SimpleDateFormat("HH:mm", Locale.US).format(Date(item.createdAt))
+    val savedAt = Calendar.getInstance().apply { timeInMillis = item.createdAt }.let { clock12(it.get(Calendar.HOUR_OF_DAY), it.get(Calendar.MINUTE)) }
     Column(
         Modifier.fillMaxWidth().background(colors.card, RoundedCornerShape(16.dp)).padding(start = 16.dp, end = 8.dp, top = 14.dp, bottom = 4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),

@@ -4,6 +4,7 @@ import com.dscorp.ispadmin.data.response.AssistanceTicketResponse
 import com.dscorp.ispadmin.data.response.TicketThreadResponse
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FICHA_ZONE
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.dayMonth
+import com.dscorp.ispadmin.presentation.util.clock12
 import java.time.LocalDate
 import java.time.OffsetDateTime
 
@@ -44,7 +45,7 @@ data class TicketCustomerInfo(val slot: String?, val comments: List<TicketCustom
 
         private fun timeLabel(iso: String): String = runCatching {
             val at = OffsetDateTime.parse(iso).atZoneSameInstant(FICHA_ZONE)
-            "${weekday(at.toLocalDate())} ${dayMonth(at.toLocalDate())}, %02d:%02d".format(at.hour, at.minute)
+            "${weekday(at.toLocalDate())} ${dayMonth(at.toLocalDate())}, ${clock12(at.hour, at.minute)}"
         }.getOrDefault("")
 
         private fun weekday(day: LocalDate) = listOf("lun", "mar", "mié", "jue", "vie", "sáb", "dom")[day.dayOfWeek.value - 1]

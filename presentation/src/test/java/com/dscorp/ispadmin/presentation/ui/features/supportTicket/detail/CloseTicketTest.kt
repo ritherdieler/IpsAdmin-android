@@ -97,14 +97,14 @@ class CloseTicketTest {
         compose.setContent {
             MaterialTheme {
                 CloseTicketContent(
-                    CloseTicketUiState(ticketId = 3606, subtitle = "", photo = File("orden.jpg"), photoTakenAt = "10:46"),
+                    CloseTicketUiState(ticketId = 3606, subtitle = "", photo = File("orden.jpg"), photoTakenAt = "10:46 a. m."),
                     onIntent = {}, onTakePhoto = {}, onBack = {},
                 )
             }
         }
 
         compose.onNodeWithText("Foto lista").assertExists()
-        compose.onNodeWithText("Tomada 10:46").assertExists()
+        compose.onNodeWithText("Tomada 10:46 a. m.").assertExists()
         compose.onNodeWithText("Repetir").assertExists()
         compose.onNodeWithText("Cerrar ticket").assertIsEnabled()
     }

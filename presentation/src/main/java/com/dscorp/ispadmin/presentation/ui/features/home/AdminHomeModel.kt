@@ -4,6 +4,7 @@ import com.dscorp.ispadmin.data.datasource.remote.HomeSummaryResponse
 import com.dscorp.ispadmin.presentation.designsystem.components.DeltaTone
 import com.dscorp.ispadmin.presentation.designsystem.components.KpiDelta
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.formatSoles
+import com.dscorp.ispadmin.presentation.util.clock12
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.math.abs
@@ -34,7 +35,7 @@ data class AdminHome(
             val today = asOf.toLocalDate()
             val collections = summary.collections
             val cutDate = runCatching { LocalDate.parse(summary.cut.nextCutDate) }.getOrNull()
-            val updated = "actualizado %02d:%02d".format(asOf.hour, asOf.minute)
+            val updated = "actualizado ${clock12(asOf.hour, asOf.minute)}"
             val previousMonth = monthShort(today.minusMonths(1))
             val subscriptions = summary.subscriptions
             val tickets = summary.tickets

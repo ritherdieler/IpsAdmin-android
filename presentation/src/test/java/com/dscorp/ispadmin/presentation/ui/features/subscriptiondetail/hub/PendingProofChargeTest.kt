@@ -32,7 +32,7 @@ class PendingProofChargeTest {
         payerName = "Jorge Ramos V.",
     )
     private val app = PendingProof(
-        appProofId = "p_55", provider = "PLIN", amount = 150.0, operation = "04112233", received = "hoy 09:15",
+        appProofId = "p_55", provider = "PLIN", amount = 150.0, operation = "04112233", received = "hoy 9:15 a. m.",
         paymentIds = listOf(1), otherServiceFees = listOf(PendingProofFee(9001, "Las Flores 88", "Set 2026", 50.0)),
     )
 

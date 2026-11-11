@@ -74,8 +74,8 @@ class TicketDetailModelTest {
         val detail = TicketDetail.from(taken, cut.copy(serviceStatus = ServiceStatus.ACTIVE, totalDebt = 0.0, pendingInvoiceQuantity = 0), emptyList(), admin, now)
 
         assertEquals(listOf(StatusBadge("En curso", BadgeTone.INFO), StatusBadge("Media", BadgeTone.INFO)), detail.badges)
-        assertEquals("Tomado por Diego Huerta a las 09:40 · 1 h 2 min", detail.meta)
-        assertEquals("Diego Huerta · hoy 09:40", detail.assignment)
+        assertEquals("Tomado por Diego Huerta a las 9:40 a. m. · 1 h 2 min", detail.meta)
+        assertEquals("Diego Huerta · hoy 9:40 a. m.", detail.assignment)
         assertEquals("Contacto: 999 888 777", detail.contact)
         assertNull(detail.debtNotice)
         assertEquals(TicketAction.CLOSE, detail.primary)
@@ -98,8 +98,8 @@ class TicketDetailModelTest {
     fun `relative times read in plain words`() {
         assertEquals("hace un momento", relativeLabel(now.minusSeconds(20), now))
         assertEquals("hace 25 min", relativeLabel(now.minusSeconds(25 * 60), now))
-        assertEquals("ayer 16:20", relativeLabel(at(13, 16, 20).toInstant(), now))
-        assertEquals("9 oct 12:16", relativeLabel(at(9, 12, 16).toInstant(), now))
+        assertEquals("ayer 4:20 p. m.", relativeLabel(at(13, 16, 20).toInstant(), now))
+        assertEquals("9 oct 12:16 p. m.", relativeLabel(at(9, 12, 16).toInstant(), now))
         assertEquals("1 h 2 min", elapsedLabel(Instant.ofEpochMilli(at(14, 9, 40).time), now))
         assertEquals("35 min", elapsedLabel(now.minusSeconds(35 * 60), now))
     }
@@ -122,8 +122,8 @@ class TicketDetailModelTest {
         assertEquals("Prefiere la tarde (13 a 18 h) · mar 10 nov", detail.customer?.slot)
         assertEquals(
             listOf(
-                TicketCustomerComment("Cliente", "Se corta en la noche", "lun 2 nov, 19:40", fromCustomer = true),
-                TicketCustomerComment("Luis Pérez", "Te visitamos mañana", "mar 3 nov, 10:15", fromCustomer = false),
+                TicketCustomerComment("Cliente", "Se corta en la noche", "lun 2 nov, 7:40 p. m.", fromCustomer = true),
+                TicketCustomerComment("Luis Pérez", "Te visitamos mañana", "mar 3 nov, 10:15 a. m.", fromCustomer = false),
             ),
             detail.customer?.comments,
         )

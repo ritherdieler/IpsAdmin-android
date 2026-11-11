@@ -41,6 +41,7 @@ import com.dscorp.ispadmin.domain.model.User
 import com.dscorp.ispadmin.presentation.theme.IspTheme
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.ficha.FICHA_ZONE
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTitleCase
+import com.dscorp.ispadmin.presentation.util.clock12
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -93,7 +94,7 @@ class CloseTicketViewModel(
         when (intent) {
             is CloseTicketIntent.Load -> load(intent.ticketId)
             is CloseTicketIntent.PhotoTaken -> _uiState.update {
-                it.copy(photo = intent.photo, photoTakenAt = now().atZone(FICHA_ZONE).let { t -> "%02d:%02d".format(t.hour, t.minute) }, error = null)
+                it.copy(photo = intent.photo, photoTakenAt = now().atZone(FICHA_ZONE).let { t -> clock12(t.hour, t.minute) }, error = null)
             }
             CloseTicketIntent.Submit -> submit()
         }

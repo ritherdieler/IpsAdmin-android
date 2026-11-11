@@ -80,6 +80,7 @@ import com.dscorp.ispadmin.presentation.ui.components.MyButton
 import com.dscorp.ispadmin.presentation.ui.components.MyCustomDialog
 import com.dscorp.ispadmin.presentation.ui.components.MyDateTimePickerField
 import com.dscorp.ispadmin.presentation.ui.components.MyOutLinedDropDown
+import com.dscorp.ispadmin.presentation.util.clock12
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -594,7 +595,7 @@ private fun ClientInfoSection(order: InstallationOrder) {
     order.createdAt?.let { createdAt ->
         InfoRow(
             icon = Icons.Outlined.Schedule,
-            label = "Creado: ${createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",
+            label = "Creado: ${createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))} ${clock12(createdAt.hour, createdAt.minute)}",
             contentDescription = "Fecha de creación"
         )
     }
@@ -604,7 +605,7 @@ private fun ClientInfoSection(order: InstallationOrder) {
         Spacer(modifier = Modifier.height(8.dp))
         InfoRow(
             icon = Icons.Outlined.Event,
-            label = "Programado: ${order.scheduledDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))}",
+            label = "Programado: ${order.scheduledDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))} ${clock12(order.scheduledDate.hour, order.scheduledDate.minute)}",
             contentDescription = "Fecha programada"
         )
     }

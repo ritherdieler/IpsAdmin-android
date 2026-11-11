@@ -7,6 +7,7 @@ import com.dscorp.ispadmin.presentation.ui.features.home.dayMonth
 import com.dscorp.ispadmin.presentation.ui.features.home.monthShort
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.formatSoles
 import com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub.toTitleCase
+import com.dscorp.ispadmin.presentation.util.clock12
 import java.text.Normalizer
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -40,7 +41,7 @@ data class PaymentSearchResult(val groups: List<PaymentDayGroup>, val footer: St
 
         private fun hit(receipt: CashReceiptResponse): PaymentHit {
             val payer = receipt.payerName?.takeIf { it.isNotBlank() }?.let { "pagó: $it" }
-            val time = paidAt(receipt.paidAt)?.let { "%02d:%02d".format(it.hour, it.minute) }
+            val time = paidAt(receipt.paidAt)?.let { clock12(it.hour, it.minute) }
             return PaymentHit(
                 receiptId = receipt.id,
                 name = receipt.subscriber.orEmpty().toTitleCase().ifBlank { "Sin titular" },
@@ -88,7 +89,7 @@ data class PaymentDetail(
                 rows = listOfNotNull(
                     month?.let { "Recibo" to it },
                     due?.let { "Vencía" to "${dayMonth(it)} ${it.year}" },
-                    paid?.let { "Pagado" to "${dayMonth(it.toLocalDate())} ${it.year} · ${"%02d:%02d".format(it.hour, it.minute)}" },
+                    paid?.let { "Pagado" to "${dayMonth(it.toLocalDate())} ${it.year} · ${clock12(it.hour, it.minute)}" },
                     "Método" to method,
                     response.payerName?.takeIf { it.isNotBlank() }?.let { "Nombre en $method" to it },
                     "Descuento" to (discount ?: "—"),

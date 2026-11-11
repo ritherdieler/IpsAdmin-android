@@ -1,7 +1,9 @@
 package com.dscorp.ispadmin.data.response
 
+import com.dscorp.ispadmin.presentation.util.clock12
 import java.io.Serializable
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -32,16 +34,15 @@ data class AssistanceTicketResponse(
     val preferredSlot: String? = null,
     val preferredDate: String? = null,
 ):Serializable {
-    fun getCreatedAtDateAsString(): String {
-        val dateFormatter =
-            SimpleDateFormat("dd MMMM yyyy - hh:mm", Locale.getDefault())
-        return dateFormatter.format(createdAt)
-    }
+    fun getCreatedAtDateAsString(): String = dateWithClock12(createdAt)
 
-    fun getScheduledAtDateAsString(): String {
-        val dateFormatter =
-            SimpleDateFormat("dd MMMM yyyy - hh:mm", Locale.getDefault())
-        return dateFormatter.format(scheduledAt ?: createdAt)
+    fun getScheduledAtDateAsString(): String = dateWithClock12(scheduledAt ?: createdAt)
+
+    /** «09 octubre 2026 - 4:20 p. m.» (12-hour clock, see [clock12]). */
+    private fun dateWithClock12(date: Date): String {
+        val calendar = Calendar.getInstance().apply { time = date }
+        val day = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(date)
+        return "$day - ${clock12(calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE))}"
     }
 
     fun getStatusAsString(): String {

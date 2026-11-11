@@ -49,7 +49,7 @@ class AdminHomeUiTest {
     fun `the home summary sits on top and the financial report stays below`() {
         show()
 
-        compose.onNodeWithText("Corte 15 oct · actualizado 10:42").assertExists()
+        compose.onNodeWithText("Corte 15 oct · actualizado 10:42 a. m.").assertExists()
         compose.onNodeWithText("Cobrado en oct (al día 14)").assertExists()
         compose.onNodeWithText("de 916 activos").assertExists()
         compose.onNodeWithText("Cobros por día · oct").assertExists()

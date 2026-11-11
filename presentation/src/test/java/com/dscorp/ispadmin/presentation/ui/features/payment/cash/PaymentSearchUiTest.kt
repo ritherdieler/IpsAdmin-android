@@ -36,7 +36,7 @@ class PaymentSearchUiTest {
         compose.onNodeWithText("Hoy").assertExists()
         compose.onNodeWithText("Busca por titular o por el nombre que aparece en Yape o Plin").assertExists()
         compose.onNodeWithText("4 pagos en los últimos 30 días").assertExists()
-        compose.onNodeWithText("Yape · pagó: Hilda Ccori M. · 11:30").performClick()
+        compose.onNodeWithText("Yape · pagó: Hilda Ccori M. · 11:30 a. m.").performClick()
         compose.onNodeWithText("Todos los métodos").performClick()
         compose.onNodeWithText("Yape").performClick()
         compose.onNodeWithTag(PaymentSearchTestTags.QUERY).performTextInput(" m")
