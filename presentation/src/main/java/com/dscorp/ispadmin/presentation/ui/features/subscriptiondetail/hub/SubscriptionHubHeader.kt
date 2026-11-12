@@ -53,6 +53,8 @@ object SubscriptionHubTestTags {
     const val PAYER_NAME = "hub_charge_payer"
     const val RECEIVED = "hub_charge_received"
     const val DISCOUNT = "hub_charge_discount"
+    const val APPLY_DISCOUNT = "hub_charge_apply_discount"
+    const val DISCOUNT_DETAIL = "hub_charge_discount_detail"
     fun receipt(id: Int) = "hub_charge_receipt_$id"
 }
 
@@ -280,29 +282,54 @@ private fun restoreNote(draft: ChargeDraft): String {
     }
 }
 
+/**
+ * a-cmp-12: discount at the charge. With a proof that has an amount it is what the proof leaves unpaid (e.g. a
+ * discount agreed for days without internet), shown and not typed; it always needs its reason.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DiscountSection(draft: ChargeDraft, onIntent: (SubscriptionHubIntent) -> Unit) {
+    if (!draft.offersDiscount) return
+    val shortfall = draft.proofShortfall
     if (!draft.discountOpen) {
-        TextButton(onClick = { onIntent(SubscriptionHubIntent.DiscountToggled) }, contentPadding = PaddingValues(0.dp)) {
-            Text("+ Aplicar descuento", fontWeight = FontWeight.SemiBold)
+        TextButton(
+            onClick = { onIntent(SubscriptionHubIntent.DiscountToggled) },
+            contentPadding = PaddingValues(0.dp),
+            modifier = Modifier.testTag(SubscriptionHubTestTags.APPLY_DISCOUNT),
+        ) {
+            Text(
+                if (shortfall != null) "+ Registrar con descuento de ${formatSoles(shortfall)}" else "+ Aplicar descuento",
+                fontWeight = FontWeight.SemiBold,
+            )
         }
         return
     }
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Descuento", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             TextButton(onClick = { onIntent(SubscriptionHubIntent.DiscountToggled) }) { Text("Quitar") }
         }
-        OutlinedTextField(
-            value = draft.discount,
-            onValueChange = { onIntent(SubscriptionHubIntent.DiscountChanged(it)) },
-            label = { Text("Monto") },
-            prefix = { Text("S/ ") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth().testTag(SubscriptionHubTestTags.DISCOUNT),
-        )
+        val proofAmount = draft.proof?.amount
+        if (draft.discountFromProof && shortfall != null && proofAmount != null) {
+            Column(Modifier.fillMaxWidth().testTag(SubscriptionHubTestTags.DISCOUNT), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                DiscountLine("Recibos", formatSoles(draft.total), muted)
+                DiscountLine("Descuento", "− ${formatSoles(shortfall)}", muted)
+                DiscountLine("Comprobante", formatSoles(proofAmount), MaterialTheme.colorScheme.onSurface, bold = true)
+            }
+            Text("Es lo que falta para cubrir los recibos y queda en el pago con su motivo.", fontSize = 12.sp, color = muted)
+        } else {
+            OutlinedTextField(
+                value = draft.discount,
+                onValueChange = { onIntent(SubscriptionHubIntent.DiscountChanged(it)) },
+                label = { Text("Monto") },
+                prefix = { Text("S/ ") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth().testTag(SubscriptionHubTestTags.DISCOUNT),
+            )
+        }
+        Text("Motivo del descuento", fontSize = 13.sp, color = muted)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             DISCOUNT_REASONS.forEach { reason ->
                 ChoiceChip(reason, selected = reason == draft.discountReason) {
@@ -310,6 +337,24 @@ private fun DiscountSection(draft: ChargeDraft, onIntent: (SubscriptionHubIntent
                 }
             }
         }
+        if (draft.discountReason == DISCOUNT_OTHER) {
+            OutlinedTextField(
+                value = draft.discountDetail,
+                onValueChange = { onIntent(SubscriptionHubIntent.DiscountDetailChanged(it.take(120))) },
+                label = { Text("Detalle del motivo") },
+                placeholder = { Text("Ej.: 3 días sin servicio") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().testTag(SubscriptionHubTestTags.DISCOUNT_DETAIL),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DiscountLine(label: String, value: String, color: androidx.compose.ui.graphics.Color, bold: Boolean = false) {
+    Row(Modifier.fillMaxWidth()) {
+        Text(label, fontSize = 14.sp, color = color, modifier = Modifier.weight(1f), fontWeight = if (bold) FontWeight.SemiBold else null)
+        Text(value, fontSize = 14.sp, color = color, fontWeight = if (bold) FontWeight.SemiBold else null)
     }
 }
 

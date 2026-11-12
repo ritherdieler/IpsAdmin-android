@@ -2,6 +2,7 @@ package com.dscorp.ispadmin.presentation.ui.features.subscriptiondetail.hub
 
 import android.app.Application
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -82,6 +83,27 @@ class SubscriptionHubUiTest {
         compose.onNodeWithText("Vuelto S/ 20.00").assertExists()
         compose.onNodeWithText("Registrar cobro · S/ 90.00").assertExists()
         compose.onNodeWithText("Quitar").assertExists()
+    }
+
+    @Test
+    fun `a receipt below the total offers the discount it leaves and shows it without a typed amount`() {
+        val proof = PendingProof(inboundMessageId = 900, provider = "YAPE", amount = 40.0, operation = "1", received = "hoy", payerName = "Jorge R.")
+        val base = ChargeDraft.start(listOf(receipt(1, 100)), METHODS, ServiceStatus.ACTIVE).use(proof)
+        val state = mutableStateOf(base)
+        compose.setContent { MaterialTheme { ChargeSheetContent(state.value, holderName = "Jorge Ramos", onIntent = {}) } }
+
+        compose.onNodeWithText("+ Registrar con descuento de S/ 10.00").assertExists()
+        compose.onNodeWithTag(SubscriptionHubTestTags.SUBMIT_CHARGE).assertIsNotEnabled()
+
+        state.value = base.copy(discountOpen = true, discountReason = "Otro")
+        compose.onNodeWithText("− S/ 10.00").assertExists()
+        compose.onNodeWithText("Monto").assertDoesNotExist()
+        compose.onNodeWithTag(SubscriptionHubTestTags.DISCOUNT_DETAIL).assertExists()
+        compose.onNodeWithText("Escribe el detalle del motivo").assertExists()
+
+        state.value = base.copy(discountOpen = true, discountReason = "Fallas de internet")
+        compose.onNodeWithText("Registrar cobro · S/ 40.00").assertExists()
+        compose.onNodeWithTag(SubscriptionHubTestTags.SUBMIT_CHARGE).assertIsEnabled()
     }
 
     @Test

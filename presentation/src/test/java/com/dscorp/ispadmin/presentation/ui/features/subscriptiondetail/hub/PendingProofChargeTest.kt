@@ -72,42 +72,75 @@ class PendingProofChargeTest {
     }
 
     @Test
-    fun `a WhatsApp receipt fixes the method and payer and goes with the charge, discount included`() = runTest(dispatcher) {
+    fun `a WhatsApp receipt fixes the method and payer and goes with the charge`() = runTest(dispatcher) {
         val batch = slot<ChargeBatch>()
         coEvery { gateway.registerCharge(capture(batch)) } returns emptyList()
         openWith(whatsApp)
 
         viewModel.onIntent(SubscriptionHubIntent.UseProof(whatsApp.key))
-        viewModel.onIntent(SubscriptionHubIntent.DiscountToggled)
-        viewModel.onIntent(SubscriptionHubIntent.DiscountChanged("10"))
-        viewModel.onIntent(SubscriptionHubIntent.DiscountReasonSelected("Promoción"))
         assertEquals("Yape", draft.method)
-        assertEquals(30.0, draft.leftover!!, 0.001)
+        assertEquals(20.0, draft.leftover!!, 0.001)
+        // The receipt covers everything: no discount is offered with it.
+        assertNull(draft.proofShortfall)
+        assertEquals(false, draft.offersDiscount)
         viewModel.onIntent(SubscriptionHubIntent.SubmitCharge)
         advanceUntilIdle()
 
         assertEquals(
-            ChargeBatch(listOf(1, 2), "Yape", 10.0, "Promoción", "Jorge Ramos V.", responsibleId = 7, inboundMessageId = 900, amountReceived = 120.0),
+            ChargeBatch(listOf(1, 2), "Yape", 0.0, null, "Jorge Ramos V.", responsibleId = 7, inboundMessageId = 900, amountReceived = 120.0),
             batch.captured,
         )
         assertNull(viewModel.uiState.value.charge)
     }
 
     @Test
-    fun `a receipt worth less than the total asks to mark only what it covers`() = runTest(dispatcher) {
+    fun `a receipt worth less than the total asks to mark only what it covers or apply the agreed discount`() = runTest(dispatcher) {
         openWith(whatsApp.copy(amount = 50.0))
 
         viewModel.onIntent(SubscriptionHubIntent.UseProof(whatsApp.key))
 
-        assertEquals("El comprobante es de S/ 50.00: marca solo los recibos que cubre", draft.blockingReason)
+        assertEquals(
+            "El comprobante es de S/ 50.00: marca solo los recibos que cubre o registra el descuento acordado",
+            draft.blockingReason,
+        )
+        assertEquals(50.0, draft.proofShortfall!!, 0.001)
         viewModel.onIntent(SubscriptionHubIntent.ReceiptToggled(2))
         assertNull(draft.blockingReason)
     }
 
     @Test
+    fun `a receipt below the total is registered with the discount it leaves and its reason`() = runTest(dispatcher) {
+        val batch = slot<ChargeBatch>()
+        coEvery { gateway.registerCharge(capture(batch)) } returns emptyList()
+        openWith(whatsApp.copy(amount = 90.0))
+
+        viewModel.onIntent(SubscriptionHubIntent.UseProof(whatsApp.key))
+        viewModel.onIntent(SubscriptionHubIntent.DiscountToggled)
+        // The amount is not typed: it is what the receipt leaves unpaid.
+        viewModel.onIntent(SubscriptionHubIntent.DiscountChanged("3"))
+        assertEquals(10.0, draft.discountValue, 0.001)
+        assertEquals(90.0, draft.toPay, 0.001)
+        assertEquals("Elige el motivo del descuento", draft.blockingReason)
+        viewModel.onIntent(SubscriptionHubIntent.DiscountReasonSelected("Otro"))
+        assertEquals("Escribe el detalle del motivo", draft.blockingReason)
+        viewModel.onIntent(SubscriptionHubIntent.DiscountDetailChanged("3 días sin servicio"))
+        assertNull(draft.blockingReason)
+        viewModel.onIntent(SubscriptionHubIntent.SubmitCharge)
+        advanceUntilIdle()
+
+        assertEquals(
+            ChargeBatch(
+                listOf(1, 2), "Yape", 10.0, "Otro: 3 días sin servicio", "Jorge Ramos V.",
+                responsibleId = 7, inboundMessageId = 900, amountReceived = 90.0,
+            ),
+            batch.captured,
+        )
+    }
+
+    @Test
     fun `a Mi GigaFiber proof pays the chosen fees of every service in one charge, with the discount`() = runTest(dispatcher) {
         coEvery { gateway.chargeWithAppProof(any(), any(), any(), any(), any()) } returns Unit
-        openWith(app)
+        openWith(app.copy(amount = 95.0))
 
         viewModel.onIntent(SubscriptionHubIntent.UseProof(app.key))
         assertEquals(setOf(1), draft.selectedIds)
@@ -116,12 +149,11 @@ class PendingProofChargeTest {
         viewModel.onIntent(SubscriptionHubIntent.ReceiptToggled(2))
         assertEquals(setOf(1), draft.selectedIds)
         viewModel.onIntent(SubscriptionHubIntent.DiscountToggled)
-        viewModel.onIntent(SubscriptionHubIntent.DiscountChanged("5"))
-        viewModel.onIntent(SubscriptionHubIntent.DiscountReasonSelected("Reclamo"))
+        viewModel.onIntent(SubscriptionHubIntent.DiscountReasonSelected("Fallas de internet"))
         viewModel.onIntent(SubscriptionHubIntent.SubmitCharge)
         advanceUntilIdle()
 
-        coVerify { gateway.chargeWithAppProof("p_55", listOf(1, 9001), null, 5.0, "Reclamo") }
+        coVerify { gateway.chargeWithAppProof("p_55", listOf(1, 9001), null, 5.0, "Fallas de internet") }
         coVerify(exactly = 0) { gateway.registerCharge(any()) }
     }
 

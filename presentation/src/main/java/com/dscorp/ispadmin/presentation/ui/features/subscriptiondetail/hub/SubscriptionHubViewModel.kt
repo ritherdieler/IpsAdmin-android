@@ -111,6 +111,7 @@ sealed interface SubscriptionHubIntent {
     data object DiscountToggled : SubscriptionHubIntent
     data class DiscountChanged(val amount: String) : SubscriptionHubIntent
     data class DiscountReasonSelected(val reason: String) : SubscriptionHubIntent
+    data class DiscountDetailChanged(val detail: String) : SubscriptionHubIntent
     data object CloseReceipt : SubscriptionHubIntent
     data object SubmitCharge : SubscriptionHubIntent
     data class UseProof(val key: String) : SubscriptionHubIntent
@@ -164,10 +165,12 @@ class SubscriptionHubViewModel(
             SubscriptionHubIntent.RestoreToggled -> updateDraft { it.copy(restore = !it.restore) }
             is SubscriptionHubIntent.ReceivedChanged -> updateDraft { it.copy(received = intent.amount) }
             SubscriptionHubIntent.DiscountToggled -> updateDraft {
-                if (it.discountOpen) it.copy(discountOpen = false, discount = "", discountReason = null) else it.copy(discountOpen = true)
+                if (it.discountOpen) it.copy(discountOpen = false, discount = "", discountReason = null, discountDetail = "") else it.copy(discountOpen = true)
             }
-            is SubscriptionHubIntent.DiscountChanged -> updateDraft { it.copy(discount = intent.amount) }
+            // With a proof amount the discount is what the proof leaves unpaid: it is not typed.
+            is SubscriptionHubIntent.DiscountChanged -> updateDraft { if (it.discountFromProof) it else it.copy(discount = intent.amount) }
             is SubscriptionHubIntent.DiscountReasonSelected -> updateDraft { it.copy(discountReason = intent.reason) }
+            is SubscriptionHubIntent.DiscountDetailChanged -> updateDraft { it.copy(discountDetail = intent.detail) }
             SubscriptionHubIntent.CloseReceipt -> _uiState.update { it.copy(chargeReceipt = null) }
             SubscriptionHubIntent.SubmitCharge -> submitCharge()
             is SubscriptionHubIntent.UseProof -> updateDraft { draft -> draft.pending.firstOrNull { it.key == intent.key }?.let(draft::use) ?: draft }
@@ -396,7 +399,7 @@ class SubscriptionHubViewModel(
                         paymentIds = draft.selectedReceipts.mapNotNull { it.id } + draft.otherServiceFees.map { it.paymentId },
                         payerName = draft.payerName.trim().ifEmpty { null },
                         discount = draft.discountValue,
-                        reason = draft.discountReason.takeIf { draft.discountValue > 0 },
+                        reason = draft.discountReasonText.takeIf { draft.discountValue > 0 },
                     )
                     emptyList()
                 } else {
@@ -429,7 +432,7 @@ class SubscriptionHubViewModel(
         paymentIds = selectedReceipts.mapNotNull { it.id },
         method = method,
         discountAmount = discountValue,
-        discountReason = discountReason.takeIf { discountValue > 0 },
+        discountReason = discountReasonText.takeIf { discountValue > 0 },
         electronicPayerName = payerName.trim().takeIf { requiresPayerName && it.isNotEmpty() },
         responsibleId = collectorId,
         inboundMessageId = proof?.inboundMessageId,

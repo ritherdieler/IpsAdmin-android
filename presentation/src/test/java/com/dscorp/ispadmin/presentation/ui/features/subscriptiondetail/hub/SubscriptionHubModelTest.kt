@@ -176,7 +176,9 @@ class SubscriptionHubModelTest {
         assertEquals(90.0, discounted.toPay, 0.001)
         assertEquals("Elige el motivo del descuento", discounted.blockingReason)
         assertNull(discounted.copy(discountReason = "Promoción").blockingReason)
-        assertEquals("El descuento no puede ser mayor al total", discounted.copy(discount = "200", discountReason = "Otro").blockingReason)
+        assertEquals("Escribe el detalle del motivo", discounted.copy(discountReason = "Otro").blockingReason)
+        assertEquals("Otro: cliente antiguo", discounted.copy(discountReason = "Otro", discountDetail = " cliente antiguo ").discountReasonText)
+        assertEquals("El descuento no puede ser mayor al total", discounted.copy(discount = "200", discountReason = "Promoción").blockingReason)
         assertEquals(100.0, discounted.copy(discountOpen = false).toPay, 0.001)
     }
 

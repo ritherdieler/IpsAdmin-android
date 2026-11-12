@@ -10,6 +10,7 @@ import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.roundToLong
 
 enum class BadgeTone { SUCCESS, WARNING, ERROR, INFO, NEUTRAL }
 
@@ -113,6 +114,8 @@ data class ChargeDraft(
     val discountOpen: Boolean = false,
     val discount: String = "",
     val discountReason: String? = null,
+    /** Written detail, required when the reason is «Otro». */
+    val discountDetail: String = "",
     /** Method of the previous charge on this phone, badged «Último usado». */
     val lastUsed: String? = null,
     /** Cut per the current production Core, which keeps the status ACTIVE and only raises isServiceCutOff. */
@@ -126,7 +129,29 @@ data class ChargeDraft(
     /** Fees of other services the Mi GigaFiber proof also pays: they go in this same charge. */
     val otherServiceFees: List<PendingProofFee> get() = proof?.otherServiceFees.orEmpty()
     val total: Double get() = selectedReceipts.sumOf { it.amountToPay } + otherServiceFees.sumOf { it.amount }
-    val discountValue: Double get() = if (discountOpen) discount.toMoney() ?: 0.0 else 0.0
+    /**
+     * What a proof with an amount leaves unpaid of the total: the agreed discount (e.g. days without internet) that
+     * lets it be registered. Null without such a proof or when it covers everything.
+     */
+    val proofShortfall: Double?
+        get() = proof?.amount?.let { amount -> ((total - amount) * 100).roundToLong() / 100.0 }?.takeIf { it > MONEY_EPSILON }
+    /** With a proof that has an amount the discount is not typed: it is exactly what the proof leaves unpaid. */
+    val discountFromProof: Boolean get() = proof?.amount != null
+    /** The discount is offered without a proof amount, or when the proof falls short. */
+    val offersDiscount: Boolean get() = !discountFromProof || proofShortfall != null
+    val discountValue: Double
+        get() = when {
+            !discountOpen -> 0.0
+            discountFromProof -> proofShortfall ?: 0.0
+            else -> discount.toMoney() ?: 0.0
+        }
+    /** The reason stored with the discount; «Otro» carries its detail. */
+    val discountReasonText: String?
+        get() = when (val reason = discountReason) {
+            null -> null
+            DISCOUNT_OTHER -> discountDetail.trim().takeIf { it.isNotEmpty() }?.let { "$DISCOUNT_OTHER: $it" }
+            else -> reason
+        }
     val toPay: Double get() = (total - discountValue).coerceAtLeast(0.0)
     val isCash: Boolean get() = method.equals(CASH_METHOD, ignoreCase = true)
     private val receivedValue: Double? get() = if (isCash) received.toMoney() else null
@@ -142,11 +167,12 @@ data class ChargeDraft(
             pending.isNotEmpty() && proof == null -> "Usa el comprobante o descártalo para continuar"
             selectedIds.isEmpty() && otherServiceFees.isEmpty() -> "Elige al menos un recibo"
             proof?.amount != null && proof.amount < toPay - MONEY_EPSILON ->
-                "El comprobante es de ${formatSoles(proof.amount)}: marca solo los recibos que cubre"
+                "El comprobante es de ${formatSoles(proof.amount)}: marca solo los recibos que cubre o registra el descuento acordado"
             method.isBlank() -> "Elige el método de pago"
             requiresPayerName && payerName.isBlank() -> "Escribe el nombre que aparece en $method"
             discountValue > total + MONEY_EPSILON -> "El descuento no puede ser mayor al total"
             discountValue > 0 && discountReason == null -> "Elige el motivo del descuento"
+            discountValue > 0 && discountReasonText == null -> "Escribe el detalle del motivo"
             receivedValue != null && receivedValue!! < toPay - MONEY_EPSILON -> "Lo recibido no alcanza para el total"
             else -> null
         }
@@ -167,12 +193,17 @@ data class ChargeDraft(
             method = method,
             payerName = chosen.payerName ?: payerName,
             received = "",
+            // A discount typed before choosing the proof does not carry over: with a proof it follows its amount.
+            discountOpen = false,
+            discount = "",
+            discountReason = null,
+            discountDetail = "",
             selectedIds = if (chosen.isApp) ids.filter { it in chosen.paymentIds }.toSet() else selectedIds,
         )
     }
 
     /** «Cambiar»: back to choosing which pending proof to use. */
-    fun clearProof(): ChargeDraft = copy(proof = null)
+    fun clearProof(): ChargeDraft = copy(proof = null, discountOpen = false, discount = "", discountReason = null, discountDetail = "")
 
     /** After a discard or a reload: keeps the proof in use only while it is still pending. */
     fun withPending(proofs: List<PendingProof>): ChargeDraft =
@@ -205,7 +236,9 @@ data class ChargeDraft(
     }
 }
 
-val DISCOUNT_REASONS = listOf("Promoción", "Reclamo", "Error de cobro", "Otro")
+/** Same reasons as the back office (WhatsApp receipt charge); «Otro» needs a written detail. */
+const val DISCOUNT_OTHER = "Otro"
+val DISCOUNT_REASONS = listOf("Fallas de internet", "Fallas de TV cable", "Error de facturación", "Promoción", DISCOUNT_OTHER)
 
 /** A fee of another service a Mi GigaFiber proof pays in the same charge. */
 data class PendingProofFee(val paymentId: Int, val place: String, val period: String?, val amount: Double)
