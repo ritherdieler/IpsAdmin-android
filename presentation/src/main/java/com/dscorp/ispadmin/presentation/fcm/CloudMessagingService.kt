@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -27,7 +26,6 @@ import com.google.gson.Gson
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import java.util.Locale
 
 private const val TAG = "FcmService"
 
@@ -39,23 +37,12 @@ class CloudMessagingService : FirebaseMessagingService() {
     private val notificationManager: NotificationManagerWrapper by lazy {
         NotificationManagerWrapperImpl(this)
     }
-    private val textToSpeechManager: TextToSpeechManager by lazy { TextToSpeechManagerImpl(this) }
     private val messageHandlerRegistry: MessageHandlerRegistry by lazy {
         MessageHandlerRegistryImpl().apply { registerDefaultHandlers(this@CloudMessagingService) }
     }
 
     // Proporcionar acceso al repository para los handlers
     val repositoryAccess: IRepository get() = repository
-
-    override fun onCreate() {
-        super.onCreate()
-        textToSpeechManager.initialize()
-    }
-
-    override fun onDestroy() {
-        textToSpeechManager.release()
-        super.onDestroy()
-    }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
@@ -113,7 +100,9 @@ data class FcmMessage(
     val type: FcmMessageType,
     val message: String,
     val id: String,
-    val data: Any
+    val data: Any,
+    /** Summary the Core sends for new tickets to read aloud; null from older Cores. */
+    val speech: String? = null
 )
 
 /**
@@ -131,60 +120,16 @@ const val MANAGEMENT_ACTION = "action"
 const val FORCE_LOGOUT = "force_logout"
 
 /**
- * Interfaz para la gestión de Text-to-Speech
- */
-interface TextToSpeechManager {
-    fun initialize()
-    fun speak(text: String)
-    fun release()
-}
-
-/**
- * Implementación de Text-to-Speech
- */
-class TextToSpeechManagerImpl(private val context: Context) : TextToSpeechManager {
-    private var textToSpeech: TextToSpeech? = null
-    private var isTtsInitialized = false
-
-    override fun initialize() {
-        textToSpeech = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                val result = textToSpeech?.setLanguage(Locale("es", "ES"))
-                isTtsInitialized =
-                    result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED
-                if (!isTtsInitialized) {
-                    Log.e(TAG, "El idioma español no está disponible para TTS")
-                }
-            } else {
-                Log.e(TAG, "Error al inicializar TextToSpeech")
-            }
-        }
-    }
-
-    override fun speak(text: String) {
-        if (isTtsInitialized) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "fcm_notification_id")
-            } else {
-                @Suppress("DEPRECATION")
-                textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null)
-            }
-        }
-    }
-
-    override fun release() {
-        textToSpeech?.stop()
-        textToSpeech?.shutdown()
-        textToSpeech = null
-    }
-}
-
-/**
  * Interfaz para la gestión de notificaciones
  */
 interface NotificationManagerWrapper {
     fun createNotificationChannel()
-    fun showNotification(title: String, message: String, pendingIntent: PendingIntent? = null)
+    fun showNotification(
+        title: String,
+        message: String,
+        pendingIntent: PendingIntent? = null,
+        notificationId: Int = CloudMessagingService.NOTIFICATION_ID,
+    )
 }
 
 /**
@@ -210,7 +155,8 @@ class NotificationManagerWrapperImpl(private val context: Context) : Notificatio
     override fun showNotification(
         title: String,
         message: String,
-        pendingIntent: PendingIntent?
+        pendingIntent: PendingIntent?,
+        notificationId: Int,
     ) {
         // Crear una notificación
         val notificationBuilder =
@@ -238,7 +184,7 @@ class NotificationManagerWrapperImpl(private val context: Context) : Notificatio
             ) {
                 return
             }
-            notify(CloudMessagingService.NOTIFICATION_ID, notificationBuilder.build())
+            notify(notificationId, notificationBuilder.build())
         }
     }
 }
@@ -290,10 +236,6 @@ class AssistanceTicketHandler(private val service: CloudMessagingService) : Mess
             service
         )
     }
-    private val textToSpeechManager: TextToSpeechManager by lazy {
-        TextToSpeechManagerImpl(service).apply { initialize() }
-    }
-
     override fun canHandle(messageType: FcmMessageType): Boolean {
         return messageType == FcmMessageType.ASSISTANCE_TICKET
     }
@@ -303,16 +245,19 @@ class AssistanceTicketHandler(private val service: CloudMessagingService) : Mess
             putExtra(TICKET_ID, message.id)
         }
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        // One notification and one tap target per ticket: a shared id replaced the previous
+        // ticket's notification and reused its PendingIntent, which opened the older ticket.
+        val ticketId = message.id.toIntOrNull() ?: CloudMessagingService.NOTIFICATION_ID
         val pendingIntent = PendingIntent.getActivity(
-            service, 0, intent,
-            PendingIntent.FLAG_IMMUTABLE
+            service, ticketId, intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        notificationManager.showNotification(message.title, message.message, pendingIntent)
+        notificationManager.showNotification(message.title, message.message, pendingIntent, ticketId)
 
-        // Verificar si pertenece al topic ASSISTANCE_TICKET y reproducir alerta
+        // Only new tickets come on this topic (status changes use the admins topic).
         val topic = rawMessage.from?.substringAfterLast("/", "")
         if (topic == FcmTopics.ASSISTANCE_TICKET) {
-            textToSpeechManager.speak("Se ha registrado un nuevo ticket de asistencia")
+            VoiceAnnouncer.get(service).announce(ticketSpeech(message))
         }
     }
 }
@@ -326,9 +271,7 @@ class InstallationOrderHandler(private val service: CloudMessagingService) : Mes
             service
         )
     }
-    private val textToSpeechManager: TextToSpeechManager by lazy {
-        TextToSpeechManagerImpl(service).apply { initialize() }
-    }
+    private val voice: VoiceAnnouncer by lazy { VoiceAnnouncer.get(service) }
 
     override fun canHandle(messageType: FcmMessageType): Boolean {
         return messageType == FcmMessageType.INSTALLATION_ORDER ||
@@ -346,7 +289,7 @@ class InstallationOrderHandler(private val service: CloudMessagingService) : Mes
                 // Verificar el topic y reproducir mensaje de voz si corresponde
                 val topic = rawMessage.from?.substringAfterLast("/", "")
                 if (topic == FcmTopics.TOPIC_INSTALLATION_ORDER) {
-                    textToSpeechManager.speak(message.message)
+                    voice.announce(message.message)
                 }
             }
 
@@ -354,7 +297,7 @@ class InstallationOrderHandler(private val service: CloudMessagingService) : Mes
             FcmMessageType.SALES_CLOSED_INSTALLATION_ORDER,
             FcmMessageType.SALES_ASSIGNED_INSTALLATION_ORDER -> {
                 // Leer el mensaje recibido con voz para estos tipos específicos
-                textToSpeechManager.speak(message.message)
+                voice.announce(message.message)
             }
 
             else -> { /* No hacer nada para otros tipos */
